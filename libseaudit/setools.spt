@@ -1,0 +1,5 @@
+undefine(`interface')
+undefine(`template')
+undefine(`ifelse')
+define(`gen_require', `')
+define(`template', `')

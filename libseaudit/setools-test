@@ -1,0 +1,32 @@
+#!/bin/bash
+
+#
+# TODO: include build.conf ???
+# TODO: build the M4PARAMs just like refpol Makefile
+#
+
+m4params="-D targeted_policy -D unable_mls -D distro_redhat -D direct_sysadm_daemon -D hide_broken_symptoms"
+
+mod_dir=policy/modules
+support=policy/support/*.spt
+
+cat $mod_dir/admin/*.if $mod_dir/apps/*.if $mod_dir/kernel/*.if $mod_dir/services/*.if $mod_dir/system/*.if > ./interfaces.first
+
+# How many m4 passes do we have to do here ???
+m4 $m4params $support ./setools.spt ./interfaces.first > ./interfaces.second
+m4 $m4params $support ./setools.spt ./interfaces.second > ./interfaces.third
+
+# remove comments
+sed -e :a -e 's/#\(.*\)//g' ./interfaces.first > ./interfaces-first.noblank
+sed -e :a -e 's/#\(.*\)//g' ./interfaces.second > ./interfaces-second.noblank
+sed -e :a -e 's/#\(.*\)//g' ./interfaces.third > ./interfaces-third.noblank
+
+#remove blank lines
+sed '/./!d' ./interfaces-first.noblank > interfaces.first.clean
+sed '/./!d' ./interfaces-second.noblank > interfaces.second.clean
+sed '/./!d' ./interfaces-third.noblank > interfaces.third.clean
+
+rm ./interfaces-first.noblank ./interfaces.first
+rm ./interfaces-second.noblank ./interfaces.second
+rm ./interfaces-third.noblank ./interfaces.third
+
