@@ -46,6 +46,7 @@ typedef struct au_iface_call {
 	int			num_params;
 	au_iface_rule_key_t	*keys;	/* rules that match this call */
 	int			keys_sz;
+	unsigned int		rank;
 } au_iface_call_t;
 
 /* structure to store the complete rule from an interface */
@@ -75,8 +76,10 @@ typedef struct au_iface_graph {
 	au_iface_t *interfaces;
 	int num_interfaces;
 	// TODO: hash function goes here
+	policy_t *policy;
 } au_iface_graph_t;
 
+/* constructor/destructor */
 au_iface_graph_t *au_iface_graph_create();
 void au_iface_graph_destroy(au_iface_graph_t *graph);
 
@@ -84,10 +87,12 @@ void au_iface_graph_destroy(au_iface_graph_t *graph);
  * 
  * Call this function with the location of the reference policy directory.
  * The function will build the interface graph.
- *
+ * error codes:
  * -1: invalid policy source directory
- * -2: failed to build interfaces file
- * -3: parse error in interfaces file
+ * -2: failed to build policy
+ * -3: failed to parse policy
+ * -4: failed to build interfaces file
+ * -5: failed to parse interfaces file
  */
 int au_iface_graph_init(const char *ref_pol_src_dir);
 
@@ -98,12 +103,11 @@ int au_iface_graph_init(const char *ref_pol_src_dir);
 int au_iface_graph_get_valid_iface_calls(au_iface_graph_t *graph, au_iface_rule_key_t *keys, 
 					 int keys_sz, au_iface_calls_t **calls, int *calls_sz);
 
-/* au_rank_iface_calls()
+/* au_iface_graph_rank_iface_calls()
  * 
- * Call this function to sort the interface calls by order of how well
- * they solve their rule keys. This is basically the 
- * degree to which the calls are good for the user.  
+ * Call this function to sort the interface calls by order of how well they solve their rule keys. 
+ * This is basically the degree to which the calls are good for the user to make.
  * TODO: what order ascending/decending? */
-int au_rank_iface_calls(au_iface_call_t *calls, int calls_sz);
+int au_iface_graph_rank_iface_calls(au_iface_graph_t *graph, au_iface_call_t *calls[], int calls_sz);
 
 #define AU_REFPOL_H
