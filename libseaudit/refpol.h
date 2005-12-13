@@ -47,6 +47,7 @@ typedef struct au_iface_call {
 	au_iface_rule_key_t	*keys;	/* rules that match this call */
 	int			keys_sz;
 	unsigned int		rank;
+	unsigned int		num_matches;
 } au_iface_call_t;
 
 /* structure to store the complete rule from an interface */
