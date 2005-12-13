@@ -19,7 +19,7 @@
 /* structure to store the interface parameters */
 typedef struct au_iface_params {
 	bool_t 		optional;	/* is this an optional param */
-	unsigned char	type;		/* type, obj, or permission */
+	unsigned char	type;		/* type, obj, or role */
 	char		*value;		/* a value or NULL */
 } au_iface_params_t;
 
@@ -52,11 +52,17 @@ typedef struct au_iface_call {
 /* structure to store the complete rule from an interface */
 typedef struct au_iface_rule {
 	au_iface_rule_key_t	key;
-#define AU_IFACE_SCOPE_COND	1
-#define AU_IFACE_SCOPE_OPTIONAL	2
-#define AU_IFACE_SCOPE_IFELSE	4
+#define AU_IFACE_SCOPE_UNCOND	0x00
+#define AU_IFACE_SCOPE_COND	0x01
+#define AU_IFACE_SCOPE_OPTIONAL	0x02
+#define AU_IFACE_SCOPE_IFELSE	0x04
+#define AU_IFACE_SCOPE_MASK 0xF8
 	unsigned char 	scope;		/* was this rule in a conditional, optional, or ifelse block */
 	cond_expr_t	*cond_exp;	/* the conditional expresion */
+#define AU_COND_LIST_TRUE 1
+#define AU_COND_LIST_FALSE 0
+#define AU_COND_LIST_UNKNOWN 2
+	unsigned char	which_list;	/* true or false list of conditional */
 	int		param_num; 	/* the parameter number for ifelse */
 } au_iface_rule_t;
 
@@ -89,10 +95,9 @@ void au_iface_graph_destroy(au_iface_graph_t *graph);
  * The function will build the interface graph.
  * error codes:
  * -1: invalid policy source directory
- * -2: failed to build policy
- * -3: failed to parse policy
- * -4: failed to build interfaces file
- * -5: failed to parse interfaces file
+ * -2: failed to parse policy
+ * -3: failed to build interfaces file
+ * -4: failed to parse interfaces file
  */
 int au_iface_graph_init(const char *ref_pol_src_dir);
 

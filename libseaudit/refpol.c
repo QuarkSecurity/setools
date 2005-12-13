@@ -82,7 +82,7 @@ static void au_iface_call_rank(au_iface_call_t *call)
 	// 7  MATCH_DISABLED
 	// 11 EXTRA_DISABLED
 	// 13 EXTRA_COND
-       	// 17 EXTRA_ENABLED
+	// 17 EXTRA_ENABLED
 	// 19 EXTRA_UNCOND
 
 	// iface = get_iface_from_call(call)
@@ -157,7 +157,7 @@ static bool_t is_valid_src_dir(const char *src_dir)
 	// stat(src_dir/policy/modules/kernel)
 	// stat(src_dir/policy/modules/services)
 	// stat(src_dir/policy/modules/system)
-	// stat(src_dir/Makefile)
+	// stat(src_dir/policy.conf)
 	return TRUE;
 }
 
@@ -169,17 +169,15 @@ int au_iface_graph_init(const char *ref_pol_src_dir)
 	
 	// if (!is_valid_src_dir(ref_pol_src_dir))
 	//	return -1
-	// if (!make conf || !make policy.conf)
-	//	return -2
 	// rt = load_partial_policy(ref_pol_src_dir/policy.conf, &graph->policy, POL_OPT_SYMS)
 	// if (rt < 0)
-	//	return -3
+	//	return -2
 	// rt = build_file_to_parse(ref_pol_src_dir, &file) /* see setools-test script */
 	// if (rt < 0)
-	//	return -4
+	//	return -3
 	// rt = parse_file(graph, file)
 	// if (rt < 0)
-	//	return -5
+	//	return -4
 	// close_file(file)
 	// delete_file(file)
 	return 0;
