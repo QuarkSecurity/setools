@@ -899,6 +899,10 @@ int str_to_internal_ip(const char *str, uint32_t ip[4])
 	for (i = 0; i <= len; i++) {
 		if (ipv4) {
 			if (str[i] == '.' || str[i] == '\0') {
+				if (val < 0 || val > 255) {
+					errno = EINVAL;
+					return -1;
+				}
 				ip[3] |= ((0x000000ff & val) << (8 * (3 - seg)));
 				seg++;
 				val = 0;
@@ -909,9 +913,16 @@ int str_to_internal_ip(const char *str, uint32_t ip[4])
 				retv = atoi(&(tmp[4]));
 				val *= 10;
 				val += retv;
+			} else {
+				errno = EINVAL;
+				return -1;
 			}
 		} else if (ipv6) {
 			if (str[i] == ':' || str[i] == '\0') {
+				if (val < 0 || val > 0xffff) {
+					errno = EINVAL;
+					return -1;
+				}
 				ip[seg/2] |= ((0x0000ffff & val) << (16 * (1 - seg % 2)));
 				seg++;
 				val = 0;
@@ -926,6 +937,9 @@ int str_to_internal_ip(const char *str, uint32_t ip[4])
 				retv = strtol(tmp, NULL, 16);
 				val = val << 4;
 				val += retv;
+			} else {
+				errno = EINVAL;
+				return -1;
 			}
 		}
 	}
