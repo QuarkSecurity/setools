@@ -300,19 +300,6 @@ static int load_range_trans(ap_fbuf_t *fb, FILE *fp, ap_bmaps_t *bm, unsigned in
 	return 0;
 }
 
-static int skip_mls_level(ap_fbuf_t *fb, FILE *fp, ap_bmaps_t *bm, unsigned int opts, policy_t *policy)
-{
-	__u32 *buf;
-	
-	INTERNAL_ASSERTION
-
-	buf = ap_read_fbuf(fb, sizeof(__u32), fp);
-	if (buf == NULL)
-		return fb->err;
-
-	return skip_ebitmap(fb,fp);
-}
-
 static int load_user_dflt_mls_level(ap_fbuf_t *fb, FILE *fp, ap_bmaps_t *bm, unsigned int opts, policy_t *policy, ap_mls_level_t **mls_level)
 {
 	__u32 *buf;
@@ -858,7 +845,7 @@ static int load_type(ap_fbuf_t *fb, FILE *fp, ap_bmaps_t *bm, unsigned int opts,
 			 * in order to add them to our type structure.  This is
 			 * required because the val of an alias may not yet be
 			 * valid type reference for our structure */
-			rt = ap_add_alias_bmap(key, val, bm);
+			rt = ap_add_alias_bmap(key, val, bm, AP_ALIAS_TYPE);
 			if(rt < 0) {
 				free(key);
 				return -1;
@@ -2320,7 +2307,7 @@ static int load_mls_sens(ap_fbuf_t *fb, FILE *fp, ap_bmaps_t *bm, unsigned int o
 {
 	/* see sens_read() */
 	__u32 *buf, len, isalias;
-	int rt;
+	int rt = 0;
 	char *name = NULL;
 
 	INTERNAL_ASSERTION
@@ -2343,9 +2330,15 @@ static int load_mls_sens(ap_fbuf_t *fb, FILE *fp, ap_bmaps_t *bm, unsigned int o
 	name[len] = '\0';
 
 	if (isalias) {
-		rt = add_sensitivity_alias(policy->num_sensitivities-1, name, policy);
+                /* the next __u32 gives the value */
+                int sens;
+                if ((buf = ap_read_fbuf(fb, sizeof(__u32), fp)) == NULL) {
+                        goto err;
+                }
+                sens = le32_to_cpu(buf[0]);
+		rt = ap_add_alias_bmap(name, sens, bm, AP_ALIAS_SENS);
 		if (rt < 0) goto err;
-		skip_mls_level(fb, fp, bm, opts, policy);
+                skip_ebitmap(fb, fp);
 	} else {
 		rt = add_sensitivity(name, NULL, policy); /* no aliases */
 		if (rt < 0) goto err;
@@ -2385,7 +2378,7 @@ static int load_mls_cats(ap_fbuf_t *fb, FILE *fp, ap_bmaps_t *bm, unsigned int o
 	name[len] = '\0';
 	
 	if (isalias) {
-		rt = add_category_alias(val-1, name, policy);
+                rt = ap_add_alias_bmap(name, val, bm, AP_ALIAS_CATS);
 		if (rt < 0) goto err;
 	} else {
 		rt = add_category(name, val-1, NULL, policy); /* no aliases */
@@ -2599,6 +2592,7 @@ static int load_binpol(FILE *fp, unsigned int opts, policy_t *policy)
 			bm->sens_num = nprim;
 			break;
 		case SYM_CATS:		/* MLS Categories */
+                        bm->cats_num = nprim;
 			break;
 		default:	/* shouldn't get here */
 			assert(FALSE);
@@ -2649,7 +2643,7 @@ static int load_binpol(FILE *fp, unsigned int opts, policy_t *policy)
 	}
 
 	/* Process aliases */
-	for(a = bm->alias_map; a != NULL; a = a->next) {
+	for(a = bm->alias_map[AP_ALIAS_TYPE]; a != NULL; a = a->next) {
 		assert(a->val <= bm->t_num); /* assert that the alias val is a valid type val */
 		type_idx = bm->t_map[a->val-1]; 
 		if(!is_valid_type_idx(type_idx, policy)) {
@@ -2661,6 +2655,28 @@ static int load_binpol(FILE *fp, unsigned int opts, policy_t *policy)
 			assert(FALSE); /* debug aide */
 			return -4;
 		}
+	}
+	for(a = bm->alias_map[AP_ALIAS_SENS]; a != NULL; a = a->next) {
+                int sens_idx;
+		assert(a->val > 0 && a->val <= bm->sens_num);
+                sens_idx = bm->sens_map[a->val - 1];
+                if (sens_idx < 0 || sens_idx >= policy->num_sensitivities) {
+                        return -4;
+                }
+                if (add_sensitivity_alias(sens_idx, a->name, policy)) {
+                        return -4;
+                }
+	}
+	for(a = bm->alias_map[AP_ALIAS_CATS]; a != NULL; a = a->next) {
+                int cats_idx;
+		assert(a->val > 0 && a->val <= bm->cats_num);
+                cats_idx = a->val - 1;
+                if (cats_idx < 0 || cats_idx >= policy->num_categories) {
+                        return -4;
+                }
+                if (add_category_alias(cats_idx, a->name, policy)) {
+                        return -4;
+                }
 	}
 	
 	/* Process role types; so far we've only stored the ebitmaps */

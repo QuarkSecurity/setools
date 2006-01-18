@@ -113,7 +113,7 @@ int main (int argc, char **argv)
 	perms = NULL;
 	src_name = tgt_name = class_name = permlist = bool_name = NULL;
 	
-	open_opts = POLOPT_TE_POLICY | POLOPT_OBJECTS;
+	open_opts = POLOPT_TE_POLICY | POLOPT_OBJECTS | POLOPT_COND_POLICY;
 	
 	while ((optc = getopt_long (argc, argv, "s:t:c:p:b:d:alChvni0:", longopts, NULL)) != -1)  {
 		switch (optc) {

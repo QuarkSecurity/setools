@@ -188,10 +188,10 @@ install: all install-dirs \
 install-nogui: all-nogui install-dirs install-dev install-secmds \
 	install-sediff-nogui install-sechecker
 
-# Install directories
-install-dirs: $(BINDIR) $(SBINDIR) $(MANDIR) $(SHARED_LIB_INSTALL_DIR) $(INSTALL_LIBDIR) $(INSTALL_HELPDIR)
+# Install directories - sort gets rid of make warnings on duplicates
+install-dirs: $(sort $(BINDIR) $(SBINDIR) $(MANDIR) $(SHARED_LIB_INSTALL_DIR) $(INSTALL_LIBDIR) $(INSTALL_HELPDIR))
 
-$(BINDIR) $(SBINDIR) $(MANDIR) $(SHARED_LIB_INSTALL_DIR) $(INSTALL_LIBDIR) $(INSTALL_HELPDIR):
+$(sort $(BINDIR) $(SBINDIR) $(MANDIR) $(SHARED_LIB_INSTALL_DIR) $(INSTALL_LIBDIR) $(INSTALL_HELPDIR)):
 	test -d $@ || install -m 755 -d $@
 
 # Install Libraries

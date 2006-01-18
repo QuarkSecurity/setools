@@ -3777,10 +3777,15 @@ int add_validatetrans(bool_t is_mls, ta_item_t *classes, ap_constraint_expr_t *e
 
 int add_sensitivity_alias(int sens, char *alias, policy_t *policy)
 {
+        char *name;
 	if (sens < 0 || sens >= policy->num_sensitivities || alias == NULL || policy == NULL)
 		return -1;
-
-	return add_name(alias, &(policy->sensitivities[sens].aliases));
+        /* strdup() the name */
+        if ((name = malloc(strlen(alias) + 1)) == NULL) {
+                return -1;
+        }
+        strcpy(name, alias);
+	return add_name(name, &(policy->sensitivities[sens].aliases));
 }
 
 /* Sensitivities do not require an order, so they are stored in the order they were
@@ -3814,10 +3819,15 @@ int add_sensitivity(char *name, name_item_t *aliases, policy_t *policy)
 
 int add_category_alias(int category, char *alias, policy_t *policy)
 {
+        char *name;
 	if (category < 0 || category >= policy->num_categories || alias == NULL || policy == NULL)
 		return -1;
-
-	return add_name(alias, &(policy->categories[category].aliases));
+        /* strdup() the name */
+        if ((name = malloc(strlen(alias) + 1)) == NULL) {
+                return -1;
+        }
+        strcpy(name, alias);
+	return add_name(name, &(policy->categories[category].aliases));
 }
 
 /* Categories have to be stored in order - so the indx is the order or value of the category. 
