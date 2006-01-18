@@ -98,8 +98,13 @@ The default source policy, or if that is unavailable the default binary\n\
 int print_stats(FILE *fp, policy_t *policy)
 {
 	char *tmp = NULL;
+	int num_genfscon = 0;
 
 	assert(policy != NULL);
+
+	/* there is one path per statement in the policy */
+	num_genfscon = ap_genfscon_get_num_paths(policy);
+
 	fprintf(fp, "\nStatistics for policy file: %s\n", policy_file);
 	fprintf(fp, "Policy Version & Type: %s\n", (tmp = get_policy_version_type_mls_str(policy))); free(tmp);
 	fprintf(fp, "\n");
@@ -117,7 +122,7 @@ int print_stats(FILE *fp, policy_t *policy)
 	fprintf(fp, "   Type_trans:    %7d    Type_change:   %7d\n", policy->rule_cnt[RULE_TE_TRANS], policy->rule_cnt[RULE_TE_CHANGE]);
 	fprintf(fp, "   Type_member:   %7d    Range_trans:   %7d\n", policy->rule_cnt[RULE_TE_MEMBER], policy->num_rangetrans);
 	fprintf(fp, "   Constraints:   %7d    Validatetrans: %7d\n", policy->num_constraints, policy->num_validatetrans);
-	fprintf(fp, "   Fs_use:        %7d    Genfscon:      %7d\n", policy->num_fs_use, policy->num_genfscon);
+	fprintf(fp, "   Fs_use:        %7d    Genfscon:      %7d\n", policy->num_fs_use, num_genfscon);
 	fprintf(fp, "   Portcon:       %7d    Netifcon:      %7d\n", policy->num_portcon, policy->num_netifcon);
 	fprintf(fp, "   Nodecon:       %7d    Initial SIDs:  %7d\n", policy->num_nodecon, num_initial_sids(policy));
 	fprintf(fp, "\n");

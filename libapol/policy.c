@@ -4552,3 +4552,20 @@ bool_t match_security_context(security_con_t *context1, security_con_t *context2
 
 	return TRUE;
 }
+
+int ap_genfscon_get_num_paths(policy_t *policy)
+{
+	int i, num_genfs = 0;
+	ap_genfscon_node_t *tmp_node = NULL;
+
+	if (!policy) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	for (i = 0; i < policy->num_genfscon; i++)
+		for (tmp_node = policy->genfscon[i].paths; tmp_node; tmp_node = tmp_node->next)
+			num_genfs++;
+
+	return num_genfs;
+}
