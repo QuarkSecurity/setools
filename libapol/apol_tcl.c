@@ -2374,7 +2374,7 @@ int Apol_GetNames(ClientData clientData, Tcl_Interp * interp, int argc, char *ar
 }
 
 /* Takes a Tcl string representing a MLS level and converts it to an
- * al_mls_level_t object.  Returns 0 on success, 1 if a identifier was
+ * ap_mls_level_t object.  Returns 0 on success, 1 if a identifier was
  * not unknown, or -1 on error. */
 static int tcl_level_string_to_level(Tcl_Interp *interp, char *level_string, ap_mls_level_t *level) {
         Tcl_Obj *level_obj, *sens_obj, *cats_list_obj, *cats_obj;
@@ -2629,17 +2629,24 @@ int Apol_IsValidRange(ClientData clientData, Tcl_Interp *interp, int argc, char 
 int Apol_GetSens(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
         Tcl_Obj *result_obj = Tcl_NewListObj(0, NULL);
-	int i;
+	int i, target_sens = -1;
 
 	if (policy == NULL) {
                 Tcl_SetResult(interp, "No current policy file is opened!", TCL_STATIC);
 		return TCL_ERROR;
 	}
+        if (argc > 1) {
+                target_sens = get_sensitivity_idx(argv[1], policy);
+                if (target_sens == -1) {
+                        /* passed sensitivity is not within the policy */
+                        return TCL_OK;
+                }
+        }
 	for (i = 0; i < policy->num_sensitivities; i++) {
                 ap_mls_sens_t *sens = policy->sensitivities + policy->mls_dominance[i];
                 name_item_t *name = sens->aliases;
                 Tcl_Obj *sens_elem[2], *sens_list;
-                if (argc > 1 && strcmp(sens->name, argv[1]) != 0) {
+                if (argc > 1 && policy->mls_dominance[i] != target_sens) {
                         continue;
                 }
                 sens_elem[0] = Tcl_NewStringObj(sens->name, -1);
@@ -2671,17 +2678,24 @@ int Apol_GetSens(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
 int Apol_GetCats(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
         Tcl_Obj *result_obj = Tcl_NewListObj(0, NULL);
-	int i;
+	int i, target_cats = -1;
 
 	if (policy == NULL) {
                 Tcl_SetResult(interp, "No current policy file is opened!", TCL_STATIC);
 		return TCL_ERROR;
 	}
+        if (argc > 1) {
+                target_cats = get_category_idx(argv[1], policy);
+                if (target_cats == -1) {
+                        /* passed category is not within the policy */
+                        return TCL_OK;
+                }
+        }
         for (i = 0; i < policy->num_categories; i++) {
                 Tcl_Obj *cats_obj[2], *cats_list;
                 ap_mls_cat_t *cats = policy->categories + i;
                 name_item_t *name = cats->aliases;
-                if (argc > 1 && strcmp(argv[1], cats->name) != 0) {
+                if (argc > 1 && i != target_cats) {
                         continue;
                 }
                 cats_obj[0] = Tcl_NewStringObj(cats->name, -1);

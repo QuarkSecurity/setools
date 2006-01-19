@@ -75,7 +75,7 @@ proc Apol_Users::searchUsers {} {
             continue
         }
         if {$opts(enable_default) && \
-                $default != $opts(default_level)} {
+                $default ne $opts(default_level)} {
             continue
         }
         if {$range_enabled && \
