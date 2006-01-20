@@ -65,10 +65,6 @@ USE_LIBSELINUX 		= 1
 #	simple performance measure tests (shouldn't normally use)
 #	set PERFORM_TEST to 1 to use
 PERFORM_TEST 		= 0
-# -DCONFIG_SECURITY_SELINUX_MLS 
-#	compiles library to be compatible with MLS 
-#	in the policy (experimental, see Readme)
-CC_DEFINES		= -DCONFIG_SECURITY_SELINUX_MLS 
 
 # You should not need to edit anything after this point.
 ifeq ($(USE_LIBSELINUX), 1)
