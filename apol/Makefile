@@ -95,6 +95,8 @@ install: apol apol.tcl
 	fi
 	install -m 644 apol.tcl $(APOL_HELP_FILES) $(APOL_PERM_MAPS) $(INSTALL_LIBDIR)
 	cd $(INSTALL_LIBDIR); ln -sf $(APOL_DFLT_PMAP) apol_perm_mapping
+	test -d $(MANDIR)/man1 || install -m 755 -d $(MANDIR)/man1
+	install -m 644 ../man/apol.1 $(MANDIR)/man1
 
 clean:
 	rm -f *.o  core apol *~ apol.tcl tmp.tcl

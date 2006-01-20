@@ -72,6 +72,10 @@ install: seaudit seaudit-report
 	install -m 644 $(SEAUDIT_REPORT_CONF_FILE) $(INSTALL_LIBDIR)
 	install -m 644 $(SEAUDIT_REPORT_STYLESHEET) $(INSTALL_LIBDIR)
 
+	test -d $(MANDIR)/man8 || install -m 755 -d $(MANDIR)/man8
+	install -m 644 ../man/seaudit.8 $(MANDIR)/man8
+	install -m 644 ../man/seaudit-report.8 $(MANDIR)/man8
+
 install-logwatch-service: 
 	install -m 644 -Z system_u:object_r:etc_t seaudit-report-group.conf $(LOGWATCH_GROUP)
 	install -m 644 -Z system_u:object_r:etc_t seaudit-report-service.conf $(LOGWATCH_SERVICE)
