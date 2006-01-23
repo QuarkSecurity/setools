@@ -26,7 +26,8 @@ seaudit:
 	field found in auditd log files.
 	added filters for the 'comm' field and 'message'
 	field.
-	
+manpages:
+	added manpages for all tools.	
 	
 =======================================================
 October 31, 2005, Version 2.2
