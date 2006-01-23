@@ -78,17 +78,17 @@ Print requested information about an SELinux policy.\n\
   -p[NUM],  --portcon[=NUM]        print a list of port contexts\n\
   -i[NAME], --initialsid[=NAME]    print a list of initial SIDs\n\
   -A, --all                        print all of the above\n\
-  -x, --expand                     show additional info for -ctarbuSCiA\n\
-  -s, --stats                      print useful policy statics\n\
+  -x, --expand                     show additional info for -ctarbuSCiA options\n\
+  -s, --stats                      print useful policy statistics\n\
 ", stdout);
 fputs("\n\
   -h, --help                       display this help and exit\n\
   -v, --version                    output version information and exit\n\
 ", stdout);
 fputs("\n\
-For -ctaruSCfgnopi, if NAME is provided, then only show info for NAME.\n\
+For -ctaruSCfgnopi options, if NAME is provided, then only show info for NAME.\n\
  Specifying a name is most useful when used with the -x option.\n\
- If no option is provided, display useful policy statics (-s).\n\n\
+ If no option is provided, display useful policy statistics (-s).\n\n\
 The default source policy, or if that is unavailable the default binary\n\
  policy, will be opened if no policy file name is provided.\n", stdout);
 	return;
