@@ -67,7 +67,7 @@ install: seaudit seaudit-report
 	install -m 755 seaudit $(SBINDIR)
 	install -m 755 seaudit-report $(SBINDIR)
 	install -m 644 $(GLADE_FILES) $(INSTALL_LIBDIR)
-	install -m 644 seaudit_help.txt $(INSTALL_LIBDIR)
+	install -m 644 seaudit_help.txt $(INSTALL_HELPDIR)
 	install -m 444 dot_seaudit $(INSTALL_LIBDIR)
 	install -m 644 $(SEAUDIT_REPORT_CONF_FILE) $(INSTALL_LIBDIR)
 	install -m 644 $(SEAUDIT_REPORT_STYLESHEET) $(INSTALL_LIBDIR)

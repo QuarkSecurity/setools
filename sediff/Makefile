@@ -24,7 +24,7 @@ install-nogui: sediff
 install: all
 	install -m 755 sediff sediffx $(BINDIR);
 	install -m 644 $(GLADE_FILES) $(INSTALL_LIBDIR)
-	install -m 644 sediff_help.txt $(INSTALL_LIBDIR)
+	install -m 644 sediff_help.txt $(INSTALL_HELPDIR)
 
 	test -d $(MANDIR)/man1 || install -m 755 -d $(MANDIR)/man1
 	install -m 644 ../man/sediff.1 $(MANDIR)/man1

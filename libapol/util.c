@@ -638,7 +638,27 @@ char* find_file(const char *file_name)
 		return dir;	
 	}
 	
-	/* 4. Didn't find it! */
+	/* 4. help install directory */
+	filesz = strlen(APOL_HELP_DIR) + strlen(file_name) + 2;
+	file = (char *)malloc(filesz);
+	if(file == NULL) {
+		fprintf(stderr, "out of memory");
+		return NULL;
+	}	
+	sprintf(file, "%s/%s", APOL_HELP_DIR, file_name);
+	rt = access(file, R_OK);
+	if(rt == 0) {
+		dir = (char *)malloc(strlen(APOL_HELP_DIR) +1);
+		if(dir == NULL) {
+			fprintf(stderr, "out of memory");
+			return NULL;
+		}
+		sprintf(dir, APOL_HELP_DIR);
+		free(file);
+		return dir;	
+	}
+	
+	/* 5. Didn't find it! */
 	free(file);		
 	return NULL;		
 }

@@ -48,6 +48,7 @@ sechk_parse.o: sechk_parse.h
 
 install: all install-profiles
 	install -m 755 sechecker $(BINDIR)
+	install -m 644 sechecker_help.txt $(INSTALL_HELPDIR)
 	test -d $(MANDIR)/man1 || install -m 755 -d $(MANDIR)/man1
 	install -m 644 ../man/sechecker.1 $(MANDIR)/man1
 

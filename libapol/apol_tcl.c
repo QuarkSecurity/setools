@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2005 Tresys Technology, LLC
+/* Copyright (C) 2002-2006 Tresys Technology, LLC
  * see file 'COPYING' for use and warranty information */
 
 /* 
@@ -95,6 +95,9 @@ static char* find_tcl_script(char *script_name);
  */
 /* global used to keep track of the script directory, set by Apol_GetScriptDir */
 static char *script_dir = NULL;
+ 
+/* global used to keep track of the help file directory, set by Apol_GetHelpDir */
+static char *help_dir = NULL;
  
  
 /* find the provided TCL script file according to the algorithm
@@ -1512,6 +1515,32 @@ int Apol_GetScriptDir(ClientData clientData, Tcl_Interp *interp, int argc, char 
 	}
 	assert(script_dir != NULL);
 	Tcl_AppendResult(interp, script_dir, (char *) NULL);
+	return TCL_OK;		
+}
+
+/* Get the directory where the help files are located.  This function
+ * simply returns the value of the help_dir GLOBAL variable defined above 
+ * if has been set previously.  Otherwise it calls
+ * find_tcl_script() and then returns the variable.  Someone needs to call
+ * this function during or prior to running scripts that use these commands.
+ */
+int Apol_GetHelpDir(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+{
+	
+	if(argc != 2) {
+		Tcl_AppendResult(interp, "wrong # of args", (char *) NULL);
+		return TCL_ERROR;
+	}
+	
+	if(help_dir == NULL) {
+		help_dir = find_file(argv[1]);
+		if(help_dir == NULL) {
+			Tcl_AppendResult(interp, "problem locating help file.", (char *) NULL);
+			return TCL_ERROR;
+		}
+	}
+	assert(help_dir != NULL);
+	Tcl_AppendResult(interp, help_dir, (char *) NULL);
 	return TCL_OK;		
 }
 
@@ -7707,6 +7736,7 @@ int Apol_RelabelAnalysis (ClientData clientData, Tcl_Interp *interp,
 int Apol_Init(Tcl_Interp *interp) 
 {
 	Tcl_CreateCommand(interp, "apol_GetScriptDir", (Tcl_CmdProc *) Apol_GetScriptDir, (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
+	Tcl_CreateCommand(interp, "apol_GetHelpDir", (Tcl_CmdProc *) Apol_GetHelpDir, (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
 	Tcl_CreateCommand(interp, "apol_OpenPolicy", (Tcl_CmdProc *) Apol_OpenPolicy, (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
 	Tcl_CreateCommand(interp, "apol_ClosePolicy", (Tcl_CmdProc *) Apol_ClosePolicy, (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
 	Tcl_CreateCommand(interp, "apol_GetVersion", (Tcl_CmdProc *) Apol_GetVersion, (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
