@@ -1,18 +1,31 @@
 # regression tests 
 MAKE 		= make
 CC		= gcc
-LIBAPOL		= ../../setools/libapol/libapol.a
+
+# adjust this to match your system
+LIBSEPOL_PATH = /home/jtang/selinux/usr/
+LIBAPOL_PATH    = ../../setools-libsepol/libapol
+
+LIBSEPOL	= $(LIBSEPOL_PATH)src/libsepol.a
+LIBAPOL		= ../../setools-libsepol/libapol/libapol.a
+
 LIBSELINUX	= -lselinux
+
 LIBS		= -lm -lfl $(LIBSELINUX)
+
 OBJS		= test.o $(LIBAPOL)
-INCLUDES	= -I../../setools/libapol
+
+INCLUDES	= -I../../setools-libsepol/libapol/ -I$(LIBSEPOL_PATH)/include -gdwarf-2 -g3
+
 CFLAGS		+= $(INCLUDES)
 
-TESTS		= partial_policy_loading transitive_flow obj_perms perm_map_reload template reload roles binpol relabel role_rules subtract source_load memtest dta_test
+LDFLAGS		+= -g -lsepol -L$(LIBSEPOL_PATH)/lib -Wl,-rpath=$(LIBSEPOL_PATH)/lib
+
+TESTS		= partial_policy_loading transitive_flow obj_perms perm_map_reload template reload roles binpol relabel role_rules subtract source_load memtest dta_test component-query-test
+
 DATE 		:= $(shell date +%Y%m%d%H%M)
 
 all : $(TESTS)
-
 
 run : $(foreach test,$(TESTS),$(test).res)
 	cat $^ > results/tests-$(DATE).results
@@ -23,9 +36,6 @@ run : $(foreach test,$(TESTS),$(test).res)
 	@cat $*.res0 $*.res1 $*.res2 > $@ 
 	@rm -f $*.res[012]
 
-% : %.o $(OBJS) $(LIBAPOL) 
-	$(CC) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
-
 test.o : test.c test.h
 	$(CC) $(CFLAGS) -c $<
 
@@ -35,49 +45,52 @@ test.o : test.c test.h
 $(LIBAPOL): libapol
 
 libapol: 
-	$(MAKE) -C ../../setools libapol
+	$(MAKE) -C $(LIBAPOL_PATH)/../ libapol
 
-partial_policy_loading : partial_policy_loading.o $(OBJS) libapol 
-	$(CC) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
+component-query-test : component-query-test.o test.o libapol
+	$(CC) $(LDFLAGS) $< $(LIBAPOL) $(CFLAGS) $(LIBS) test.o -o $@
+
+partial_policy_loading : partial_policy_loading.o test.o libapol
+	$(CC) $(LDFLAGS) $< $(LIBAPOL) $(CFLAGS) $(LIBS) test.o -o $@
 
 transitive_flow : transitive_flow.o $(OBJS) libapol 
-	$(CC) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
+	$(CC) $(LDFLAGS) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
 
 obj_perms : obj_perms.o $(OBJS) libapol 
-	$(CC) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
+	$(CC) $(LDFLAGS) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
 
 perm_map_reload : perm_map_reload.o $(OBJS) libapol 
-	$(CC) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
+	$(CC) $(LDFLAGS) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
 
 template : template.o $(OBJS) libapol 
-	$(CC) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
+	$(CC) $(LDFLAGS) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
 
 reload : reload.o $(OBJS) libapol 
-	$(CC) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
+	$(CC) $(LDFLAGS) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
 
 roles : roles.o $(OBJS) libapol 
-	$(CC) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
+	$(CC) $(LDFLAGS) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
 
 binpol : binpol.o $(OBJS) libapol 
-	$(CC) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
+	$(CC) $(LDFLAGS) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
 
 relabel : relabel.o $(OBJS) libapol 
-	$(CC) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
+	$(CC) $(LDFLAGS) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
 
 role_rules : role_rules.o $(OBJS) libapol 
-	$(CC) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
+	$(CC) $(LDFLAGS) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
 
 subtract : subtract.o $(OBJS) libapol 
-	$(CC) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
+	$(CC) $(LDFLAGS) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
 
 source_load: source_load.o $(OBJS) $(LIBAPOL)
-	$(CC) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
+	$(CC) $(LDFLAGS) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
 
 memtest: memtest.o $(OBJS) libapol
-	$(CC) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
+	$(CC) $(LDFLAGS) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
 
 dta_test : dta_test.o $(OBJS) libapol 
-	$(CC) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
+	$(CC) $(LDFLAGS) $< $(CFLAGS) $(OBJS) $(LIBS) -o $@
 
 .PHONY : clean bare libapol
 
