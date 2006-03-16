@@ -24,45 +24,21 @@ int main(int argc, char ** argv)
 	}
 
 	TEST("opening the binary policy file", !bin_open_policy(pol_path, &p));
+	
+	TEST("querying for types", !type_query(p) );
 
-	if( type_query(p) < 0)
-	{
-		printf("type_query failed\n");
-		exit(-1);
-	}
+	TEST("querying for attributes", !attribute_query(p) );
+	
+	TEST("querying for roles", !role_query(p) );
+	
+	TEST("querying for users", !user_query(p) );
 
-	if( attribute_query(p)< 0)
-	{
-		printf("attribute_query failed\n");
-		exit(-1);
-	}
-	if( role_query(p) < 0 )
-	{
-		printf("role_query failed\n");
-		exit(-1);
-	}
-	if( user_query(p) < 0)
-	{
-		printf("user_query failed\n");
-		exit(-1);
-	}
+	TEST("querying for classes",  !classes_query(p));
+	
+	TEST("querying for common classes", !common_classes_query(p ));
 
-	if( classes_query(p) < 0)
-	{
-		printf("classes_query failed\n");
-		exit(-1);
-	}
-	if( common_classes_query(p ) < 0)
-	{
-		printf("common_classes_query failed\n");
-		exit(-1);
-	}
-
-	if( permissions_query(p)< 0)
-	{
-		printf("permissions_query failed\n");
-		exit(-1);
-	}
+	TEST("querying for permissions",!permissions_query(p));
+	
 	apol_policy_destroy(&p);
 	return 0;
 }
@@ -119,13 +95,14 @@ int type_query(apol_policy_t* p)
 	printf("the size of the apol_vector structure passed in is %d\n", vector_size);
 	printf("printing all the names of each of the datums in the vector\n"); 
 
-	for( ; n < vector_size;n++) {
+	for(n = 0 ; n < vector_size;n++) {
 		printf("item %d: ", n);
 		type_datum_ptr = (sepol_type_datum_t*)apol_vector_get_element(v, n);
 		sepol_type_datum_get_name(p->sh , p->p, type_datum_ptr, &name);
 		printf("%s\n", name);
 	}
 	printf("destroying all the elements in v\n");
+	apol_vector_destroy(&v, NULL);
 
 	printf("\n\n---------------GET dir_t TYPE---------------\n");
 	TEST("creating a new apol_type_query_t structure t", (t = apol_type_query_create()));
@@ -140,6 +117,7 @@ int type_query(apol_policy_t* p)
 		printf("%s\n", name);
 	}
 	apol_type_query_destroy(&t);
+	apol_vector_destroy(&v, NULL);
 	TEST("creating a new apol_type_query_t structure t", (t = apol_type_query_create()));
 	TEST("unsetting my type_query_t structure to NULL name", !apol_type_query_set_type(p,t, NULL) );
 	printf("\n\n---------------GET REGEX \"se\" TYPE---------------\n");
@@ -158,6 +136,7 @@ int type_query(apol_policy_t* p)
 
 	printf("destroying the query structure\n");
 	apol_type_query_destroy(&t);
+	apol_vector_destroy(&v, NULL);
 	TEST("creating a new apol_type_query_t structure t", (t = apol_type_query_create()));
 	printf("\n\n---------------GET REGEX \"ex\" TYPE---------------\n");
 	TEST("setting this query structure to do regex", !apol_type_query_set_regex(p,t, 1));
@@ -211,7 +190,7 @@ int attribute_query(apol_policy_t *p)
 		printf("------------------------------------\n");
 
 	} else{
-		for( ; n < vector_size;n++) {
+		for(n = 0 ; n < vector_size;n++) {
 			printf("item %d: ", n);
 			type_datum_ptr = (sepol_type_datum_t*)apol_vector_get_element(v, n);
 			sepol_type_datum_get_name(p->sh, p->p, type_datum_ptr, &name);
@@ -219,6 +198,7 @@ int attribute_query(apol_policy_t *p)
 			printf("%s\n", name);
 		}
 	}
+	apol_vector_destroy(&v, NULL);
 	printf("\n\n---------------GET ATTRIBUTE \"RANDOM\"---------------\n");
 
 	TEST("creating an apol attribute query structure", (attr_s = apol_attr_query_create())!= NULL);
@@ -243,6 +223,7 @@ int attribute_query(apol_policy_t *p)
 			printf("attribute: %s\n",name );
 		}
 	}
+	apol_vector_destroy(&v, NULL);
 
 	printf("\n\n---------------GET REGEX ATTRIBUTE \"re*\"---------------\n");
 	TEST("setting the attribute query structure to be regex'ed", !apol_attr_query_set_regex(p,attr_s, 1));
@@ -361,6 +342,7 @@ int user_query(apol_policy_t *p)
 		printf("%s\n", name);
 	}
 	printf("destroying all the elements in v\n");
+	apol_vector_destroy(&v, NULL);
 
 	printf("\n\n---------------GET USER \"joe\"---------------\n");
 	user_s = apol_user_query_create();
@@ -382,7 +364,11 @@ int user_query(apol_policy_t *p)
 		}
 	}
 	printf("destroying apol vector\n");
-	if( user_s == NULL)
+	apol_vector_destroy(&v, NULL);
+
+	apol_user_query_destroy(&user_s);
+	user_s = apol_user_query_create();
+        if( user_s == NULL)
 	{
 		fprintf(stderr, "user_s is null\n");
 		exit(-1);
@@ -402,6 +388,7 @@ int user_query(apol_policy_t *p)
 			printf("%s\n", name);
 		}
 	}
+	apol_vector_destroy(&v, NULL);
 	TEST("setting role to user query structure",!apol_user_query_set_role(p,user_s, "system_r"));
 	TEST("re-querying the policy for the specified user", !apol_get_user_by_query(p, user_s, &v));
 	vector_size = apol_vector_get_size(v);
@@ -415,6 +402,7 @@ int user_query(apol_policy_t *p)
 			printf("%s\n", name);
 		}
 	}
+	apol_vector_destroy(&v, NULL);
 	if( apol_policy_is_mls(p) ){
 		printf("\n\n---------------MLS QUERIES----------------\n");		
 		TEST("calling apol_user_query_set_role on user query structure", !apol_user_query_set_role(p, user_s,NULL ));
@@ -461,6 +449,7 @@ int user_query(apol_policy_t *p)
 		apol_mls_range_destroy(&mls_range_var);
 		apol_vector_destroy(&v, NULL);
 	}	
+	apol_user_query_destroy(&user_s);
 	printf("Destroying the vector\n");
 	apol_vector_destroy(&v,NULL);
 	return 0;
