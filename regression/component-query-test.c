@@ -4,6 +4,7 @@
 #include "policy-io.h"
 #include <stdio.h>
 #include "component-query.h"
+#include <sepol/portcon_query.h>
 #include <errno.h>
 #include "test.h"
 
@@ -24,22 +25,25 @@ int main(int argc, char ** argv)
 	}
 
 	TEST("opening the binary policy file", !bin_open_policy(pol_path, &p));
-	
+
 	TEST("querying for types", !type_query(p) );
 
 	TEST("querying for attributes", !attribute_query(p) );
-	
+
 	TEST("querying for roles", !role_query(p) );
-	
+
 	TEST("querying for users", !user_query(p) );
 
 	TEST("querying for classes",  !classes_query(p));
-	
+
 	TEST("querying for common classes", !common_classes_query(p ));
 
 	TEST("querying for permissions",!permissions_query(p));
-	
+
+	TEST("querying for ports", !portcon_query(p));
+
 	apol_policy_destroy(&p);
+	printf("DONE WITH TEH WHOLE THING\n");
 	return 0;
 }
 /**
@@ -368,7 +372,7 @@ int user_query(apol_policy_t *p)
 
 	apol_user_query_destroy(&user_s);
 	user_s = apol_user_query_create();
-        if( user_s == NULL)
+	if( user_s == NULL)
 	{
 		fprintf(stderr, "user_s is null\n");
 		exit(-1);
@@ -643,6 +647,93 @@ int permissions_query (apol_policy_t *p)
 	}
 	apol_perm_query_destroy(&query_s_perm);	
 	printf("Destroying the vector\n");
+	apol_vector_destroy(&v,NULL);
+	return 0;
+}
+
+/**
+ *  Do portcon query tests on a binary policy
+ *
+ * @param p The binary policy to do query query tests on.
+ *
+ * @return 0 on success, negative on error
+ */
+int portcon_query(apol_policy_t *p)
+{	
+	unsigned int n;
+	int vector_size = 0;
+	char * name;
+	char * role_name;
+	char * type_name;
+	sepol_portcon_t *portcon_tmp_p;
+	apol_portcon_query_t * apol_portcon_tmp_p;
+	apol_vector_t * v;
+	uint16_t port_p;
+	sepol_context_struct_t *context_p = NULL;
+	apol_context_t *apol_context_p = NULL;
+	sepol_user_datum_t * user_datum_p;
+	sepol_role_datum_t * role_datum_p;
+	sepol_type_datum_t * type_datum_p;
+	apol_mls_range_t * apol_mls_range_p;
+	apol_mls_level_t * apol_mls_low_lvl_p;
+	apol_mls_level_t * apol_mls_high_lvl_p;
+	printf("\n============================================ QUERY PORTCONS ==========================================\n\n\n");
+	printf("-------- LISTING ALL PORTCONS --------\n");
+	TEST("query policy for all portcons", !apol_get_portcon_by_query(p, NULL, &v));
+	vector_size = apol_vector_get_size(v);
+	printf("GOTTEN SIZE\n");
+	if( vector_size == 0) {
+		fprintf(stderr, "vector size is 0, no results\n");
+	} else {
+		for( n = 0 ; n < vector_size ; n++){
+			printf("port %d: ", n);
+			portcon_tmp_p = (sepol_portcon_t*)apol_vector_get_element(v, n);
+			sepol_portcon_get_low_port(p->sh, p->p, portcon_tmp_p, &port_p);
+			printf("%d\n", port_p);
+		}
+	}
+	printf("-------- LISTING ALL PORT CONTEXTS --------\n");
+	if( vector_size == 0) {
+		fprintf(stderr, "vector size is 0, no results\n");
+	} else {
+		for( n = 0 ; n < vector_size ; n++){
+			printf("portcon %d: ", n);
+			portcon_tmp_p = (sepol_portcon_t*)apol_vector_get_element(v, n);
+			printf("%d ", port_p);
+			TEST("", !sepol_portcon_get_context(p->sh, p->p, portcon_tmp_p, &context_p));
+			TEST("", !sepol_context_struct_get_user(p->sh, p->p, context_p, &user_datum_p));
+			TEST("getting the name from the user datum", !sepol_user_datum_get_name(p->sh, p->p, user_datum_p, &name));
+			TEST("", !sepol_context_struct_get_role(p->sh, p->p, context_p, &role_datum_p));
+			TEST("", !sepol_role_datum_get_name(p->sh, p->p, role_datum_p, &role_name));
+			TEST("", !sepol_context_struct_get_type(p->sh, p->p, context_p, &type_datum_p));
+			TEST("", !sepol_type_datum_get_name(p->sh, p->p, type_datum_p, &type_name));
+			printf("%s:%s:%s\n",name, role_name, type_name);
+		}
+	}
+	TEST("creating an apol portcon structure", !(apol_portcon_tmp_p = apol_portcon_query_create())== NULL);
+	TEST("setting the protocol of the portcon structure", !apol_portcon_query_set_proto(p, apol_portcon_tmp_p, 6));
+	TEST("setting the low port of the portcon structure", !apol_portcon_query_set_low(p, apol_portcon_tmp_p, 21));
+	TEST("setting the high port of the portcon structure", !apol_portcon_query_set_high(p, apol_portcon_tmp_p, 21));
+
+	if( context_p != NULL){
+		TEST("creating an apol context struct from an old sepol context struct",
+				!(apol_context_p = apol_context_create_from_sepol_context(p, context_p))==NULL); 
+	}
+	else{
+		TEST("creating an apol context from scratch", !(apol_context_p = apol_context_create( ))==NULL);
+		TEST("setting the user of the context structure", !apol_context_set_user(p, apol_context_p, "system_u"));
+		TEST("setting the role of the context structure", !apol_context_set_role(p, apol_context_p, "object_r" ));
+		TEST("setting the type of the context structure", !apol_context_set_type( p, apol_context_p, "net_foo_t"));
+		TEST("creating an mls range", !(apol_mls_range_p = apol_mls_range_create())== NULL);
+		TEST("creating low level", !(apol_mls_low_lvl_p = apol_mls_level_create_from_string(p, "s1:c0.c2"))== NULL);
+		TEST("creating high level", !(apol_mls_high_lvl_p = apol_mls_level_create_from_string(p, "s2:c0.c4"))== NULL);
+		TEST("setting the low level of the range", !apol_mls_range_set_low(p, apol_mls_range_p, apol_mls_low_lvl_p));
+		TEST("setting the high level of the range", !apol_mls_range_set_high(p, apol_mls_range_p, apol_mls_high_lvl_p));
+		TEST("setting the range of the context structure", !apol_context_set_range(p, apol_context_p, apol_mls_range_p));
+	}
+	/*TEST("setting the context of the portcon structure", !apol_portcon_query_set_context(p, apol_portcon_tmp_p,  ));*/
+	apol_portcon_query_destroy(&apol_portcon_tmp_p);
+	apol_context_destroy(&apol_context_p);
 	apol_vector_destroy(&v,NULL);
 	return 0;
 }
