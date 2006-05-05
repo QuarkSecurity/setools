@@ -25,6 +25,7 @@ static int user_query(apol_policy_t * p);
 static int classes_query(apol_policy_t * p);
 static int common_classes_query(apol_policy_t * p);
 static int permissions_query(apol_policy_t * p);
+static int portcon_query(apol_policy_t * p);
 static int netifcon_query(apol_policy_t * p);
 static int category_query(apol_policy_t * p);
 static int levels_query(apol_policy_t * p);
@@ -64,6 +65,7 @@ int main(int argc, char **argv)
 
 	apol_policy_destroy(&p);
 
+	printf("all pass.\n");
 	return 0;
 }
 
@@ -79,8 +81,7 @@ int main(int argc, char **argv)
 int type_query(apol_policy_t * p)
 {
 	sepol_type_datum_t *type_datum_ptr;
-	size_t vector_size;
-	unsigned int n;
+	size_t vector_size, n;
 	char *name;
 	apol_type_query_t *t;
 	apol_vector_t *v;
@@ -194,8 +195,7 @@ int type_query(apol_policy_t * p)
  */
 int attribute_query(apol_policy_t * p)
 {
-	size_t vector_size;
-	unsigned int n;
+	size_t vector_size, n;
 	sepol_type_datum_t *type_datum_ptr;
 	apol_attr_query_t *attr_s;
 	char *name;
@@ -318,8 +318,7 @@ int attribute_query(apol_policy_t * p)
  */
 int role_query(apol_policy_t * p)
 {
-	unsigned int n;
-	size_t vector_size;
+	size_t vector_size, n;
 	sepol_role_datum_t *role_datum_ptr;
 	apol_role_query_t *query_s_role;
 	char *name;
@@ -386,8 +385,7 @@ int role_query(apol_policy_t * p)
  */
 int user_query(apol_policy_t * p)
 {
-	unsigned int n;
-	size_t vector_size;
+	size_t vector_size, n;
 	sepol_user_datum_t *user_datum_ptr;
 	apol_user_query_t *user_s;
 	char *name;
@@ -509,9 +507,8 @@ int user_query(apol_policy_t * p)
 			exit(-1);
 		}
 		printf("The high level has categories: \n");
-		for (n;
-		     (unsigned int) n <
-		     apol_vector_get_size(mls_v_high->cats); n++) {
+		for (;
+		     n < apol_vector_get_size(mls_v_high->cats); n++) {
 			printf("cat[%d]: %s\n", n,
 			       (char *)
 			       apol_vector_get_element(mls_v_high->cats,
@@ -525,9 +522,8 @@ int user_query(apol_policy_t * p)
 		printf("The low level has sensitivity: %s\n",
 		       mls_v_low->sens);
 		printf("The low level has categories: \n");
-		for (n;
-		     (unsigned int) n <
-		     apol_vector_get_size(mls_v_low->cats); n++) {
+		for (;
+		     n < apol_vector_get_size(mls_v_low->cats); n++) {
 			printf("cat[%d]: %s\n", n,
 			       (char *)
 			       apol_vector_get_element(mls_v_high->cats,
@@ -579,10 +575,9 @@ int user_query(apol_policy_t * p)
  */
 int classes_query(apol_policy_t * p)
 {
-	size_t vector_size;
+	size_t vector_size, n;
 	apol_class_query_t *query_s_class;
 	sepol_class_datum_t *class_datum_ptr;
-	unsigned int n;
 	char *name;
 	apol_vector_t *v;
 	printf
@@ -695,8 +690,7 @@ int classes_query(apol_policy_t * p)
  */
 int common_classes_query(apol_policy_t * p)
 {
-	unsigned int n;
-	size_t vector_size;
+	size_t vector_size, n;
 	char *name;
 	apol_common_query_t *query_s_common;
 	sepol_common_datum_t *common_datum_ptr;
@@ -761,8 +755,7 @@ int common_classes_query(apol_policy_t * p)
  */
 int permissions_query(apol_policy_t * p)
 {
-	unsigned int n;
-	int vector_size = 0;
+	size_t vector_size = 0, n;
 	apol_perm_query_t *query_s_perm;
 	char *name;
 	apol_vector_t *v;
@@ -834,8 +827,7 @@ int permissions_query(apol_policy_t * p)
  */
 int portcon_query(apol_policy_t * p)
 {
-	unsigned int n;
-	int vector_size = 0;
+	size_t vector_size = 0, n;
 	char *name;
 	char *role_name;
 	char *type_name;
@@ -1211,8 +1203,7 @@ int netifcon_query(apol_policy_t * p)
 	apol_vector_t *v;
 	sepol_netifcon_t *sepol_netifcon_p;
 	char *netifcon_name = NULL;
-	size_t vector_size;
-	int n;
+	size_t vector_size, n;
 	char *dev_name;
 	apol_netifcon_query_t *apol_netifcon_query_p;
 	apol_context_t *apol_context_p;
@@ -1503,11 +1494,10 @@ int netifcon_query(apol_policy_t * p)
 static int category_query(apol_policy_t * p)
 {
 	apol_vector_t *v;
-	int vector_size;
+	size_t vector_size, n;
 	sepol_cat_datum_t *cat_datum_p;
 	char *cat_name;
 	apol_cat_query_t *apol_cat_query_p;
-	int n;
 	TEST("getting all categories in the policy",
 	     !apol_get_cat_by_query(p, NULL, &v));
 	vector_size = apol_vector_get_size(v);
@@ -1617,13 +1607,13 @@ static int category_query(apol_policy_t * p)
 
 int levels_query(apol_policy_t * p)
 {
-	int n, r;
+	int r;
 	apol_vector_t *v = NULL;
 	sepol_level_datum_t *se_lvl_datum_p = NULL;
 	/*apol_mls_level_t * apol_level_query_p = NULL; */
 	apol_level_query_t *ap_lvl_query_p;
 	char *level_name;
-	int vector_size;
+	size_t vector_size, n;
 	int sz;
 	printf
 	    ("\n============================================ QUERY LEVELS "
