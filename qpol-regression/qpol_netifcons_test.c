@@ -20,7 +20,7 @@ int main(int argc, char ** argv)
 	sepol_role_datum_t * role;
 	sepol_type_datum_t *  type;
 	sepol_iterator_t * qpol_iter;
-	char * name_str, *user_str, *role_str, *type_str, *mls_str;
+	char *user_str, *role_str, *type_str;
 
 	if( argc < 2)
 	{

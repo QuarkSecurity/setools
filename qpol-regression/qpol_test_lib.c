@@ -1,4 +1,5 @@
 #include "qpol_test_lib.h"
+#include <stdlib.h>
 int qpol_bin_pol_open( const char* path, qpol_t ** qpol_policy )
 {
 	if ((*qpol_policy = calloc(1, sizeof(**qpol_policy))) == NULL) {
