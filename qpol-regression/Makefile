@@ -2,19 +2,16 @@
 MAKE 		= make
 CC		= gcc
 
-LIBSEPOL_PATH = ../../../../nsa-mainline/branch/setools_public-policydb-components/libsepol/
+LIBQPOL_PATH	= ../../setools-libsepol/libqpol
+LIBQPOL		= -L$(LIBQPOL_PATH)/src -Wl,-rpath=$(LIBQPOL_PATH)/src
 
-LIBSEPOL	= $(LIBSEPOL_PATH)src/libsepol.a
+LIBSELINUX	= -lselinux -lsepol
 
-LIBSELINUX	= -lselinux
+LIBS		= -lm -lfl $(LIBSELINUX) -lqpol
 
-LIBS		= -lm -lfl $(LIBSELINUX)
+INCLUDES	= -I$(LIBQPOL_PATH)/include
 
-OBJS		= $(LIBSEPOL) 
-
-INCLUDES	= -I$(LIBSEPOL_PATH)include/
-
-CFLAGS		+= $(INCLUDES)
+CFLAGS		+= $(INCLUDES) $(LIBQPOL)
 CFLAGS 		+= -Wall -g3 -O3 -gdwarf-2 -Wshadow -Wmissing-prototypes \
 	-Wstrict-prototypes -Wextra -Wnested-externs -Wundef -Wmissing-noreturn \
 	-Wmissing-format-attribute
@@ -44,30 +41,32 @@ run : $(TESTS-RES)
 test.o : test.c test.h
 	$(CC) $(CFLAGS) -c $<
 
-libsepol: $(LIBSEPOL)
-
-qpol_booleans_test: qpol_booleans_test.o qpol_test_lib.o test.o qpol_wrapper.h libsepol
-	$(CC) -L$(LIBSEPOL_PATH)src -lsepol -Wl,-rpath=$(LIBSEPOL_PATH)src $< $(CFLAGS) $(LIBS) \
+qpol_booleans_test: qpol_booleans_test.o qpol_test_lib.o test.o qpol_wrapper.h
+	$(CC) $< $(CFLAGS) $(LIBS) \
 	qpol_test_lib.o test.o -o $@
 
-qpol_contexts_test: qpol_contexts_test.o qpol_test_lib.o test.o qpol_wrapper.h libsepol
+qpol_contexts_test: qpol_contexts_test.o qpol_test_lib.o test.o qpol_wrapper.h
+	$(CC) $< $(CFLAGS) $(LIBS) \
+	qpol_test_lib.o test.o -o $@
+
+qpol_class_perms_test: qpol_class_perms_test.o qpol_test_lib.o test.o qpol_wrapper.h
+	$(CC) $< $(CFLAGS) $(LIBS) \
+	qpol_test_lib.o test.o -o $@
+
+qpol_genfscons_test: qpol_genfscons_test.o qpol_test_lib.o test.o qpol_wrapper.h
+	$(CC) $< $(CFLAGS) $(LIBS) \
+	qpol_test_lib.o test.o -o $@
+
+qpol_netifcons_test: qpol_netifcons_test.o qpol_test_lib.o test.o qpol_wrapper.h
+	$(CC) $< $(CFLAGS) $(LIBS) \
+	qpol_test_lib.o test.o -o $@
+qpol_nodecons_test: qpol_nodecons_test.o qpol_test_lib.o test.o qpol_wrapper.h
+	$(CC) $< $(CFLAGS) $(LIBS) \
+	qpol_test_lib.o test.o -o $@
+qpol_types_test: qpol_types_test.o qpol_test_lib.o test.o qpol_wrapper.h libsepol
 	$(CC) -L$(LIBSEPOL_PATH)src -lsepol -Wl,-rpath=$(LIBSEPOL_PATH)src $< $(CFLAGS) $(LIBS) \
 	qpol_test_lib.o test.o -o $@
 
-qpol_class_perms_test: qpol_class_perms_test.o qpol_test_lib.o test.o qpol_wrapper.h libsepol
-	$(CC) -L$(LIBSEPOL_PATH)src -lsepol -Wl,-rpath=$(LIBSEPOL_PATH)src $< $(CFLAGS) $(LIBS) \
-	qpol_test_lib.o test.o -o $@
-
-qpol_genfscons_test: qpol_genfscons_test.o qpol_test_lib.o test.o qpol_wrapper.h libsepol
-	$(CC) -L$(LIBSEPOL_PATH)src -lsepol -Wl,-rpath=$(LIBSEPOL_PATH)src $< $(CFLAGS) $(LIBS) \
-	qpol_test_lib.o test.o -o $@
-
-qpol_netifcons_test: qpol_netifcons_test.o qpol_test_lib.o test.o qpol_wrapper.h libsepol
-	$(CC) -L$(LIBSEPOL_PATH)src -lsepol -Wl,-rpath=$(LIBSEPOL_PATH)src $< $(CFLAGS) $(LIBS) \
-	qpol_test_lib.o test.o -o $@
-qpol_nodecons_test: qpol_nodecons_test.o qpol_test_lib.o test.o qpol_wrapper.h libsepol
-	$(CC) -L$(LIBSEPOL_PATH)src -lsepol -Wl,-rpath=$(LIBSEPOL_PATH)src $< $(CFLAGS) $(LIBS) \
-	qpol_test_lib.o test.o -o $@
 
 .PHONY : clean bare
 
