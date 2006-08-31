@@ -184,5 +184,5 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 	free (tmp_nodecon_obj);
 	qpol_iterator_next(qpol_iter);
 	qpol_iterator_destroy(&qpol_iter);
-	qpol_close_policy ( &policy );
+	qpol_policy_destroy ( &policy );
 }

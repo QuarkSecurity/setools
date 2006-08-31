@@ -251,6 +251,6 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 	TEST("get name of common", !qpol_common_get_name( handle, policy, tmp_common_datum, &common_name));
 	TEST("compare common names with returned name", !strcmp("file", common_name));
 
-	qpol_close_policy ( &policy );
+	qpol_policy_destroy( &policy );
 	sepol_handle_destroy( handle );
 }

@@ -9,13 +9,12 @@
 #include <qpol/policy.h>
 #include "test_bools.h"
 
-qpol_t * quer_policy;
-void call_test_funcs(qpol_policy_t *policy, sepol_handle_t *handle);
+void call_test_funcs(qpol_policy_t *policy, qpol_handle_t *handle);
 
-int main(int argc, char **argv)
+int main()
 {
 	qpol_policy_t *policy;
-	sepol_handle_t *handle;
+	qpol_handle_t *handle;
 	TEST("open binary policy", ! (qpol_open_policy_from_file(MLS_TEST_BIN, &policy, &handle, NULL, NULL) < 0));
 	call_test_funcs(policy, handle);
 	TEST("open source policy", ! (qpol_open_policy_from_file(MLS_TEST_SRC , &policy, &handle, NULL, NULL) < 0));
@@ -23,7 +22,7 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-void call_test_funcs(qpol_policy_t *policy, sepol_handle_t *handle)
+void call_test_funcs(qpol_policy_t *policy, qpol_handle_t *handle)
 {
 	qpol_bool_t * search_bool_datum, *tmp_bool_datum;
 	char * bool_name;
@@ -92,7 +91,6 @@ void call_test_funcs(qpol_policy_t *policy, sepol_handle_t *handle)
 
 	/* free memory allocated */	
 	qpol_iterator_destroy(&qpol_iter);
-	qpol_close_policy ( &policy );
-	sepol_handle_destroy( handle );
-	free(quer_policy);
+	qpol_policy_destroy( &policy );
+	qpol_handle_destroy( &handle );
 }

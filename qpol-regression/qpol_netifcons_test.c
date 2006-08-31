@@ -125,7 +125,7 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 
 	}
 	qpol_iterator_destroy(&qpol_iter);
-	qpol_close_policy ( &policy );
+	qpol_policy_destroy ( &policy );
 	sepol_handle_destroy( handle );
 	return 0;
 }

@@ -228,6 +228,6 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 		printf("%s\n", cat_name);
 		qpol_iterator_next(iter);	
 		}*/
-	qpol_close_policy ( &policy );
+	qpol_policy_destroy ( &policy );
 	sepol_handle_destroy( handle );
 }

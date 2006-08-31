@@ -85,6 +85,6 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 	TEST("get class of genfscon", !qpol_genfscon_get_class(handle, policy, qpol_genfscon_obj, &class));
 	
 	qpol_iterator_destroy(&qpol_iter);
-	qpol_close_policy ( &policy );
+	qpol_policy_destroy( &policy );
 	sepol_handle_destroy( handle );
 }
