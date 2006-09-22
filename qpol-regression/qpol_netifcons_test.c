@@ -12,25 +12,24 @@
 
 #define MLS_POL "../regression/policy/mls_policy.19"
 
-void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle);
+void call_test_funcs( qpol_policy_t *policy);
 #define MLS_TEST_POL_BIN "../regression/policy/mls_test.20"
 #define MLS_TEST_POL_SRC "../regression/policy/mls_test.conf"
 int main(int argc, char ** argv)
 {
 
 	qpol_policy_t *policy;
-	sepol_handle_t *handle;
 
-	TEST("open binary policy", ! (qpol_open_policy_from_file(MLS_TEST_POL_BIN, &policy, &handle, NULL, NULL) < 0) );
-	call_test_funcs( policy, handle);
+	TEST("open binary policy", ! (qpol_open_policy_from_file(MLS_TEST_POL_BIN, &policy, NULL, NULL) < 0) );
+	call_test_funcs( policy);
 
-	TEST("open source policy",!( qpol_open_policy_from_file(MLS_TEST_POL_SRC , &policy, &handle, NULL, NULL) < 0));
-	call_test_funcs( policy, handle);
+	TEST("open source policy",!( qpol_open_policy_from_file(MLS_TEST_POL_SRC , &policy, NULL, NULL) < 0));
+	call_test_funcs( policy);
 
 	return 0;
 }
 
-void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
+void call_test_funcs( qpol_policy_t *policy)
 {
 	char *pol_filename, *netifcon_name;
 	qpol_netifcon_t * qpol_netifcon_obj;
@@ -43,41 +42,41 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 	int p = 0;
 	int found;
 	uint32_t num_items;
-	TEST("get netifcon datum for name \"eth0\"", !qpol_policy_get_netifcon_by_name(handle, policy,
+	TEST("get netifcon datum for name \"eth0\"", !qpol_policy_get_netifcon_by_name(policy,
 				"eth0", &qpol_netifcon_obj));
 
-	TEST("get the name of the netifcon structure", !qpol_netifcon_get_name(handle, policy,
+	TEST("get the name of the netifcon structure", !qpol_netifcon_get_name(policy,
 				qpol_netifcon_obj, &netifcon_name)); 
 
 	TEST("name of netifcon", !strcmp("eth0", netifcon_name));	
 
-	TEST("getting the message context of netifcon", !qpol_netifcon_get_msg_con( handle, policy,
+	TEST("getting the message context of netifcon", !qpol_netifcon_get_msg_con( policy,
 				qpol_netifcon_obj, &msg_con));
 
-	TEST("get user", !qpol_context_get_user(handle, policy,msg_con , &user));
-	TEST("get user string", !qpol_user_get_name(handle,policy , user, &msg_user_str ));
-	TEST("get role", !qpol_context_get_role(handle, policy,msg_con , &role));
-	TEST("get role string", !qpol_role_get_name(handle, policy, role, &msg_role_str ));
-	TEST("get type", !qpol_context_get_type(handle, policy,msg_con , &type));
-	TEST("get type string", !qpol_type_get_name(handle, policy, type, &msg_type_str ));
+	TEST("get user", !qpol_context_get_user(policy,msg_con , &user));
+	TEST("get user string", !qpol_user_get_name(policy , user, &msg_user_str ));
+	TEST("get role", !qpol_context_get_role(policy,msg_con , &role));
+	TEST("get role string", !qpol_role_get_name(policy, role, &msg_role_str ));
+	TEST("get type", !qpol_context_get_type(policy,msg_con , &type));
+	TEST("get type string", !qpol_type_get_name(policy, type, &msg_type_str ));
 	TEST("check user", !strcmp("system_u", msg_user_str));
 	TEST("check role", !strcmp("object_r", msg_role_str));
 	TEST("check type", !strcmp("unlabeled_t", msg_type_str));
 
 
-	TEST("get inteface context from netif object", !qpol_netifcon_get_if_con( handle, policy, 
+	TEST("get inteface context from netif object", !qpol_netifcon_get_if_con( policy, 
 				qpol_netifcon_obj, &if_con));
 
-	TEST("get user", !qpol_context_get_user(handle, policy,if_con , &user));
-	TEST("get user string", !qpol_user_get_name(handle,policy , user, &if_user_str ));
-	TEST("get role", !qpol_context_get_role(handle, policy,if_con , &role));
-	TEST("get role string", !qpol_role_get_name(handle, policy, role, &if_role_str ));
-	TEST("get type", !qpol_context_get_type(handle, policy, if_con , &type));
-	TEST("get type string", !qpol_type_get_name(handle, policy, type, &if_type_str ));
+	TEST("get user", !qpol_context_get_user(policy,if_con , &user));
+	TEST("get user string", !qpol_user_get_name(policy , user, &if_user_str ));
+	TEST("get role", !qpol_context_get_role(policy,if_con , &role));
+	TEST("get role string", !qpol_role_get_name(policy, role, &if_role_str ));
+	TEST("get type", !qpol_context_get_type(policy, if_con , &type));
+	TEST("get type string", !qpol_type_get_name(policy, type, &if_type_str ));
 	TEST("check user", !strcmp("system_u", if_user_str));
 	TEST("check role", !strcmp("object_r", if_role_str));
 	TEST("check type", !strcmp("netif_eth0_t", if_type_str));
-	TEST("get all netifcons in policy through iterator", !qpol_policy_get_netifcon_iter(handle, policy,
+	TEST("get all netifcons in policy through iterator", !qpol_policy_get_netifcon_iter(policy,
 				&qpol_iter));
 	TEST("get size", !qpol_iterator_get_size(qpol_iter, &num_items));
 	TEST("the size", num_items == NUM_IFCONS);
@@ -85,26 +84,26 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 	while( ! qpol_iterator_end(qpol_iter))
 	{
 		TEST("get item from iterator", !qpol_iterator_get_item( qpol_iter, (void**)&qpol_netifcon_obj));
-		TEST("get the name of the netifcon structure", !qpol_netifcon_get_name(handle, policy,
+		TEST("get the name of the netifcon structure", !qpol_netifcon_get_name(policy,
 					qpol_netifcon_obj, &netifcon_name)); 
 		found = 0;
 
-		TEST("get user", !qpol_context_get_user(handle, policy,msg_con , &user));
-		TEST("get user string", !qpol_user_get_name(handle,policy , user, &msg_user_str ));
-		TEST("get role", !qpol_context_get_role(handle, policy,msg_con , &role));
-		TEST("get role string", !qpol_role_get_name(handle, policy, role, &msg_role_str ));
-		TEST("get type", !qpol_context_get_type(handle, policy,msg_con , &type));
-		TEST("get type string", !qpol_type_get_name(handle, policy, type, &msg_type_str ));
+		TEST("get user", !qpol_context_get_user(policy,msg_con , &user));
+		TEST("get user string", !qpol_user_get_name(policy , user, &msg_user_str ));
+		TEST("get role", !qpol_context_get_role(policy,msg_con , &role));
+		TEST("get role string", !qpol_role_get_name(policy, role, &msg_role_str ));
+		TEST("get type", !qpol_context_get_type(policy,msg_con , &type));
+		TEST("get type string", !qpol_type_get_name(policy, type, &msg_type_str ));
 
-		TEST("get inteface context from netif object", !qpol_netifcon_get_if_con( handle, policy, 
+		TEST("get inteface context from netif object", !qpol_netifcon_get_if_con( policy, 
 					qpol_netifcon_obj, &if_con));
 
-		TEST("get user", !qpol_context_get_user(handle, policy,if_con , &user));
-		TEST("get user string", !qpol_user_get_name(handle,policy , user, &if_user_str ));
-		TEST("get role", !qpol_context_get_role(handle, policy,if_con , &role));
-		TEST("get role string", !qpol_role_get_name(handle, policy, role, &if_role_str ));
-		TEST("get type", !qpol_context_get_type(handle, policy,if_con , &type));
-		TEST("get type string", !qpol_type_get_name(handle, policy, type, &if_type_str ));
+		TEST("get user", !qpol_context_get_user(policy,if_con , &user));
+		TEST("get user string", !qpol_user_get_name(policy , user, &if_user_str ));
+		TEST("get role", !qpol_context_get_role(policy,if_con , &role));
+		TEST("get role string", !qpol_role_get_name(policy, role, &if_role_str ));
+		TEST("get type", !qpol_context_get_type(policy,if_con , &type));
+		TEST("get type string", !qpol_type_get_name(policy, type, &if_type_str ));
 
 		for( p = 0; p < NUM_IFCONS; p++)
 		{
@@ -126,6 +125,5 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 	}
 	qpol_iterator_destroy(&qpol_iter);
 	qpol_policy_destroy ( &policy );
-	sepol_handle_destroy( handle );
 	return 0;
 }

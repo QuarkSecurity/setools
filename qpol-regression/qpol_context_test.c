@@ -10,20 +10,19 @@
 #define MLS_TEST_BIN "../regression/policy/mls_test.20"
 #define MLS_TEST_SRC "../regression/policy/mls_test.conf"
 
-void call_test_funcs(qpol_policy_t *policy, qpol_handle_t *handle);
+void call_test_funcs(qpol_policy_t *policy);
 
 int main(void)
 {
 	qpol_policy_t *policy;
-	qpol_handle_t *handle;
-	TEST("open binary policy", ! (qpol_open_policy_from_file(MLS_TEST_BIN, &policy, &handle, NULL, NULL) < 0));
-	call_test_funcs(policy, handle);
-	TEST("open source policy", ! (qpol_open_policy_from_file(MLS_TEST_SRC, &policy, &handle, NULL, NULL) < 0));
-	call_test_funcs(policy, handle);
+	TEST("open binary policy", ! (qpol_open_policy_from_file(MLS_TEST_BIN, &policy, NULL, NULL) < 0));
+	call_test_funcs(policy);
+	TEST("open source policy", ! (qpol_open_policy_from_file(MLS_TEST_SRC, &policy, NULL, NULL) < 0));
+	call_test_funcs(policy);
 	return 0;
 }
 
-void call_test_funcs(qpol_policy_t *policy, qpol_handle_t *handle)
+void call_test_funcs(qpol_policy_t *policy)
 {
 	qpol_iterator_t *portcons = 0;
 	qpol_portcon_t *tmp_portcon = 0;
@@ -34,15 +33,15 @@ void call_test_funcs(qpol_policy_t *policy, qpol_handle_t *handle)
 	qpol_mls_range_t *mls_range = 0;
 	
 	/* set up a context to test */
-	qpol_policy_get_portcon_iter(handle, policy, &portcons);
+	qpol_policy_get_portcon_iter(policy, &portcons);
 	while (!qpol_iterator_end(portcons)) {
 		qpol_iterator_get_item(portcons, (void **)&tmp_portcon);
-		qpol_portcon_get_context(handle, policy, tmp_portcon, &context);
+		qpol_portcon_get_context(policy, tmp_portcon, &context);
 
-		TEST("get user from context", !(qpol_context_get_user(handle, policy, context, &user)));
-		TEST("get role from context", !(qpol_context_get_role(handle, policy, context, &role)));
-		TEST("get type from context", !(qpol_context_get_type(handle, policy, context, &type)));
-		TEST("get range from context", !(qpol_context_get_range(handle, policy, context, &mls_range)));
+		TEST("get user from context", !(qpol_context_get_user(policy, context, &user)));
+		TEST("get role from context", !(qpol_context_get_role(policy, context, &role)));
+		TEST("get type from context", !(qpol_context_get_type(policy, context, &type)));
+		TEST("get range from context", !(qpol_context_get_range(policy, context, &mls_range)));
 		qpol_iterator_next(portcons);
 	}
 	qpol_iterator_destroy(&portcons);

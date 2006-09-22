@@ -3,29 +3,32 @@ MAKE 		= make
 CC		= gcc
 
 LIBQPOL_PATH	= ../../setools-libsepol/libqpol
-LIBSEPOL_PATH  	= /home/rjordan/working/nsa-mainline/branch/setools_public-policydb-components/libsepol
+LIBSEPOL_PATH  	= /home/rjordan/working/nsa-mainline/trunk/libsepol
 
 LIBQPOL		= -L$(LIBQPOL_PATH)/src -Wl,-rpath=$(LIBQPOL_PATH)/src
 LIBSEPOL	= -L$(LIBSEPOL_PATH)/src -Wl,-rpath=$(LIBSEPOL_PATH)/src
 
-LIBSELINUX	= -lselinux -lsepol
+LIBSELINUX	= -lselinux
 
-LIBS		= -lm -lfl $(LIBSELINUX) -lqpol
+LIBQPOL_A = $(LIBQPOL_PATH)/src/libqpol.a
+
+LIBS		= -lm -lfl $(LIBSELINUX) 
 
 INCLUDES	= -I$(LIBQPOL_PATH)/include -I$(LIBSEPOL_PATH)/include
 
 CFLAGS		+= $(INCLUDES) $(LIBQPOL)
 CFLAGS 		+= -Wall -g3 -O3 -gdwarf-2 -Wshadow -Wmissing-prototypes \
 		-Wstrict-prototypes -Wextra -Wnested-externs -Wundef -Wmissing-noreturn \
-		-Wmissing-format-attribute -pg -fprofile-arcs -ftest-coverage -Wno-strict-aliasing
+		-Wmissing-format-attribute -pg -fprofile-arcs -ftest-coverage \
+	  	-Wno-strict-aliasing 
 
-LDFLAGS =	$(LIBQPOL) $(LIBSEPOL)
+LDFLAGS =	$(LIBQPOL) $(LIBSEPOL) $(LIBSELINUX)
 
 TESTS		:= qpol_types_test qpol_booleans_test qpol_class_perms_test qpol_genfscons_test \
 		   qpol_netifcons_test qpol_nodecons_test qpol_mls_test qpol_avrule_test qpol_cond_test \
 			qpol_constraint_test qpol_context_test qpol_isid_test qpol_mlsrule_test \
 			qpol_portcon_test qpol_rbacrule_test qpol_role_test qpol_user_test qpol_terule_test \
-			qpol_syn_rule_test
+			qpol_syn_rule_test qpol_fs_use_test
 
 TESTS-RES = $(foreach test,$(TESTS),$(test).res)
 OBJS = $(foreach test,$(TESTS),$(test).o)
@@ -54,6 +57,10 @@ profile:
 	$(foreach test, $(TESTS), `gprof -b -z $(test) > gprof/$(test).output`)
 	$(foreach test, $(TESTS), `gcov $(test) > gcov/$(test).output`)
 
+valgrind:
+	make all
+	$(foreach test, $(TESTS), `valgrind --leak-check=yes --show-reachable=yes $(test) 2> valg-output/$(test).output`)
+
 %.res : %.o $(OBJS) $(TESTS)
 	@echo $* > $*.res0
 	@./$* > $*.res1 2> $*.res2 ; if [ $$? -ne 0 ]; then echo "$* failed."; fi
@@ -67,61 +74,64 @@ test.o : test.c test.h
 	$(CC) $(CFLAGS) -c $<
 
 qpol_booleans_test: qpol_booleans_test.o qpol_test_lib.o test.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS) 
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBQPOL_A) -o $@ $(LIBS) 
 
 qpol_class_perms_test: qpol_class_perms_test.o qpol_test_lib.o test.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBQPOL_A) -o $@ $(LIBS)
 
 qpol_genfscons_test: qpol_genfscons_test.o qpol_test_lib.o test.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBQPOL_A) -o $@ $(LIBS)
 
 qpol_netifcons_test: qpol_netifcons_test.o qpol_test_lib.o test.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBQPOL_A) -o $@ $(LIBS)
 
 qpol_nodecons_test: qpol_nodecons_test.o qpol_test_lib.o test.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBQPOL_A) -o $@ $(LIBS)
 
 qpol_types_test: qpol_types_test.o qpol_test_lib.o test.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBQPOL_A) -o $@ $(LIBS)
 
 qpol_mls_test: qpol_mls_test.o test.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBQPOL_A) -o $@ $(LIBS)
 
 qpol_avrule_test: qpol_avrule_test.o test.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBQPOL_A) -o $@ $(LIBS)
 
 qpol_cond_test: qpol_cond_test.o test.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBQPOL_A) -o $@ $(LIBS)
 
 qpol_constraint_test: qpol_constraint_test.o test.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBQPOL_A) -o $@ $(LIBS)
 
 qpol_context_test: qpol_context_test.o test.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBQPOL_A) -o $@ $(LIBS)
 
 qpol_isid_test: qpol_isid_test.o test.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBQPOL_A) -o $@ $(LIBS)
 
 qpol_mlsrule_test: qpol_mlsrule_test.o test.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBQPOL_A) -o $@ $(LIBS)
 
 qpol_portcon_test: qpol_portcon_test.o test.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBQPOL_A) -o $@ $(LIBS)
 
 qpol_rbacrule_test: qpol_rbacrule_test.o test.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBQPOL_A) -o $@ $(LIBS)
 
 qpol_role_test: qpol_role_test.o test.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBQPOL_A) -o $@ $(LIBS)
 
 qpol_user_test: qpol_user_test.o test.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBQPOL_A) -o $@ $(LIBS)
 
 qpol_terule_test: qpol_terule_test.o test.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBQPOL_A) -o $@ $(LIBS)
 
 qpol_syn_rule_test: qpol_syn_rule_test.o test.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBQPOL_A) -o $@ $(LIBS)
+
+qpol_fs_use_test: qpol_fs_use_test.o test.o
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBQPOL_A) -o $@ $(LIBS)
 
 
 clean : 

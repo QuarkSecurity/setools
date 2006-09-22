@@ -7,6 +7,6 @@ int qpol_bin_pol_open( const char* path, qpol_t ** qpol_policy )
 		fprintf(stderr, "Out of memory!\n");
 		return -1;
 	}
-	return qpol_open_policy_from_file(path, &(*qpol_policy)->policy, &(*qpol_policy)->handle, NULL, NULL);
+	return qpol_open_policy_from_file(path, &(*qpol_policy)->policy, NULL, NULL);
 
 }

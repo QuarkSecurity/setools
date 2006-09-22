@@ -14,20 +14,19 @@
 
 #include "class_perms.h"
 
-void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle);
+void call_test_funcs(qpol_policy_t *policy);
 
 int main(int argc, char ** argv)
 {
 	qpol_policy_t *policy;
-	sepol_handle_t *handle;
-	TEST("open binary policy", ! (qpol_open_policy_from_file(MLS_TEST_BIN, &policy, &handle, NULL, NULL)<0));
-	call_test_funcs( policy, handle);
-	TEST("open source policy", ! (qpol_open_policy_from_file(MLS_TEST_SRC , &policy, &handle, NULL, NULL)<0));
-	call_test_funcs( policy, handle);
+	TEST("open binary policy", ! (qpol_open_policy_from_file(MLS_TEST_BIN, &policy, NULL, NULL)<0));
+	call_test_funcs(policy);
+	TEST("open source policy", ! (qpol_open_policy_from_file(MLS_TEST_SRC , &policy, NULL, NULL)<0));
+	call_test_funcs(policy);
 	return 0;
 }
 
-void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
+void call_test_funcs( qpol_policy_t *policy)
 {
 	qpol_class_t * tmp_class_datum;
 	qpol_common_t * tmp_common_datum;
@@ -36,7 +35,6 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 	char *common_name;
 	char * perm_name;
 	int n = 0;
-	uint32_t val;
 	int found = 0;
 	int r = 0;
 	int u = 0;
@@ -44,11 +42,11 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 	int perm_found = 0;
 	size_t  num_items= 0;
 	
-	TEST("getting all object classes",! qpol_policy_get_class_iter(handle, policy, &qpol_iter));
+	TEST("getting all object classes",! qpol_policy_get_class_iter(policy, &qpol_iter));
 	while (! qpol_iterator_end(qpol_iter))
 	{
 		TEST ("get item from iterator", !qpol_iterator_get_item( qpol_iter, (void**) (&tmp_class_datum)));
-		TEST ("get name from datum", !qpol_class_get_name(handle, policy,
+		TEST ("get name from datum", !qpol_class_get_name(policy,
 					tmp_class_datum, &class_name ));
 		for (r = 0; r < MLS_TEST_NUM_CLASSES ; r++) {
 			if (! strcmp(class_name, mls_test_all_classes[r])) {
@@ -59,7 +57,7 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 		} 
 		TEST ("if found class", found);
 
-		TEST ("getting permissions iterator from class", !qpol_class_get_perm_iter(handle, policy,
+		TEST ("getting permissions iterator from class", !qpol_class_get_perm_iter(policy,
 					tmp_class_datum, &qpol_perm_iter));
 		found = 0;	
 		while (! qpol_iterator_end(qpol_perm_iter))
@@ -85,12 +83,12 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 
 	for (r = 0; r < MLS_TEST_NUM_CLASSES ; r++) 
 	{
-		TEST("getting all object classes",! qpol_policy_get_class_iter(handle, policy, &qpol_iter));
+		TEST("getting all object classes",! qpol_policy_get_class_iter(policy, &qpol_iter));
 		found = 0;
 		while (! qpol_iterator_end(qpol_iter))
 		{
 			TEST ("get item from iterator", !qpol_iterator_get_item( qpol_iter, (void**) (&tmp_class_datum)));
-			TEST ("get name from datum", !qpol_class_get_name(handle, policy,
+			TEST ("get name from datum", !qpol_class_get_name(policy,
 						tmp_class_datum, &class_name ));
 			if (! strcmp(class_name, mls_test_all_classes[r])) 
 			{
@@ -105,9 +103,9 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 
 		for( u = 0; u < mls_test_all_classes_and_perms[idx].len_perm; u++)
 		{
-			qpol_policy_get_class_by_name(handle, policy,mls_test_all_classes_and_perms[idx].class_name,
+			qpol_policy_get_class_by_name(policy,mls_test_all_classes_and_perms[idx].class_name,
 					&tmp_class_datum);
-			TEST ("getting permissions iterator from class", !qpol_class_get_perm_iter(handle, policy,
+			TEST ("getting permissions iterator from class", !qpol_class_get_perm_iter(policy,
 						tmp_class_datum, &qpol_perm_iter));
 
 			while (! qpol_iterator_end(qpol_perm_iter))
@@ -125,14 +123,14 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 	qpol_iterator_destroy(&qpol_iter);
 
 	TEST("getting iterator over all classes with permission \"create\"", 
-			!qpol_perm_get_class_iter ( handle, policy, "create", &qpol_iter )); 
+			!qpol_perm_get_class_iter ( policy, "create", &qpol_iter )); 
 	qpol_iterator_get_size( qpol_iter, &num_items);
 	TEST("check num classes with perm create", num_items == MLS_TEST_NUM_CLASSES_W_PERM_CREAT);
 	while (! qpol_iterator_end(qpol_iter)) 
 	{
 		found = 0;
 		TEST ("get item from iterator", !qpol_iterator_get_item( qpol_iter, (void**)&tmp_class_datum));
-		TEST ("get name from datum", !qpol_class_get_name(handle, policy,
+		TEST ("get name from datum", !qpol_class_get_name(policy,
 					tmp_class_datum, &class_name ));
 		for( r = 0; r < MLS_TEST_NUM_CLASSES_W_PERM_CREAT; r ++){
 			if( !strcmp( class_name, mls_test_classes_w_perm_create[r]))
@@ -144,12 +142,12 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 	qpol_iterator_destroy(&qpol_iter);
 	for( r = 0; r < MLS_TEST_NUM_CLASSES_W_PERM_CREAT; r ++){
 		TEST("getting iterator over all classes with permission \"create\"", 
-				!qpol_perm_get_class_iter ( handle, policy, "create", &qpol_iter )); 
+				!qpol_perm_get_class_iter ( policy, "create", &qpol_iter )); 
 		found = 0;
 		while(! qpol_iterator_end(qpol_iter)) 
 		{
 			TEST ("get item from iterator", !qpol_iterator_get_item( qpol_iter, (void**)&tmp_class_datum));
-			TEST ("get name from datum", !qpol_class_get_name(handle, policy,
+			TEST ("get name from datum", !qpol_class_get_name(policy,
 						tmp_class_datum, &class_name ));
 			if( !strcmp( class_name, mls_test_classes_w_perm_create[r]))
 				found = 1;
@@ -158,7 +156,7 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 		TEST("if found", found);
 	}
 	
-	TEST("get all commons in policy", !qpol_policy_get_common_iter(handle, policy, &qpol_iter ) );
+	TEST("get all commons in policy", !qpol_policy_get_common_iter(policy, &qpol_iter ) );
 	qpol_iterator_get_size(qpol_iter, &num_items);
 
 	TEST("commons iter size", num_items == MLS_TEST_NUM_COMMONS);
@@ -167,7 +165,7 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 	{
 		found = 0;
 		TEST("get item from iterator", !qpol_iterator_get_item( qpol_iter, (void**)&tmp_common_datum));
-		TEST("get name of common", !qpol_common_get_name(handle, policy, tmp_common_datum, &common_name));
+		TEST("get name of common", !qpol_common_get_name(policy, tmp_common_datum, &common_name));
 		for (r = 0; r < MLS_TEST_NUM_COMMONS; r++)
 		{
 			if (! strcmp(common_name, mls_test_all_commons[r].common_name)) 
@@ -179,7 +177,7 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 		}
 		TEST("if found", found);
 
-		qpol_common_get_perm_iter(handle, policy,tmp_common_datum, &qpol_perm_iter);
+		qpol_common_get_perm_iter(policy,tmp_common_datum, &qpol_perm_iter);
 		while (!qpol_iterator_end(qpol_perm_iter))
 		{
 			TEST ("get perm name", !qpol_iterator_get_item( qpol_perm_iter, (void**)&perm_name));
@@ -198,11 +196,11 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 	}
 	qpol_iterator_destroy(&qpol_iter);
 
-	qpol_policy_get_common_by_name(handle, policy, "socket", &tmp_common_datum);
-	qpol_common_get_name(handle, policy, tmp_common_datum, &common_name);
+	qpol_policy_get_common_by_name(policy, "socket", &tmp_common_datum);
+	qpol_common_get_name(policy, tmp_common_datum, &common_name);
 	TEST("testing against true common name", !strcmp("socket", common_name));		
 
-	TEST("getting all commons with permission \"create\"", !qpol_perm_get_common_iter(handle, policy,
+	TEST("getting all commons with permission \"create\"", !qpol_perm_get_common_iter(policy,
 				"create", &qpol_iter));
 	qpol_iterator_get_size(qpol_iter, &num_items);
 
@@ -211,7 +209,7 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 	while (! qpol_iterator_end(qpol_iter))
 	{
 		qpol_iterator_get_item( qpol_iter, (void**)&tmp_common_datum);
-		qpol_common_get_name(handle, policy, tmp_common_datum, &common_name);
+		qpol_common_get_name(policy, tmp_common_datum, &common_name);
 		for( r = 0; r < MLS_TEST_NUM_COMMONS; r++)
 		{
 			if (! strcmp(common_name, mls_test_all_commons[r].common_name)){
@@ -221,7 +219,7 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 			}
 		}
 		TEST("found", found);
-		qpol_common_get_perm_iter(handle, policy,tmp_common_datum, &qpol_perm_iter);
+		qpol_common_get_perm_iter(policy,tmp_common_datum, &qpol_perm_iter);
 		while (! qpol_iterator_end(qpol_perm_iter) )
 		{
 			perm_found =0;
@@ -241,16 +239,15 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 	}
 	qpol_iterator_destroy(&qpol_iter);
 
-	TEST("getting a datum for the \"class blk_file\"", !qpol_policy_get_class_by_name(handle, policy,
+	TEST("getting a datum for the \"class blk_file\"", !qpol_policy_get_class_by_name(policy,
 				"blk_file", &tmp_class_datum ));
-	TEST("getting name of class datum retrieved", !qpol_class_get_name(handle,
-				policy, tmp_class_datum, &class_name));
+	TEST("getting name of class datum retrieved", !qpol_class_get_name(policy,
+			  	tmp_class_datum, &class_name));
 	TEST("compare names", !strcmp( "blk_file", class_name));
-	TEST("getting the common used by the class \"blk_file\"", !qpol_class_get_common(handle, policy,
+	TEST("getting the common used by the class \"blk_file\"", !qpol_class_get_common(policy,
 				tmp_class_datum, &tmp_common_datum ));
-	TEST("get name of common", !qpol_common_get_name( handle, policy, tmp_common_datum, &common_name));
+	TEST("get name of common", !qpol_common_get_name( policy, tmp_common_datum, &common_name));
 	TEST("compare common names with returned name", !strcmp("file", common_name));
 
 	qpol_policy_destroy( &policy );
-	sepol_handle_destroy( handle );
 }

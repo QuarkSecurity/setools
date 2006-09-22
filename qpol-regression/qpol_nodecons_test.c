@@ -59,22 +59,21 @@ uint8_t y[16] = {
 };
 #define MLS_TEST_POL_BIN "../regression/policy/mls_test.20"
 #define MLS_TEST_POL_SRC "../regression/policy/mls_test.conf"
-void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle);
+void call_test_funcs( qpol_policy_t *policy);
 int main(int argc, char **argv)
 {
 	qpol_policy_t * policy;
-	sepol_handle_t *handle;
 
-	TEST("open binary policy", ! (qpol_open_policy_from_file(MLS_TEST_POL_BIN, &policy, &handle, NULL, NULL) < 0) );
-	call_test_funcs( policy, handle);
+	TEST("open binary policy", ! (qpol_open_policy_from_file(MLS_TEST_POL_BIN, &policy, NULL, NULL) < 0) );
+	call_test_funcs( policy);
 
-	TEST("open source policy",!( qpol_open_policy_from_file(MLS_TEST_POL_SRC , &policy, &handle, NULL, NULL) < 0));
-	call_test_funcs( policy, handle);
+	TEST("open source policy",!( qpol_open_policy_from_file(MLS_TEST_POL_SRC , &policy, NULL, NULL) < 0));
+	call_test_funcs( policy);
 
 	return 0;
 }
 
-void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
+void call_test_funcs( qpol_policy_t *policy)
 {
 	qpol_nodecon_t * tmp_nodecon_obj;
 	qpol_user_t * tmp_user;
@@ -102,7 +101,7 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 	}
 
 
-	TEST("get all nodecons in policy",!qpol_policy_get_nodecon_iter(handle, policy, &qpol_iter));
+	TEST("get all nodecons in policy",!qpol_policy_get_nodecon_iter(policy, &qpol_iter));
 	
 	TEST("get iterator size", !qpol_iterator_get_size(qpol_iter, &num_items));
 	printf("iter size: %d\n", num_items);
@@ -111,7 +110,7 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 
 	TEST("get item", !qpol_iterator_get_item( qpol_iter, (void**) (&tmp_nodecon_obj)));
 
-	TEST("get address", !qpol_nodecon_get_addr(handle, policy, tmp_nodecon_obj, &addr, &proto));
+	TEST("get address", !qpol_nodecon_get_addr(policy, tmp_nodecon_obj, &addr, &proto));
 
 
 	TEST("1st set", 0x00 == addr[0]%(1<<8));
@@ -133,7 +132,7 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 
 	TEST("compare protocols", proto == ADDR_PROTO );
 
-	TEST("get nodecon mask", !qpol_nodecon_get_mask(handle, policy, tmp_nodecon_obj, &mask, &proto));
+	TEST("get nodecon mask", !qpol_nodecon_get_mask(policy, tmp_nodecon_obj, &mask, &proto));
 
 	TEST("compare masks protocols", proto == MASK_PROTO); 
 
@@ -154,31 +153,31 @@ void call_test_funcs( qpol_policy_t *policy, sepol_handle_t *handle)
 	TEST("14th set", 0x00 == mask[3]/(1<<8)%(1<<8) );
 	TEST("15th set", 0x00 == mask[3]/(1<<16)%(1<<8) );
 	TEST("16th set", 0x00 == mask[3]/(1<<24)%(1<<8) );
-	TEST("get context of nodecon",! qpol_nodecon_get_context(handle, policy,tmp_nodecon_obj, &tmp_context_obj));
-	TEST("get user of context", !qpol_context_get_user(handle, policy,tmp_context_obj, &tmp_user ));
-	TEST("get name string from user datum", !qpol_user_get_name(handle, policy, tmp_user, &user_name));
+	TEST("get context of nodecon",! qpol_nodecon_get_context(policy,tmp_nodecon_obj, &tmp_context_obj));
+	TEST("get user of context", !qpol_context_get_user(policy,tmp_context_obj, &tmp_user ));
+	TEST("get name string from user datum", !qpol_user_get_name(policy, tmp_user, &user_name));
 	TEST("compare name", !strcmp( user_name, "system_u"));
-	TEST("get role struct of context", !qpol_context_get_role(handle, policy, tmp_context_obj, &role_obj));
-	TEST("get role string from datum", !qpol_role_get_name(handle, policy, role_obj, &role_name));
+	TEST("get role struct of context", !qpol_context_get_role(policy, tmp_context_obj, &role_obj));
+	TEST("get role string from datum", !qpol_role_get_name(policy, role_obj, &role_name));
 	TEST("compare roles", !strcmp( role_name, "object_r"));
 
-	TEST("get type of context", !qpol_context_get_type(handle, policy,tmp_context_obj, &type_obj));
-	TEST("get the name of the type", !qpol_type_get_name(handle, policy,type_obj, &type_name));
+	TEST("get type of context", !qpol_context_get_type(policy,tmp_context_obj, &type_obj));
+	TEST("get the name of the type", !qpol_type_get_name(policy,type_obj, &type_name));
 	TEST("compare type names", !strcmp(type_name, "unlabeled_t"));
-	TEST("get a nodecon by a node", !qpol_policy_get_nodecon_by_node(handle, policy, addr, mask, ADDR_PROTO, 
+	TEST("get a nodecon by a node", !qpol_policy_get_nodecon_by_node(policy, addr, mask, ADDR_PROTO, 
 				&ocon_obj));
 
-	TEST("get address", !qpol_nodecon_get_addr(handle, policy, tmp_nodecon_obj, &addr, &proto));
-	TEST("get context of nodecon",! qpol_nodecon_get_context(handle, policy,tmp_nodecon_obj, &tmp_context_obj));
-	TEST("get user of context", !qpol_context_get_user(handle, policy,tmp_context_obj, &tmp_user ));
-	TEST("get name string from user datum", !qpol_user_get_name(handle, policy, tmp_user, &user_name));
+	TEST("get address", !qpol_nodecon_get_addr(policy, tmp_nodecon_obj, &addr, &proto));
+	TEST("get context of nodecon",! qpol_nodecon_get_context(policy,tmp_nodecon_obj, &tmp_context_obj));
+	TEST("get user of context", !qpol_context_get_user(policy,tmp_context_obj, &tmp_user ));
+	TEST("get name string from user datum", !qpol_user_get_name(policy, tmp_user, &user_name));
 	TEST("compare name", !strcmp( user_name, "system_u"));
-	TEST("get role struct of context", !qpol_context_get_role(handle, policy, tmp_context_obj, &role_obj));
-	TEST("get role string from datum", !qpol_role_get_name(handle, policy, role_obj, &role_name));
+	TEST("get role struct of context", !qpol_context_get_role(policy, tmp_context_obj, &role_obj));
+	TEST("get role string from datum", !qpol_role_get_name(policy, role_obj, &role_name));
 	TEST("compare roles", !strcmp( role_name, "object_r"));
 
-	TEST("get type of context", !qpol_context_get_type(handle, policy,tmp_context_obj, &type_obj));
-	TEST("get the name of the type", !qpol_type_get_name(handle, policy,type_obj, &type_name));
+	TEST("get type of context", !qpol_context_get_type(policy,tmp_context_obj, &type_obj));
+	TEST("get the name of the type", !qpol_type_get_name(policy,type_obj, &type_name));
 	TEST("compare type names", !strcmp(type_name, "unlabeled_t"));
 
 	free (tmp_nodecon_obj);
