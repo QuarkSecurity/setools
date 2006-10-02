@@ -3,7 +3,10 @@ MAKE 		= make
 CC		= gcc
 
 LIBQPOL_PATH	= ../../setools-libsepol/libqpol
-LIBSEPOL_PATH  	= /home/rjordan/working/nsa-mainline/trunk/libsepol
+LIBSEPOL_PATH  	= /home/rjordan/selinux/libsepol
+
+POLICY_PATH = ../regression/policy
+POLICIES = $(POLICY_PATH)/mls_test.20:$(POLICY_PATH)/mls_test.conf
 
 LIBQPOL		= -L$(LIBQPOL_PATH)/src -Wl,-rpath=$(LIBQPOL_PATH)/src
 LIBSEPOL	= -L$(LIBSEPOL_PATH)/src -Wl,-rpath=$(LIBSEPOL_PATH)/src
@@ -40,32 +43,30 @@ all : $(TESTS)
 help:
 	@echo "Interesting make targets for tests"
 	@echo "	    all 	- build all tests"
-	@echo "	    run-tests 	- run all regression tests"
-	@echo "      profile  - run gprof/gcov on all tests"
-
-
-run-tests:
-	make all
-	$(foreach test, $(TESTS), `./$(test)`)
+	@echo "	    run 	- run all regression tests"
+	@echo "      profile  - run gprof on all tests"
+	@echo "      coverage - run gcov on all libqpol source files"
 
 run : $(TESTS-RES)
 	mkdir -p results
 	cat $^ > results/tests$(DATE).results
 
-profile:
-	make run-tests
-	$(foreach test, $(TESTS), `gprof -b -z $(test) > gprof/$(test).output`)
-	$(foreach test, $(TESTS), `gcov $(test) > gcov/$(test).output`)
+coverage: coverage.sh
+	mkdir -p gcov
+	make run
+	./coverage.sh `pwd` $(LIBQPOL_PATH)/src
 
-valgrind:
-	make all
-	$(foreach test, $(TESTS), `valgrind --leak-check=yes --show-reachable=yes $(test) 2> valg-output/$(test).output`)
+profile:
+	mkdir -p gprof
+	make run
+	$(foreach test, $(TESTS), `gprof -b -z $(test) > gprof/$(test).output`)
+
+valgrind: $(TESTS)
+	mkdir -p valg-output
+	$(foreach policies, $(POLICIES), $(foreach test, $(TESTS), `valgrind --leak-check=yes --show-reachable=yes $(test) $(subst :, ,$(policies)) 2> valg-output/$(test).output;`))
 
 %.res : %.o $(OBJS) $(TESTS)
-	@echo $* > $*.res0
-	@./$* > $*.res1 2> $*.res2 ; if [ $$? -ne 0 ]; then echo "$* failed."; fi
-	@cat $*.res0 $*.res1 $*.res2 > $@ 
-	@rm -f $*.res[012]
+	@$(foreach policies, $(POLICIES), echo $* > $*.res0;./$* $(subst :, ,$(policies)) > $*.res1 2> $*.res2 ; if [ $$? -ne 0 ]; then echo "$* failed."; fi;cat $*.res0 $*.res1 $*.res2 > $@;rm -f $*.res[012])
 
 %.o : %.c
 	$(CC) $(CFLAGS) -c $<

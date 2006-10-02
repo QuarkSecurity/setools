@@ -9,17 +9,16 @@
 
 #define QPOL_ALL_AVRULE_TYPES 135 /* Bitwise OR of all types */
 #define QPOL_ALL_TERULE_TYPES 112
-#define MLS_TEST_BIN "../regression/policy/mls_test.20"
-#define MLS_TEST_SRC "../regression/policy/mls_test.conf"
 
 void call_test_funcs(qpol_policy_t *policy);
 
-int main(void)
+int main(int argc, char *argv[])
 {
 	qpol_policy_t *policy;
-	TEST("open binary policy", ! (qpol_open_policy_from_file(MLS_TEST_BIN, &policy, NULL, NULL) < 0));
+	TEST("number of arguments", (argc == 3));
+	TEST("open binary policy", ! (qpol_open_policy_from_file(argv[1], &policy, NULL, NULL) < 0));
 	call_test_funcs(policy);
-	TEST("open source policy", ! (qpol_open_policy_from_file(MLS_TEST_SRC, &policy, NULL, NULL) < 0));
+	TEST("open source policy", ! (qpol_open_policy_from_file(argv[2], &policy, NULL, NULL) < 0));
 	call_test_funcs(policy);
 	return 0;
 }

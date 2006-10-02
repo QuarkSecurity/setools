@@ -7,14 +7,22 @@
 #include <qpol/policy_query.h>
 #include <qpol/policy.h>
 
-#define RBAC_TEST_POLICY "../regression/policy/rbac1.conf"
-
 void call_test_funcs(qpol_policy_t *policy);
 
-int main(void)
+int main(int argc, char *argv[])
 {
 	qpol_policy_t *policy;
-	TEST("open source policy", ! (qpol_open_policy_from_file(RBAC_TEST_POLICY, &policy, NULL, NULL) < 0));
+	TEST("number of arguments", (argc == 2 || argc == 3));
+	if (argc == 2)
+	{
+		/* can be run alone with one argument */
+		TEST("open source policy", ! (qpol_open_policy_from_file(argv[1], &policy, NULL, NULL) < 0));
+	}
+	else if (argc == 3)
+	{
+		/* Makefile passes two arguments, use only the second */
+		TEST("open source policy", !(qpol_open_policy_from_file(argv[2], &policy, NULL, NULL) < 0));
+	}
 	call_test_funcs(policy);
 	return 0;
 }

@@ -6,8 +6,6 @@
 #include "qpol_test_lib.h"
 #include "test_types.h"
 #include <qpol/type_query.h>
-#define MLS_TEST_POL_BIN "../regression/policy/mls_test.20"
-#define MLS_TEST_POL_SRC "../regression/policy/mls_test.conf"
 
 void call_test_funcs( qpol_policy_t *policy, int is_src);
 
@@ -15,10 +13,12 @@ int main(int argc, char** argv)
 {
 	qpol_policy_t *policy;
 
-	TEST("open binary policy", ! (qpol_open_policy_from_file(MLS_TEST_POL_BIN, &policy, NULL, NULL) < 0) );
+	TEST("number of arguments", (argc == 3));
+
+	TEST("open binary policy", ! (qpol_open_policy_from_file(argv[1], &policy, NULL, NULL) < 0) );
 	call_test_funcs( policy, 0);
 
-	TEST("open source policy",!( qpol_open_policy_from_file(MLS_TEST_POL_SRC , &policy, NULL, NULL) < 0));
+	TEST("open source policy",!( qpol_open_policy_from_file(argv[2], &policy, NULL, NULL) < 0));
 	call_test_funcs( policy, 1);
 	return 0;
 }

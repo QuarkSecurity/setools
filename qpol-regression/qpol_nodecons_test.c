@@ -6,20 +6,9 @@
 #include "qpol_wrapper.h"
 #include "qpol_test_lib.h"
 #include <qpol/policy_query.h>
-#define SMALL_BINARY_17_POL "../regression/policy/test_small.17"
 #define NUM_ADDRS 1
 #define ADDR_PROTO 1
 #define MASK_PROTO 1
-
-/*qpol_t * quer_policy;*/
-/*qpol_policy_t * quer_policy;*/
-
-/*	printf("addr: %02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X\n", 
-	addr[0]%(1<<8),addr[0]/(1<<8)%(1<<8),addr[0]/(1<<16)%(1<<8),addr[0]/(1<<24)%(1<<8),
-	addr[1]%(1<<8),addr[1]/(1<<8)%(1<<8),addr[1]/(1<<16)%(1<<8),addr[1]/(1<<24)%(1<<8),
-	addr[2]%(1<<8),addr[2]/(1<<8)%(1<<8),addr[2]/(1<<16)%(1<<8),addr[2]/(1<<24)%(1<<8),
-	addr[3]%(1<<8),addr[3]/(1<<8)%(1<<8),addr[3]/(1<<16)%(1<<8),addr[3]/(1<<24)%(1<<8)); */
-
 
 uint8_t x[16] = {
 	0x00,
@@ -64,10 +53,12 @@ int main(int argc, char **argv)
 {
 	qpol_policy_t * policy;
 
-	TEST("open binary policy", ! (qpol_open_policy_from_file(MLS_TEST_POL_BIN, &policy, NULL, NULL) < 0) );
+	TEST("number of arguments", (argc == 3));
+
+	TEST("open binary policy", ! (qpol_open_policy_from_file(argv[1], &policy, NULL, NULL) < 0) );
 	call_test_funcs( policy);
 
-	TEST("open source policy",!( qpol_open_policy_from_file(MLS_TEST_POL_SRC , &policy, NULL, NULL) < 0));
+	TEST("open source policy",!( qpol_open_policy_from_file(argv[2], &policy, NULL, NULL) < 0));
 	call_test_funcs( policy);
 
 	return 0;

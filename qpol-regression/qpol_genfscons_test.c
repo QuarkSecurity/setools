@@ -9,18 +9,17 @@
 /* qpol */
 #include <qpol/policy_query.h>
 #include "test_genfscon.h"
-#define MLS_TEST_POL_BIN "../regression/policy/mls_test.20"
-#define MLS_TEST_POL_SRC "../regression/policy/mls_test.conf"
-qpol_t * quer_policy;
+
 void call_test_funcs( qpol_policy_t *policy);
-int main(int argc, char ** argv)
+
+int main(int argc, char *argv[])
 {
 	qpol_policy_t *policy;
-
-	TEST("open binary policy", ! (qpol_open_policy_from_file(MLS_TEST_POL_BIN, &policy, NULL, NULL) < 0) );
+	
+	TEST("number of arguments", (argc == 3))
+	TEST("open binary policy", !(qpol_open_policy_from_file(argv[1], &policy, NULL, NULL) < 0) );
 	call_test_funcs( policy);
-
-	TEST("open source policy",!( qpol_open_policy_from_file(MLS_TEST_POL_SRC , &policy, NULL, NULL) < 0));
+	TEST("open source policy", !(qpol_open_policy_from_file(argv[2] , &policy, NULL, NULL) < 0));
 	call_test_funcs( policy);
 	return 0;
 }

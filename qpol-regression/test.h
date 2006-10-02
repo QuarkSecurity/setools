@@ -32,8 +32,14 @@ static int dump_core = 0;
  *
  */
 
-#define TEST(name, expression) fprintf(stderr, "Testing %s . . . ", name); \
-  if (expression) { fprintf(stderr, "pass.\n"); } \
+/*
+ * Minor change -- non-failing tests are printed to stdout so that
+ * errors may be redirected separately from the rest of the output.
+ *
+ */
+
+#define TEST(name, expression) fprintf(stdout, "Testing %s . . . ", name); \
+  if (expression) { fprintf(stdout, "pass.\n"); } \
   else { fprintf(stderr, "failed - in %s at %s:%d\n", __FUNCTION__, __FILE__, __LINE__); \
     if (dump_core) { abort(); } else { exit(1); } }
 
