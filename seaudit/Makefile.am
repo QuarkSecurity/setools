@@ -3,12 +3,13 @@ bin_PROGRAMS = seaudit-report
 sbin_PROGRAMS = seaudit
 
 AM_CFLAGS = @DEBUGCFLAGS@ @WARNCFLAGS@ @PROFILECFLAGS@ @SELINUX_CFLAGS@ \
-	@QPOL_CFLAGS@ @APOL_CFLAGS@ @GTK_CFLAGS@ @GLADE_CFLAGS@ @XML_CFLAGS@ \
+	@QPOL_CFLAGS@ @APOL_CFLAGS@ @SEAUDIT_CFLAGS@ \
+	@GTK_CFLAGS@ @GLADE_CFLAGS@ @XML_CFLAGS@ \
 	-DAPOL_INSTALL_DIR='"${setoolsdir}"' -I$(top_srcdir)/libseaudit
 # need the -rdynamic flag below - glade uses dlopen() upon seaudit callbacks
 AM_LDFLAGS = @DEBUGLDFLAGS@ @WARNLDFLAGS@ @PROFILELDFLAGS@ \
 	@GTK_LIBS@ @GLADE_LIBS@ @XML_LIBS@ -rdynamic
-LDADD = @SELINUX_LIB_FLAG@ $(top_builddir)/libseaudit/libseaudit.a @APOL_LIB_FLAG@ @QPOL_LIB_FLAG@
+LDADD = @SELINUX_LIB_FLAG@ @SEAUDIT_LIB_FLAG@ @APOL_LIB_FLAG@ @QPOL_LIB_FLAG@
 
 dist_setools_DATA = \
 	customize_filter_window.glade \
@@ -38,7 +39,7 @@ seaudit_SOURCES = \
 	seaudit_callback.h seaudit.h \
 	seaudit_window.c seaudit_window.h \
 	utilgui.c utilgui.h
-seaudit_DEPENDENCIES = $(top_builddir)/libseaudit/libseaudit.a \
+seaudit_DEPENDENCIES = $(top_builddir)/libseaudit/src/libseaudit.so \
                        $(top_builddir)/libapol/src/libapol.so \
                        $(top_builddir)/libqpol/src/libqpol.so
 
@@ -48,7 +49,7 @@ dot_seaudit: dot_seaudit.in Makefile
 	sed -e 's|\@setoolsdir\@|$(setoolsdir)|g' > $@
 
 seaudit_report_SOURCES = seaudit-report.c report.c report.h
-seaudit_report_DEPENDENCIES = $(top_builddir)/libseaudit/libseaudit.a \
+seaudit_report_DEPENDENCIES = $(top_builddir)/libseaudit/src/libseaudit.so \
                               $(top_builddir)/libapol/src/libapol.so \
                               $(top_builddir)/libqpol/src/libqpol.so
 

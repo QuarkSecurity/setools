@@ -1,7 +1,7 @@
 /* Copyright (C) 2004 Tresys Technology, LLC
  * see file 'COPYING' for use and warranty information */
 
-/* 
+/*
  * Author: Kevin Carr <kcarr@tresys.com>
  * Date: February 06, 2004
  *
@@ -11,8 +11,8 @@
  * multifilter.h
  */
 
-#ifndef LIBSEAUDIT_MULTIFILTER_H
-#define LIBSEAUDIT_MULTIFILTER_H
+#ifndef SEAUDIT_MULTIFILTER_H
+#define SEAUDIT_MULTIFILTER_H
 
 #include "filters.h"
 #include <apol/util.h>
@@ -20,7 +20,7 @@
 
 typedef struct seaudit_multifilter {
 	apol_vector_t *filters;
-	enum seaudit_filter_match_t match; /* SEAUDIT_FILTER_MATCH_ALL, 
+	enum seaudit_filter_match_t match; /* SEAUDIT_FILTER_MATCH_ALL,
 					      SEAUDIT_FILTER_MATCH_ANY */
 	bool_t show;  /* show matches */
 	char *name;
@@ -38,4 +38,4 @@ bool_t seaudit_multifilter_should_message_show(seaudit_multifilter_t *multifilte
 int seaudit_multifilter_save_to_file(seaudit_multifilter_t *multifilter, const char *filename);
 int seaudit_multifilter_load_from_file(seaudit_multifilter_t **multifilter, bool_t *is_multi, const char *filename);
 
-#endif 
+#endif

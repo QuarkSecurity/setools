@@ -1,18 +1,30 @@
-/* Copyright (C) 2003-2006 Tresys Technology, LLC
- * see file 'COPYING' for use and warranty information */
-
-/*
- * Author: mbrown@tresys.com
- * Date: October 3, 2003
- * Modified 3/26/2004 <don.patterson@tresys.com>
- * Modified 7/20/2004 <jstitz@tresys.com>
+/**
+ *  @file parse.c
+ *  Implementation for the audit log parser.
  *
- * This file contains the implementation of the parse.h
+ *  @author Meggan Whalen mwhalen@tresys.com
+ *  @author Jeremy A. Mowery jmowery@tresys.com
+ *  @author Jason Tang jtang@tresys.com
  *
+ *  Copyright (C) 2003-2006 Tresys Technology, LLC
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "parse.h"
-#include "limits.h"
+#include <seaudit/parse.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -1394,7 +1406,7 @@ static unsigned int get_tokens(char *line, int msgtype, audit_log_t *log, FILE *
 	return ret;
 }
 
-unsigned int parse_audit(FILE *syslog, audit_log_t *log)
+unsigned int audit_log_parse(audit_log_t *log, FILE *syslog)
 {
 	FILE *audit_file = syslog;
 	msg_t *msg = NULL;

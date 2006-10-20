@@ -11,7 +11,7 @@
 
 #include <gtk/gtk.h>
 #include <glade/glade.h>
-#include "auditlog.h"
+#include <seaudit/auditlog.h>
 #include "filtered_view.h"
 
 typedef struct seaudit_window {

@@ -1,20 +1,29 @@
-/* Copyright (C) 2003-2006 Tresys Technology, LLC
- * see file 'COPYING' for use and warranty information */
-
-/*
- * Author: Kevin Carr <kcarr@tresys.com>
- *         Karl MacMillan <kmacmillan@tresys.com>
- *         Jeremy Stitz <jstitz@tresys.com>
+/**
+ *  @file auditlog.c
+ *  Implementation for the main libseaudit object, auditlog_t.
  *
- * Date: October 1, 2003
+ *  @author Jeremy A. Mowery jmowery@tresys.com
+ *  @author Jason Tang jtang@tresys.com
  *
- * This file contains the implementation of message.h
+ *  Copyright (C) 2003-2006 Tresys Technology, LLC
  *
- * auditlog.c
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "auditlog.h"
-#include "filters.h"
+#include <seaudit/auditlog.h>
+#include <seaudit/filters.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -624,8 +633,3 @@ static void avc_msg_print(msg_t *msg, FILE *file)
 		fprintf(file,"saddr=%s ", msg->msg_data.avc_msg->saddr);
 }
 #endif
-
-void msg_print(msg_t *msg, FILE *file)
-{
-	printf("msg_printf() - not implemented.\n");
-}

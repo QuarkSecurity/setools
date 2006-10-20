@@ -10,7 +10,8 @@
  * multifilter.c
  */
 
-#include "multifilter.h"
+#include <seaudit/multifilter.h>
+
 #include <string.h>
 #include <libxml/parser.h>
 #include <libxml/uri.h>

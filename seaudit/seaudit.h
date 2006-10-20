@@ -10,7 +10,7 @@
 #ifndef SEAUDIT_H
 #define SEAUDIT_H
 
-#include "auditlog.h"
+#include <seaudit/auditlog.h>
 #include "auditlogmodel.h"
 #include "seaudit_window.h"
 #include "filter_window.h"

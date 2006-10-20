@@ -1,17 +1,28 @@
-/* Copyright (C) 2004 Tresys Technology, LLC
- * see file 'COPYING' for use and warranty information */
-
-/* 
- * Author: Kevin Carr <kcarr@tresys.com>
- * Date: January 14, 2004
- * 
- * This file contains the data structure definitions for storing
- * audit log views.
+/**
+ *  @file auditlog_model.c
+ *  Implementation of auditlog_model_t.
  *
- * auditlog_view.c
+ *  @author Jeremy A. Mowery jmowery@tresys.com
+ *  @author Jason Tang jtang@tresys.com
+ *
+ *  Copyright (C) 2004-2006 Tresys Technology, LLC
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "auditlog_view.h"
+#include <seaudit/auditlog_view.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -52,8 +63,8 @@ void audit_log_view_set_log(audit_log_view_t *view, audit_log_t *log)
 		audit_log_view_do_filter(view, &deleted, &num_deleted);
 		if(deleted)
 			free(deleted);
-	}	
-	
+	}
+
 }
 
 void audit_log_view_set_multifilter(audit_log_view_t *view, seaudit_multifilter_t *multifilter)
@@ -74,7 +85,7 @@ void audit_log_view_purge_fltr_msgs(audit_log_view_t *view)
 }
 
 /* filter the log into the view */
-int audit_log_view_do_filter(audit_log_view_t *view, int **deleted, int *num_deleted) 
+int audit_log_view_do_filter(audit_log_view_t *view, int **deleted, int *num_deleted)
 {
 	filter_info_t *info;
 	bool_t found, show;

@@ -11,8 +11,8 @@
  * filters.h
  */
 
-#ifndef LIBSEAUDIT_FILTER_H
-#define LIBSEAUDIT_FILTER_H
+#ifndef SEAUDIT_FILTER_H
+#define SEAUDIT_FILTER_H
 
 #include <apol/util.h>
 #include <apol/vector.h>

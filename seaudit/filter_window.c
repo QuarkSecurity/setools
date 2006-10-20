@@ -17,10 +17,9 @@
 #include "filter_window.h"
 #include "seaudit.h"
 #include "utilgui.h"
-#include "filters.h"
 #include "seaudit_callback.h"
-#include "../libseaudit/filters.h"
-#include "../libseaudit/auditlog.h"
+#include <seaudit/filters.h>
+#include <seaudit/auditlog.h>
 #include <apol/policy.h>
 #include <string.h>
 #include <time.h>

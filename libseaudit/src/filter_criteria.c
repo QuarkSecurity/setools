@@ -1,25 +1,38 @@
-/* Copyright (C) 2004 Tresys Technology, LLC
- * see file 'COPYING' for use and warranty information */
-
-/* 
- * Author: Kevin Carr <kcarr@tresys.com> and Karl MacMillan <kmacmillan@tresys.com>
- * Date: February 06, 2004
+/**
+ *  @file audit_filter.c
+ *  Implementation of the audit_filter_t.
  *
- * This file contains the implementation of filter_criteria.h
+ *  @author Jeremy A. Mowery jmowery@tresys.com
+ *  @author Jason Tang jtang@tresys.com
  *
- * filter_criteria.c
+ *  Copyright (C) 2004-2006 Tresys Technology, LLC
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include <config.h>
+
+#include <seaudit/filter_criteria.h>
+#include <seaudit/auditlog.h>
+#include <seaudit/sort.h>
 
 #include <string.h>
 #include <sys/types.h>
 #include <assert.h>
 #include <fnmatch.h>
 #include <libxml/uri.h>
-#include "filter_criteria.h"
-#include "auditlog.h"
-#include "sort.h"
 
 typedef struct strs_criteria {
 	apol_vector_t *strs;
@@ -63,7 +76,7 @@ typedef struct date_time_criteria {
 const char *netif_criteria_get_str(seaudit_criteria_t *criteria)
 {
 	netif_criteria_t *netif_criteria;
-	
+
 	if (!criteria)
 		return NULL;
 	netif_criteria = (netif_criteria_t*)criteria->data;
@@ -73,7 +86,7 @@ const char *netif_criteria_get_str(seaudit_criteria_t *criteria)
 const char *glob_criteria_get_str(seaudit_criteria_t *criteria)
 {
 	glob_criteria_t *glob_criteria;
-	
+
 	if (!criteria)
 		return NULL;
 	glob_criteria = (glob_criteria_t*)criteria->data;
@@ -94,7 +107,7 @@ apol_vector_t *strs_criteria_get_strs(seaudit_criteria_t *criteria)
 int ports_criteria_get_val(seaudit_criteria_t *criteria)
 {
 	ports_criteria_t *ports_criteria;
-	
+
 	if (!criteria)
 		return -1;
 	ports_criteria = (ports_criteria_t*)criteria->data;
@@ -156,7 +169,7 @@ static void date_time_criteria_print(seaudit_criteria_t *criteria, FILE *stream,
 		return;
 
 	dt_criteria = (date_time_criteria_t*)criteria->data;
-	if (tabs < 0) 
+	if (tabs < 0)
 		tabs = 0;
 	for (i = 0; i < tabs; i++)
 		fprintf(stream, "\t");
@@ -186,7 +199,7 @@ static void date_time_criteria_print(seaudit_criteria_t *criteria, FILE *stream,
 int msg_criteria_get_val(seaudit_criteria_t *criteria)
 {
 	msg_criteria_t *msg_criteria;
-	
+
 	if (!criteria)
 		return -1;
 	msg_criteria = (msg_criteria_t*)criteria->data;
@@ -218,7 +231,7 @@ static void netif_criteria_print(seaudit_criteria_t *criteria, FILE *stream, int
 		return;
 
 	netif_criteria = (netif_criteria_t*)criteria->data;
-	if (tabs < 0) 
+	if (tabs < 0)
 		tabs = 0;
 	for (i = 0; i < tabs; i++)
 		fprintf(stream, "\t");
@@ -352,7 +365,7 @@ static void ipaddr_criteria_print(seaudit_criteria_t *criteria, FILE *stream, in
 	if (tabs < 0)
 		tabs = 0;
 	ipaddr_criteria = (ipaddr_criteria_t*)criteria->data;
-	str_xml = xmlCharStrdup(ipaddr_criteria->globex); 
+	str_xml = xmlCharStrdup(ipaddr_criteria->globex);
 	escaped = xmlURIEscapeStr(str_xml, NULL);
 	for (i = 0; i < tabs; i++)
 		fprintf(stream, "\t");
@@ -410,8 +423,8 @@ static void host_criteria_print(seaudit_criteria_t *criteria, FILE *stream, int 
 	free(str_xml);
 }
 
-static bool_t comm_criteria_action(msg_t *msg, seaudit_criteria_t *criteria, audit_log_t *log)  
-{ 
+static bool_t comm_criteria_action(msg_t *msg, seaudit_criteria_t *criteria, audit_log_t *log)
+{
 	comm_criteria_t *comm_criteria;
 
 	if (msg == NULL || criteria == NULL || criteria->data == NULL || !msg->msg_data.avc_msg->comm)
@@ -423,7 +436,7 @@ static bool_t comm_criteria_action(msg_t *msg, seaudit_criteria_t *criteria, aud
 	if (fnmatch(comm_criteria->globex, msg->msg_data.avc_msg->comm, 0) == 0)
 		return TRUE;
 	return FALSE;
-} 
+}
 
 static void comm_criteria_print(seaudit_criteria_t *criteria, FILE *stream, int tabs)
 {
@@ -451,8 +464,8 @@ static void comm_criteria_print(seaudit_criteria_t *criteria, FILE *stream, int 
 	free(str_xml);
 }
 
-static bool_t exe_criteria_action(msg_t *msg, seaudit_criteria_t *criteria, audit_log_t *log)  
-{ 
+static bool_t exe_criteria_action(msg_t *msg, seaudit_criteria_t *criteria, audit_log_t *log)
+{
 	exe_criteria_t *exe_criteria;
 
 	if (msg == NULL || criteria == NULL || criteria->data == NULL || !msg->msg_data.avc_msg->exe)
@@ -464,7 +477,7 @@ static bool_t exe_criteria_action(msg_t *msg, seaudit_criteria_t *criteria, audi
 	if (fnmatch(exe_criteria->globex, msg->msg_data.avc_msg->exe, 0) == 0)
 		return TRUE;
 	return FALSE;
-} 
+}
 
 static void exe_criteria_print(seaudit_criteria_t *criteria, FILE *stream, int tabs)
 {
@@ -492,8 +505,8 @@ static void exe_criteria_print(seaudit_criteria_t *criteria, FILE *stream, int t
 	free(str_xml);
 }
 
-static bool_t path_criteria_action(msg_t *msg, seaudit_criteria_t *criteria, audit_log_t *log)  
-{ 
+static bool_t path_criteria_action(msg_t *msg, seaudit_criteria_t *criteria, audit_log_t *log)
+{
 	path_criteria_t *path_criteria;
 
 	if (msg == NULL || criteria == NULL || criteria->data == NULL || !msg->msg_data.avc_msg->path)
@@ -505,7 +518,7 @@ static bool_t path_criteria_action(msg_t *msg, seaudit_criteria_t *criteria, aud
 	if (fnmatch(path_criteria->globex, msg->msg_data.avc_msg->path, 0) == 0)
 		return TRUE;
 	return FALSE;
-} 
+}
 
 static void path_criteria_print(seaudit_criteria_t *criteria, FILE *stream, int tabs)
 {
@@ -547,10 +560,10 @@ static bool_t src_user_criteria_action(msg_t *msg, seaudit_criteria_t *criteria,
 		return FALSE;
 	user_criteria = (user_criteria_t*)criteria->data;
 	criteria->dirty = FALSE;
-	for (i = 0; i < apol_vector_get_size(user_criteria->strs); i++) { 
+	for (i = 0; i < apol_vector_get_size(user_criteria->strs); i++) {
 		if (!strcmp(apol_vector_get_element(user_criteria->strs,i),user))
-			return TRUE; 
-	} 
+			return TRUE;
+	}
 	return FALSE;
 }
 
@@ -605,10 +618,10 @@ static bool_t tgt_user_criteria_action(msg_t *msg, seaudit_criteria_t *criteria,
 		return FALSE;
 	user_criteria = (user_criteria_t*)criteria->data;
 	criteria->dirty = FALSE;
-	for (i = 0; i < apol_vector_get_size(user_criteria->strs); i++) { 
+	for (i = 0; i < apol_vector_get_size(user_criteria->strs); i++) {
 		if (!strcmp(apol_vector_get_element(user_criteria->strs,i),user))
-			return TRUE; 
-	} 
+			return TRUE;
+	}
 	return FALSE;
 }
 
@@ -632,7 +645,7 @@ static void tgt_user_criteria_print(seaudit_criteria_t *criteria, FILE *stream, 
 
 static bool_t src_role_criteria_action(msg_t *msg, seaudit_criteria_t *criteria, audit_log_t *log)
 {
-	int i; 
+	int i;
 	role_criteria_t *role_criteria;
 	const char *role;
 
@@ -644,10 +657,10 @@ static bool_t src_role_criteria_action(msg_t *msg, seaudit_criteria_t *criteria,
 		return FALSE;
 	role_criteria = (role_criteria_t*)criteria->data;
 	criteria->dirty = FALSE;
-	for (i = 0; i < apol_vector_get_size(role_criteria->strs); i++) { 
+	for (i = 0; i < apol_vector_get_size(role_criteria->strs); i++) {
 		if (!strcmp(apol_vector_get_element(role_criteria->strs,i), role))
-			return TRUE; 
-	} 
+			return TRUE;
+	}
 	return FALSE;
 }
 
@@ -671,7 +684,7 @@ static void src_role_criteria_print(seaudit_criteria_t *criteria, FILE *stream, 
 
 static bool_t tgt_role_criteria_action(msg_t *msg, seaudit_criteria_t *criteria, audit_log_t *log)
 {
-	int i; 
+	int i;
 	role_criteria_t *role_criteria;
 	const char *role;
 
@@ -683,10 +696,10 @@ static bool_t tgt_role_criteria_action(msg_t *msg, seaudit_criteria_t *criteria,
 		return FALSE;
 	role_criteria = (role_criteria_t*)criteria->data;
 	criteria->dirty = FALSE;
-	for (i = 0; i < apol_vector_get_size(role_criteria->strs); i++) { 
+	for (i = 0; i < apol_vector_get_size(role_criteria->strs); i++) {
 		if (!strcmp(apol_vector_get_element(role_criteria->strs,i), role))
-			return TRUE; 
-	} 
+			return TRUE;
+	}
 	return FALSE;
 }
 
@@ -710,7 +723,7 @@ static void tgt_role_criteria_print(seaudit_criteria_t *criteria, FILE *stream, 
 
 static bool_t src_type_criteria_action(msg_t *msg, seaudit_criteria_t *criteria, audit_log_t *log)
 {
-	int i; 
+	int i;
 	type_criteria_t *type_criteria;
 	const char *type;
 
@@ -722,10 +735,10 @@ static bool_t src_type_criteria_action(msg_t *msg, seaudit_criteria_t *criteria,
 		return FALSE;
 	type_criteria = (type_criteria_t*)criteria->data;
 	criteria->dirty = FALSE;
-	for (i = 0; i < apol_vector_get_size(type_criteria->strs); i++) { 
+	for (i = 0; i < apol_vector_get_size(type_criteria->strs); i++) {
 		if (!strcmp(apol_vector_get_element(type_criteria->strs,i), type))
 			return TRUE;
-	} 
+	}
 	return FALSE;
 }
 
@@ -749,7 +762,7 @@ static void src_type_criteria_print(seaudit_criteria_t *criteria, FILE *stream, 
 
 static bool_t tgt_type_criteria_action(msg_t *msg, seaudit_criteria_t *criteria, audit_log_t *log)
 {
-	int i; 
+	int i;
 	type_criteria_t *type_criteria;
 	const char *type;
 
@@ -761,10 +774,10 @@ static bool_t tgt_type_criteria_action(msg_t *msg, seaudit_criteria_t *criteria,
 		return FALSE;
 	type_criteria = (type_criteria_t*)criteria->data;
 	criteria->dirty = FALSE;
-	for (i = 0; i < apol_vector_get_size(type_criteria->strs); i++) { 
+	for (i = 0; i < apol_vector_get_size(type_criteria->strs); i++) {
 		if (!strcmp(apol_vector_get_element(type_criteria->strs,i), type))
 			return TRUE;
-	} 
+	}
 	return FALSE;
 }
 
@@ -786,9 +799,9 @@ static void tgt_type_criteria_print(seaudit_criteria_t *criteria, FILE *stream, 
 	fprintf(stream, "</criteria>\n");
 }
 
-static bool_t class_criteria_action(msg_t *msg, seaudit_criteria_t *criteria, audit_log_t *log) 
-{ 
-	int i; 
+static bool_t class_criteria_action(msg_t *msg, seaudit_criteria_t *criteria, audit_log_t *log)
+{
+	int i;
 	class_criteria_t *class_criteria;
 	const char *class;
 
@@ -800,12 +813,12 @@ static bool_t class_criteria_action(msg_t *msg, seaudit_criteria_t *criteria, au
 		return FALSE;
 	class_criteria = (class_criteria_t*)criteria->data;
 	criteria->dirty = FALSE;
-	for (i = 0; i < apol_vector_get_size(class_criteria->strs); i++) { 
+	for (i = 0; i < apol_vector_get_size(class_criteria->strs); i++) {
 		if (!strcmp(apol_vector_get_element(class_criteria->strs,i), class))
-			return TRUE; 
-	} 
-	return FALSE;	
-} 
+			return TRUE;
+	}
+	return FALSE;
+}
 
 static void class_criteria_print(seaudit_criteria_t *criteria, FILE *stream, int tabs)
 {
@@ -832,7 +845,7 @@ static seaudit_criteria_t* criteria_create(void)
 	seaudit_criteria_t *new;
 
 	new = (seaudit_criteria_t*)malloc(sizeof(seaudit_criteria_t));
-	if (new == NULL) 
+	if (new == NULL)
 		return NULL;
 	memset(new, 0, sizeof(seaudit_criteria_t));
 	return new;
@@ -840,7 +853,7 @@ static seaudit_criteria_t* criteria_create(void)
 
 /*
  * destroy the entire criteria */
-void seaudit_criteria_destroy(seaudit_criteria_t *ftr) 
+void seaudit_criteria_destroy(seaudit_criteria_t *ftr)
 {
 	if (ftr == NULL)
 		return;
@@ -875,7 +888,7 @@ static void strs_criteria_destroy(strs_criteria_t *strs_criteria)
 		}
 		free(strs_criteria->strs);
 	}
-	free(strs_criteria);	
+	free(strs_criteria);
 }
 
 static strs_criteria_t *strs_criteria_create(char **strs, int num_strs)
@@ -894,7 +907,7 @@ static strs_criteria_t *strs_criteria_create(char **strs, int num_strs)
 		goto bad;
 	}
 	for (i = 0; i < num_strs; i++) {
-		if ( apol_vector_append(d->strs, (void **)strdup(strs[i])) < 0 ) 
+		if ( apol_vector_append(d->strs, (void **)strdup(strs[i])) < 0 )
 			goto bad;
 	}
 	/* alloc indexes */
@@ -941,13 +954,13 @@ seaudit_criteria_t* src_type_criteria_create(char **types, int num_types)
 		seaudit_criteria_destroy(new_criteria);
 		return NULL;
 	}
-	
+
 	/* set container variables */
 	new_criteria->msg_types |= AVC_MSG;
-	new_criteria->criteria_act = &src_type_criteria_action; 
+	new_criteria->criteria_act = &src_type_criteria_action;
 	new_criteria->print = &src_type_criteria_print;
-	new_criteria->destroy = &type_criteria_destroy; 
-	new_criteria->data = d; 
+	new_criteria->destroy = &type_criteria_destroy;
+	new_criteria->data = d;
 	new_criteria->dirty = TRUE;
 	return new_criteria;
 }
@@ -965,13 +978,13 @@ seaudit_criteria_t* tgt_type_criteria_create(char **types, int num_types)
 		seaudit_criteria_destroy(new_criteria);
 		return NULL;
 	}
-	
+
 	/* set container variables */
 	new_criteria->msg_types |= AVC_MSG;
-	new_criteria->criteria_act = &tgt_type_criteria_action; 
+	new_criteria->criteria_act = &tgt_type_criteria_action;
 	new_criteria->print = &tgt_type_criteria_print;
-	new_criteria->destroy = &type_criteria_destroy; 
-	new_criteria->data = d; 
+	new_criteria->destroy = &type_criteria_destroy;
+	new_criteria->data = d;
 	new_criteria->dirty = TRUE;
 	return new_criteria;
 }
@@ -1000,13 +1013,13 @@ seaudit_criteria_t* src_role_criteria_create(char **roles, int num_roles)
 		seaudit_criteria_destroy(new_criteria);
 		return NULL;
 	}
-	
+
 	/* set container variables */
 	new_criteria->msg_types |= AVC_MSG;
-	new_criteria->criteria_act = &src_role_criteria_action; 
+	new_criteria->criteria_act = &src_role_criteria_action;
 	new_criteria->print = &src_role_criteria_print;
-	new_criteria->destroy = &role_criteria_destroy; 
-	new_criteria->data = d; 
+	new_criteria->destroy = &role_criteria_destroy;
+	new_criteria->data = d;
 	new_criteria->dirty = TRUE;
 	return new_criteria;
 }
@@ -1024,13 +1037,13 @@ seaudit_criteria_t* tgt_role_criteria_create(char **roles, int num_roles)
 		seaudit_criteria_destroy(new_criteria);
 		return NULL;
 	}
-	
+
 	/* set container variables */
 	new_criteria->msg_types |= AVC_MSG;
-	new_criteria->criteria_act = &tgt_role_criteria_action; 
+	new_criteria->criteria_act = &tgt_role_criteria_action;
 	new_criteria->print = &tgt_role_criteria_print;
-	new_criteria->destroy = &role_criteria_destroy; 
-	new_criteria->data = d; 
+	new_criteria->destroy = &role_criteria_destroy;
+	new_criteria->data = d;
 	new_criteria->dirty = TRUE;
 	return new_criteria;
 }
@@ -1059,13 +1072,13 @@ seaudit_criteria_t* src_user_criteria_create(char **users, int num_users)
 		seaudit_criteria_destroy(new_criteria);
 		return NULL;
 	}
-	
+
 	/* set container variables */
 	new_criteria->msg_types |= AVC_MSG;
-	new_criteria->criteria_act = &src_user_criteria_action; 
+	new_criteria->criteria_act = &src_user_criteria_action;
 	new_criteria->print = &src_user_criteria_print;
-	new_criteria->destroy = &user_criteria_destroy; 
-	new_criteria->data = d; 
+	new_criteria->destroy = &user_criteria_destroy;
+	new_criteria->data = d;
 	new_criteria->dirty = TRUE;
 	return new_criteria;
 }
@@ -1083,13 +1096,13 @@ seaudit_criteria_t* tgt_user_criteria_create(char **users, int num_users)
 		seaudit_criteria_destroy(new_criteria);
 		return NULL;
 	}
-	
+
 	/* set container variables */
 	new_criteria->msg_types |= AVC_MSG;
-	new_criteria->criteria_act = &tgt_user_criteria_action; 
+	new_criteria->criteria_act = &tgt_user_criteria_action;
 	new_criteria->print = &tgt_user_criteria_print;
-	new_criteria->destroy = &user_criteria_destroy; 
-	new_criteria->data = d; 
+	new_criteria->destroy = &user_criteria_destroy;
+	new_criteria->data = d;
 	new_criteria->dirty = TRUE;
 	return new_criteria;
 }
@@ -1119,13 +1132,13 @@ seaudit_criteria_t* class_criteria_create(char **classes, int num_classes)
 		seaudit_criteria_destroy(new_criteria);
 		return NULL;
 	}
-	
+
 	/* set container variables */
 	new_criteria->msg_types |= AVC_MSG;
-	new_criteria->criteria_act = &class_criteria_action; 
+	new_criteria->criteria_act = &class_criteria_action;
 	new_criteria->print = &class_criteria_print;
-	new_criteria->destroy = &class_criteria_destroy; 
-	new_criteria->data = d; 
+	new_criteria->destroy = &class_criteria_destroy;
+	new_criteria->data = d;
 	new_criteria->dirty = TRUE;
 	return new_criteria;
 }
@@ -1154,12 +1167,12 @@ seaudit_criteria_t* comm_criteria_create(const char* comm)
 	int i;
 
 	d = (comm_criteria_t*)malloc(sizeof(comm_criteria_t));
-	if (d == NULL) 
+	if (d == NULL)
 		goto bad;
 	memset(d, 0, sizeof(comm_criteria_t));
 	i = strlen(comm);
 	d->globex = (char*)malloc(sizeof(char) * (i+1));
-	if (d->globex == NULL) 
+	if (d->globex == NULL)
 		goto bad;
 	new = criteria_create();
 	if (new == NULL) {
@@ -1167,10 +1180,10 @@ seaudit_criteria_t* comm_criteria_create(const char* comm)
 	}
 	/* set container variables */
 	new->msg_types |= AVC_MSG;
-	new->criteria_act = &comm_criteria_action; 
+	new->criteria_act = &comm_criteria_action;
 	new->print = &comm_criteria_print;
-	new->destroy = &comm_criteria_destroy; 
-	new->data = d; 
+	new->destroy = &comm_criteria_destroy;
+	new->data = d;
 	/* set criteria variables */
 	strcpy(d->globex, comm);
 	return new;
@@ -1208,12 +1221,12 @@ seaudit_criteria_t* exe_criteria_create(const char* exe)
 	int i;
 
 	d = (exe_criteria_t*)malloc(sizeof(exe_criteria_t));
-	if (d == NULL) 
+	if (d == NULL)
 		goto bad;
 	memset(d, 0, sizeof(exe_criteria_t));
 	i = strlen(exe);
 	d->globex = (char*)malloc(sizeof(char) * (i+1));
-	if (d->globex == NULL) 
+	if (d->globex == NULL)
 		goto bad;
 	new = criteria_create();
 	if (new == NULL) {
@@ -1221,10 +1234,10 @@ seaudit_criteria_t* exe_criteria_create(const char* exe)
 	}
 	/* set container variables */
 	new->msg_types |= AVC_MSG;
-	new->criteria_act = &exe_criteria_action; 
+	new->criteria_act = &exe_criteria_action;
 	new->print = &exe_criteria_print;
-	new->destroy = &exe_criteria_destroy; 
-	new->data = d; 
+	new->destroy = &exe_criteria_destroy;
+	new->data = d;
 	/* set criteria variables */
 	strcpy(d->globex, exe);
 	return new;
@@ -1238,7 +1251,7 @@ bad:
 	return NULL;
 }
 
-static void netif_criteria_destroy(seaudit_criteria_t *ftr) 
+static void netif_criteria_destroy(seaudit_criteria_t *ftr)
 {
 	netif_criteria_t *d;
 	if (ftr == NULL)
@@ -1258,12 +1271,12 @@ seaudit_criteria_t* netif_criteria_create(const char *netif)
 	netif_criteria_t *d;
 	int i;
 	d = (netif_criteria_t*)malloc(sizeof(netif_criteria_t));
-	if (d == NULL) 
+	if (d == NULL)
 		goto bad;
 	memset(d, 0, sizeof(netif_criteria_t));
 	i = strlen(netif);
 	d->netif = (char*)malloc(sizeof(char) * (i+1));
-	if (d->netif == NULL) 
+	if (d->netif == NULL)
 		goto bad;
 	new = criteria_create();
 	if (new == NULL) {
@@ -1271,10 +1284,10 @@ seaudit_criteria_t* netif_criteria_create(const char *netif)
 	}
 	/* set container variables */
 	new->msg_types |= AVC_MSG;
-	new->criteria_act = &netif_criteria_action; 
+	new->criteria_act = &netif_criteria_action;
 	new->print = &netif_criteria_print;
 	new->destroy = &netif_criteria_destroy;
-	new->data = d; 
+	new->data = d;
 	/* set criteria variables */
 	strcpy(d->netif, netif);
 	return new;
@@ -1308,12 +1321,12 @@ seaudit_criteria_t* ipaddr_criteria_create(const char *ipaddr)
 	ipaddr_criteria_t *d;
 	int i;
 	d = (ipaddr_criteria_t*)malloc(sizeof(ipaddr_criteria_t));
-	if (d == NULL) 
+	if (d == NULL)
 		goto bad;
 	memset(d, 0, sizeof(ipaddr_criteria_t));
 	i = strlen(ipaddr);
 	d->globex = (char*)malloc(sizeof(char) * (i+1));
-	if (d->globex == NULL) 
+	if (d->globex == NULL)
 		goto bad;
 	new = criteria_create();
 	if (new == NULL) {
@@ -1321,10 +1334,10 @@ seaudit_criteria_t* ipaddr_criteria_create(const char *ipaddr)
 	}
 	/* set container variables */
 	new->msg_types |= AVC_MSG;
-	new->criteria_act = &ipaddr_criteria_action; 
+	new->criteria_act = &ipaddr_criteria_action;
 	new->print = &ipaddr_criteria_print;
-	new->destroy = &ipaddr_criteria_destroy; 
-	new->data = d; 
+	new->destroy = &ipaddr_criteria_destroy;
+	new->data = d;
 	/* set criteria variables */
 	strcpy(d->globex, ipaddr);
 	return new;
@@ -1348,7 +1361,7 @@ static void host_criteria_destroy(seaudit_criteria_t *ftr)
 		return;
 	if (d->globex != NULL)
 		free(d->globex);
-	free(d);	
+	free(d);
 }
 
 seaudit_criteria_t* host_criteria_create(const char *hostname)
@@ -1357,12 +1370,12 @@ seaudit_criteria_t* host_criteria_create(const char *hostname)
 	host_criteria_t *d;
 	int i;
 	d = (host_criteria_t*)malloc(sizeof(host_criteria_t));
-	if (d == NULL) 
+	if (d == NULL)
 		goto bad;
 	memset(d, 0, sizeof(host_criteria_t));
 	i = strlen(hostname);
 	d->globex = (char*)malloc(sizeof(char) * (i+1));
-	if (d->globex == NULL) 
+	if (d->globex == NULL)
 		goto bad;
 	new = criteria_create();
 	if (new == NULL) {
@@ -1370,10 +1383,10 @@ seaudit_criteria_t* host_criteria_create(const char *hostname)
 	}
 	/* set container variables */
 	new->msg_types |= AVC_MSG | LOAD_POLICY_MSG | BOOLEAN_MSG;
-	new->criteria_act = &host_criteria_action; 
+	new->criteria_act = &host_criteria_action;
 	new->print = &host_criteria_print;
-	new->destroy = &host_criteria_destroy; 
-	new->data = d; 
+	new->destroy = &host_criteria_destroy;
+	new->data = d;
 	/* set criteria variables */
 	strcpy(d->globex, hostname);
 	return new;
@@ -1414,17 +1427,17 @@ seaudit_criteria_t* path_criteria_create(const char *path)
 	memset(d, 0, sizeof(path_criteria_t));
 	i = strlen(path);
 	d->globex = (char*)malloc(sizeof(char) * (i+1));
-	if (d->globex == NULL) 
+	if (d->globex == NULL)
 		goto bad;
 	new = criteria_create();
-	if (new == NULL) 
+	if (new == NULL)
 		goto bad;
 	/* set container variables */
 	new->msg_types |= AVC_MSG;
-	new->criteria_act = &path_criteria_action; 
+	new->criteria_act = &path_criteria_action;
 	new->print = &path_criteria_print;
-	new->destroy = &path_criteria_destroy; 
-	new->data = d; 
+	new->destroy = &path_criteria_destroy;
+	new->data = d;
 	/* set criteria variables */
 	strcpy(d->globex, path);
 	return new;
@@ -1463,10 +1476,10 @@ seaudit_criteria_t* ports_criteria_create(int port)
 		goto bad;
 	/* set container variables */
 	new->msg_types |= AVC_MSG;
-	new->criteria_act = &ports_criteria_action; 
+	new->criteria_act = &ports_criteria_action;
 	new->print = &ports_criteria_print;
-	new->destroy = &ports_criteria_destroy; 
-	new->data = d; 
+	new->destroy = &ports_criteria_destroy;
+	new->data = d;
 	/* set criteria variables */
 	d->val = port;
 	return new;
@@ -1507,7 +1520,7 @@ static void date_time_criteria_destroy(seaudit_criteria_t *ftr)
 	return;
 }
 
-/* 
+/*
  *  Create a date/time filter with the given start time, end time, and matching
  *  option.
  */
@@ -1515,7 +1528,7 @@ seaudit_criteria_t* date_time_criteria_create(struct tm *start, struct tm *end, 
 {
 	seaudit_criteria_t *rt = NULL;
 	date_time_criteria_t *d = NULL;
-	
+
 	if (option != FILTER_CRITERIA_DT_OPTION_BETWEEN &&
 		option != FILTER_CRITERIA_DT_OPTION_AFTER &&
 		option != FILTER_CRITERIA_DT_OPTION_BEFORE)
@@ -1573,10 +1586,10 @@ seaudit_criteria_t* msg_criteria_create(int msg)
 		goto bad;
 	/* set container variables */
 	new->msg_types |= AVC_MSG;
-	new->criteria_act = &msg_criteria_action; 
+	new->criteria_act = &msg_criteria_action;
 	new->print = &msg_criteria_print;
-	new->destroy = &msg_criteria_destroy; 
-	new->data = d; 
+	new->destroy = &msg_criteria_destroy;
+	new->data = d;
 	/* set criteria variables */
 	d->val = msg;
 	return new;
@@ -1587,4 +1600,3 @@ bad:
 	}
 	return NULL;
 }
-

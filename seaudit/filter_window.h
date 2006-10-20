@@ -16,7 +16,7 @@
 
 #include "auditlogmodel.h"
 #include "multifilter_window.h"
-#include "../libseaudit/filters.h"
+#include <seaudit/filters.h>
 #include <glib.h>
 #include <gtk/gtk.h>
 #include <glade/glade.h>

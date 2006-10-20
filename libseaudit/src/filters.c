@@ -10,7 +10,7 @@
  * filters.c
  */
 
-#include "filters.h"
+#include <seaudit/filters.h>
 #include <string.h>
 #include <libxml/uri.h>
 

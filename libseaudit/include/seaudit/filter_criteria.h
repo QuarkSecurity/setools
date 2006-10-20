@@ -1,18 +1,30 @@
-/* Copyright (C) 2004 Tresys Technology, LLC
- * see file 'COPYING' for use and warranty information */
-
-/* 
- * Author: Kevin Carr <kcarr@tresys.com> and Karl MacMillan <kmacmillan@tresys.com>
- * Date: February 06, 2004
- * 
- * This file contains the data structure definitions for storing
- * filter criterias.
+/**
+ *  @file audit_filter.h
+ *  Public interface to audit_filter_t.  This is an abstract class that
+ *  defines a filter, used to select messages for an audit_model_t.
  *
- * filter_criteria.h
+ *  @author Jeremy A. Mowery jmowery@tresys.com
+ *  @author Jason Tang jtang@tresys.com
+ *
+ *  Copyright (C) 2004-2006 Tresys Technology, LLC
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBSEAUDIT_CRITERIA_H
-#define LIBSEAUDIT_CRITERIA_H
+#ifndef SEAUDIT_AUDIT_FILTER_H
+#define SEAUDIT_AUDIT_FILTER_H
 
 #include <time.h>
 #include "auditlog.h"
@@ -21,13 +33,13 @@ struct seaudit_criteria;
 /* callback type for printing criteria */
 typedef void (*seaudit_criteria_print_t)(struct seaudit_criteria *criteria, FILE *stream, int tabs);
 /* callback type for criteria */
-typedef bool_t(*seaudit_criteria_action_t)(msg_t *msg, struct seaudit_criteria *criteria, audit_log_t *log); 
+typedef bool_t(*seaudit_criteria_action_t)(msg_t *msg, struct seaudit_criteria *criteria, audit_log_t *log);
 /* callback type for criteria cleanup */
 typedef void (*seaudit_criteria_destroy_t)(struct seaudit_criteria *criteria);
 
 /*
  * generic criteria structure */
-typedef struct seaudit_criteria {  
+typedef struct seaudit_criteria {
 	unsigned int msg_types;                 /* message types for the criteria */
 	seaudit_criteria_action_t criteria_act; /* function to perform the criteria matching */
 	seaudit_criteria_print_t print;

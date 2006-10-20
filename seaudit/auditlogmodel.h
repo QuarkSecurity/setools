@@ -12,7 +12,7 @@
 
 #include <gtk/gtktreemodel.h>
 #include <gtk/gtktreesortable.h>
-#include "auditlog_view.h"
+#include <seaudit/auditlog_view.h>
 #include <apol/util.h>
 
 #define SEAUDIT_TYPE_LOG_VIEW_STORE	       (seaudit_log_view_store_get_type())

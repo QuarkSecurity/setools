@@ -1,21 +1,58 @@
-/* Copyright (C) 2003-2006 Tresys Technology, LLC
- * see file 'COPYING' for use and warranty information */
-
-/*
- * Author: Kevin Carr kcarr@tresys.com
- *         Karl MacMillan <kmacmillan@tresys.com>
- *         Jeremy Stitz <jstitz@tresys.com>
+/**
+ *  @file auditlog.h
+ *  Public interface for the main libseaudit object, seaudit_log_t.
  *
- * Date: October 1, 2003
+ *  @author Jeremy A. Mowery jmowery@tresys.com
+ *  @author Jason Tang jtang@tresys.com
  *
- * This file contains the data structure definitions for storing
- * audit logs.
+ *  Copyright (C) 2003-2006 Tresys Technology, LLC
  *
- * auditlog.h
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBAUDIT_AUDITLOG_H
-#define LIBAUDIT_AUDITLOG_H
+#ifndef SEAUDIT_LOG_H
+#define SEAUDIT_LOG_H
+
+typedef struct seaudit_log_t;
+typedef void (*seaudit_handle_fn_t)(void *arg, audit_log_t *a, int level, const char *fmt, va_list va_args);
+
+/**
+ * Allocate and initialize a new seaudit log structure.  This
+ * structure holds log messages from one or more audit files.
+ *
+ * @param fn Function to be called by the error handler.  If NULL
+ * then write messages to standard error.
+ * @param callback_arg Argument for the callback.
+ *
+ * @return A newly allocated and initialized difference structure or
+ * NULL on error; if the call fails, errno will be set.
+ * The caller is responsible for calling seaudit_log_destroy() to free
+ * memory used by this structure.
+ */
+extern seaudit_log_t *seaudit_log_create(seaudit_handle_fn_t fn,
+					 void *callback_arg);
+
+/**
+ * Free all memory used by an seaudit log structure and set it to
+ * NULL.
+ *
+ * @param log Reference pointer to the log structure to destroy.  This
+ * pointer will be set to NULL. (If already NULL, function is a
+ * no-op.)
+ */
+extern void seaudit_log_destroy(seaudit_log_t **log);
 
 #include <config.h>
 #include <time.h>
@@ -23,11 +60,6 @@
 #include <apol/policy.h>
 #include <apol/vector.h>
 #include <errno.h>
-
-/* The following should be defined in the make environment */
-#ifndef LIBSEAUDIT_VERSION_STRING
-	#define LIBSEAUDIT_VERSION_STRING "UNKNOWN"
-#endif
 
 /* define the types of logs that we understand here, this will
    be assigned to the logtype of the audit_log_t */

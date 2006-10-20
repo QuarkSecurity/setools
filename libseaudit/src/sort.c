@@ -5,7 +5,7 @@
  * Author: Karl MacMillan <kmacmillan@tresys.com>
  */
 
-#include "sort.h"
+#include <seaudit/sort.h>
 
 #include <assert.h>
 #include <stdlib.h>

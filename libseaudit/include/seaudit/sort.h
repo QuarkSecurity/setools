@@ -5,8 +5,8 @@
  * Author: Karl MacMillan <kmacmillan@tresys.com>
  */
 
-#ifndef LIBAUDIT_SORT_H
-#define LIBAUDIT_SORT_H
+#ifndef SEAUDIT_SORT_H
+#define SEAUDIT_SORT_H
 
 #include "auditlog_view.h"
 

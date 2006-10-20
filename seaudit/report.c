@@ -16,8 +16,7 @@
 /* report generation back-end header */
 #include "report.h"
 
-/* libapol and libseaudit headers */
-#include "../libseaudit/parse.h"
+#include <seaudit/parse.h>
 #include <apol/util.h>
 #include <apol/vector.h>
 
@@ -1579,7 +1578,7 @@ int seaudit_report_load_audit_messages_from_log_file(seaudit_report_t *seaudit_r
 	/* If specified STDIN, then parse STDIN, otherwise we will parse each logfile */
 	/* Add a flag to parse_audit function in libseaudit to hold onto malformed strings. */
 	if (seaudit_report->stdin) {
-		rt |= parse_audit(stdin, seaudit_report->log);
+		rt |= audit_log_parse(seaudit_report->log, stdin);
 		if (rt & PARSE_RET_MEMORY_ERROR) {
 			fprintf(stderr, "Memory error while parsing the log!\n");
 				return -1;
@@ -1596,7 +1595,7 @@ int seaudit_report_load_audit_messages_from_log_file(seaudit_report_t *seaudit_r
 				return -1;
 			}
 
-			rt |= parse_audit(tmp_file, seaudit_report->log);
+			rt |= audit_log_parse(seaudit_report->log, tmp_file);
 			if (rt & PARSE_RET_MEMORY_ERROR) {
 				fprintf(stderr, "Memory error while parsing the log!\n");
 				fclose(tmp_file);

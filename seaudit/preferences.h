@@ -9,7 +9,7 @@
 
 #include <gtk/gtk.h>
 #include <glade/glade.h>
-#include "auditlog.h"
+#include <seaudit/auditlog.h>
 
 #ifndef SEAUDIT_PREFERENCES_H
 #define SEAUDIT_PREFERENCES_H
@@ -24,7 +24,7 @@ typedef struct seaudit_conf {
 	int num_recent_policy_files;
 	char *default_policy_file;
 	char *default_log_file;
-  	bool_t column_visibility[NUM_FIELDS];
+	bool_t column_visibility[NUM_FIELDS];
 	bool_t real_time_log;
 	int real_time_interval;
 	char *default_seaudit_report_config_file;

@@ -11,8 +11,8 @@
 #include <config.h>
 
 #include "seaudit.h"
-#include "parse.h"
-#include "auditlog.h"
+#include <seaudit/parse.h>
+#include <seaudit/auditlog.h>
 #include "auditlogmodel.h"
 #include "query_window.h"
 #include "filter_window.h"
@@ -313,7 +313,7 @@ int seaudit_open_log_file(seaudit_t *seaudit, const char *filename)
 	}
 
 	new_log = audit_log_create();
-	rt |= parse_audit(tmp_file, new_log);
+	rt |= audit_log_parse(new_log, tmp_file);
 	if (rt & PARSE_RET_MEMORY_ERROR) {
 		message_display(seaudit->window->window,
 				GTK_MESSAGE_ERROR,
@@ -1374,7 +1374,7 @@ static gboolean seaudit_real_time_update_log(gpointer callback_data)
 	if (!seaudit_app->log_file_ptr)
 		return TRUE;
 
-	rt |= parse_audit(seaudit_app->log_file_ptr, seaudit_app->cur_log);
+	rt |= audit_log_parse(seaudit_app->cur_log, seaudit_app->log_file_ptr);
 	if (rt & PARSE_RET_NO_SELINUX_ERROR)
 		return TRUE;
 	seaudit_window_filter_views(seaudit_app->window);
