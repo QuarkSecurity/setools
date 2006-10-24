@@ -1,6 +1,6 @@
 /**
- *  @file auditlog.c
- *  Implementation for the main libseaudit object, auditlog_t.
+ *  @file log.c
+ *  Implementation for the main libseaudit object, seaudit_log_t.
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
@@ -22,13 +22,99 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <seaudit/auditlog.h>
-#include <seaudit/filters.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
+#include "seaudit_internal.h"
 
+#include <apol/util.h>
+
+#include <errno.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+seaudit_log_t *seaudit_log_create(seaudit_handle_fn_t fn, void *callback_arg)
+{
+	seaudit_log_t *log = NULL;
+	int error;
+	if ((log = calloc(1, sizeof(*log))) == NULL) {
+		ERR(NULL, "%s", strerror(EINVAL));
+		errno = EINVAL;
+		return NULL;
+	}
+	log->fn = fn;
+	log->handle_arg = callback_arg;
+	if ((log->messages = apol_vector_create()) == NULL ||
+	    (log->types = apol_bst_create(apol_str_strcmp)) == NULL ||
+	    (log->classes = apol_bst_create(apol_str_strcmp)) == NULL ||
+	    (log->roles = apol_bst_create(apol_str_strcmp)) == NULL ||
+	    (log->users = apol_bst_create(apol_str_strcmp)) == NULL ||
+	    (log->perms = apol_bst_create(apol_str_strcmp)) == NULL ||
+	    (log->hosts = apol_bst_create(apol_str_strcmp)) == NULL ||
+	    (log->bools = apol_bst_create(apol_str_strcmp)) == NULL) {
+		error = errno;
+		ERR(log, "%s", strerror(error));
+		seaudit_log_destroy(&log);
+		errno = error;
+		return NULL;
+	}
+	return log;
+}
+
+void seaudit_log_destroy(seaudit_log_t **log) {
+	if (log == NULL || *log == NULL) {
+		return;
+	}
+	apol_vector_destroy(&(*log)->messages, message_free);
+	apol_bst_destroy(&(*log)->types, free);
+	apol_bst_destroy(&(*log)->classes, free);
+	apol_bst_destroy(&(*log)->roles, free);
+	apol_bst_destroy(&(*log)->users, free);
+	apol_bst_destroy(&(*log)->perms, free);
+	apol_bst_destroy(&(*log)->hosts, free);
+	apol_bst_destroy(&(*log)->bools, free);
+	free(*log);
+	*log = NULL;
+}
+
+static void seaudit_handle_default_callback(void *arg __attribute__((unused)),
+					    seaudit_log_t *log __attribute__ ((unused)),
+					    int level,
+					    const char *fmt,
+					    va_list va_args)
+{
+	switch (level) {
+	case SEAUDIT_MSG_INFO: {
+		/* by default do not display these messages */
+                return;
+	}
+	case SEAUDIT_MSG_WARN: {
+		fprintf(stderr, "WARNING: ");
+		break;
+	}
+	case SEAUDIT_MSG_ERR:
+	default: {
+		fprintf(stderr, "ERROR: ");
+		break;
+	}
+	}
+	vfprintf(stderr, fmt, va_args);
+	fprintf(stderr, "\n");
+}
+
+void seaudit_handle_msg(seaudit_log_t *log, int level, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	if (log == NULL || log->fn == NULL) {
+		seaudit_handle_default_callback(NULL, NULL, level, fmt, ap);
+	}
+	else {
+		log->fn(log->handle_arg, log, level, fmt, ap);
+	}
+	va_end(ap);
+}
+
+#if 0
 const char *audit_log_field_strs[] = { "msg_field",
 				       "exe_field",
 				       "path_field",
@@ -600,7 +686,6 @@ enum avc_msg_class_t which_avc_msg_class(msg_t *msg)
 	return AVC_AUDIT_DATA_NO_VALUE;
 }
 
-#if 0
 static void avc_msg_print(msg_t *msg, FILE *file)
 {
 	avc_msg_t *d = msg->msg_data.avc_msg;

@@ -1,4 +1,5 @@
 {
-
-        local: *;
+	global:
+		libseaudit_get_version;
+	local: *;
 };

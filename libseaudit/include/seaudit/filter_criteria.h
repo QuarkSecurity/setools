@@ -27,7 +27,7 @@
 #define SEAUDIT_AUDIT_FILTER_H
 
 #include <time.h>
-#include "auditlog.h"
+#include "log.h"
 
 struct seaudit_criteria;
 /* callback type for printing criteria */

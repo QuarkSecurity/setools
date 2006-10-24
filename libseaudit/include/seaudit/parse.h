@@ -26,8 +26,10 @@
 #ifndef SEAUDIT_PARSE_H
 #define SEAUDIT_PARSE_H
 
-#include "auditlog.h"
+#include "log.h"
+#include <stdio.h>
 
+#if 0
 #define	PARSE_RET_SUCCESS		0x00000001	/* success, no warnings nor errors */
 #define PARSE_RET_MEMORY_ERROR		0x00000002	/* general error */
 #define PARSE_RET_EOF_ERROR	0x00000004	/* file was eof */
@@ -41,6 +43,7 @@
 #define PARSE_NO_SELINUX_ERROR_MSG "No SELinux messages found in log!"
 #define PARSE_SUCCESS_MSG "Parse success!"
 #define PARSE_INVALID_MSG_WARN_MSG "Warning! One or more invalid messages found in audit log.  See help file for more information."
+#endif
 
 /**
  * Parse the file specified by syslog and puts all selinux audit
@@ -50,8 +53,8 @@
  * @param log Audit log to which append messages.
  * @param syslog Handler to a file containing audit messages.
  *
- * @return 0 on success, < 0 on error.
+ * @return 0 on success, < 0 on error and errno will be set.
  */
-unsigned int audit_log_parse(audit_log_t *log, FILE *syslog);
+extern int seaudit_log_parse(seaudit_log_t *log, FILE *syslog);
 
 #endif

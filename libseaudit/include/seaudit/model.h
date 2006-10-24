@@ -1,8 +1,9 @@
 /**
- *  @file auditlog_model.h
- *  Public interface to an auditlog_model_t.  This represents a subset
- *  of log messages from an auditlog_t, where the subset is defined by
- *  a finite set of auditlog_filters and sorted by some criterion.
+ *  @file model.h
+ *  Public interface to a seaudit_model_t.  This represents a subset
+ *  of log messages from a seaudit_model_t, where the subset is
+ *  defined by a finite set of seaudit_filters and sorted by some
+ *  criterion.
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
@@ -24,12 +25,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "auditlog.h"
+#ifndef SEAUDIT_MODEL_H
+#define SEAUDIT_MODEL_H
+
+#include "log.h"
+#include "message.h"
+
 #include "multifilter.h"
 #include "sort.h"
-
-#ifndef SEAUDIT_AUDITLOG_MODEL_H
-#define SEAUDIT_AUDITLOG_MODEL_H
 
 typedef struct filter_info {
 	int orig_indx;

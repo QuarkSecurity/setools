@@ -1,5 +1,5 @@
 /**
- *  @file auditlog.h
+ *  @file log.h
  *  Public interface for the main libseaudit object, seaudit_log_t.
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com
@@ -25,8 +25,10 @@
 #ifndef SEAUDIT_LOG_H
 #define SEAUDIT_LOG_H
 
-typedef struct seaudit_log_t;
-typedef void (*seaudit_handle_fn_t)(void *arg, audit_log_t *a, int level, const char *fmt, va_list va_args);
+#include <stdarg.h>
+
+typedef struct seaudit_log seaudit_log_t;
+typedef void (*seaudit_handle_fn_t)(void *arg, seaudit_log_t *log, int level, const char *fmt, va_list va_args);
 
 /**
  * Allocate and initialize a new seaudit log structure.  This
@@ -54,17 +56,23 @@ extern seaudit_log_t *seaudit_log_create(seaudit_handle_fn_t fn,
  */
 extern void seaudit_log_destroy(seaudit_log_t **log);
 
+/**
+ * Define the types of logs that this library can parse.
+ */
+typedef enum seaudit_log_type {
+	SEAUDIT_LOG_TYPE_INVALID = 0,
+	SEAUDIT_LOG_TYPE_SYSLOG,
+	SEAUDIT_LOG_TYPE_AUDITD
+} seaudit_log_type_e;
+
+#if 0
+
 #include <config.h>
 #include <time.h>
 #include <apol/util.h>
 #include <apol/policy.h>
 #include <apol/vector.h>
 #include <errno.h>
-
-/* define the types of logs that we understand here, this will
-   be assigned to the logtype of the audit_log_t */
-#define AUDITLOG_SYSLOG 0
-#define AUDITLOG_AUDITD 1
 
 /*
  * msg_type_t defines the different types of audit messages this library will
@@ -142,12 +150,12 @@ extern const char *audit_log_field_strs[NUM_FIELDS];
 int audit_log_field_strs_get_index(const char *str);
 
 enum avc_msg_class_t {
-	AVC_AUDIT_DATA_NO_VALUE,
+	AVC_AUDIT_DATA_INVALID = 0,
+	AVC_AUDIT_DATA_MALFORMED,
 	AVC_AUDIT_DATA_IPC,
-	AVC_AUDIT_DATA_CAP,
+	AVC_AUDIT_DATA_CAP,  /* capability */
 	AVC_AUDIT_DATA_FS,
 	AVC_AUDIT_DATA_NET,
-	AVC_AUDIT_DATA_MALFORMED
 };
 /*
  * avc_msg contains all fields unique to an AVC message.
@@ -201,44 +209,6 @@ typedef struct avc_msg {
 	bool_t is_inode;
 } avc_msg_t;
 
-/*
- * load_policy_msg contains all fields unique to the loaded policy message.
- */
-typedef struct load_policy_msg {
-	unsigned int users;   /* number of users */
-	unsigned int roles;   /* number of roles */
-	unsigned int types;   /* number of types */
-	unsigned int classes; /* number of classes */
-	unsigned int rules;   /* number of rules */
-	unsigned int bools;   /* number of bools */
-	char *binary;         /* path for binary that was loaded */
-} load_policy_msg_t;
-
-
-/*
- * boolean_msg contains all fields unique to a conditional boolean message.
- */
-typedef struct boolean_msg {
-        int num_bools;    /* number of booleans */
-        int *booleans;    /* ordered array of ints refering to boolean name */
-        bool_t *values;      /* ordered array 0 or 1 depending on boolean value */
-} boolean_msg_t;
-
-
-/*
- * msg_t is the type for all audit log messages.  It will contain either
- * avc_msg_t OR load_policy_msg_t OR boolean_msg_t.
- */
-typedef struct msg {
-	struct tm *date_stamp; /* audit message datestamp */
-	unsigned int msg_type; /* audit message type..AVC_MSG, LOAD_POLICY_MSG or BOOLEAN_MSG */
-	int host;              /* key for the hostname that generated the message */
-	union {
-		avc_msg_t *avc_msg;                 /* if msg_type = AVC_MSG */
-		load_policy_msg_t *load_policy_msg; /* if msg_type = LOAD_POLICY_MSG */
-	        boolean_msg_t *boolean_msg;         /* if msg_type = BOOLEAN_MSG */
-	} msg_data;
-} msg_t;
 
 /*
  * strs_t is a type for storing dynamically allocated arrays of strings.
@@ -325,5 +295,7 @@ enum avc_msg_class_t which_avc_msg_class(msg_t *msg);
 #define audit_log_get_bool(log, idx) audit_log_get_str(log, idx, BOOL_VECTOR)
 
 const char* libseaudit_get_version(void);
+
+#endif
 
 #endif
