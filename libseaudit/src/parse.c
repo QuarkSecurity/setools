@@ -103,7 +103,7 @@ static int get_line(seaudit_log_t *log, FILE *audit_file, char **dest)
 /**
  * Given a line from an audit log, create and return a vector of
  * tokens from that line.  The caller is responsible for calling
- * apol_vector_destroy() upon that vector, passing free as the second
+ * apol_vector_destroy() upon that vector, passing NULL as the second
  * parameter.  Note that this function will modify the passed in line.
  */
 static int get_tokens(seaudit_log_t *log, char *line, apol_vector_t **tokens)
@@ -1340,7 +1340,7 @@ static int load_parse(seaudit_log_t *log, apol_vector_t *tokens)
 int seaudit_log_parse(seaudit_log_t *log, FILE *syslog)
 {
 	FILE *audit_file = syslog;
-	char *line = NULL;
+	char *line = NULL, *line_dup = NULL;
 	seaudit_message_t *prev_message;
 	seaudit_message_type_e is_sel, prev_message_type;
 	apol_vector_t *tokens = NULL;
@@ -1366,6 +1366,9 @@ int seaudit_log_parse(seaudit_log_t *log, FILE *syslog)
 
 	while (1) {
 		free(line);
+		line = NULL;
+		free(line_dup);
+		line_dup = NULL;
 		apol_vector_destroy(&tokens, NULL);
 		if (get_line(log, audit_file, &line) < 0) {
 			error = errno;
@@ -1400,6 +1403,11 @@ int seaudit_log_parse(seaudit_log_t *log, FILE *syslog)
 			continue;
 		}
 
+		if ((line_dup = strdup(line)) == NULL) {
+			error = errno;
+			ERR(log, "%s", strerror(error));
+			goto cleanup;
+		}
 		if (get_tokens(log, line, &tokens) < 0) {
 			error = errno;
 			ERR(log, "%s", strerror(error));
@@ -1428,13 +1436,21 @@ int seaudit_log_parse(seaudit_log_t *log, FILE *syslog)
 			goto cleanup;
 		}
 		else if (retval2 > 0) {
+			if (apol_vector_append(log->malformed_msgs, line_dup) < 0) {
+				error = errno;
+				ERR(log, "%s", strerror(error));
+				goto cleanup;
+			}
+			line_dup = NULL;
 			has_warnings = 1;
 		}
 	}
 
         retval = 0;
  cleanup:
+	log_recalc_stats(log);
 	free(line);
+	free(line_dup);
 	apol_vector_destroy(&tokens, NULL);
         if (retval < 0) {
                 errno = error;

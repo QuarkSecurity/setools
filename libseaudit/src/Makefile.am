@@ -10,19 +10,20 @@ AM_LDFLAGS = @DEBUGLDFLAGS@ @WARNLDFLAGS@ @PROFILELDFLAGS@
 libseaudit_a_SOURCES = \
 	avc_message.c \
 	bool_message.c \
-	filters.c \
-	filter_criteria.c \
 	load_message.c \
 	log.c \
 	message.c \
 	model.c \
-	multifilter.c \
 	parse.c \
-	sort.c \
+	report.c \
 	util.c \
 	seaudit_internal.h
 
-libseaudit_a_SOURCES = avc_message.c bool_message.c load_message.c message.c log.c parse.c util.c seaudit_internal.h
+#	filters.c \
+#	filter_criteria.c \
+#	multifilter.c \
+#	sort.c \
+#
 
 libseaudit_a_DEPENDENCIES = $(top_builddir)/libapol/src/libapol.so
 

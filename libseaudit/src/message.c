@@ -121,3 +121,21 @@ void message_free(void *msg)
 		free(m);
 	}
 }
+
+struct tm *seaudit_message_get_time(seaudit_message_t *msg)
+{
+	if (!msg) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return msg->date_stamp;
+}
+
+char *seaudit_message_get_host(seaudit_message_t *msg)
+{
+	if (!msg) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return msg->host;
+}

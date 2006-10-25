@@ -1,48 +1,601 @@
-/* Copyright (C) 2004-2006 Tresys Technology, LLC
- * see file 'COPYING' for use and warranty information
+/**
+ *  @file parse.c
+ *  Implementation of seaudit report generator.
  *
- * Author: Don Patterson <don.patterson@tresys.com>
- * Date: December 3, 2004
+ *  @author Jeremy A. Mowery jmowery@tresys.com
+ *  @author Jason Tang jtang@tresys.com
+ *
+ *  Copyright (C) 2004-2006 Tresys Technology, LLC
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* This is the interface for processing SELinux audit logs and/or seaudit views
- * to generate concise reports containing standard information as well as
- * customized information using seaudit views. Reports are rendered in either
- * HTML or plain text. Future support will provide rendering into XML. The
- * HTML report can be formatted by providing an alternate stylesheet file
- * or by configuring the default stylesheet.
- */
+#include "seaudit_internal.h"
 
-/* report generation back-end header */
-#include "report.h"
+#include <seaudit/report.h>
 
-#include <seaudit/parse.h>
 #include <apol/util.h>
-#include <apol/vector.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <limits.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-
 #include <libxml/xmlreader.h>
 
-#define DATE_STR_SIZE 256
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-static int find_int_in_array(int i, const int *a, int a_sz)
+#define CONFIG_FILE "seaudit-report.conf"
+#define STYLESHEET_FILE "seaudit-report.css"
+#define LINE_MAX 1024
+
+struct seaudit_report {
+	/** output format for the report */
+	seaudit_report_format_e format;
+	/** name of output file */
+	char *out_file;
+	/** path to configuration file, or NULL to use system configuration */
+	char *config;
+	/** path to HTML stylesheet, or NULL to use system stylesheet */
+	char *stylesheet;
+	/** if non-zero, then use a stylesheet when generating HTML reports */
+	int use_stylesheet;
+	/** if non-zero, then print malformed messages */
+	int malformed;
+	/** model from which messages will be obtained */
+	seaudit_model_t *model;
+};
+
+static const char *seaudit_report_node_names[] = {
+	"seaudit-report",
+	"standard-section",
+	"custom-section",
+	"view",
+	NULL
+};
+
+static const char *seaudit_standard_section_names[] = {
+	"PolicyLoads",
+	"EnforcementToggles",
+	"PolicyBooleans",
+	"Statistics",
+	"AllowListing",
+	"DenyListing",
+	NULL
+};
+
+seaudit_report_t *seaudit_report_create(seaudit_model_t *model, const char *out_file)
 {
-        int j;
-        if(a == NULL  || a_sz < 1)
-                return -1;
-        for(j = 0; j < a_sz; j++) {
-                if(a[j] == i)
-                        return j;
+        seaudit_report_t *r = calloc(1, sizeof(*r));
+        if (r == NULL) {
+                return NULL;
         }
-        return -1;
+        if (out_file != NULL && (r->out_file = strdup(out_file)) == NULL) {
+                int error = errno;
+                seaudit_report_destroy(&r);
+                errno = error;
+                return NULL;
+        }
+        r->model = model;
+        return r;
 }
+
+void seaudit_report_destroy(seaudit_report_t **report)
+{
+	if (report == NULL || *report == NULL) {
+		return;
+	}
+	free((*report)->out_file);
+	free(*report);
+	*report = NULL;
+}
+
+
+int seaudit_report_set_format(seaudit_report_t *report, seaudit_report_format_e format)
+{
+	if (report == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+        report->format = format;
+	return 0;
+}
+
+/**
+ * Set the report's configuration file to the default system file.
+ */
+static int report_set_default_configuration(seaudit_log_t *log, seaudit_report_t *report) {
+	char *config_dir = apol_file_find(CONFIG_FILE);
+	int error;
+
+	if (config_dir == NULL) {
+		error = errno;
+		ERR(log, "%s", "Could not find default configuration file.");
+		errno = error;
+		return -1;
+	}
+	if (asprintf(&report->config, "%s/%s", config_dir, CONFIG_FILE) < 0) {
+		error = errno;
+		report->config = NULL;
+		free(config_dir);
+		ERR(log, "%s", strerror(error));
+		errno = error;
+		return -1;
+	}
+	free(config_dir);
+
+	/* check if can read the file */
+	if (access(report->config, R_OK) != 0) {
+		error = errno;
+		ERR(log, "Could not read default config file %s.",
+		    report->config);
+		errno = error;
+		return -1;
+	}
+	return 0;
+}
+
+int seaudit_report_set_configuration(seaudit_log_t *log, seaudit_report_t *report, const char *file)
+{
+	if (report == NULL) {
+		ERR(log, "%s", strerror(EINVAL));
+		errno = EINVAL;
+		return -1;
+	}
+	free(report->config);
+	report->config = NULL;
+	if (file == NULL) {
+		return report_set_default_configuration(log, report);
+	}
+	else {
+		if ((report->config = strdup(file)) == NULL) {
+			int error = errno;
+			ERR(log, "%s", strerror(error));
+			errno = error;
+			return -1;
+		}
+		return 0;
+	}
+}
+
+/**
+ * Set the report's stylesheet to the default system stylesheet.
+ */
+static int report_set_default_stylesheet(seaudit_log_t *log, seaudit_report_t *report) {
+	char *dir = apol_file_find(STYLESHEET_FILE);
+	int error;
+	if (dir == NULL) {
+		error = errno;
+		ERR(log, "%s", "Could not find default stylesheet.");
+		errno = error;
+		return -1;
+	}
+
+	if (asprintf(&report->stylesheet, "%s/%s", dir, STYLESHEET_FILE) < 0) {
+		error = errno;
+		report->stylesheet = NULL;
+		free(dir);
+		ERR(log, "%s", strerror(error));
+		errno = error;
+		return -1;
+	}
+	free(dir);
+
+	return 0;
+}
+
+int seaudit_report_set_stylesheet(seaudit_log_t *log, seaudit_report_t *report, const char *file, const int use_stylesheet)
+{
+	if (report == NULL) {
+		ERR(log, "%s", strerror(EINVAL));
+		errno = EINVAL;
+		return -1;
+	}
+	free(report->stylesheet);
+	report->stylesheet = NULL;
+        report->use_stylesheet = use_stylesheet;
+	if (file == NULL) {
+		return report_set_default_stylesheet(log, report);
+	}
+	else {
+		if ((report->stylesheet = strdup(file)) == NULL) {
+			return -1;
+			int error = errno;
+			ERR(log, "%s", strerror(error));
+			errno = error;
+			return -1;
+		}
+		return 0;
+	}
+}
+
+/**
+ * Insert the contents of the stylesheet into the output file.  If it
+ * is not readable then generate a warning.  This is not an error
+ * because the stylesheet is not strictly necessary.
+ */
+static int report_import_html_stylesheet(seaudit_log_t *log, seaudit_report_t *report, FILE *outfile) {
+	char line[LINE_MAX], *line_ptr = NULL;
+	FILE *fp;
+
+	if (report->use_stylesheet) {
+		fp = fopen(report->stylesheet, "r");
+		if (fp == NULL) {
+			WARN(log, "Cannot open stylesheet file %s.", report->stylesheet);
+			return 1;
+		}
+		fprintf(outfile, "<style type=\"text/css\">\n");
+
+		while(fgets(line, LINE_MAX, fp) != NULL) {
+			free(line_ptr);
+			line_ptr = NULL;
+			if ((line_ptr = strdup(line)) == NULL ||
+			    apol_str_trim(&line_ptr) < 0) {
+				int error = errno;
+				free(line_ptr);
+				fclose(fp);
+				ERR(log, "%s", strerror(error));
+				errno = error;
+				return -1;
+			}
+			if (line_ptr[0] == '#' || apol_str_is_only_white_space(line_ptr))
+				continue;
+			fprintf(outfile, "%s\n", line_ptr);
+		}
+		fprintf(outfile, "</style>\n");
+		fclose(fp);
+		free(line_ptr);
+	}
+	return 0;
+}
+
+static int report_print_header(seaudit_log_t *log, seaudit_report_t *report, FILE *outfile) {
+	time_t ltime;
+
+	time(&ltime);
+	if (report->format == SEAUDIT_REPORT_FORMAT_HTML) {
+		fprintf(outfile, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">\n");
+		fprintf(outfile, "<html>\n<head>\n");
+		if (report_import_html_stylesheet(log, report, outfile) < 0) {
+			return -1;
+		}
+		fprintf(outfile, "<title>seaudit-report</title>\n</head>\n");
+		fprintf(outfile, "<body>\n");
+		fprintf(outfile, "<b class=\"report_date\"># Report generated by seaudit-report on %s</b><br>\n", ctime(&ltime));
+	}
+        else {
+		fprintf(outfile, "# Begin\n\n");
+		fprintf(outfile, "# Report generated by seaudit-report on %s\n", ctime(&ltime));
+	}
+	return 0;
+}
+
+static int report_print_footer(seaudit_report_t *report, FILE *outfile) {
+	if (report->format == SEAUDIT_REPORT_FORMAT_HTML) {
+		fprintf(outfile, "</body>\n</html>\n");
+	} else {
+		fprintf(outfile, "# End\n");
+	}
+	return 0;
+}
+
+static int seaudit_report_is_valid_node_name(const char *name)
+{
+	size_t i;
+	for (i = 0; seaudit_report_node_names[i] != NULL; i++)
+		if (strcmp(seaudit_report_node_names[i], name) == 0)
+			return 1;
+	return 0;
+}
+
+static int seaudit_report_is_valid_section_name(const char *name)
+{
+	size_t i;
+	for (i = 0; seaudit_standard_section_names[i] != NULL; i++)
+		if (strcmp(seaudit_standard_section_names[i], name) == 0)
+			return 1;
+	return 0;
+}
+
+static int report_parse_seaudit_report(seaudit_log_t *log, seaudit_report_t *report,
+                                       xmlTextReaderPtr reader,
+                                       xmlChar **id_value, xmlChar **title_value)
+{
+	int rt, error;
+	xmlChar *name = NULL;
+
+	if (xmlTextReaderNodeType(reader) == 1 &&
+	    xmlTextReaderAttributeCount(reader) > 0) {
+		/* Parse attributes */
+		rt = xmlTextReaderMoveToNextAttribute(reader);
+		while (rt > 0) {
+			name = xmlTextReaderName(reader);
+			if (name == NULL) {
+				error = errno;
+				ERR(log, "%s", "Attribute name unavailable.");
+				errno = error;
+				return -1;
+			}
+			if (strcmp((char *)name, "title") == 0) {
+				*title_value = xmlTextReaderValue(reader);
+			}
+
+			xmlFree(name);
+			rt = xmlTextReaderMoveToNextAttribute(reader);
+		}
+		if (rt < 0) {
+			error = errno;
+			ERR(log, "%s", "Error parsing attribute for seaudit-report node.");
+			errno = error;
+			return -1;
+		}
+	}
+	return 0;
+}
+
+static int report_parse_standard_attribs(seaudit_log_t *log, seaudit_report_t *report,
+					 xmlTextReaderPtr reader,
+					 xmlChar **id_value, xmlChar **title_value)
+{
+	int rt, error;
+	xmlChar *name = NULL;
+
+	if (xmlTextReaderNodeType(reader) == 1 &&
+	    xmlTextReaderAttributeCount(reader) > 0) {
+		/* Parse attributes */
+		rt = xmlTextReaderMoveToNextAttribute(reader);
+		while (rt > 0) {
+			name = xmlTextReaderName(reader);
+			if (name == NULL) {
+				error = errno;
+				ERR(log, "%s", "Attribute name unavailable.");
+				errno = error;
+				return -1;
+			}
+			if (strcmp((char *)name, "id") == 0) {
+				*id_value = xmlTextReaderValue(reader);
+			} else if (strcmp((char *)name, "title") == 0) {
+				*title_value = xmlTextReaderValue(reader);
+			}
+			xmlFree(name);
+			rt = xmlTextReaderMoveToNextAttribute(reader);
+		}
+		if (rt < 0) {
+			error = errno;
+			ERR(log, "%s", "Error parsing attribute for standard-section node.");
+			errno = error;
+			return -1;
+		}
+	}
+	return 0;
+}
+
+static int report_parse_custom_attribs(seaudit_log_t *log, seaudit_report_t *report,
+				       xmlTextReaderPtr reader,
+				       xmlChar **title_value) {
+	int rt, error;
+	xmlChar *name = NULL;
+
+	if (xmlTextReaderNodeType(reader) == 1 &&
+	    xmlTextReaderAttributeCount(reader) > 0) {
+		/* Parse attributes */
+		rt = xmlTextReaderMoveToNextAttribute(reader);
+		while (rt > 0) {
+			name = xmlTextReaderName(reader);
+			if (name == NULL) {
+				error = errno;
+				ERR(log, "%s", "Attribute name unavailable.");
+				errno = error;
+				return -1;
+			}
+			if (strcmp((char *)name, "title") == 0) {
+				*title_value = xmlTextReaderValue(reader);
+			}
+
+			xmlFree(name);
+			rt = xmlTextReaderMoveToNextAttribute(reader);
+		}
+		if (rt < 0) {
+			error = errno;
+			ERR(log, "%s", "Error parsing attribute for custom-section node.");
+			errno = error;
+			return -1;
+		}
+	}
+	return 0;
+}
+
+static int report_print_standard_section(seaudit_log_t *log, seaudit_report_t *_report,
+					 xmlChar *id,
+					 xmlChar *title, FILE *outfile)
+{
+	return -1;
+}
+
+static int report_print_custom_section(seaudit_log_t *log, seaudit_report_t *report,
+				       xmlTextReaderPtr reader,
+				       xmlChar *title,
+				       FILE *outfile)
+{
+	return -1;
+}
+
+static int report_process_xmlNode(seaudit_log_t *log, seaudit_report_t *report,
+				  xmlTextReaderPtr reader, FILE *outfile) {
+	xmlChar *name = NULL, *id_attr = NULL, *title_attr = NULL;
+	int retval = -1, error;
+
+	if ((name = xmlTextReaderName(reader)) == NULL) {
+		error = errno;
+		ERR(log, "%s", "Unavailable node name.");
+		goto cleanup;
+	}
+
+	if (!seaudit_report_is_valid_node_name((char *)name)) {
+		retval = 0;
+		goto cleanup;
+	}
+
+	if (strcmp((char *)name, "seaudit-report") == 0 &&
+	    xmlTextReaderNodeType(reader) == 1) {
+		if (report_parse_seaudit_report(log, report, reader,
+						&id_attr, &title_attr) < 0) {
+			error = errno;
+			goto cleanup;
+		}
+		if (report->format == SEAUDIT_REPORT_FORMAT_HTML) {
+			fprintf(outfile, "<h1 class=\"report_title\">Title: %s</h1>\n", title_attr);
+		} else {
+			fprintf(outfile, "Title: %s\n", title_attr);
+		}
+	} else if (strcmp((char *)name, "standard-section") == 0 &&
+		   xmlTextReaderNodeType(reader) == 1) {
+		if (report_parse_standard_attribs(log, report, reader,
+						  &id_attr, &title_attr) < 0) {
+			error = errno;
+			goto cleanup;
+		}
+		if (id_attr == NULL) {
+			ERR(log, "%s", "Missing required id attribute for standard section node.");
+			error = EIO;
+			goto cleanup;
+		}
+		/* NOTE: If a title wasn't provided, we still continue. */
+		if (report_print_standard_section(log, report,
+						  id_attr, title_attr,
+						  outfile) < 0) {
+			error = errno;
+			goto cleanup;
+		}
+	} else if (strcmp((char *)name, "custom-section") == 0 &&
+		   xmlTextReaderNodeType(reader) == 1) {
+		if (report_parse_custom_attribs(log, report, reader,
+						&title_attr) < 0) {
+			error = errno;
+			goto cleanup;
+		}
+		/* NOTE: If a title wasn't provided, we still continue. */
+		if (report_print_custom_section(log, report, reader,
+						title_attr, outfile) < 0) {
+			error = errno;
+			goto cleanup;
+		}
+	}
+
+	retval = 0;
+ cleanup:
+	xmlFree(name);
+	xmlFree(id_attr);
+	xmlFree(title_attr);
+	if (retval < 0) {
+		errno = error;
+	}
+	return retval;
+}
+
+static int report_print_malformed(seaudit_log_t *log, seaudit_report_t *report, FILE *outfile)
+{
+	size_t i, len;
+	apol_vector_t *v = seaudit_model_get_malformed_messages(log, report->model);
+        if (v == NULL) {
+                return -1;
+        }
+	if (report->format == SEAUDIT_REPORT_FORMAT_HTML) {
+		fprintf(outfile, "<b><u>Malformed messages</b></u>\n");
+		fprintf(outfile, "<br>\n<br>\n");
+	} else {
+		fprintf(outfile, "Malformed messages\n");
+		len = strlen("Malformed messages\n");
+		for (i = 0; i < len; i++) {
+			fprintf(outfile, "-");
+		}
+		fprintf(outfile, "\n");
+	}
+	for (i = 0; i < apol_vector_get_size(v); i++) {
+		char *malformed_msg;
+		malformed_msg = apol_vector_get_element(v, i);
+		if (report->format == SEAUDIT_REPORT_FORMAT_HTML)
+			fprintf(outfile, "%s<br>\n", malformed_msg);
+		else
+			fprintf(outfile, "%s\n", malformed_msg);
+	}
+	fprintf(outfile, "\n");
+	return 0;
+}
+
+int seaudit_report_write(seaudit_log_t *log, seaudit_report_t *report) {
+	xmlTextReaderPtr reader;
+	FILE *outfile = NULL;
+	int rt, retval = -1, error = 0;
+
+	/* Set/Open the output stream */
+	if (report->out_file == NULL) {
+		outfile = stdout;
+	} else {
+		if ((outfile = fopen(report->out_file, "w+")) == NULL) {
+			error = errno;
+			ERR(log, "Could not open %s for writing.", report->out_file);
+			goto cleanup;
+		}
+	}
+
+	/* Print report header */
+	if (report_print_header(log, report, outfile) < 0) {
+		error = errno;
+		goto cleanup;
+	}
+
+	/* Parse the xml config file and output report */
+	reader = xmlNewTextReaderFilename(report->config);
+	if (reader == NULL) {
+		error = errno;
+		ERR(log, "Unable to open config file (%s).", report->config);
+		goto cleanup;
+	}
+	rt = xmlTextReaderRead(reader);
+	while (rt == 1) {
+		report_process_xmlNode(log, report, reader, outfile);
+		rt = xmlTextReaderRead(reader);
+	}
+	error = errno;
+	xmlFreeTextReader(reader);
+	if (rt != 0) {
+		ERR(log, "Failed to parse config file %s.", report->config);
+		goto cleanup;
+	}
+	if (report->malformed &&
+	    report_print_malformed(log, report, outfile) < 0) {
+		error = errno;
+		goto cleanup;
+	}
+	report_print_footer(report, outfile);
+
+	retval = 0;
+ cleanup:
+	if (outfile != NULL) {
+		fclose(outfile);
+	}
+	if (retval < 0) {
+		errno = error;
+	}
+	return retval;
+}
+
+
+#if 0
+
+
+#define DATE_STR_SIZE 256
 
 static int int_compare(const void *aptr, const void *bptr)
 {
@@ -59,44 +612,6 @@ static int int_compare(const void *aptr, const void *bptr)
         return 0;
 }
 
-
-/* seaudit_report valid node names */
-const char *seaudit_report_node_names[] = { "seaudit-report",
-					    "standard-section",
-					    "custom-section",
-					    "view",
-					    NULL };
-
-const char *seaudit_standard_section_names[] = { "PolicyLoads",
-						 "EnforcementToggles",
-						 "PolicyBooleans",
-						 "Statistics",
-						 "AllowListing",
-						 "DenyListing",
-						 NULL };
-
-/* Helper functions */
-static bool_t seaudit_report_is_valid_node_name(const char *name)
-{
-	int i;
-
-	assert(name != NULL);
-	for (i = 0; seaudit_report_node_names[i] != NULL; i++)
-		if (strcmp(seaudit_report_node_names[i], name) == 0)
-			return TRUE;
-	return FALSE;
-}
-
-static bool_t seaudit_report_is_valid_section_name(const char *name)
-{
-	int i;
-
-	assert(name != NULL);
-	for (i = 0; seaudit_standard_section_names[i] != NULL; i++)
-		if (strcmp(seaudit_standard_section_names[i], name) == 0)
-			return TRUE;
-	return FALSE;
-}
 
 static int seaudit_report_load_saved_view(seaudit_report_t *seaudit_report,
 					  xmlChar *view_filePath,
@@ -338,69 +853,6 @@ static int seaudit_report_print_view_results(seaudit_report_t *seaudit_report,
 			fprintf(outfile, "\n\n");
 	}
 
-	return 0;
-}
-
-static int seaudit_report_import_html_stylesheet(seaudit_report_t *seaudit_report, FILE *outfile) {
-	char line[LINE_MAX], *line_ptr = NULL;
-	FILE *fp;
-
-	assert(outfile != NULL);
-	if (seaudit_report->use_stylesheet && seaudit_report->stylesheet_file != NULL) {
-		fprintf(outfile, "<style type=\"text/css\">\n");
-		fp = fopen(seaudit_report->stylesheet_file, "r");
-		if (fp == NULL) {
-			fprintf(stderr, "Cannot open stylesheet file %s", seaudit_report->stylesheet_file);
-			return -1;
-		}
-
-		while(fgets(line, LINE_MAX, fp) != NULL) {
-			line_ptr = &line[0];
-			if (apol_str_trim(&line_ptr) != 0) {
-				fclose(fp);
-				return -1;
-			}
-			if (line_ptr[0] == '#' || apol_str_is_only_white_space(line_ptr))
-				continue;
-			fprintf(outfile, "%s\n", line_ptr);
-		}
-		fclose(fp);
-		fprintf(outfile, "</style>\n");
-	}
-
-	return 0;
-}
-
-static int seaudit_report_print_header(seaudit_report_t *seaudit_report, FILE *outfile) {
-	time_t ltime;
-	int rt;
-
-	time(&ltime);
-	if (seaudit_report->html) {
-		fprintf(outfile, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">\n");
-		fprintf(outfile, "<html>\n<head>\n");
-		rt = seaudit_report_import_html_stylesheet(seaudit_report, outfile);
-		if (rt != 0) {
-			return -1;
-		}
-		fprintf(outfile, "<title>seaudit-report</title>\n</head>\n");
-		fprintf(outfile, "<body>\n");
-		rt = fprintf(outfile, "<b class=\"report_date\"># Report generated by seaudit-report on %s</b><br>\n", ctime(&ltime));
-	} else {
-		fprintf(outfile, "# Begin\n\n");
-		rt = fprintf(outfile, "# Report generated by seaudit-report on %s\n", ctime(&ltime));
-	}
-	if (rt < 0)
-		return -1;
-	return 0;
-}
-
-static int seaudit_report_print_footer(seaudit_report_t *seaudit_report, FILE *outfile) {
-	if (seaudit_report->html) {
-		fprintf(outfile, "</body>\n</html>\n");
-	} else {
-		fprintf(outfile, "# End\n");
-	}
 	return 0;
 }
 
@@ -1336,238 +1788,8 @@ err:
 	return -1;
 }
 
-static void seaudit_report_print_malformed_msgs(seaudit_report_t *seaudit_report, FILE *outfile) {
-	int i, len;
-
-	assert(outfile != NULL);
-	if (seaudit_report->log_view != NULL)
-		return;
-	if (seaudit_report->html) {
-		fprintf(outfile, "<b><u>Malformed messages</b></u>\n");
-		fprintf(outfile, "<br>\n<br>\n");
-	} else {
-		fprintf(outfile, "Malformed messages\n");
-		len = strlen("Malformed messages\n");
-		for (i = 0; i < len; i++) {
-			fprintf(outfile, "-");
-		}
-		fprintf(outfile, "\n");
-	}
-	if (apol_vector_get_size((seaudit_report->log)->malformed_msgs)) {
-		for (i = 0; i < apol_vector_get_size((seaudit_report->log)->malformed_msgs); i++) {
-			char *malformed_msg;
-			malformed_msg = apol_vector_get_element((seaudit_report->log)->malformed_msgs, i);
-			if (seaudit_report->html)
-				fprintf(outfile, "%s<br>\n", malformed_msg);
-			else
-				fprintf(outfile, "%s\n", malformed_msg);
-		}
-	}
-	fprintf(outfile, "\n");
-}
 
 
-static int seaudit_report_parse_seaudit_report_node(seaudit_report_t *seaudit_report,
-						    xmlTextReaderPtr reader,
-						    xmlChar **id_value,
-						    xmlChar **title_value) {
-	int rt;
-	xmlChar *name = NULL;
-
-	assert(id_value != NULL && title_value != NULL);
-	if (xmlTextReaderNodeType(reader) == 1 && xmlTextReaderAttributeCount(reader) > 0) {
-		/* Parse attributes */
-		rt = xmlTextReaderMoveToNextAttribute(reader);
-	        while (rt) {
-		name = xmlTextReaderName(reader);
-			if (name == NULL) {
-				fprintf(stderr, "Attribute name unavailable\n");
-				return -1;
-			}
-			if (strcmp((char *)name, "title") == 0) {
-				*title_value = xmlTextReaderValue(reader);
-			}
-
-			xmlFree(name);
-			rt = xmlTextReaderMoveToNextAttribute(reader);
-		}
-		if (rt < 0) {
-			fprintf(stderr, "Error parsing attribute for seaudit-report node.\n");
-		}
-	}
-	return 0;
-}
-
-static int seaudit_report_parse_standard_section_attributes(seaudit_report_t *seaudit_report,
-							    xmlTextReaderPtr reader,
-							    xmlChar **id_value,
-							    xmlChar **title_value) {
-	int rt;
-	xmlChar *name = NULL;
-
-	assert(id_value != NULL && title_value != NULL);
-	if (xmlTextReaderNodeType(reader) == 1 && xmlTextReaderAttributeCount(reader) > 0) {
-		/* Parse attributes */
-		rt = xmlTextReaderMoveToNextAttribute(reader);
-	        while (rt) {
-		name = xmlTextReaderName(reader);
-			if (name == NULL) {
-				fprintf(stderr, "Attribute name unavailable\n");
-				return -1;
-			}
-			if (strcmp((char *)name, "id") == 0) {
-				*id_value = xmlTextReaderValue(reader);
-			} else if (strcmp((char *)name, "title") == 0) {
-				*title_value = xmlTextReaderValue(reader);
-			}
-
-			xmlFree(name);
-			rt = xmlTextReaderMoveToNextAttribute(reader);
-		}
-		if (rt < 0) {
-			fprintf(stderr, "Error parsing attribute for standard-section node.\n");
-		}
-	}
-	return 0;
-}
-
-static int seaudit_report_parse_custom_section_attributes(seaudit_report_t *seaudit_report,
-							  xmlTextReaderPtr reader,
-							  xmlChar **title_value) {
-	int rt;
-	xmlChar *name = NULL;
-
-	assert(title_value != NULL);
-	if (xmlTextReaderNodeType(reader) == 1 && xmlTextReaderAttributeCount(reader) > 0) {
-		/* Parse attributes */
-		rt = xmlTextReaderMoveToNextAttribute(reader);
-	        while (rt) {
-		name = xmlTextReaderName(reader);
-			if (name == NULL) {
-				fprintf(stderr, "Attribute name unavailable\n");
-				return -1;
-			}
-			if (strcmp((char *)name, "title") == 0) {
-				*title_value = xmlTextReaderValue(reader);
-			}
-
-			xmlFree(name);
-			rt = xmlTextReaderMoveToNextAttribute(reader);
-		}
-		if (rt < 0) {
-			fprintf(stderr, "Error parsing attribute for standard-section node.\n");
-		}
-	}
-	return 0;
-}
-
-/* Processes each node in the tree */
-static int seaudit_report_process_xmlNode(seaudit_report_t *seaudit_report, xmlTextReaderPtr reader, FILE *outfile) {
-	xmlChar *name = NULL;
-	xmlChar *id_attr = NULL, *title_attr = NULL;
-	int rt;
-
-	name = xmlTextReaderName(reader);
-	if (name == NULL) {
-		fprintf(stderr, "Unavailable node name\n");
-		return -1;
-	}
-
-	if (seaudit_report_is_valid_node_name((char *)name)) {
-		if (strcmp((char *)name, "seaudit-report") == 0 && xmlTextReaderNodeType(reader) == 1) {
-			rt = seaudit_report_parse_seaudit_report_node(seaudit_report, reader,
-								      &id_attr, &title_attr);
-			if (rt != 0)
-				goto err;
-			if (seaudit_report->html) {
-				fprintf(outfile, "<h1 class=\"report_title\">Title: %s</h1>\n", title_attr);
-			} else {
-				fprintf(outfile, "Title: %s\n", title_attr);
-			}
-		} else if (strcmp((char *)name, "standard-section") == 0 && xmlTextReaderNodeType(reader) == 1) {
-			rt = seaudit_report_parse_standard_section_attributes(seaudit_report, reader,
-								              &id_attr, &title_attr);
-			if (rt != 0)
-				goto err;
-			if (id_attr == NULL) {
-				fprintf(stderr, "Missing required id attribute for standard section node.\n");
-				goto err;
-			}
-			/* NOTE: If a title wasn't provided, we still continue. */
-			rt = seaudit_report_print_standard_section(seaudit_report,
-										    id_attr,
-										    title_attr,
-										    outfile);
-			if (rt != 0)
-				goto err;
-		} else if (strcmp((char *)name, "custom-section") == 0 && xmlTextReaderNodeType(reader) == 1) {
-			rt = seaudit_report_parse_custom_section_attributes(seaudit_report, reader, &title_attr);
-			if (rt != 0)
-				goto err;
-			/* NOTE: If a title wasn't provided, we still continue. */
-			rt = seaudit_report_print_custom_section(seaudit_report,
-										  reader,
-										  title_attr,
-										  outfile);
-			if (rt != 0)
-				goto err;
-
-		}
-	}
-	xmlFree(name);
-	xmlFree(id_attr);
-	xmlFree(title_attr);
-
-	return 0;
-err:
-	if (name) xmlFree(name);
-	if (id_attr) xmlFree(id_attr);
-	if (title_attr) xmlFree(title_attr);
-	return -1;
-}
-
-static int seaudit_report_add_file_path(const char *str, char **copy_ptr) {
-	int len;
-
-	if (str == NULL)
-		return 0;
-
-	assert(copy_ptr != NULL);
-	len = strlen(str);
-	if (len > PATH_MAX) {
-		fprintf(stderr, "Invalid string length for file.\n");
-		return -1;
-	}
-	/* Do not need to check if file exists. Will be created if it doesn't exist. */
-	*copy_ptr = malloc((len * sizeof(char)) + 1);
-	if (*copy_ptr == NULL) {
-		fprintf(stderr, "Out of memory.\n");
-		return -1;
-	}
-	strncpy(*copy_ptr, str, len + 1);
-	(*copy_ptr)[len] = '\0';
-
-	return 0;
-}
-
-int seaudit_report_add_logfile_to_list(seaudit_report_t *seaudit_report, const char *file)
-{
-	assert(seaudit_report != NULL);
-
-	seaudit_report->logfiles =
-	    realloc(seaudit_report->logfiles, (sizeof(char *) * (seaudit_report->num_logfiles + 1)));
-	if (!seaudit_report->logfiles)
-		goto err;
-	if ((seaudit_report->logfiles[seaudit_report->num_logfiles] = strdup(file)) == NULL)
-		goto err;
-	seaudit_report->num_logfiles++;
-	return 0;
-
-err:
-	fprintf(stderr, "Error: Out of memory\n");
-	return -1;
-
-}
 
 int seaudit_report_load_audit_messages_from_log_file(seaudit_report_t *seaudit_report) {
 	int i;
@@ -1612,180 +1834,4 @@ int seaudit_report_load_audit_messages_from_log_file(seaudit_report_t *seaudit_r
 	return 0;
 }
 
-int seaudit_report_search_dflt_config_file(seaudit_report_t *seaudit_report) {
-	int len;
-	char *configFile_dir = NULL;
-
-	assert(seaudit_report != NULL);
-	if (seaudit_report->configPath == NULL) {
-		configFile_dir = apol_file_find(CONFIG_FILE);
-		if (configFile_dir == NULL) {
-			fprintf(stderr, "Could not find default config file.\n");
-			return -1;
-		}
-		len = strlen(configFile_dir) + strlen(CONFIG_FILE) + 2;
-		seaudit_report->configPath = (char *)malloc(len * sizeof(char));
-		if (seaudit_report->configPath == NULL) {
-			free(configFile_dir);
-			fprintf(stderr, "out of memory");
-			return -1;
-		}
-		snprintf(seaudit_report->configPath, len, "%s/%s", configFile_dir, CONFIG_FILE);
-		free(configFile_dir);
-		assert(seaudit_report->configPath != NULL);
-
-		/* Here we must check to see if we can read the file, or the application cannot continue. */
-		if (access(seaudit_report->configPath, R_OK) != 0) {
-			fprintf(stderr, "Could not read system default config file (%s).\n",
-				seaudit_report->configPath);
-			return -1;
-		}
-	}
-
-	return 0;
-}
-
-int seaudit_report_search_dflt_stylesheet(seaudit_report_t *seaudit_report) {
-	int len;
-	char *dir = NULL;
-
-	assert(seaudit_report != NULL);
-	if (seaudit_report->stylesheet_file == NULL) {
-		dir = apol_file_find(STYLESHEET_FILE);
-		if (dir == NULL) {
-			fprintf(stderr, "Could not find default stylesheet.\n");
-			return -1;
-		}
-		len = strlen(dir) + strlen(STYLESHEET_FILE) + 2;
-		seaudit_report->stylesheet_file = (char *)malloc(len * sizeof(char));
-		if (seaudit_report->stylesheet_file == NULL) {
-			free(dir);
-			fprintf(stderr, "out of memory");
-			return -1;
-		}
-		snprintf(seaudit_report->stylesheet_file, len, "%s/%s", dir, STYLESHEET_FILE);
-		free(dir);
-		assert(seaudit_report->stylesheet_file != NULL);
-		/* Here we do not return an error if we cannot read the file, b/c a stylesheet is not necessary.
-		 * We simply output a message to the user. */
-		if (access(seaudit_report->configPath, R_OK) != 0) {
-			fprintf(stderr, "Could not read system default style sheet (%s)...continuing.\n",
-				seaudit_report->configPath);
-		}
-	}
-
-	return 0;
-}
-
-int seaudit_report_add_outFile_path(const char *file, seaudit_report_t *seaudit_report)
-{
-	return (seaudit_report_add_file_path(file, &seaudit_report->outFile));
-}
-
-int seaudit_report_add_configFile_path(const char *file, seaudit_report_t *seaudit_report)
-{
-	return (seaudit_report_add_file_path(file, &seaudit_report->configPath));
-}
-
-int seaudit_report_add_stylesheet_path(const char *file, seaudit_report_t *seaudit_report)
-{
-	return (seaudit_report_add_file_path(file, &seaudit_report->stylesheet_file));
-}
-
-int seaudit_report_generate_report(seaudit_report_t *seaudit_report) {
-	int rt;
-	xmlTextReaderPtr reader;
-	FILE *outfile = NULL;
-
-	if (seaudit_report->configPath == NULL) {
-		/* Search for the system default seaudit report config file to use */
-		if (seaudit_report_search_dflt_config_file(seaudit_report) != 0) {
-			return -1;
-		}
-	}
-
-	if (seaudit_report->html && seaudit_report->stylesheet_file == NULL) {
-		/* Try and import system default style sheet from /usr/share/setools directory. */
-		if (seaudit_report_search_dflt_stylesheet(seaudit_report) < 0) {
-			return -1;
-		}
-		seaudit_report->use_stylesheet = TRUE;
-	}
-
-	/* Set/Open the output stream */
-	if (seaudit_report->outFile == NULL) {
-		outfile = stdout;
-	} else {
-		if ((outfile = fopen(seaudit_report->outFile, "w+")) == NULL) {
-			fprintf(stderr, "Write permission to save file (%s) was not permitted!", seaudit_report->outFile);
-			return -1;
-		}
-	}
-
-	/* Print report header */
-	if (seaudit_report_print_header(seaudit_report, outfile) != 0) {
-		fclose(outfile);
-		return -1;
-	}
-
-	/* Parse the xml config file and output report */
-	reader = xmlNewTextReaderFilename(seaudit_report->configPath);
-	if (reader != NULL) {
-		rt = xmlTextReaderRead(reader);
-		while (rt == 1) {
-			seaudit_report_process_xmlNode(seaudit_report, reader, outfile);
-			rt = xmlTextReaderRead(reader);
-		}
-		xmlFreeTextReader(reader);
-		if (rt != 0) {
-			fprintf(stderr, "%s : failed to parse config file\n", seaudit_report->configPath);
-		}
-	} else {
-		fprintf(stderr, "Unable to open config file (%s)\n", seaudit_report->configPath);
-		fclose(outfile);
-		return -1;
-	}
-	if (seaudit_report->malformed) {
-		seaudit_report_print_malformed_msgs(seaudit_report, outfile);
-	}
-	seaudit_report_print_footer(seaudit_report, outfile);
-	fclose(outfile);
-
-	return 0;
-}
-
-void seaudit_report_destroy(seaudit_report_t *seaudit_report) {
-	int i;
-
-	assert(seaudit_report != NULL);
-	if (seaudit_report->configPath)
-		free(seaudit_report->configPath);
-	if (seaudit_report->outFile)
-		free(seaudit_report->outFile);
-	if (seaudit_report->stylesheet_file)
-		free(seaudit_report->stylesheet_file);
-	/* Free log file path strings */
-	if (seaudit_report->logfiles) {
-		for (i = 0; i < seaudit_report->num_logfiles; i++) {
-			if (seaudit_report->logfiles[i]) {
-				free(seaudit_report->logfiles[i]);
-			}
-		}
-		free(seaudit_report->logfiles);
-	}
-	if (seaudit_report->log)
-		audit_log_destroy(seaudit_report->log);
-}
-
-seaudit_report_t *seaudit_report_create() {
-	seaudit_report_t *seaudit_report;
-
-	seaudit_report = (seaudit_report_t*)malloc(sizeof(seaudit_report_t));
-	if (!seaudit_report) {
-		fprintf(stderr, "Out of memory");
-		return NULL;
-	}
-	memset(seaudit_report, 0, sizeof(seaudit_report_t));
-
-	return seaudit_report;
-}
+#endif

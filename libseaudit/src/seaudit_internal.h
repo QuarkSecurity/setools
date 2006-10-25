@@ -32,14 +32,21 @@
 #include <seaudit/load_message.h>
 #include <seaudit/log.h>
 #include <seaudit/message.h>
+#include <seaudit/model.h>
 
 #include <apol/bst.h>
 #include <apol/vector.h>
 
+
 /*************** master seaudit log object (defined in log.c) ***************/
 
+
 struct seaudit_log {
-	apol_vector_t *messages;  /* vector of seaudit_message_t pointers */
+	/** vector of seaudit_message_t pointers */
+	apol_vector_t *messages;
+	/** vector of strings, corresponding to log messages that did
+	 * not parse cleanly */
+	apol_vector_t *malformed_msgs;
 	size_t num_allow_messages, num_deny_messages;
 	size_t num_bool_messages, num_load_messages;
 	apol_bst_t *types, *classes, *roles, *users;
@@ -53,7 +60,17 @@ struct seaudit_log {
         int next_line;
 };
 
+/**
+ * Iterate through the log's messages and recalculate the number of
+ * each type of message is stored within.
+ *
+ * @param log Log to recalculate.
+ */
+void log_recalc_stats(seaudit_log_t *log);
+
+
 /*************** messages (defined in message.c) ***************/
+
 
 struct seaudit_message {
 	/** when this message was generated */
@@ -94,6 +111,12 @@ void message_free(void *msg);
 
 /*************** avc messages (defined in avc_message.c) ***************/
 
+typedef enum seaudit_avc_message_type {
+	SEAUDIT_AVC_UNKNOWN = 0,
+	SEAUDIT_AVC_DENIED,
+	SEAUDIT_AVC_GRANTED
+} seaudit_avc_message_type_e;
+
 typedef enum seaudit_avc_message_class {
 	SEAUDIT_AVC_DATA_INVALID = 0,
 	SEAUDIT_AVC_DATA_MALFORMED,
@@ -102,12 +125,6 @@ typedef enum seaudit_avc_message_class {
 	SEAUDIT_AVC_DATA_FS,
 	SEAUDIT_AVC_DATA_NET,
 } seaudit_avc_message_class_e;
-
-typedef enum seaudit_avc_message_type {
-	SEAUDIT_AVC_UNKNOWN = 0,
-	SEAUDIT_AVC_DENIED,
-	SEAUDIT_AVC_GRANTED
-} seaudit_avc_message_type_e;
 
 /**
  * Definition of an avc message.  Note that unless stated otherwise,
@@ -277,6 +294,7 @@ void load_message_free(seaudit_load_message_t *msg);
 
 
 /*************** error handling code (defined in log.c) ***************/
+
 
 #define SEAUDIT_MSG_ERR  1
 #define SEAUDIT_MSG_WARN 2

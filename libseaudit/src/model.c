@@ -1,6 +1,6 @@
 /**
- *  @file auditlog_model.c
- *  Implementation of auditlog_model_t.
+ *  @file model.c
+ *  Implementation of seaudit_model_t.
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
@@ -22,67 +22,144 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <seaudit/model.h>
+#include "seaudit_internal.h"
+
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
-static void sort_kept_messages(int *kept, int num_kept, filter_info_t *info);
+struct seaudit_model {
+	/** vector of seaudit_log_t pointers; this model will get
+	 * messages from these logs */
+	apol_vector_t *logs;
+	/** vector of seaudit_message_t pointers; these point into
+	 * messages from the watched logs */
+	apol_vector_t *messages;
+	/** vector of char * pointers; these point into malformed
+	 * messages from the watched logs */
+	apol_vector_t *malformed_messages;
+	/** non-zero whenever this model needs to be recalculated */
+	int dirty;
+};
 
-/* create an audit_log_view */
-audit_log_view_t* audit_log_view_create(void)
+/**
+ * Recalculate all of the messages associated with a particular model,
+ * based upon that model's criteria.  If the model is marked as not
+ * dirty then do nothing and return success.
+ *
+ * @param log Log to which report error messages.
+ * @param model Model whose messages list to refresh.
+ *
+ * @return 0 on success, < 0 on error.
+ */
+static int model_refresh(seaudit_log_t *log, seaudit_model_t *model)
 {
-	audit_log_view_t *view;
+	size_t i, j;
+	seaudit_log_t *l;
+	apol_vector_t *v;
+	seaudit_message_t *message;
+	int error;
 
-	view = (audit_log_view_t*) malloc(sizeof(audit_log_view_t));
-	if (!view) {
-		printf("out of memory\n");
+	if (!model->dirty) {
+		return 0;
+	}
+	apol_vector_destroy(&model->messages, NULL);
+	apol_vector_destroy(&model->malformed_messages, NULL);
+	if ((model->messages = apol_vector_create()) == NULL ||
+	    (model->malformed_messages = apol_vector_create()) == NULL) {
+		error = errno;
+		ERR(log, "%s", strerror(error));
+		errno = error;
+		return -1;
+	}
+	for (i = 0; i < apol_vector_get_size(model->logs); i++) {
+		l = apol_vector_get_element(model->logs, 1);
+		v = seaudit_log_get_messages(l);
+		for (j = 0; j < apol_vector_get_size(v); j++) {
+			message = apol_vector_get_element(v, j);
+			if (apol_vector_append(model->logs, message) < 0) {
+				error = errno;
+				ERR(log, "%s", strerror(error));
+				errno = error;
+				return -1;
+			}
+		}
+		v = seaudit_log_get_malformed_messages(l);
+		if (apol_vector_cat(model->malformed_messages, v) < 0) {
+			error = errno;
+			ERR(log, "%s", strerror(error));
+			errno = error;
+			return -1;
+		}
+	}
+        model->dirty = 0;
+	return 0;
+}
+
+seaudit_model_t *seaudit_model_create(seaudit_log_t *log)
+{
+	seaudit_model_t *m = NULL;
+	int error;
+	if ((m = calloc(1, sizeof(*m))) == NULL) {
+		error = errno;
+		ERR(log, "%s", strerror(error));
+		errno = error;
 		return NULL;
 	}
-	memset(view, 0, sizeof(audit_log_view_t));
-	return view;
-}
 
-void audit_log_view_destroy(audit_log_view_t* view)
-{
-	sort_action_list_destroy(view->sort_actions);
-	if (view->fltr_msgs)
-		free(view->fltr_msgs);
-	free(view);
-	view = NULL;
-	return;
-}
-
-void audit_log_view_set_log(audit_log_view_t *view, audit_log_t *log)
-{
-	int num_deleted, *deleted = NULL;
-
-	audit_log_view_purge_fltr_msgs(view);
-	view->my_log = log;
-
-	if (log != NULL) {
-		audit_log_view_do_filter(view, &deleted, &num_deleted);
-		if(deleted)
-			free(deleted);
+	if ((m->logs = apol_vector_create_with_capacity(1)) == NULL ||
+	    apol_vector_append(m->logs, log) < 0) {
+		error = errno;
+		seaudit_model_destroy(&m);
+		ERR(log, "%s", strerror(error));
+		errno = error;
+		return NULL;
 	}
-
+        m->dirty = 1;
+	return m;
 }
 
-void audit_log_view_set_multifilter(audit_log_view_t *view, seaudit_multifilter_t *multifilter)
+void seaudit_model_destroy(seaudit_model_t **model)
 {
-	seaudit_multifilter_destroy(view->multifilter);
-	view->multifilter = multifilter;
-}
-
-void audit_log_view_purge_fltr_msgs(audit_log_view_t *view)
-{
-	if (view->fltr_msgs) {
-		free(view->fltr_msgs);
-		view->fltr_msgs = NULL;
-		view->num_fltr_msgs = 0;
-		view->fltr_msgs_sz = 0;
+	if (model == NULL || *model == NULL) {
+		return;
 	}
-	return;
+	apol_vector_destroy(&(*model)->logs, NULL);
+	apol_vector_destroy(&(*model)->messages, NULL);
+	free(*model);
+	*model = NULL;
 }
+
+apol_vector_t *seaudit_model_get_messages(seaudit_log_t *log, seaudit_model_t *model)
+{
+	if (log == NULL || model == NULL) {
+		ERR(log, "%s", strerror(EINVAL));
+		errno = EINVAL;
+		return NULL;
+	}
+	if (model_refresh(log, model) < 0) {
+		return NULL;
+	}
+	return log->messages;
+}
+
+apol_vector_t *seaudit_model_get_malformed_messages(seaudit_log_t *log, seaudit_model_t *model)
+{
+	if (log == NULL || model == NULL) {
+		ERR(log, "%s", strerror(EINVAL));
+		errno = EINVAL;
+		return NULL;
+	}
+	if (model_refresh(log, model) < 0) {
+		return NULL;
+	}
+	return model->malformed_messages;
+}
+
+#if 0
+
+static void sort_kept_messages(int *kept, int num_kept, filter_info_t *info);
+
 
 /* filter the log into the view */
 int audit_log_view_do_filter(audit_log_view_t *view, int **deleted, int *num_deleted)
@@ -197,3 +274,5 @@ static void sort_kept_messages(int *kept, int num_kept, filter_info_t *info)
 	}
 	return;
 }
+
+#endif

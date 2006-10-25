@@ -26,12 +26,24 @@
 #ifndef SEAUDIT_MESSAGE_H
 #define SEAUDIT_MESSAGE_H
 
+#include <time.h>
+
 typedef struct seaudit_message seaudit_message_t;
 
+/**
+ * This enum defines the different types of audit messages this
+ * library will handle.  Message types are put in alphabetical order
+ * to make msg_field_compare() in sort.c easier.
+ */
 typedef enum seaudit_message_type {
 	SEAUDIT_MESSAGE_TYPE_INVALID = 0,
-	SEAUDIT_MESSAGE_TYPE_AVC,
+	/** BOOL is the message that results when changing booleans in
+	    a conditional policy. */
 	SEAUDIT_MESSAGE_TYPE_BOOL,
+	/** AVC is a standard 'allowed' or 'denied' type message. */
+	SEAUDIT_MESSAGE_TYPE_AVC,
+	/** LOAD is the message that results when a policy is loaded
+	    into the system. */
 	SEAUDIT_MESSAGE_TYPE_LOAD
 } seaudit_message_type_e;
 
@@ -48,5 +60,26 @@ typedef enum seaudit_message_type {
  * @return Pointer to message's specific type, or NULL upon error.
  */
 extern void *seaudit_message_get_data(seaudit_message_t *msg, seaudit_message_type_e *type);
+
+/**
+ * Return the time that this audit message was generated.
+ *
+ * @param msg Message from which to get its time.
+ *
+ * @return Time of the message.  Treat the contents of this struct as
+ * const.
+ *
+ * @see localtime(3)
+ */
+extern struct tm *seaudit_message_get_time(seaudit_message_t *msg);
+
+/**
+ * Return the name of the host that generated this audit message.
+ *
+ * @param msg Message from which to get its time.
+ *
+ * @return Host of the message.  Do not modify this string.
+ */
+extern char *seaudit_message_get_host(seaudit_message_t *msg);
 
 #endif

@@ -33,7 +33,6 @@ seaudit_SOURCES = \
 	multifilter_window.c multifilter_window.h \
 	preferences.c preferences.h \
 	query_window.c query_window.h \
-	report.c report.h \
 	report_window.c report_window.h \
 	seaudit.c seaudit_callback.c \
 	seaudit_callback.h seaudit.h \
@@ -48,7 +47,7 @@ dot_seaudit: dot_seaudit.in Makefile
 	cat $< | \
 	sed -e 's|\@setoolsdir\@|$(setoolsdir)|g' > $@
 
-seaudit_report_SOURCES = seaudit-report.c report.c report.h
+seaudit_report_SOURCES = seaudit-report.c
 seaudit_report_DEPENDENCIES = $(top_builddir)/libseaudit/src/libseaudit.so \
                               $(top_builddir)/libapol/src/libapol.so \
                               $(top_builddir)/libqpol/src/libqpol.so

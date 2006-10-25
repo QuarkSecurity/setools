@@ -7,5 +7,6 @@ seaudit_HEADERS = \
 	model.h \
 	multifilter.h \
 	parse.h \
+	report.h \
 	sort.h \
 	util.h
