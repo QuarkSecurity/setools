@@ -28,12 +28,47 @@
 
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 
 seaudit_bool_message_t *bool_message_create(void)
 {
-	return calloc(1, sizeof(seaudit_bool_message_t));
+	seaudit_bool_message_t *bool = calloc(1, sizeof(seaudit_bool_message_t));
+	if (bool == NULL) {
+		return NULL;
+	}
+	if ((bool->changes = apol_vector_create()) == NULL) {
+		bool_message_free(bool);
+		return NULL;
+	}
+	return bool;
 }
 
+int bool_change_append(seaudit_log_t *log, seaudit_bool_message_t *bool,
+		       char *name, int value)
+{
+	char *s = strdup(name);
+	seaudit_bool_change_t *bc = NULL;
+	int error;
+	if (s == NULL ||
+	    apol_bst_insert_and_get(log->bools, (void **) &s, NULL, free) < 0) {
+		error = errno;
+		free(s);
+		ERR(log, "%s", strerror(error));
+		errno = error;
+		return -1;
+	}
+	if ((bc = calloc(1, sizeof(*bc))) == NULL ||
+	    apol_vector_append(bool->changes, bc) < 0) {
+		error = errno;
+		free(s);
+		ERR(log, "%s", strerror(error));
+		errno = error;
+		return -1;
+	}
+	bc->bool = s;
+	bc->value = value;
+	return 0;
+}
 
 static void seaudit_bool_change_free(void *elem)
 {
@@ -43,10 +78,10 @@ static void seaudit_bool_change_free(void *elem)
 	}
 }
 
-void bool_message_free(seaudit_bool_message_t *msg)
+void bool_message_free(seaudit_bool_message_t *bool)
 {
-	if (msg != NULL) {
-		apol_vector_destroy(&msg->changes, seaudit_bool_change_free);
-		free(msg);
+	if (bool != NULL) {
+		apol_vector_destroy(&bool->changes, seaudit_bool_change_free);
+		free(bool);
 	}
 }

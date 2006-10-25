@@ -29,13 +29,34 @@
 
 seaudit_avc_message_t *avc_message_create(void)
 {
-	return calloc(1, sizeof(seaudit_avc_message_t));
+	seaudit_avc_message_t *avc = calloc(1, sizeof(seaudit_avc_message_t));
+	if (avc == NULL) {
+		return NULL;
+	}
+	if ((avc->perms = apol_vector_create_with_capacity(1)) == NULL) {
+		int error = errno;
+		avc_message_free(avc);
+		errno = error;
+		return NULL;
+	}
+	return avc;
 }
 
-void avc_message_free(seaudit_avc_message_t *msg)
+void avc_message_free(seaudit_avc_message_t *avc)
 {
-	if (msg != NULL) {
-		apol_vector_destroy(&msg->perms, NULL);
-		free(msg);
+	if (avc != NULL) {
+		free(avc->exe);
+		free(avc->comm);
+		free(avc->path);
+		free(avc->dev);
+		free(avc->netif);
+		free(avc->laddr);
+		free(avc->faddr);
+		free(avc->saddr);
+		free(avc->daddr);
+		free(avc->name);
+		free(avc->ipaddr);
+		apol_vector_destroy(&avc->perms, NULL);
+		free(avc);
 	}
 }

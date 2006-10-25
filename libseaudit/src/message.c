@@ -104,6 +104,7 @@ void message_free(void *msg)
 {
 	if (msg != NULL) {
 		seaudit_message_t *m = (seaudit_message_t *) msg;
+		free(m->date_stamp);
 		switch (m->type) {
 		case SEAUDIT_MESSAGE_TYPE_AVC:
 			avc_message_free(m->data.avc);

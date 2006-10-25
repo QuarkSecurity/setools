@@ -200,7 +200,7 @@ seaudit_avc_message_t *avc_message_create(void);
  *
  * @param msg If not NULL, message to free.
  */
-void avc_message_free(seaudit_avc_message_t *msg);
+void avc_message_free(seaudit_avc_message_t *avc);
 
 
 /*************** bool messages (defined in bool_message.c) ***************/
@@ -226,11 +226,26 @@ struct seaudit_bool_message {
 seaudit_bool_message_t *bool_message_create(void);
 
 /**
+ * Append a boolean change to a particular boolean message.  This will
+ * add the boolean name to the log's BST as needed.
+ *
+ * @param log Log containing boolean name BST.
+ * @param bool Boolean message to change.
+ * @param name Name of the boolean that was changed.  This function
+ * will dup the incoming name.
+ * @param value New value for the boolean.
+ *
+ * @return 0 on success, < 0 on error.
+ */
+int bool_change_append(seaudit_log_t *log, seaudit_bool_message_t *bool,
+		       char *name, int value);
+
+/**
  * Deallocate all space associated with a boolean change message.
  *
  * @param msg If not NULL, message to free.
  */
-void bool_message_free(seaudit_bool_message_t *msg);
+void bool_message_free(seaudit_bool_message_t *bool);
 
 
 /*************** load messages (defined in load_message.c) ***************/
