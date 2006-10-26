@@ -48,6 +48,7 @@
 #include "apol_tcl_analysis.h"
 
 #include <qpol/policy.h>
+#include <qpol/policy_extend.h>
 
 apol_policy_t *policydb = NULL;
 
@@ -425,6 +426,13 @@ static int Apol_OpenPolicy(ClientData clientData, Tcl_Interp *interp, int argc, 
 	apol_policy_destroy(&policydb);
 	if (apol_policy_open(argv[1], &policydb, apol_tcl_route_handle_to_string, NULL)) {
 		Tcl_Obj *result_obj = Tcl_NewStringObj("Error opening policy: ", -1);
+		Tcl_AppendToObj(result_obj, strerror(errno), -1);
+		Tcl_SetObjResult(interp, result_obj);
+		return TCL_ERROR;
+	}
+	/* if not binary load syntactic rules so that line numbers may be accessed */
+	if (!apol_policy_is_binary(policydb) && qpol_policy_build_syn_rule_table(policydb->p)) {
+		Tcl_Obj *result_obj = Tcl_NewStringObj("Error loading syntactic rules: ", -1);
 		Tcl_AppendToObj(result_obj, strerror(errno), -1);
 		Tcl_SetObjResult(interp, result_obj);
 		return TCL_ERROR;

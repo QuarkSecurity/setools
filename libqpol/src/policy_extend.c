@@ -106,7 +106,7 @@ static int qpol_policy_build_attrs_from_map(qpol_policy_t *policy)
 	char *tmp_name = NULL, buff[10];
 	int error = 0, retv;
 
-	INFO(policy, "%s", "Generating attributes for policy.");
+	INFO(policy, "%s", "Generating attributes for policy. (Step 4 of 5)");
 	if (policy == NULL) {
 		ERR(policy, "%s", strerror(EINVAL));
 		errno = EINVAL;
@@ -132,7 +132,7 @@ static int qpol_policy_build_attrs_from_map(qpol_policy_t *policy)
 		if (db->type_val_to_struct[i] != NULL) {
 			continue; /* datum already exists? */
 		}
-		snprintf(buff, 9, "@ttr%04d", i+1);
+		snprintf(buff, 9, "@ttr%04zd", i+1);
 		tmp_name = strdup(buff);
 		if (!tmp_name) {
 			error = errno;
@@ -223,7 +223,7 @@ static int qpol_policy_fill_attr_holes(qpol_policy_t *policy)
 	for (i = 0; i < db->p_types.nprim; i++) {
 		if (db->type_val_to_struct[i])
 			continue;
-		snprintf(buff, 9, "@ttr%04d", i+1);
+		snprintf(buff, 9, "@ttr%04zd", i+1);
 		tmp_name = strdup(buff);
 		if (!tmp_name) {
 			error = errno;
@@ -356,7 +356,7 @@ static int qpol_policy_add_cond_rule_traceback(qpol_policy_t *policy)
 	avtab_ptr_t rule = NULL;
 	int error = 0;
 
-	INFO(policy, "%s", "Building conditional rules tables.");
+	INFO(policy, "%s", "Building conditional rules tables. (Step 5 of 5)");
 	if (!policy) {
 		ERR(policy, "%s", strerror(EINVAL));
 		errno = EINVAL;
@@ -678,14 +678,7 @@ err:
 	return -1;
 }
 
-/**
- *  Build the table of syntactic rules for a policy.
- *  @param policy The policy for which to build the table.
- *  This policy will be modified by this call.
- *  @return 0 on success and < 0 on error; if the call fails,
- *  errno will be set.
- */
-static int qpol_policy_build_syn_rule_table(qpol_policy_t *policy)
+int qpol_policy_build_syn_rule_table(qpol_policy_t *policy)
 {
 	int error = 0, created = 0;
 	avrule_block_t *cur_block = NULL;
@@ -842,12 +835,6 @@ int qpol_policy_extend(qpol_policy_t *policy)
 		return STATUS_SUCCESS;
 
 	retv = qpol_policy_add_cond_rule_traceback(policy);
-	if (retv) {
-		error = errno;
-		goto err;
-	}
-
-	retv = qpol_policy_build_syn_rule_table(policy);
 	if (retv) {
 		error = errno;
 		goto err;
