@@ -45,6 +45,7 @@ seaudit_log_t *seaudit_log_create(seaudit_handle_fn_t fn, void *callback_arg)
 	log->handle_arg = callback_arg;
 	if ((log->messages = apol_vector_create()) == NULL ||
 	    (log->malformed_msgs = apol_vector_create()) == NULL ||
+	    (log->models = apol_vector_create()) == NULL ||
 	    (log->types = apol_bst_create(apol_str_strcmp)) == NULL ||
 	    (log->classes = apol_bst_create(apol_str_strcmp)) == NULL ||
 	    (log->roles = apol_bst_create(apol_str_strcmp)) == NULL ||
@@ -63,11 +64,17 @@ seaudit_log_t *seaudit_log_create(seaudit_handle_fn_t fn, void *callback_arg)
 
 void seaudit_log_destroy(seaudit_log_t **log)
 {
+	size_t i;
 	if (log == NULL || *log == NULL) {
 		return;
 	}
+	for (i = 0; i < apol_vector_get_size((*log)->models); i++) {
+		seaudit_model_t *m = apol_vector_get_element((*log)->models, i);
+		model_remove_log(m, *log);
+	}
 	apol_vector_destroy(&(*log)->messages, message_free);
 	apol_vector_destroy(&(*log)->malformed_msgs, free);
+	apol_vector_destroy(&(*log)->models, NULL);
 	apol_bst_destroy(&(*log)->types, free);
 	apol_bst_destroy(&(*log)->classes, free);
 	apol_bst_destroy(&(*log)->roles, free);
@@ -79,52 +86,35 @@ void seaudit_log_destroy(seaudit_log_t **log)
 	*log = NULL;
 }
 
-apol_vector_t *seaudit_log_get_messages(seaudit_log_t *log)
+/******************** protected functions below ********************/
+
+int log_append_model(seaudit_log_t *log, seaudit_model_t *model)
 {
-	if (!log) {
-		ERR(log, "%s", strerror(EINVAL));
-		errno = EINVAL;
-		return NULL;
+	if (apol_vector_append(log->models, model) < 0) {
+		int error = errno;
+		ERR(log, "%s", strerror(error));
+		errno = error;
+		return -1;
 	}
+	return 0;
+}
+
+void log_remove_model(seaudit_log_t *log, seaudit_model_t *model)
+{
+	size_t i;
+	if (apol_vector_get_index(log->models, model, NULL, NULL, &i) == 0) {
+		apol_vector_remove(log->models, i);
+	}
+}
+
+apol_vector_t *log_get_messages(seaudit_log_t *log)
+{
 	return log->messages;
 }
 
-apol_vector_t *seaudit_log_get_malformed_messages(seaudit_log_t *log)
+apol_vector_t *log_get_malformed_messages(seaudit_log_t *log)
 {
-	if (!log) {
-		ERR(log, "%s", strerror(EINVAL));
-		errno = EINVAL;
-		return NULL;
-	}
 	return log->malformed_msgs;
-}
-
-void log_recalc_stats(seaudit_log_t *log)
-{
-	size_t i;
-	seaudit_message_t *msg;
-	seaudit_message_type_e type;
-	void *v;
-	seaudit_avc_message_t *avc;
-	for (i = 0; i < apol_vector_get_size(log->messages); i++) {
-		 msg = apol_vector_get_element(log->messages, i);
-		 v = seaudit_message_get_data(msg, &type);
-		 if (type == SEAUDIT_MESSAGE_TYPE_AVC) {
-			 avc = (seaudit_avc_message_t *) v;
-			 if (avc->msg == SEAUDIT_AVC_DENIED) {
-				 log->num_deny_messages++;
-			 }
-			 else if (avc->msg == SEAUDIT_AVC_GRANTED) {
-				 log->num_allow_messages++;
-			 }
-		 }
-		 else if (type == SEAUDIT_MESSAGE_TYPE_BOOL) {
-			 log->num_bool_messages++;
-		 }
-		 else if (type == SEAUDIT_MESSAGE_TYPE_LOAD) {
-			 log->num_load_messages++;
-		 }
-	}
 }
 
 static void seaudit_handle_default_callback(void *arg __attribute__((unused)),

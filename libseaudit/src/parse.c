@@ -1345,6 +1345,7 @@ int seaudit_log_parse(seaudit_log_t *log, FILE *syslog)
 	seaudit_message_type_e is_sel, prev_message_type;
 	apol_vector_t *tokens = NULL;
 	int retval = -1, retval2, has_warnings = 0, error = 0;
+	size_t i;
 
 	if (log == NULL || syslog == NULL) {
 		ERR(log, "%s", strerror(EINVAL));
@@ -1446,12 +1447,15 @@ int seaudit_log_parse(seaudit_log_t *log, FILE *syslog)
 		}
 	}
 
-        retval = 0;
+	retval = 0;
  cleanup:
-	log_recalc_stats(log);
 	free(line);
 	free(line_dup);
 	apol_vector_destroy(&tokens, NULL);
+	for (i = 0; i < apol_vector_get_size(log->models); i++) {
+		seaudit_model_t *m = apol_vector_get_element(log->models, i);
+		model_notify_log_changed(m, log);
+	}
         if (retval < 0) {
                 errno = error;
                 return -1;

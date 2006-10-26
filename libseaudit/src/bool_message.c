@@ -85,3 +85,62 @@ void bool_message_free(seaudit_bool_message_t *bool)
 		free(bool);
 	}
 }
+
+char *bool_message_to_string(seaudit_bool_message_t *bool,
+			     const char *date, const char *host)
+{
+	char *s = NULL;
+	size_t i, len = 0;
+	char *open_brace = "", *close_brace = "";
+	if (apol_vector_get_size(bool->changes) > 0) {
+		open_brace = "{ ";
+		close_brace = " }";
+	}
+	if (apol_str_appendf(&s, &len,
+                             "%s %s kernel: security: committed booleans: %s",
+                             date, host, open_brace) < 0) {
+		return NULL;
+	}
+	for (i = 0; i < apol_vector_get_size(bool->changes); i++) {
+		seaudit_bool_change_t *bc = apol_vector_get_element(bool->changes, i);
+		if (apol_str_appendf(&s, &len, "%s%s:%d",
+				     (i == 0 ? "" : ", "), bc->bool, bc->value) < 0) {
+			return NULL;
+		}
+	}
+	if (apol_str_append(&s, &len, close_brace) < 0) {
+		return NULL;
+	}
+	return s;
+}
+
+char *bool_message_to_string_html(seaudit_bool_message_t *bool,
+				  const char *date, const char *host)
+{
+	char *s = NULL;
+	size_t i, len = 0;
+	char *open_brace = "", *close_brace = "";
+	if (apol_vector_get_size(bool->changes) > 0) {
+		open_brace = "{ ";
+		close_brace = " }";
+	}
+	if (apol_str_appendf(&s, &len,
+			     "<font class=\"message_date\">%s</font> "
+			     "<font class=\"host_name\">%s</font> "
+			     "kernel: security: committed booleans: %s",
+			     date, host, open_brace) < 1) {
+		return NULL;
+	}
+	len = strlen(s) + 1;
+	for (i = 0; i < apol_vector_get_size(bool->changes); i++) {
+		seaudit_bool_change_t *bc = apol_vector_get_element(bool->changes, i);
+		if (apol_str_appendf(&s, &len, "%s%s:%d",
+				     (i == 0 ? "" : ", "), bc->bool, bc->value) < 0) {
+			return NULL;
+		}
+	}
+	if (apol_str_appendf(&s, &len, "%s%s<br>", s, close_brace) < 0) {
+		return NULL;
+	}
+	return s;
+}

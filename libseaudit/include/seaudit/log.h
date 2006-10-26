@@ -1,6 +1,9 @@
 /**
  *  @file log.h
  *  Public interface for the main libseaudit object, seaudit_log_t.
+ *  Note that there is no public way to get at the messages stored
+ *  within a model.  For that, the caller must create a
+ *  seaudit_model_t and then access messages through the model.
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
@@ -69,28 +72,5 @@ extern seaudit_log_t *seaudit_log_create(seaudit_handle_fn_t fn,
 extern void seaudit_log_destroy(seaudit_log_t **log);
 
 
-/**
- * Get a vector of all messages from this seaudit log object.
- *
- * @param log Log object containing messages.
- *
- * @return Vector of seaudit_message_t pointers.  Do not free() or
- * otherwise modify this vector or its contents.
- */
-extern apol_vector_t *seaudit_log_get_messages(seaudit_log_t *log);
-
-
-/**
- * Get a vector of all malformed messages from this seaudit log
- * object.  These are SELinux messages that did not parse cleanly for
- * some reason.  They will be returned in the same order in which they
- * were read from the log file.
- *
- * @param log Log object containing malformed messages.
- *
- * @return Vector of strings.  Do not free() or otherwise modify this
- * vector or its contents.
- */
-extern apol_vector_t *seaudit_log_get_malformed_messages(seaudit_log_t *log);
 
 #endif

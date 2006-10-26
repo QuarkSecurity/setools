@@ -47,8 +47,8 @@ struct seaudit_log {
 	/** vector of strings, corresponding to log messages that did
 	 * not parse cleanly */
 	apol_vector_t *malformed_msgs;
-	size_t num_allow_messages, num_deny_messages;
-	size_t num_bool_messages, num_load_messages;
+	/** vector of seaudit_model_t that are watching this log */
+	apol_vector_t *models;
 	apol_bst_t *types, *classes, *roles, *users;
 	apol_bst_t *perms, *hosts, *bools;
 	seaudit_log_type_e logtype;
@@ -61,12 +61,45 @@ struct seaudit_log {
 };
 
 /**
- * Iterate through the log's messages and recalculate the number of
- * each type of message is stored within.
+ * Notify a log that model is now watching it.
  *
- * @param log Log to recalculate.
+ * @param log Log to append model.
+ * @param model Model that is watching.
+ *
+ * @return 0 on success, < 0 on error.
  */
-void log_recalc_stats(seaudit_log_t *log);
+int log_append_model(seaudit_log_t *log, seaudit_model_t *model);
+
+/**
+ * Notify a log that model is no longer watching it.
+ *
+ * @param log Log to append model.
+ * @param model Model that stopped watching.
+ */
+void log_remove_model(seaudit_log_t *log, seaudit_model_t *model);
+
+/**
+ * Get a vector of all messages from this seaudit log object.
+ *
+ * @param log Log object containing messages.
+ *
+ * @return Vector of seaudit_message_t pointers.  Do not free() or
+ * otherwise modify this vector or its contents.
+ */
+apol_vector_t *log_get_messages(seaudit_log_t *log);
+
+/**
+ * Get a vector of all malformed messages from this seaudit log
+ * object.  These are SELinux messages that did not parse cleanly for
+ * some reason.  They will be returned in the same order in which they
+ * were read from the log file.
+ *
+ * @param log Log object containing malformed messages.
+ *
+ * @return Vector of strings.  Do not free() or otherwise modify this
+ * vector or its contents.
+ */
+apol_vector_t *log_get_malformed_messages(seaudit_log_t *log);
 
 
 /*************** messages (defined in message.c) ***************/
@@ -219,8 +252,38 @@ seaudit_avc_message_t *avc_message_create(void);
  */
 void avc_message_free(seaudit_avc_message_t *avc);
 
+/**
+ * Given an avc message, allocate and return a string that
+ * approximates the message as it had appeared within the log file.
+ *
+ * @param avc Message whose string representation to get.
+ * @param date Date and time when message was generated.
+ * @param host Hostname that generated message.
+ *
+ * @return String representation for message, or NULL upon error.  The
+ * caller is responsible for free()ing the string afterwards.
+ */
+char *avc_message_to_string(seaudit_avc_message_t *avc,
+                            const char *date, const char *host);
+
+/**
+ * Given an avc change message, allocate and return a string,
+ * formatted in HTML, that approximates the message as it had appeared
+ * within the log file.
+ *
+ * @param avc Message whose string representation to get.
+ * @param date Date and time when message was generated.
+ * @param host Hostname that generated message.
+ *
+ * @return String representation for message, or NULL upon error.  The
+ * caller is responsible for free()ing the string afterwards.
+ */
+char *avc_message_to_string_html(seaudit_avc_message_t *avc,
+                                 const char *date, const char *host);
+
 
 /*************** bool messages (defined in bool_message.c) ***************/
+
 
 typedef struct seaudit_bool_change {
 	/** pointer into log's bools BST */
@@ -264,6 +327,35 @@ int bool_change_append(seaudit_log_t *log, seaudit_bool_message_t *bool,
  */
 void bool_message_free(seaudit_bool_message_t *bool);
 
+/**
+ * Given a boolean change message, allocate and return a string that
+ * approximates the message as it had appeared within the log file.
+ *
+ * @param bool Message whose string representation to get.
+ * @param date Date and time when message was generated.
+ * @param host Hostname that generated message.
+ *
+ * @return String representation for message, or NULL upon error.  The
+ * caller is responsible for free()ing the string afterwards.
+ */
+char *bool_message_to_string(seaudit_bool_message_t *bool,
+                             const char *date, const char *host);
+
+/**
+ * Given a boolean change message, allocate and return a string,
+ * formatted in HTML, that approximates the message as it had appeared
+ * within the log file.
+ *
+ * @param bool Message whose string representation to get.
+ * @param date Date and time when message was generated.
+ * @param host Hostname that generated message.
+ *
+ * @return String representation for message, or NULL upon error.  The
+ * caller is responsible for free()ing the string afterwards.
+ */
+char *bool_message_to_string_html(seaudit_bool_message_t *bool,
+				  const char *date, const char *host);
+
 
 /*************** load messages (defined in load_message.c) ***************/
 
@@ -291,6 +383,56 @@ seaudit_load_message_t *load_message_create(void);
  * @param msg If not NULL, message to free.
  */
 void load_message_free(seaudit_load_message_t *msg);
+
+/**
+ * Given a load message, allocate and return a string that
+ * approximates the message as it had appeared within the log file.
+ *
+ * @param load Message whose string representation to get.
+ * @param date Date and time when message was generated.
+ * @param host Hostname that generated message.
+ *
+ * @return String representation for message, or NULL upon error.  The
+ * caller is responsible for free()ing the string afterwards.
+ */
+char *load_message_to_string(seaudit_load_message_t *load,
+                             const char *date, const char *host);
+
+/**
+ * Given a load message, allocate and return a string, formatted in
+ * HTML, that approximates the message as it had appeared within the
+ * log file.
+ *
+ * @param load Message whose string representation to get.
+ * @param date Date and time when message was generated.
+ * @param host Hostname that generated message.
+ *
+ * @return String representation for message, or NULL upon error.  The
+ * caller is responsible for free()ing the string afterwards.
+ */
+char *load_message_to_string_html(seaudit_load_message_t *load,
+				  const char *date, const char *host);
+
+
+/*************** model functions (defined in model.h) ***************/
+
+
+/**
+ * Notify a model to stop watching a log.
+ *
+ * @param model Model to notify.
+ * @param log Log to stop watching.
+ */
+void model_remove_log(seaudit_model_t *model, seaudit_log_t *log);
+
+/**
+ * Notify a model to that a log has been changed; the model will need
+ * to recalculate its messages.
+ *
+ * @param model Model to notify.
+ * @param log Log that has been changed.
+ */
+void model_notify_log_changed(seaudit_model_t *model, seaudit_log_t *log);
 
 
 /*************** error handling code (defined in log.c) ***************/

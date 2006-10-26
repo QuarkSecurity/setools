@@ -31,14 +31,16 @@
 #include "log.h"
 #include "message.h"
 
+#include <stdlib.h>
+
 typedef struct seaudit_model seaudit_model_t;
 
 /**
  * Create a seaudit_model based upon the messages from some particular
- * seaudit_log.  The model will be initialized with all of the
- * messages from that log.
+ * seaudit_log_t.  The model will be initialized with the default
+ * filter (i.e., accept all of the messages from the log).
  *
- * @param log Log to model.
+ * @param log Log to model.  If NULL then do not watch any log files.
  *
  * @return An initialized model, or NULL upon error.  The caller must
  * call seaudit_model_destroy() afterwards.
@@ -52,6 +54,17 @@ extern seaudit_model_t *seaudit_model_create(seaudit_log_t *log);
  * afterwards.  (If pointer is already NULL then do nothing.)
  */
 extern void seaudit_model_destroy(seaudit_model_t **model);
+
+/**
+ * Have the given model start watching the given log file, in addition
+ * to any other log files the model was watching.
+ *
+ * @param model Model to modify.
+ * @param log Additional log file to watch.
+ *
+ * @return 0 on success, < 0 on error.
+ */
+extern int seaudit_model_append_log(seaudit_model_t *model, seaudit_log_t *log);
 
 /**
  * Return a sorted list of messages associated with this model.  This
@@ -69,7 +82,8 @@ extern apol_vector_t *seaudit_model_get_messages(seaudit_log_t *log, seaudit_mod
 /**
  * Return a sorted list of malformed messages associated with this
  * model.  This is the union of all malformed messages from the
- * model's logs.
+ * model's logs.  This will cause the model to recalculate, as
+ * necessary, all messages according to its filters.
  *
  * @param log Log to which report error messages.
  * @param model Model containing malformed messages.
@@ -79,25 +93,53 @@ extern apol_vector_t *seaudit_model_get_messages(seaudit_log_t *log, seaudit_mod
  */
 extern apol_vector_t *seaudit_model_get_malformed_messages(seaudit_log_t *log, seaudit_model_t *model);
 
-#if 0
-#include "multifilter.h"
-#include "sort.h"
+/**
+ * Return the number of avc allow messages currently within the model.
+ * This will cause the model to recalculate, as necessary, all
+ * messages according to its filters.
+ *
+ * @param log Log to which report error messages.
+ * @param model Model to get statistics.
+ *
+ * @return Number of allow messages in the model.  This could be zero.
+ */
+extern size_t seaudit_model_get_num_allows(seaudit_log_t *log, seaudit_model_t *model);
 
-typedef struct filter_info {
-	int orig_indx;
-	bool_t filtered;
-} filter_info_t;
+/**
+ * Return the number of avc deny messages currently within the model.
+ * This will cause the model to recalculate, as necessary, all
+ * messages according to its filters.
+ *
+ * @param log Log to which report error messages.
+ * @param model Model to get statistics.
+ *
+ * @return Number of deny messages in the model.  This could be zero.
+ */
+extern size_t seaudit_model_get_num_denies(seaudit_log_t *log, seaudit_model_t *model);
 
-typedef struct audit_log_view {
-	audit_log_t *my_log; /* reference to the log */
-	int *fltr_msgs;      /* filtered and sorted messages */
-	int num_fltr_msgs;   /* num of filtered and sorted messages */
-	int fltr_msgs_sz;    /* size of filtered messages array */
-	struct sort_action_node *sort_actions;     /* sort functions */
-	struct sort_action_node *last_sort_action;
-	seaudit_multifilter_t *multifilter;
-} audit_log_view_t;
+/**
+ * Return the number of boolean change messages currently within the
+ * model.  This will cause the model to recalculate, as necessary, all
+ * messages according to its filters.
+ *
+ * @param log Log to which report error messages.
+ * @param model Model to get statistics.
+ *
+ * @return Number of boolean messages in the model.  This could be
+ * zero.
+ */
+extern size_t seaudit_model_get_num_bools(seaudit_log_t *log, seaudit_model_t *model);
 
-#endif
+/**
+ * Return the number of load messages currently within the model.
+ * This will cause the model to recalculate, as necessary, all
+ * messages according to its filters.
+ *
+ * @param log Log to which report error messages.
+ * @param model Model to get statistics.
+ *
+ * @return Number of load messages in the model.  This could be zero.
+ */
+extern size_t seaudit_model_get_num_loads(seaudit_log_t *log, seaudit_model_t *model);
 
 #endif

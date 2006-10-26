@@ -25,6 +25,7 @@
 #include "seaudit_internal.h"
 
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 seaudit_load_message_t *load_message_create(void)
@@ -38,4 +39,40 @@ void load_message_free(seaudit_load_message_t *msg)
 		free(msg->binary);
 		free(msg);
 	}
+}
+
+char *load_message_to_string(seaudit_load_message_t *load,
+			     const char *date, const char *host)
+{
+	char *s = NULL;
+	if (asprintf(&s,
+		     "%s %s kernel: security: %d users, %d roles, %d types, %d bools\n"
+		     "%s %s kernel: security: %d classes, %d rules",
+		     date, host, load->users, load->roles, load->types, load->bools,
+		     date, host, load->classes, load->rules) < 0) {
+		return NULL;
+	}
+	return s;
+}
+
+char *load_message_to_string_html(seaudit_load_message_t *load,
+				  const char *date, const char *host)
+{
+	char *s = NULL;
+	if (asprintf(&s,
+		     "<font class=\"message_date\">%s</font> "
+		     "<font class=\"host_name\">%s</font> "
+		     "kernel: security: %d users, %d roles, %d types, %d bools<br>\n"
+		     "<font class=\"message_date\">%s</font> "
+		     "<font class=\"host_name\">%s</font> "
+		     "kernel: security: %d classes, %d rules<br>",
+		     date,
+		     host,
+		     load->users, load->roles, load->types, load->bools,
+		     date,
+		     host,
+		     load->classes, load->rules) < 0) {
+		return NULL;
+	}
+	return s;
 }

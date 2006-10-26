@@ -38,9 +38,54 @@ struct seaudit_model {
 	/** vector of char * pointers; these point into malformed
 	 * messages from the watched logs */
 	apol_vector_t *malformed_messages;
+	/* number of allow messages in the model (only valid if dirty == 0) */
+	size_t num_allows;
+	/* number of deny messages in the model (only valid if dirty == 0) */
+	size_t num_denies;
+	/* number of boolean changes in the model (only valid if dirty == 0) */
+	size_t num_bools;
+	/* number of policy loads in the model (only valid if dirty == 0) */
+	size_t num_loads;
 	/** non-zero whenever this model needs to be recalculated */
 	int dirty;
 };
+
+/**
+ * Iterate through the model's messages and recalculate the number of
+ * each type of message is stored within.
+ *
+ * @param model Model to recalculate.
+ */
+static void model_recalc_stats(seaudit_model_t *model)
+{
+	size_t i;
+	seaudit_message_t *msg;
+	seaudit_message_type_e type;
+	void *v;
+	seaudit_avc_message_t *avc;
+	model->num_allows = model->num_denies =
+		model->num_bools = model->num_loads = 0;
+	for (i = 0; i < apol_vector_get_size(model->messages); i++) {
+		 msg = apol_vector_get_element(model->messages, i);
+		 v = seaudit_message_get_data(msg, &type);
+		 if (type == SEAUDIT_MESSAGE_TYPE_AVC) {
+			 avc = (seaudit_avc_message_t *) v;
+			 if (avc->msg == SEAUDIT_AVC_DENIED) {
+				 model->num_denies++;
+			 }
+			 else if (avc->msg == SEAUDIT_AVC_GRANTED) {
+				 model->num_allows++;
+			 }
+		 }
+		 else if (type == SEAUDIT_MESSAGE_TYPE_BOOL) {
+			 model->num_bools++;
+		 }
+		 else if (type == SEAUDIT_MESSAGE_TYPE_LOAD) {
+			 model->num_loads++;
+		 }
+	}
+}
+
 
 /**
  * Recalculate all of the messages associated with a particular model,
@@ -74,7 +119,7 @@ static int model_refresh(seaudit_log_t *log, seaudit_model_t *model)
 	}
 	for (i = 0; i < apol_vector_get_size(model->logs); i++) {
 		l = apol_vector_get_element(model->logs, 1);
-		v = seaudit_log_get_messages(l);
+		v = log_get_messages(l);
 		for (j = 0; j < apol_vector_get_size(v); j++) {
 			message = apol_vector_get_element(v, j);
 			if (apol_vector_append(model->logs, message) < 0) {
@@ -84,7 +129,7 @@ static int model_refresh(seaudit_log_t *log, seaudit_model_t *model)
 				return -1;
 			}
 		}
-		v = seaudit_log_get_malformed_messages(l);
+		v = log_get_malformed_messages(l);
 		if (apol_vector_cat(model->malformed_messages, v) < 0) {
 			error = errno;
 			ERR(log, "%s", strerror(error));
@@ -92,6 +137,7 @@ static int model_refresh(seaudit_log_t *log, seaudit_model_t *model)
 			return -1;
 		}
 	}
+	model_recalc_stats(model);
         model->dirty = 0;
 	return 0;
 }
@@ -107,27 +153,58 @@ seaudit_model_t *seaudit_model_create(seaudit_log_t *log)
 		return NULL;
 	}
 
-	if ((m->logs = apol_vector_create_with_capacity(1)) == NULL ||
-	    apol_vector_append(m->logs, log) < 0) {
+	if ((m->logs = apol_vector_create_with_capacity(1)) == NULL) {
 		error = errno;
 		seaudit_model_destroy(&m);
 		ERR(log, "%s", strerror(error));
 		errno = error;
 		return NULL;
 	}
-        m->dirty = 1;
+	if (log != NULL) {
+		if (apol_vector_append(m->logs, log) < 0 ||
+		    log_append_model(log, m)) {
+			error = errno;
+			seaudit_model_destroy(&m);
+			ERR(log, "%s", strerror(error));
+			errno = error;
+			return NULL;
+		}
+	}
+	m->dirty = 1;
 	return m;
 }
 
 void seaudit_model_destroy(seaudit_model_t **model)
 {
+	size_t i;
 	if (model == NULL || *model == NULL) {
 		return;
+	}
+	for (i = 0; i < apol_vector_get_size((*model)->logs); i++) {
+		seaudit_log_t *l = apol_vector_get_element((*model)->logs, i);
+		log_remove_model(l, *model);
 	}
 	apol_vector_destroy(&(*model)->logs, NULL);
 	apol_vector_destroy(&(*model)->messages, NULL);
 	free(*model);
 	*model = NULL;
+}
+
+int seaudit_model_append_log(seaudit_model_t *model, seaudit_log_t *log)
+{
+	if (model == NULL || log == NULL) {
+		ERR(log, "%s", strerror(EINVAL));
+		errno = EINVAL;
+		return -1;
+	}
+	if (apol_vector_append(model->logs, log) < 0 ||
+	    log_append_model(log, model) < 0) {
+		int error = errno;
+		ERR(log, "%s", strerror(error));
+		errno = error;
+		return -1;
+	}
+	return 0;
 }
 
 apol_vector_t *seaudit_model_get_messages(seaudit_log_t *log, seaudit_model_t *model)
@@ -154,6 +231,78 @@ apol_vector_t *seaudit_model_get_malformed_messages(seaudit_log_t *log, seaudit_
 		return NULL;
 	}
 	return model->malformed_messages;
+}
+
+size_t seaudit_model_get_num_allows(seaudit_log_t *log, seaudit_model_t *model)
+{
+	if (log == NULL || model == NULL) {
+		ERR(log, "%s", strerror(EINVAL));
+		errno = EINVAL;
+		return 0;
+	}
+	if (model_refresh(log, model) < 0) {
+		return 0;
+	}
+	return model->num_allows;
+}
+
+size_t seaudit_model_get_num_denies(seaudit_log_t *log, seaudit_model_t *model)
+{
+	if (log == NULL || model == NULL) {
+		ERR(log, "%s", strerror(EINVAL));
+		errno = EINVAL;
+		return 0;
+	}
+	if (model_refresh(log, model) < 0) {
+		return 0;
+	}
+	return model->num_denies;
+}
+
+size_t seaudit_model_get_num_bools(seaudit_log_t *log, seaudit_model_t *model)
+{
+	if (log == NULL || model == NULL) {
+		ERR(log, "%s", strerror(EINVAL));
+		errno = EINVAL;
+		return 0;
+	}
+	if (model_refresh(log, model) < 0) {
+		return 0;
+	}
+	return model->num_bools;
+}
+
+size_t seaudit_model_get_num_loads(seaudit_log_t *log, seaudit_model_t *model)
+{
+	if (log == NULL || model == NULL) {
+		ERR(log, "%s", strerror(EINVAL));
+		errno = EINVAL;
+		return 0;
+	}
+	if (model_refresh(log, model) < 0) {
+		return 0;
+	}
+	return model->num_loads;
+}
+
+
+/******************** protected functions below ********************/
+
+void model_remove_log(seaudit_model_t *model, seaudit_log_t *log)
+{
+	size_t i;
+	if (apol_vector_get_index(model->logs, log, NULL, NULL, &i) == 0) {
+		apol_vector_remove(model->logs, i);
+		model->dirty = 1;
+	}
+}
+
+void model_notify_log_changed(seaudit_model_t *model, seaudit_log_t *log)
+{
+	size_t i;
+	if (apol_vector_get_index(model->logs, log, NULL, NULL, &i) == 0) {
+		model->dirty = 1;
+	}
 }
 
 #if 0

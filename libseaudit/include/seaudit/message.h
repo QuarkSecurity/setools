@@ -82,4 +82,27 @@ extern struct tm *seaudit_message_get_time(seaudit_message_t *msg);
  */
 extern char *seaudit_message_get_host(seaudit_message_t *msg);
 
+/**
+ * Given a message, allocate and return a string that approximates the
+ * message as it had appeared within the original log file.
+ *
+ * @param msg Message to convert.
+ *
+ * @return String representation for message, or NULL upon error.  The
+ * caller is responsible for free()ing the string afterwards.
+ */
+extern char *seaudit_message_to_string(seaudit_message_t *msg);
+
+/**
+ * Given a message, allocate and return a string, formatted in HTML,
+ * that approximates the message as it had appeared within the
+ * original log file.
+ *
+ * @param msg Message to convert.
+ *
+ * @return HTML String representation for message, or NULL upon error.
+ * The caller is responsible for free()ing the string afterwards.
+ */
+extern char *seaudit_message_to_string_html(seaudit_message_t *msg);
+
 #endif

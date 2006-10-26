@@ -36,7 +36,7 @@
  * messages will be appended to it.
  *
  * @param log Audit log to which append messages.
- * @param syslog Handler to a file containing audit messages.
+ * @param syslog Handler to an opened file containing audit messages.
  *
  * @return 0 on success, > 0 on warnings, < 0 on error and errno will
  * be set.

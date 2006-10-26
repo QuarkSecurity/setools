@@ -54,6 +54,70 @@ void *seaudit_message_get_data(seaudit_message_t *msg,
         }
 }
 
+struct tm *seaudit_message_get_time(seaudit_message_t *msg)
+{
+	if (!msg) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return msg->date_stamp;
+}
+
+char *seaudit_message_get_host(seaudit_message_t *msg)
+{
+	if (!msg) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return msg->host;
+}
+
+#define DATE_STR_SIZE 256
+
+char *seaudit_message_to_string(seaudit_message_t *msg)
+{
+	char date[DATE_STR_SIZE];
+	if (msg == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	strftime(date, DATE_STR_SIZE, "%b %d %H:%M:%S", msg->date_stamp);
+	switch (msg->type) {
+	case SEAUDIT_MESSAGE_TYPE_AVC:
+		return avc_message_to_string(msg->data.avc, date, msg->host);
+	case SEAUDIT_MESSAGE_TYPE_BOOL:
+		return bool_message_to_string(msg->data.bool, date, msg->host);
+	case SEAUDIT_MESSAGE_TYPE_LOAD:
+		return load_message_to_string(msg->data.load, date, msg->host);
+	default:
+		errno = EINVAL;
+		return NULL;
+	}
+}
+
+char *seaudit_message_to_string_html(seaudit_message_t *msg)
+{
+	char date[DATE_STR_SIZE];
+	if (msg == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	strftime(date, DATE_STR_SIZE, "%b %d %H:%M:%S", msg->date_stamp);
+	switch (msg->type) {
+	case SEAUDIT_MESSAGE_TYPE_AVC:
+		return avc_message_to_string_html(msg->data.avc, date, msg->host);
+	case SEAUDIT_MESSAGE_TYPE_BOOL:
+		return bool_message_to_string_html(msg->data.bool, date, msg->host);
+	case SEAUDIT_MESSAGE_TYPE_LOAD:
+		return load_message_to_string_html(msg->data.load, date, msg->host);
+	default:
+		errno = EINVAL;
+		return NULL;
+	}
+}
+
+/******************** protected functions below ********************/
+
 seaudit_message_t *message_create(seaudit_log_t *log, seaudit_message_type_e type)
 {
 	seaudit_message_t *m;
@@ -120,22 +184,4 @@ void message_free(void *msg)
 		}
 		free(m);
 	}
-}
-
-struct tm *seaudit_message_get_time(seaudit_message_t *msg)
-{
-	if (!msg) {
-		errno = EINVAL;
-		return NULL;
-	}
-	return msg->date_stamp;
-}
-
-char *seaudit_message_get_host(seaudit_message_t *msg)
-{
-	if (!msg) {
-		errno = EINVAL;
-		return NULL;
-	}
-	return msg->host;
 }

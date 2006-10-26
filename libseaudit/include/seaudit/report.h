@@ -56,6 +56,14 @@ typedef enum seaudit_report_format {
 extern seaudit_report_t *seaudit_report_create(seaudit_model_t *model, const char *out_file);
 
 /**
+ * Destroy the referenced seaudit_report_t object.
+ *
+ * @param report Report to destroy.  The pointer will be set to NULL
+ * afterwards.  (If pointer is already NULL then do nothing.)
+ */
+extern void seaudit_report_destroy(seaudit_report_t **report);
+
+/**
  * Write the report with the messages currently stored in the report's
  * model.
  *
@@ -67,23 +75,16 @@ extern seaudit_report_t *seaudit_report_create(seaudit_model_t *model, const cha
 extern int seaudit_report_write(seaudit_log_t *log, seaudit_report_t *report);
 
 /**
- * Destroy the referenced seaudit_report_t object.
- *
- * @param report Report to destroy.  The pointer will be set to NULL
- * afterwards.  (If pointer is already NULL then do nothing.)
- */
-extern void seaudit_report_destroy(seaudit_report_t **report);
-
-/**
  * Set the output format of the report.  The default format is plain
  * text.
  *
+ * @param log Error handler.
  * @param report Report whose format to set.
  * @param format Output formate.
  *
  * @return 0 on success, < 0 on error.
  */
-extern int seaudit_report_set_format(seaudit_report_t *report, seaudit_report_format_e format);
+extern int seaudit_report_set_format(seaudit_log_t *log, seaudit_report_t *report, seaudit_report_format_e format);
 
 /**
  * Set the report to use a particular report configuration file.
@@ -113,24 +114,17 @@ extern int seaudit_report_set_configuration(seaudit_log_t *log, seaudit_report_t
  */
 extern int seaudit_report_set_stylesheet(seaudit_log_t *log, seaudit_report_t *report, const char *file, const int use_stylesheet);
 
-#if 0
-
-typedef struct seaudit_report {
-	bool_t stdin;
-	bool_t html;
-	bool_t use_stylesheet;
-	bool_t malformed;
-	char *configPath;
-	char *outFile;
-	char *stylesheet_file;
-	char **logfiles;
-	int num_logfiles;
-	audit_log_t *log;		/* This holds all of the log messages, which we're interested in */
-	audit_log_view_t *log_view;	/* This holds a reference to an seaudit view to filter messages */
-} seaudit_report_t;
-
-int seaudit_report_load_audit_messages_from_log_file(seaudit_report_t *seaudit_report);
-
-#endif
+/**
+ * Set the report to print messages that did not parse cleanly (i.e.,
+ * "malformed messages").
+ *
+ * @param log Error handler.
+ * @param report Report whose malformed messagse to print.
+ * @param do_malformed If non-zero then print malformed messages.
+ * Otherwise do not print them.
+ *
+ * @return 0 on success, < 0 on error.
+ */
+extern int seaudit_report_set_malformed(seaudit_log_t *log, seaudit_report_t *report, const int do_malformed);
 
 #endif
