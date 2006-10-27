@@ -51,8 +51,7 @@ seaudit_log_t *seaudit_log_create(seaudit_handle_fn_t fn, void *callback_arg)
 	    (log->roles = apol_bst_create(apol_str_strcmp)) == NULL ||
 	    (log->users = apol_bst_create(apol_str_strcmp)) == NULL ||
 	    (log->perms = apol_bst_create(apol_str_strcmp)) == NULL ||
-	    (log->hosts = apol_bst_create(apol_str_strcmp)) == NULL ||
-	    (log->bools = apol_bst_create(apol_str_strcmp)) == NULL) {
+	    (log->hosts = apol_bst_create(apol_str_strcmp)) == NULL || (log->bools = apol_bst_create(apol_str_strcmp)) == NULL) {
 		error = errno;
 		ERR(log, "%s", strerror(error));
 		seaudit_log_destroy(&log);
@@ -62,7 +61,7 @@ seaudit_log_t *seaudit_log_create(seaudit_handle_fn_t fn, void *callback_arg)
 	return log;
 }
 
-void seaudit_log_destroy(seaudit_log_t **log)
+void seaudit_log_destroy(seaudit_log_t ** log)
 {
 	size_t i;
 	if (log == NULL || *log == NULL) {
@@ -88,7 +87,7 @@ void seaudit_log_destroy(seaudit_log_t **log)
 
 /******************** protected functions below ********************/
 
-int log_append_model(seaudit_log_t *log, seaudit_model_t *model)
+int log_append_model(seaudit_log_t * log, seaudit_model_t * model)
 {
 	if (apol_vector_append(log->models, model) < 0) {
 		int error = errno;
@@ -99,7 +98,7 @@ int log_append_model(seaudit_log_t *log, seaudit_model_t *model)
 	return 0;
 }
 
-void log_remove_model(seaudit_log_t *log, seaudit_model_t *model)
+void log_remove_model(seaudit_log_t * log, seaudit_model_t * model)
 {
 	size_t i;
 	if (apol_vector_get_index(log->models, model, NULL, NULL, &i) == 0) {
@@ -107,49 +106,46 @@ void log_remove_model(seaudit_log_t *log, seaudit_model_t *model)
 	}
 }
 
-apol_vector_t *log_get_messages(seaudit_log_t *log)
+apol_vector_t *log_get_messages(seaudit_log_t * log)
 {
 	return log->messages;
 }
 
-apol_vector_t *log_get_malformed_messages(seaudit_log_t *log)
+apol_vector_t *log_get_malformed_messages(seaudit_log_t * log)
 {
 	return log->malformed_msgs;
 }
 
-static void seaudit_handle_default_callback(void *arg __attribute__((unused)),
-					    seaudit_log_t *log __attribute__ ((unused)),
-					    int level,
-					    const char *fmt,
-					    va_list va_args)
+static void seaudit_handle_default_callback(void *arg __attribute__ ((unused)),
+					    seaudit_log_t * log __attribute__ ((unused)),
+					    int level, const char *fmt, va_list va_args)
 {
 	switch (level) {
-	case SEAUDIT_MSG_INFO: {
-		/* by default do not display these messages */
-                return;
-	}
-	case SEAUDIT_MSG_WARN: {
-		fprintf(stderr, "WARNING: ");
-		break;
-	}
+	case SEAUDIT_MSG_INFO:{
+			/* by default do not display these messages */
+			return;
+		}
+	case SEAUDIT_MSG_WARN:{
+			fprintf(stderr, "WARNING: ");
+			break;
+		}
 	case SEAUDIT_MSG_ERR:
-	default: {
-		fprintf(stderr, "ERROR: ");
-		break;
-	}
+	default:{
+			fprintf(stderr, "ERROR: ");
+			break;
+		}
 	}
 	vfprintf(stderr, fmt, va_args);
 	fprintf(stderr, "\n");
 }
 
-void seaudit_handle_msg(seaudit_log_t *log, int level, const char *fmt, ...)
+void seaudit_handle_msg(seaudit_log_t * log, int level, const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
 	if (log == NULL || log->fn == NULL) {
 		seaudit_handle_default_callback(NULL, NULL, level, fmt, ap);
-	}
-	else {
+	} else {
 		log->fn(log->handle_arg, log, level, fmt, ap);
 	}
 	va_end(ap);
@@ -157,50 +153,51 @@ void seaudit_handle_msg(seaudit_log_t *log, int level, const char *fmt, ...)
 
 #if 0
 const char *audit_log_field_strs[] = { "msg_field",
-				       "exe_field",
-				       "path_field",
-				       "dev_field",
-				       "src_usr_field",
-				       "src_role_field",
-				       "src_type_field",
-				       "tgt_usr_field",
-				       "tgt_role_field",
-				       "tgt_type_field",
-				       "obj_class_field",
-				       "perm_field",
-				       "inode_field",
-				       "ipaddr_field",
-				       "audit_header_field",
-				       "pid_field",
-				       "src_sid_field",
-				       "tgt_sid_field",
-				       "comm_field",
-				       "netif_field",
-				       "key_field",
-				       "cap_field",
-				       "port_field",
-				       "lport_field",
-				       "fport_field",
-				       "dest_field",
-				       "source_field",
-				       "laddr_field",
-				       "faddr_field",
-				       "daddr_field",
-				       "saddr_field",
-				       "src_context",
-				       "tgt_context",
-				       "name_field",
-				       "other_field",
-				       "policy_usrs_field",
-				       "policy_roles_field",
-				       "policy_types_field",
-				       "policy_classes_field",
-				       "policy_rules_field",
-				       "policy_binary_field",
-				       "boolean_num_field",
-                                       "boolean_bool_field",
-				       "boolean_value_field",
-				       "date_field" ,
-                                       "host_field" };
+	"exe_field",
+	"path_field",
+	"dev_field",
+	"src_usr_field",
+	"src_role_field",
+	"src_type_field",
+	"tgt_usr_field",
+	"tgt_role_field",
+	"tgt_type_field",
+	"obj_class_field",
+	"perm_field",
+	"inode_field",
+	"ipaddr_field",
+	"audit_header_field",
+	"pid_field",
+	"src_sid_field",
+	"tgt_sid_field",
+	"comm_field",
+	"netif_field",
+	"key_field",
+	"cap_field",
+	"port_field",
+	"lport_field",
+	"fport_field",
+	"dest_field",
+	"source_field",
+	"laddr_field",
+	"faddr_field",
+	"daddr_field",
+	"saddr_field",
+	"src_context",
+	"tgt_context",
+	"name_field",
+	"other_field",
+	"policy_usrs_field",
+	"policy_roles_field",
+	"policy_types_field",
+	"policy_classes_field",
+	"policy_rules_field",
+	"policy_binary_field",
+	"boolean_num_field",
+	"boolean_bool_field",
+	"boolean_value_field",
+	"date_field",
+	"host_field"
+};
 
 #endif

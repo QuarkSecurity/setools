@@ -267,7 +267,7 @@ extern int apol_str_append(char **tgt, size_t * tgt_sz, const char *str);
  * @return 0 on success.  On error, return < 0 and set errno; tgt will be
  * free()d and set to NULL, tgt_sz will be set to 0. */
 __attribute__ ((format(printf, 3, 4)))
-extern int apol_str_appendf(char **tgt, size_t *tgt_sz, const char *fmt, ...);
+extern int apol_str_appendf(char **tgt, size_t * tgt_sz, const char *fmt, ...);
 
 /**
  * Test whether a given string is only white space.

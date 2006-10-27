@@ -33,15 +33,15 @@
 #include <seaudit/log.h>
 #include <seaudit/message.h>
 #include <seaudit/model.h>
+#include <seaudit/sort.h>
 
 #include <apol/bst.h>
 #include <apol/vector.h>
 
-
 /*************** master seaudit log object (defined in log.c) ***************/
 
-
-struct seaudit_log {
+struct seaudit_log
+{
 	/** vector of seaudit_message_t pointers */
 	apol_vector_t *messages;
 	/** vector of strings, corresponding to log messages that did
@@ -54,10 +54,10 @@ struct seaudit_log {
 	seaudit_log_type_e logtype;
 	seaudit_handle_fn_t fn;
 	void *handle_arg;
-        /** non-zero if tzset() has been called */
-        int tz_initialized;
-        /** non-zero if the parser is in the middle of a line */
-        int next_line;
+	/** non-zero if tzset() has been called */
+	int tz_initialized;
+	/** non-zero if the parser is in the middle of a line */
+	int next_line;
 };
 
 /**
@@ -68,7 +68,7 @@ struct seaudit_log {
  *
  * @return 0 on success, < 0 on error.
  */
-int log_append_model(seaudit_log_t *log, seaudit_model_t *model);
+int log_append_model(seaudit_log_t * log, seaudit_model_t * model);
 
 /**
  * Notify a log that model is no longer watching it.
@@ -76,7 +76,7 @@ int log_append_model(seaudit_log_t *log, seaudit_model_t *model);
  * @param log Log to append model.
  * @param model Model that stopped watching.
  */
-void log_remove_model(seaudit_log_t *log, seaudit_model_t *model);
+void log_remove_model(seaudit_log_t * log, seaudit_model_t * model);
 
 /**
  * Get a vector of all messages from this seaudit log object.
@@ -86,7 +86,7 @@ void log_remove_model(seaudit_log_t *log, seaudit_model_t *model);
  * @return Vector of seaudit_message_t pointers.  Do not free() or
  * otherwise modify this vector or its contents.
  */
-apol_vector_t *log_get_messages(seaudit_log_t *log);
+apol_vector_t *log_get_messages(seaudit_log_t * log);
 
 /**
  * Get a vector of all malformed messages from this seaudit log
@@ -99,13 +99,12 @@ apol_vector_t *log_get_messages(seaudit_log_t *log);
  * @return Vector of strings.  Do not free() or otherwise modify this
  * vector or its contents.
  */
-apol_vector_t *log_get_malformed_messages(seaudit_log_t *log);
-
+apol_vector_t *log_get_malformed_messages(seaudit_log_t * log);
 
 /*************** messages (defined in message.c) ***************/
 
-
-struct seaudit_message {
+struct seaudit_message
+{
 	/** when this message was generated */
 	struct tm *date_stamp;
 	/** pointer into log->host for the hostname that generated
@@ -114,7 +113,8 @@ struct seaudit_message {
 	/** type of message this really is */
 	seaudit_message_type_e type;
 	/** fake polymorphism by having a union of possible subclasses */
-	union {
+	union
+	{
 		seaudit_avc_message_t *avc;
 		seaudit_bool_message_t *bool;
 		seaudit_load_message_t *load;
@@ -131,7 +131,7 @@ struct seaudit_message {
  * @return A newly allocated message.  The caller must not free the
  * value.
  */
-seaudit_message_t *message_create(seaudit_log_t *log, seaudit_message_type_e type);
+seaudit_message_t *message_create(seaudit_log_t * log, seaudit_message_type_e type);
 
 /**
  * Deallocate all space associated with a message, recursing into the
@@ -141,20 +141,21 @@ seaudit_message_t *message_create(seaudit_log_t *log, seaudit_message_type_e typ
  */
 void message_free(void *msg);
 
-
 /*************** avc messages (defined in avc_message.c) ***************/
 
-typedef enum seaudit_avc_message_type {
+typedef enum seaudit_avc_message_type
+{
 	SEAUDIT_AVC_UNKNOWN = 0,
 	SEAUDIT_AVC_DENIED,
 	SEAUDIT_AVC_GRANTED
 } seaudit_avc_message_type_e;
 
-typedef enum seaudit_avc_message_class {
+typedef enum seaudit_avc_message_class
+{
 	SEAUDIT_AVC_DATA_INVALID = 0,
 	SEAUDIT_AVC_DATA_MALFORMED,
 	SEAUDIT_AVC_DATA_IPC,
-	SEAUDIT_AVC_DATA_CAP,  /* capability */
+	SEAUDIT_AVC_DATA_CAP,	       /* capability */
 	SEAUDIT_AVC_DATA_FS,
 	SEAUDIT_AVC_DATA_NET,
 } seaudit_avc_message_class_e;
@@ -163,7 +164,8 @@ typedef enum seaudit_avc_message_class {
  * Definition of an avc message.  Note that unless stated otherwise,
  * character pointers are into the message's log's respective BST.
  */
-struct seaudit_avc_message {
+struct seaudit_avc_message
+{
 	seaudit_avc_message_type_e msg;
 	seaudit_avc_message_class_e avc_type;
 	/** executable and path - free() this */
@@ -250,7 +252,7 @@ seaudit_avc_message_t *avc_message_create(void);
  *
  * @param msg If not NULL, message to free.
  */
-void avc_message_free(seaudit_avc_message_t *avc);
+void avc_message_free(seaudit_avc_message_t * avc);
 
 /**
  * Given an avc message, allocate and return a string that
@@ -263,8 +265,7 @@ void avc_message_free(seaudit_avc_message_t *avc);
  * @return String representation for message, or NULL upon error.  The
  * caller is responsible for free()ing the string afterwards.
  */
-char *avc_message_to_string(seaudit_avc_message_t *avc,
-                            const char *date, const char *host);
+char *avc_message_to_string(seaudit_avc_message_t * avc, const char *date, const char *host);
 
 /**
  * Given an avc change message, allocate and return a string,
@@ -278,21 +279,20 @@ char *avc_message_to_string(seaudit_avc_message_t *avc,
  * @return String representation for message, or NULL upon error.  The
  * caller is responsible for free()ing the string afterwards.
  */
-char *avc_message_to_string_html(seaudit_avc_message_t *avc,
-                                 const char *date, const char *host);
-
+char *avc_message_to_string_html(seaudit_avc_message_t * avc, const char *date, const char *host);
 
 /*************** bool messages (defined in bool_message.c) ***************/
 
-
-typedef struct seaudit_bool_change {
+typedef struct seaudit_bool_change
+{
 	/** pointer into log's bools BST */
 	char *bool;
 	/** new value for the boolean */
 	int value;
 } seaudit_bool_change_t;
 
-struct seaudit_bool_message {
+struct seaudit_bool_message
+{
 	/** vector of seaudit_bool_change_t pointers; vector owns objects. */
 	apol_vector_t *changes;
 };
@@ -317,15 +317,14 @@ seaudit_bool_message_t *bool_message_create(void);
  *
  * @return 0 on success, < 0 on error.
  */
-int bool_change_append(seaudit_log_t *log, seaudit_bool_message_t *bool,
-		       char *name, int value);
+int bool_change_append(seaudit_log_t * log, seaudit_bool_message_t * bool, char *name, int value);
 
 /**
  * Deallocate all space associated with a boolean change message.
  *
  * @param msg If not NULL, message to free.
  */
-void bool_message_free(seaudit_bool_message_t *bool);
+void bool_message_free(seaudit_bool_message_t * bool);
 
 /**
  * Given a boolean change message, allocate and return a string that
@@ -338,8 +337,7 @@ void bool_message_free(seaudit_bool_message_t *bool);
  * @return String representation for message, or NULL upon error.  The
  * caller is responsible for free()ing the string afterwards.
  */
-char *bool_message_to_string(seaudit_bool_message_t *bool,
-                             const char *date, const char *host);
+char *bool_message_to_string(seaudit_bool_message_t * bool, const char *date, const char *host);
 
 /**
  * Given a boolean change message, allocate and return a string,
@@ -353,20 +351,19 @@ char *bool_message_to_string(seaudit_bool_message_t *bool,
  * @return String representation for message, or NULL upon error.  The
  * caller is responsible for free()ing the string afterwards.
  */
-char *bool_message_to_string_html(seaudit_bool_message_t *bool,
-				  const char *date, const char *host);
-
+char *bool_message_to_string_html(seaudit_bool_message_t * bool, const char *date, const char *host);
 
 /*************** load messages (defined in load_message.c) ***************/
 
-struct seaudit_load_message {
-	unsigned int users;   /* number of users */
-	unsigned int roles;   /* number of roles */
-	unsigned int types;   /* number of types */
-	unsigned int classes; /* number of classes */
-	unsigned int rules;   /* number of rules */
-	unsigned int bools;   /* number of bools */
-	char *binary;         /* path for binary that was loaded */
+struct seaudit_load_message
+{
+	unsigned int users;	       /* number of users */
+	unsigned int roles;	       /* number of roles */
+	unsigned int types;	       /* number of types */
+	unsigned int classes;	       /* number of classes */
+	unsigned int rules;	       /* number of rules */
+	unsigned int bools;	       /* number of bools */
+	char *binary;		       /* path for binary that was loaded */
 };
 
 /**
@@ -382,7 +379,7 @@ seaudit_load_message_t *load_message_create(void);
  *
  * @param msg If not NULL, message to free.
  */
-void load_message_free(seaudit_load_message_t *msg);
+void load_message_free(seaudit_load_message_t * msg);
 
 /**
  * Given a load message, allocate and return a string that
@@ -395,8 +392,7 @@ void load_message_free(seaudit_load_message_t *msg);
  * @return String representation for message, or NULL upon error.  The
  * caller is responsible for free()ing the string afterwards.
  */
-char *load_message_to_string(seaudit_load_message_t *load,
-                             const char *date, const char *host);
+char *load_message_to_string(seaudit_load_message_t * load, const char *date, const char *host);
 
 /**
  * Given a load message, allocate and return a string, formatted in
@@ -410,12 +406,9 @@ char *load_message_to_string(seaudit_load_message_t *load,
  * @return String representation for message, or NULL upon error.  The
  * caller is responsible for free()ing the string afterwards.
  */
-char *load_message_to_string_html(seaudit_load_message_t *load,
-				  const char *date, const char *host);
-
+char *load_message_to_string_html(seaudit_load_message_t * load, const char *date, const char *host);
 
 /*************** model functions (defined in model.h) ***************/
-
 
 /**
  * Notify a model to stop watching a log.
@@ -423,7 +416,7 @@ char *load_message_to_string_html(seaudit_load_message_t *load,
  * @param model Model to notify.
  * @param log Log to stop watching.
  */
-void model_remove_log(seaudit_model_t *model, seaudit_log_t *log);
+void model_remove_log(seaudit_model_t * model, seaudit_log_t * log);
 
 /**
  * Notify a model to that a log has been changed; the model will need
@@ -432,11 +425,35 @@ void model_remove_log(seaudit_model_t *model, seaudit_log_t *log);
  * @param model Model to notify.
  * @param log Log that has been changed.
  */
-void model_notify_log_changed(seaudit_model_t *model, seaudit_log_t *log);
+void model_notify_log_changed(seaudit_model_t * model, seaudit_log_t * log);
 
+/*************** sort functions (defined in sort.c) ***************/
+
+/**
+ * Given a sort object and a message, return non-zero if this sort
+ * object could operate on the message, 0 if not.  (Messages may have
+ * incomplete information due to parser warnings.)
+ *
+ * @param sort Sort object to query.
+ * @param msg Message to check.
+ *
+ * @return Non-zero if sort supports the message, 0 if not.
+ */
+int sort_is_supported(seaudit_sort_t * sort, const seaudit_message_t * msg);
+
+/**
+ * Invoke a sort object's comparison function.
+ *
+ * @param sort Sort object that contains a comparator.
+ * @param m1 First message to compare.
+ * @param m2 Second message to compare.
+ *
+ * @return 0 if the messages are equivalent, < 0 if a is first, > 0 if
+ * b is first.
+ */
+int sort_comp(seaudit_sort_t * sort, const seaudit_message_t * a, const seaudit_message_t * b);
 
 /*************** error handling code (defined in log.c) ***************/
-
 
 #define SEAUDIT_MSG_ERR  1
 #define SEAUDIT_MSG_WARN 2
@@ -454,7 +471,7 @@ void model_notify_log_changed(seaudit_model_t *model, seaudit_log_t *log);
  * @param fmt Format string to print, using syntax of printf(3).
  */
 __attribute__ ((format(printf, 3, 4)))
-extern void seaudit_handle_msg(seaudit_log_t *log, int level, const char *fmt, ...);
+extern void seaudit_handle_msg(seaudit_log_t * log, int level, const char *fmt, ...);
 
 #undef ERR
 #undef WARN

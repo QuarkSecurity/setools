@@ -44,7 +44,7 @@ seaudit_avc_message_t *avc_message_create(void)
 	return avc;
 }
 
-void avc_message_free(seaudit_avc_message_t *avc)
+void avc_message_free(seaudit_avc_message_t * avc)
 {
 	if (avc != NULL) {
 		free(avc->exe);
@@ -63,30 +63,22 @@ void avc_message_free(seaudit_avc_message_t *avc)
 	}
 }
 
-char *avc_message_to_string(seaudit_avc_message_t *avc,
-			    const char *date, const char *host)
+char *avc_message_to_string(seaudit_avc_message_t * avc, const char *date, const char *host)
 {
 	char *s = NULL, *perm;
 	size_t i, len = 0;
-	if (apol_str_appendf(&s, &len,
-			     "%s %s kernel: ",
-			     date, host) < 0) {
+	if (apol_str_appendf(&s, &len, "%s %s kernel: ", date, host) < 0) {
 		return NULL;
 	}
 	if (!(avc->tm_stmp_sec == 0 && avc->tm_stmp_nano == 0 && avc->serial == 0)) {
-		if (apol_str_appendf(&s, &len,
-				     "audit(%lu.%03lu:%u): ",
-				     avc->tm_stmp_sec,
-				     avc->tm_stmp_nano,
-				     avc->serial) < 0) {
+		if (apol_str_appendf(&s, &len, "audit(%lu.%03lu:%u): ", avc->tm_stmp_sec, avc->tm_stmp_nano, avc->serial) < 0) {
 			return NULL;
 		}
 	}
 	if (apol_str_appendf(&s, &len,
 			     "avc: %s ",
 			     (avc->msg == SEAUDIT_AVC_DENIED ? "denied" :
-			      avc->msg == SEAUDIT_AVC_GRANTED ? "granted" :
-			      "<unknown>")) < 0) {
+			      avc->msg == SEAUDIT_AVC_GRANTED ? "granted" : "<unknown>")) < 0) {
 		return NULL;
 	}
 
@@ -111,7 +103,7 @@ char *avc_message_to_string(seaudit_avc_message_t *avc,
 		return NULL;
 	}
 	if (avc->path && apol_str_appendf(&s, &len, "path=%s ", avc->path) < 0) {
-			return NULL;
+		return NULL;
 	}
 	if (avc->dev && apol_str_appendf(&s, &len, "dev=%s ", avc->dev) < 0) {
 		return NULL;
@@ -156,14 +148,10 @@ char *avc_message_to_string(seaudit_avc_message_t *avc,
 		return NULL;
 	}
 
-	if (avc->suser &&
-	    apol_str_appendf(&s, &len, "scontext=%s:%s:%s ",
-			     avc->suser, avc->srole, avc->stype) < 0) {
+	if (avc->suser && apol_str_appendf(&s, &len, "scontext=%s:%s:%s ", avc->suser, avc->srole, avc->stype) < 0) {
 		return NULL;
 	}
-	if (avc->tuser &&
-	    apol_str_appendf(&s, &len, "tcontext=%s:%s:%s ",
-			     avc->tuser, avc->trole, avc->ttype) < 0) {
+	if (avc->tuser && apol_str_appendf(&s, &len, "tcontext=%s:%s:%s ", avc->tuser, avc->trole, avc->ttype) < 0) {
 		return NULL;
 	}
 	if (avc->tclass && apol_str_appendf(&s, &len, "tclass=%s ", avc->tclass) < 0) {
@@ -172,32 +160,26 @@ char *avc_message_to_string(seaudit_avc_message_t *avc,
 	return s;
 }
 
-char *avc_message_to_string_html(seaudit_avc_message_t *avc,
-				 const char *date, const char *host)
+char *avc_message_to_string_html(seaudit_avc_message_t * avc, const char *date, const char *host)
 {
 	char *s = NULL, *perm;
 	size_t i, len = 0;
 	if (apol_str_appendf(&s, &len,
 			     "<font class=\"message_date\">%s</font> "
-			     "<font class=\"host_name\">%s</font> "
-			     "kernel: ",
-			     date, host) < 0) {
+			     "<font class=\"host_name\">%s</font> " "kernel: ", date, host) < 0) {
 		return NULL;
 	}
 	if (!(avc->tm_stmp_sec == 0 && avc->tm_stmp_nano == 0 && avc->serial == 0)) {
 		if (apol_str_appendf(&s, &len,
 				     "<font class=\"syscall_timestamp\">audit(%lu.%03lu:%u): </font>",
-				     avc->tm_stmp_sec,
-				     avc->tm_stmp_nano,
-				     avc->serial) < 0) {
+				     avc->tm_stmp_sec, avc->tm_stmp_nano, avc->serial) < 0) {
 			return NULL;
 		}
 	}
 	if (apol_str_appendf(&s, &len,
 			     "avc: %s ",
 			     (avc->msg == SEAUDIT_AVC_DENIED ? "<font class=\"avc_deny\">denied</font> " :
-			      avc->msg == SEAUDIT_AVC_GRANTED ? "<font class=\"avc_grant\">granted</font>" :
-			      "<unknown>")) < 0) {
+			      avc->msg == SEAUDIT_AVC_GRANTED ? "<font class=\"avc_grant\">granted</font>" : "<unknown>")) < 0) {
 		return NULL;
 	}
 

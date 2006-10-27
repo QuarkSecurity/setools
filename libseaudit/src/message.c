@@ -31,8 +31,7 @@
 #include <string.h>
 #include <time.h>
 
-void *seaudit_message_get_data(seaudit_message_t *msg,
-			       seaudit_message_type_e *type)
+void *seaudit_message_get_data(seaudit_message_t * msg, seaudit_message_type_e * type)
 {
 	if (type != NULL) {
 		*type = SEAUDIT_MESSAGE_TYPE_INVALID;
@@ -51,10 +50,10 @@ void *seaudit_message_get_data(seaudit_message_t *msg,
 	default:
 		errno = EINVAL;
 		return NULL;
-        }
+	}
 }
 
-struct tm *seaudit_message_get_time(seaudit_message_t *msg)
+struct tm *seaudit_message_get_time(seaudit_message_t * msg)
 {
 	if (!msg) {
 		errno = EINVAL;
@@ -63,7 +62,7 @@ struct tm *seaudit_message_get_time(seaudit_message_t *msg)
 	return msg->date_stamp;
 }
 
-char *seaudit_message_get_host(seaudit_message_t *msg)
+char *seaudit_message_get_host(seaudit_message_t * msg)
 {
 	if (!msg) {
 		errno = EINVAL;
@@ -74,7 +73,7 @@ char *seaudit_message_get_host(seaudit_message_t *msg)
 
 #define DATE_STR_SIZE 256
 
-char *seaudit_message_to_string(seaudit_message_t *msg)
+char *seaudit_message_to_string(seaudit_message_t * msg)
 {
 	char date[DATE_STR_SIZE];
 	if (msg == NULL) {
@@ -95,7 +94,7 @@ char *seaudit_message_to_string(seaudit_message_t *msg)
 	}
 }
 
-char *seaudit_message_to_string_html(seaudit_message_t *msg)
+char *seaudit_message_to_string_html(seaudit_message_t * msg)
 {
 	char date[DATE_STR_SIZE];
 	if (msg == NULL) {
@@ -118,7 +117,7 @@ char *seaudit_message_to_string_html(seaudit_message_t *msg)
 
 /******************** protected functions below ********************/
 
-seaudit_message_t *message_create(seaudit_log_t *log, seaudit_message_type_e type)
+seaudit_message_t *message_create(seaudit_log_t * log, seaudit_message_type_e type)
 {
 	seaudit_message_t *m;
 	int error, rt = 0;
@@ -127,8 +126,7 @@ seaudit_message_t *message_create(seaudit_log_t *log, seaudit_message_type_e typ
 		errno = EINVAL;
 		return NULL;
 	}
-	if ((m = calloc(1, sizeof(*m))) == NULL ||
-	    apol_vector_append(log->messages, m) < 0) {
+	if ((m = calloc(1, sizeof(*m))) == NULL || apol_vector_append(log->messages, m) < 0) {
 		error = errno;
 		message_free(m);
 		ERR(log, "%s", strerror(error));
@@ -152,7 +150,7 @@ seaudit_message_t *message_create(seaudit_log_t *log, seaudit_message_type_e typ
 			rt = -1;
 		}
 		break;
-	default: /* shouldn't get here */
+	default:		       /* shouldn't get here */
 		assert(0);
 	}
 	if (rt < 0) {

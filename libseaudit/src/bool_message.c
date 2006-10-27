@@ -43,22 +43,19 @@ seaudit_bool_message_t *bool_message_create(void)
 	return bool;
 }
 
-int bool_change_append(seaudit_log_t *log, seaudit_bool_message_t *bool,
-		       char *name, int value)
+int bool_change_append(seaudit_log_t * log, seaudit_bool_message_t * bool, char *name, int value)
 {
 	char *s = strdup(name);
 	seaudit_bool_change_t *bc = NULL;
 	int error;
-	if (s == NULL ||
-	    apol_bst_insert_and_get(log->bools, (void **) &s, NULL, free) < 0) {
+	if (s == NULL || apol_bst_insert_and_get(log->bools, (void **)&s, NULL, free) < 0) {
 		error = errno;
 		free(s);
 		ERR(log, "%s", strerror(error));
 		errno = error;
 		return -1;
 	}
-	if ((bc = calloc(1, sizeof(*bc))) == NULL ||
-	    apol_vector_append(bool->changes, bc) < 0) {
+	if ((bc = calloc(1, sizeof(*bc))) == NULL || apol_vector_append(bool->changes, bc) < 0) {
 		error = errno;
 		free(s);
 		ERR(log, "%s", strerror(error));
@@ -78,7 +75,7 @@ static void seaudit_bool_change_free(void *elem)
 	}
 }
 
-void bool_message_free(seaudit_bool_message_t *bool)
+void bool_message_free(seaudit_bool_message_t * bool)
 {
 	if (bool != NULL) {
 		apol_vector_destroy(&bool->changes, seaudit_bool_change_free);
@@ -86,8 +83,7 @@ void bool_message_free(seaudit_bool_message_t *bool)
 	}
 }
 
-char *bool_message_to_string(seaudit_bool_message_t *bool,
-			     const char *date, const char *host)
+char *bool_message_to_string(seaudit_bool_message_t * bool, const char *date, const char *host)
 {
 	char *s = NULL;
 	size_t i, len = 0;
@@ -96,15 +92,12 @@ char *bool_message_to_string(seaudit_bool_message_t *bool,
 		open_brace = "{ ";
 		close_brace = " }";
 	}
-	if (apol_str_appendf(&s, &len,
-                             "%s %s kernel: security: committed booleans: %s",
-                             date, host, open_brace) < 0) {
+	if (apol_str_appendf(&s, &len, "%s %s kernel: security: committed booleans: %s", date, host, open_brace) < 0) {
 		return NULL;
 	}
 	for (i = 0; i < apol_vector_get_size(bool->changes); i++) {
 		seaudit_bool_change_t *bc = apol_vector_get_element(bool->changes, i);
-		if (apol_str_appendf(&s, &len, "%s%s:%d",
-				     (i == 0 ? "" : ", "), bc->bool, bc->value) < 0) {
+		if (apol_str_appendf(&s, &len, "%s%s:%d", (i == 0 ? "" : ", "), bc->bool, bc->value) < 0) {
 			return NULL;
 		}
 	}
@@ -114,8 +107,7 @@ char *bool_message_to_string(seaudit_bool_message_t *bool,
 	return s;
 }
 
-char *bool_message_to_string_html(seaudit_bool_message_t *bool,
-				  const char *date, const char *host)
+char *bool_message_to_string_html(seaudit_bool_message_t * bool, const char *date, const char *host)
 {
 	char *s = NULL;
 	size_t i, len = 0;
@@ -127,15 +119,13 @@ char *bool_message_to_string_html(seaudit_bool_message_t *bool,
 	if (apol_str_appendf(&s, &len,
 			     "<font class=\"message_date\">%s</font> "
 			     "<font class=\"host_name\">%s</font> "
-			     "kernel: security: committed booleans: %s",
-			     date, host, open_brace) < 1) {
+			     "kernel: security: committed booleans: %s", date, host, open_brace) < 1) {
 		return NULL;
 	}
 	len = strlen(s) + 1;
 	for (i = 0; i < apol_vector_get_size(bool->changes); i++) {
 		seaudit_bool_change_t *bc = apol_vector_get_element(bool->changes, i);
-		if (apol_str_appendf(&s, &len, "%s%s:%d",
-				     (i == 0 ? "" : ", "), bc->bool, bc->value) < 0) {
+		if (apol_str_appendf(&s, &len, "%s%s:%d", (i == 0 ? "" : ", "), bc->bool, bc->value) < 0) {
 			return NULL;
 		}
 	}

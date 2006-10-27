@@ -585,7 +585,7 @@ int apol_str_append(char **tgt, size_t * tgt_sz, const char *str)
 	}
 }
 
-int apol_str_appendf(char **tgt, size_t *tgt_sz, const char *fmt, ...)
+int apol_str_appendf(char **tgt, size_t * tgt_sz, const char *fmt, ...)
 {
 	va_list ap;
 	int error;
@@ -606,7 +606,7 @@ int apol_str_appendf(char **tgt, size_t *tgt_sz, const char *fmt, ...)
 			errno = error;
 			return -1;
 		}
-		*tgt_sz = strlen(*tgt);
+		*tgt_sz = strlen(*tgt) + 1;
 		va_end(ap);
 		return 0;
 	} else {
@@ -623,7 +623,7 @@ int apol_str_appendf(char **tgt, size_t *tgt_sz, const char *fmt, ...)
 		}
 		va_end(ap);
 		str_len = strlen(t);
-		if ((u = (char *) realloc(*tgt, *tgt_sz + str_len)) == NULL) {
+		if ((u = (char *)realloc(*tgt, *tgt_sz + str_len)) == NULL) {
 			error = errno;
 			free(t);
 			free(*tgt);

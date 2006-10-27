@@ -32,12 +32,13 @@
 #include <apol/vector.h>
 
 typedef struct seaudit_log seaudit_log_t;
-typedef void (*seaudit_handle_fn_t)(void *arg, seaudit_log_t *log, int level, const char *fmt, va_list va_args);
+typedef void (*seaudit_handle_fn_t) (void *arg, seaudit_log_t * log, int level, const char *fmt, va_list va_args);
 
 /**
  * Define the types of logs that this library can parse.
  */
-typedef enum seaudit_log_type {
+typedef enum seaudit_log_type
+{
 	SEAUDIT_LOG_TYPE_INVALID = 0,
 	SEAUDIT_LOG_TYPE_SYSLOG,
 	SEAUDIT_LOG_TYPE_AUDITD
@@ -57,9 +58,7 @@ typedef enum seaudit_log_type {
  * The caller is responsible for calling seaudit_log_destroy() to free
  * memory used by this structure.
  */
-extern seaudit_log_t *seaudit_log_create(seaudit_handle_fn_t fn,
-					 void *callback_arg);
-
+extern seaudit_log_t *seaudit_log_create(seaudit_handle_fn_t fn, void *callback_arg);
 
 /**
  * Free all memory used by an seaudit log structure and set it to
@@ -69,8 +68,6 @@ extern seaudit_log_t *seaudit_log_create(seaudit_handle_fn_t fn,
  * pointer will be set to NULL. (If already NULL, function is a
  * no-op.)
  */
-extern void seaudit_log_destroy(seaudit_log_t **log);
-
-
+extern void seaudit_log_destroy(seaudit_log_t ** log);
 
 #endif

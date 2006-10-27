@@ -41,6 +41,6 @@
  * @return 0 on success, > 0 on warnings, < 0 on error and errno will
  * be set.
  */
-extern int seaudit_log_parse(seaudit_log_t *log, FILE *syslog);
+extern int seaudit_log_parse(seaudit_log_t * log, FILE * syslog);
 
 #endif

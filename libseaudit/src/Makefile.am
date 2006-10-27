@@ -16,13 +16,13 @@ libseaudit_a_SOURCES = \
 	model.c \
 	parse.c \
 	report.c \
+	sort.c \
 	util.c \
 	seaudit_internal.h
 
 #	filters.c \
 #	filter_criteria.c \
 #	multifilter.c \
-#	sort.c \
 #
 
 libseaudit_a_DEPENDENCIES = $(top_builddir)/libapol/src/libapol.so

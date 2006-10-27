@@ -104,34 +104,40 @@ static void seaudit_report_info_usage(const char *program_name, int brief)
 	printf("Example stylesheet is at %s/%s.\n", APOL_INSTALL_DIR, STYLESHEET_FILE);
 }
 
-static void parse_command_line_args(int argc, char **argv) {
+static void parse_command_line_args(int argc, char **argv)
+{
 	int optc, i;
 	int do_malformed = 0, do_style = 0, read_stdin = 0;
 	seaudit_report_format_e format = SEAUDIT_REPORT_FORMAT_TEXT;
 	char *outfile = NULL, *configfile = NULL, *stylesheet = NULL;
 
 	/* get option arguments */
-	while ((optc =
-		getopt_long(argc, argv, "o:c:t:msvh", longopts, NULL)) != -1) {
+	while ((optc = getopt_long(argc, argv, "o:c:t:msvh", longopts, NULL)) != -1) {
 		switch (optc) {
 		case 0:
 			break;
-		case 'o': /* output file name */
-			outfile = optarg; break;
-		case 'c': /* Alternate config file path */
-			configfile = optarg; break;
-		case 'S': /* HTML style sheet file path */
-			stylesheet = optarg; do_style = 1; break;
-		case 'm': /* include malformed messages */
-			do_malformed = 1; break;
-		case 's': /* read LOGFILES from standard input */
-			read_stdin = 1; break;
-		case 'H': /* Set the output to format to html */
-			format = SEAUDIT_REPORT_FORMAT_HTML; break;
+		case 'o':	       /* output file name */
+			outfile = optarg;
+			break;
+		case 'c':	       /* Alternate config file path */
+			configfile = optarg;
+			break;
+		case 'S':	       /* HTML style sheet file path */
+			stylesheet = optarg;
+			do_style = 1;
+			break;
+		case 'm':	       /* include malformed messages */
+			do_malformed = 1;
+			break;
+		case 's':	       /* read LOGFILES from standard input */
+			read_stdin = 1;
+			break;
+		case 'H':	       /* Set the output to format to html */
+			format = SEAUDIT_REPORT_FORMAT_HTML;
+			break;
 		case 'v':
 			/* display version */
-			printf("\n%s (seaudit-report ver. %s)\n\n", COPYRIGHT_INFO,
-					VERSION);
+			printf("\n%s (seaudit-report ver. %s)\n\n", COPYRIGHT_INFO, VERSION);
 			exit(0);
 		case 'h':
 			/* display help */
@@ -160,8 +166,7 @@ static void parse_command_line_args(int argc, char **argv) {
 	if ((model = seaudit_model_create(NULL)) == NULL) {
 		exit(-1);
 	}
-	if ((first_log = seaudit_log_create(NULL, NULL)) == NULL ||
-	    seaudit_model_append_log(model, first_log) < 0) {
+	if ((first_log = seaudit_log_create(NULL, NULL)) == NULL || seaudit_model_append_log(model, first_log) < 0) {
 		exit(-1);
 	}
 	if (apol_vector_append(logs, first_log) < 0) {
@@ -177,8 +182,7 @@ static void parse_command_line_args(int argc, char **argv) {
 		if (seaudit_log_parse(first_log, stdin) < 0) {
 			exit(-1);
 		}
-	}
-	else {
+	} else {
 		/* Parse given filenames */
 		FILE *f;
 		seaudit_log_t *l;
@@ -191,8 +195,7 @@ static void parse_command_line_args(int argc, char **argv) {
 		}
 		fclose(f);
 		for (i = optind + 1; i < argc; i++) {
-			if ((l = seaudit_log_create(NULL, NULL)) == NULL ||
-			    seaudit_model_append_log(model, l) < 0) {
+			if ((l = seaudit_log_create(NULL, NULL)) == NULL || seaudit_model_append_log(model, l) < 0) {
 				exit(-1);
 			}
 			if (apol_vector_append(logs, l) < 0) {
@@ -219,7 +222,7 @@ static void parse_command_line_args(int argc, char **argv) {
 	}
 }
 
-int main (int argc, char **argv)
+int main(int argc, char **argv)
 {
 	size_t i;
 	parse_command_line_args(argc, argv);

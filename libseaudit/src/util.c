@@ -25,7 +25,7 @@
 
 #include <config.h>
 
-const char* libseaudit_get_version(void)
+const char *libseaudit_get_version(void)
 {
 	return LIBSEAUDIT_VERSION_STRING;
 }

@@ -30,6 +30,7 @@
 
 #include "log.h"
 #include "message.h"
+#include "sort.h"
 
 #include <stdlib.h>
 
@@ -45,7 +46,7 @@ typedef struct seaudit_model seaudit_model_t;
  * @return An initialized model, or NULL upon error.  The caller must
  * call seaudit_model_destroy() afterwards.
  */
-extern seaudit_model_t *seaudit_model_create(seaudit_log_t *log);
+extern seaudit_model_t *seaudit_model_create(seaudit_log_t * log);
 
 /**
  * Destroy the referenced seadit_model_t object.
@@ -53,7 +54,7 @@ extern seaudit_model_t *seaudit_model_create(seaudit_log_t *log);
  * @param model Model to destroy.  The pointer will be set to NULL
  * afterwards.  (If pointer is already NULL then do nothing.)
  */
-extern void seaudit_model_destroy(seaudit_model_t **model);
+extern void seaudit_model_destroy(seaudit_model_t ** model);
 
 /**
  * Have the given model start watching the given log file, in addition
@@ -64,7 +65,29 @@ extern void seaudit_model_destroy(seaudit_model_t **model);
  *
  * @return 0 on success, < 0 on error.
  */
-extern int seaudit_model_append_log(seaudit_model_t *model, seaudit_log_t *log);
+extern int seaudit_model_append_log(seaudit_model_t * model, seaudit_log_t * log);
+/**
+ * Append a sort criterion to a model.  The next time the model's
+ * messages are retrieved they will be sorted by this criterion.  If
+ * the model already has sort criteria, they will have a higher
+ * priority than this new criterion.
+ *
+ * @param model Model to modify.
+ * @param sort Additional sort criterion.
+ *
+ * @return 0 on success, < 0 on error.  Upon success, the model takes
+ * ownership of the sort object.
+ */
+extern int seaudit_model_append_sort(seaudit_model_t * model, seaudit_sort_t * sort);
+
+/**
+ * Remove all sort criteria from this model.  The next time the
+ * model's messages are retrieved they will be in the same order as
+ * provided by the model's logs.
+ *
+ * @param model Model to modify.
+ */
+extern int seaudit_model_remove_all_sort(seaudit_model_t * model);
 
 /**
  * Return a sorted list of messages associated with this model.  This
@@ -77,7 +100,7 @@ extern int seaudit_model_append_log(seaudit_model_t *model, seaudit_log_t *log);
  * @return Vector of seaudit_message_t, pre-filtered and pre-sorted,
  * or NULL upon error.
  */
-extern apol_vector_t *seaudit_model_get_messages(seaudit_log_t *log, seaudit_model_t *model);
+extern apol_vector_t *seaudit_model_get_messages(seaudit_log_t * log, seaudit_model_t * model);
 
 /**
  * Return a sorted list of malformed messages associated with this
@@ -91,7 +114,7 @@ extern apol_vector_t *seaudit_model_get_messages(seaudit_log_t *log, seaudit_mod
  * @return Vector of strings, or NULL upon error.  Treat the contents
  * of the vector as const char *.
  */
-extern apol_vector_t *seaudit_model_get_malformed_messages(seaudit_log_t *log, seaudit_model_t *model);
+extern apol_vector_t *seaudit_model_get_malformed_messages(seaudit_log_t * log, seaudit_model_t * model);
 
 /**
  * Return the number of avc allow messages currently within the model.
@@ -103,7 +126,7 @@ extern apol_vector_t *seaudit_model_get_malformed_messages(seaudit_log_t *log, s
  *
  * @return Number of allow messages in the model.  This could be zero.
  */
-extern size_t seaudit_model_get_num_allows(seaudit_log_t *log, seaudit_model_t *model);
+extern size_t seaudit_model_get_num_allows(seaudit_log_t * log, seaudit_model_t * model);
 
 /**
  * Return the number of avc deny messages currently within the model.
@@ -115,7 +138,7 @@ extern size_t seaudit_model_get_num_allows(seaudit_log_t *log, seaudit_model_t *
  *
  * @return Number of deny messages in the model.  This could be zero.
  */
-extern size_t seaudit_model_get_num_denies(seaudit_log_t *log, seaudit_model_t *model);
+extern size_t seaudit_model_get_num_denies(seaudit_log_t * log, seaudit_model_t * model);
 
 /**
  * Return the number of boolean change messages currently within the
@@ -128,7 +151,7 @@ extern size_t seaudit_model_get_num_denies(seaudit_log_t *log, seaudit_model_t *
  * @return Number of boolean messages in the model.  This could be
  * zero.
  */
-extern size_t seaudit_model_get_num_bools(seaudit_log_t *log, seaudit_model_t *model);
+extern size_t seaudit_model_get_num_bools(seaudit_log_t * log, seaudit_model_t * model);
 
 /**
  * Return the number of load messages currently within the model.
@@ -140,6 +163,6 @@ extern size_t seaudit_model_get_num_bools(seaudit_log_t *log, seaudit_model_t *m
  *
  * @return Number of load messages in the model.  This could be zero.
  */
-extern size_t seaudit_model_get_num_loads(seaudit_log_t *log, seaudit_model_t *model);
+extern size_t seaudit_model_get_num_loads(seaudit_log_t * log, seaudit_model_t * model);
 
 #endif

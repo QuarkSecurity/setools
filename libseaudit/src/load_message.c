@@ -33,7 +33,7 @@ seaudit_load_message_t *load_message_create(void)
 	return calloc(1, sizeof(seaudit_load_message_t));
 }
 
-void load_message_free(seaudit_load_message_t *msg)
+void load_message_free(seaudit_load_message_t * msg)
 {
 	if (msg != NULL) {
 		free(msg->binary);
@@ -41,22 +41,19 @@ void load_message_free(seaudit_load_message_t *msg)
 	}
 }
 
-char *load_message_to_string(seaudit_load_message_t *load,
-			     const char *date, const char *host)
+char *load_message_to_string(seaudit_load_message_t * load, const char *date, const char *host)
 {
 	char *s = NULL;
 	if (asprintf(&s,
 		     "%s %s kernel: security: %d users, %d roles, %d types, %d bools\n"
 		     "%s %s kernel: security: %d classes, %d rules",
-		     date, host, load->users, load->roles, load->types, load->bools,
-		     date, host, load->classes, load->rules) < 0) {
+		     date, host, load->users, load->roles, load->types, load->bools, date, host, load->classes, load->rules) < 0) {
 		return NULL;
 	}
 	return s;
 }
 
-char *load_message_to_string_html(seaudit_load_message_t *load,
-				  const char *date, const char *host)
+char *load_message_to_string_html(seaudit_load_message_t * load, const char *date, const char *host)
 {
 	char *s = NULL;
 	if (asprintf(&s,
@@ -66,12 +63,7 @@ char *load_message_to_string_html(seaudit_load_message_t *load,
 		     "<font class=\"message_date\">%s</font> "
 		     "<font class=\"host_name\">%s</font> "
 		     "kernel: security: %d classes, %d rules<br>",
-		     date,
-		     host,
-		     load->users, load->roles, load->types, load->bools,
-		     date,
-		     host,
-		     load->classes, load->rules) < 0) {
+		     date, host, load->users, load->roles, load->types, load->bools, date, host, load->classes, load->rules) < 0) {
 		return NULL;
 	}
 	return s;

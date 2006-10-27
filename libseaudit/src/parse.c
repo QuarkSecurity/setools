@@ -35,7 +35,7 @@
 #include <string.h>
 #include <time.h>
 
-#define ALT_SYSCALL_STRING "msg=audit("  /* should contain SYSCALL_STRING */
+#define ALT_SYSCALL_STRING "msg=audit("	/* should contain SYSCALL_STRING */
 #define AUDITD_MSG "type="
 #define AVCMSG " avc: "
 #define BOOLMSG "committed booleans"
@@ -51,10 +51,10 @@
  * Allocate a string and return the next line within the file pointer.
  * The caller is responsible for free()ing the string.
  */
-static int get_line(seaudit_log_t *log, FILE *audit_file, char **dest)
+static int get_line(seaudit_log_t * log, FILE * audit_file, char **dest)
 {
 	char *line = NULL, *s, c = '\0';
-	int  length = 0, i = 0, error;
+	int length = 0, i = 0, error;
 
 	*dest = NULL;
 	while ((c = fgetc(audit_file)) != EOF) {
@@ -62,7 +62,7 @@ static int get_line(seaudit_log_t *log, FILE *audit_file, char **dest)
 			line[i] = c;
 		} else {
 			length += MEMORY_BLOCK_MAX_SIZE;
-			if ((s = (char*) realloc(line, length * sizeof(char))) == NULL) {
+			if ((s = (char *)realloc(line, length * sizeof(char))) == NULL) {
 				error = errno;
 				ERR(log, "%s", strerror(error));
 				errno = error;
@@ -73,9 +73,9 @@ static int get_line(seaudit_log_t *log, FILE *audit_file, char **dest)
 		}
 
 		if (c == '\n') {
-			line[i+1] = '\0';
+			line[i + 1] = '\0';
 			*dest = line;
-                        return 0;
+			return 0;
 		}
 		i++;
 	}
@@ -86,7 +86,7 @@ static int get_line(seaudit_log_t *log, FILE *audit_file, char **dest)
 			*dest = line;
 		} else {
 			length += MEMORY_BLOCK_MAX_SIZE;
-			if ((s = (char*) realloc(line, length * sizeof(char))) == NULL) {
+			if ((s = (char *)realloc(line, length * sizeof(char))) == NULL) {
 				error = errno;
 				ERR(log, "%s", strerror(error));
 				errno = error;
@@ -97,7 +97,7 @@ static int get_line(seaudit_log_t *log, FILE *audit_file, char **dest)
 			*dest = line;
 		}
 	}
-        return 0;
+	return 0;
 }
 
 /**
@@ -106,7 +106,7 @@ static int get_line(seaudit_log_t *log, FILE *audit_file, char **dest)
  * apol_vector_destroy() upon that vector, passing NULL as the second
  * parameter.  Note that this function will modify the passed in line.
  */
-static int get_tokens(seaudit_log_t *log, char *line, apol_vector_t **tokens)
+static int get_tokens(seaudit_log_t * log, char *line, apol_vector_t ** tokens)
 {
 	char *line_ptr, *next;
 	*tokens = NULL;
@@ -128,7 +128,7 @@ static int get_tokens(seaudit_log_t *log, char *line, apol_vector_t **tokens)
 			}
 		}
 	}
- cleanup:
+      cleanup:
 	if (error != 0) {
 		apol_vector_destroy(tokens, NULL);
 		errno = error;
@@ -136,7 +136,6 @@ static int get_tokens(seaudit_log_t *log, char *line, apol_vector_t **tokens)
 	}
 	return 0;
 }
-
 
 /**
  * Given a line, determine what type of audit message it is.
@@ -159,7 +158,7 @@ static seaudit_message_type_e is_selinux(char *line)
  *
  * @return 0 on success, > 0 on warning, < 0 on error.
  */
-static int insert_time(seaudit_log_t *log, apol_vector_t *tokens, size_t *position, seaudit_message_t *msg)
+static int insert_time(seaudit_log_t * log, apol_vector_t * tokens, size_t * position, seaudit_message_t * msg)
 {
 	char *t = NULL;
 	size_t i, length = 0;
@@ -171,12 +170,12 @@ static int insert_time(seaudit_log_t *log, apol_vector_t *tokens, size_t *positi
 		return 1;
 	}
 	for (i = 0; i < NUM_TIME_COMPONENTS; i++) {
-		length += strlen((char *) apol_vector_get_element(tokens, i + *position));
+		length += strlen((char *)apol_vector_get_element(tokens, i + *position));
 	}
 
 	/* Increase size for terminating string char and whitespace within. */
 	length += NUM_TIME_COMPONENTS;
-	if ((t = (char*) calloc(1, length)) == NULL) {
+	if ((t = (char *)calloc(1, length)) == NULL) {
 		error = errno;
 		ERR(log, "%s", strerror(error));
 		errno = error;
@@ -187,12 +186,12 @@ static int insert_time(seaudit_log_t *log, apol_vector_t *tokens, size_t *positi
 		if (i > 0) {
 			strcat(t, " ");
 		}
-		strcat(t, (char *) apol_vector_get_element(tokens, *position));
+		strcat(t, (char *)apol_vector_get_element(tokens, *position));
 		(*position)++;
 	}
 
 	if (!msg->date_stamp) {
-		if ((msg->date_stamp = (struct tm*) calloc(1, sizeof(struct tm))) == NULL) {
+		if ((msg->date_stamp = (struct tm *)calloc(1, sizeof(struct tm))) == NULL) {
 			error = errno;
 			ERR(log, "%s", strerror(error));
 			free(t);
@@ -203,8 +202,8 @@ static int insert_time(seaudit_log_t *log, apol_vector_t *tokens, size_t *positi
 
 	if (strptime(t, "%b %d %T", msg->date_stamp) != NULL) {
 		/* set year to 1900 since we know no valid logs were
-		   generated.  this will tell us that the msg does not
-		   really have a year */
+		 * generated.  this will tell us that the msg does not
+		 * really have a year */
 		msg->date_stamp->tm_isdst = 0;
 		msg->date_stamp->tm_year = 0;
 	}
@@ -217,14 +216,14 @@ static int insert_time(seaudit_log_t *log, apol_vector_t *tokens, size_t *positi
  *
  * @return 0 on success, > 0 on warning, < 0 on error.
  */
-static int insert_hostname(seaudit_log_t *log, apol_vector_t *tokens, size_t *position, seaudit_message_t *msg)
+static int insert_hostname(seaudit_log_t * log, apol_vector_t * tokens, size_t * position, seaudit_message_t * msg)
 {
 	char *s, *host;
 	if (*position >= apol_vector_get_size(tokens)) {
 		WARN(log, "%s", "Not enough tokens for hostname.");
 		return 1;
 	}
-        s = apol_vector_get_element(tokens, *position);
+	s = apol_vector_get_element(tokens, *position);
 	/* Make sure this is not the kernel string identifier, which
 	 * may indicate that the hostname is empty. */
 	if (strstr(s, "kernel")) {
@@ -232,8 +231,7 @@ static int insert_hostname(seaudit_log_t *log, apol_vector_t *tokens, size_t *po
 		return 1;
 	}
 	(*position)++;
-	if ((host = strdup(s)) == NULL ||
-	    apol_bst_insert_and_get(log->hosts, (void **) &host, NULL, free) < 0) {
+	if ((host = strdup(s)) == NULL || apol_bst_insert_and_get(log->hosts, (void **)&host, NULL, free) < 0) {
 		int error = errno;
 		ERR(log, "%s", strerror(error));
 		errno = error;
@@ -243,7 +241,7 @@ static int insert_hostname(seaudit_log_t *log, apol_vector_t *tokens, size_t *po
 	return 0;
 }
 
-static int insert_standard_msg_header(seaudit_log_t *log, apol_vector_t *tokens, size_t *position, seaudit_message_t *msg)
+static int insert_standard_msg_header(seaudit_log_t * log, apol_vector_t * tokens, size_t * position, seaudit_message_t * msg)
 {
 	int ret = 0;
 	if ((ret = insert_time(log, tokens, position, msg)) != 0) {
@@ -259,14 +257,14 @@ static int insert_standard_msg_header(seaudit_log_t *log, apol_vector_t *tokens,
  * Parse a context (user:role:type).  For each of the pieces, add them
  * to the log's BSTs.  Set reference pointers to those strings.
  */
-static int parse_context(seaudit_log_t *log, char *token, char **user, char **role, char **type)
+static int parse_context(seaudit_log_t * log, char *token, char **user, char **role, char **type)
 {
 	size_t i = 0;
 	char *fields[PARSE_NUM_CONTEXT_FIELDS], *s;
 	int error;
 
 	*user = *role = *type = NULL;
-	while (i < PARSE_NUM_CONTEXT_FIELDS && (fields[i] = strsep(&token,":")) != NULL){
+	while (i < PARSE_NUM_CONTEXT_FIELDS && (fields[i] = strsep(&token, ":")) != NULL) {
 		i++;
 	}
 	if (i != PARSE_NUM_CONTEXT_FIELDS) {
@@ -274,8 +272,7 @@ static int parse_context(seaudit_log_t *log, char *token, char **user, char **ro
 		return 1;
 	}
 
-	if ((s = strdup(fields[0])) == NULL ||
-	    apol_bst_insert_and_get(log->users, (void **) &s, NULL, free) < 0) {
+	if ((s = strdup(fields[0])) == NULL || apol_bst_insert_and_get(log->users, (void **)&s, NULL, free) < 0) {
 		error = errno;
 		ERR(log, "%s", strerror(error));
 		errno = error;
@@ -283,8 +280,7 @@ static int parse_context(seaudit_log_t *log, char *token, char **user, char **ro
 	}
 	*user = s;
 
-	if ((s = strdup(fields[1])) == NULL ||
-	    apol_bst_insert_and_get(log->roles, (void **) &s, NULL, free) < 0) {
+	if ((s = strdup(fields[1])) == NULL || apol_bst_insert_and_get(log->roles, (void **)&s, NULL, free) < 0) {
 		error = errno;
 		ERR(log, "%s", strerror(error));
 		errno = error;
@@ -292,8 +288,7 @@ static int parse_context(seaudit_log_t *log, char *token, char **user, char **ro
 	}
 	*role = s;
 
-	if ((s = strdup(fields[2])) == NULL ||
-	    apol_bst_insert_and_get(log->types, (void **) &s, NULL, free) < 0) {
+	if ((s = strdup(fields[2])) == NULL || apol_bst_insert_and_get(log->types, (void **)&s, NULL, free) < 0) {
 		error = errno;
 		ERR(log, "%s", strerror(error));
 		errno = error;
@@ -304,9 +299,7 @@ static int parse_context(seaudit_log_t *log, char *token, char **user, char **ro
 	return 0;
 }
 
-
 /******************** AVC message parsing ********************/
-
 
 /**
  * Given a token, determine if it is the new AVC header or not.
@@ -347,15 +340,11 @@ static int avc_msg_is_prefix(char *token, char *prefix, char **result)
  *
  * @return 0 on success, > 0 on warning, < 0 on error.
  */
-static int avc_msg_insert_perms(seaudit_log_t *log,
-				apol_vector_t *tokens,
-				size_t *position,
-				seaudit_avc_message_t *avc)
+static int avc_msg_insert_perms(seaudit_log_t * log, apol_vector_t * tokens, size_t * position, seaudit_avc_message_t * avc)
 {
 	char *s, *perm;
 	int error;
-	if ((s = apol_vector_get_element(tokens, *position)) == NULL ||
-	    strcmp(s, "{") != 0) {
+	if ((s = apol_vector_get_element(tokens, *position)) == NULL || strcmp(s, "{") != 0) {
 		WARN(log, "%s", "Expected an opening brace while parsing permissions.");
 		return 1;
 	}
@@ -370,7 +359,7 @@ static int avc_msg_insert_perms(seaudit_log_t *log,
 		}
 
 		if ((perm = strdup(s)) == NULL ||
-		    apol_bst_insert_and_get(log->perms, (void **) &perm, NULL, free) < 0 ||
+		    apol_bst_insert_and_get(log->perms, (void **)&perm, NULL, free) < 0 ||
 		    apol_vector_append(avc->perms, perm) < 0) {
 			error = errno;
 			ERR(log, "%s", strerror(error));
@@ -384,7 +373,7 @@ static int avc_msg_insert_perms(seaudit_log_t *log,
 	return 1;
 }
 
-static int avc_msg_insert_syscall_info(seaudit_log_t *log, char *token, seaudit_message_t *msg, seaudit_avc_message_t *avc)
+static int avc_msg_insert_syscall_info(seaudit_log_t * log, char *token, seaudit_message_t * msg, seaudit_avc_message_t * avc)
 {
 	size_t length, header_len = 0, i = 0;
 	char *fields[PARSE_NUM_SYSCALL_FIELDS];
@@ -427,7 +416,7 @@ static int avc_msg_insert_syscall_info(seaudit_log_t *log, char *token, seaudit_
 	avc->serial = atoi(fields[2]);
 
 	if (msg->date_stamp == NULL) {
-		if ((msg->date_stamp = (struct tm*) malloc(sizeof(struct tm))) == NULL) {
+		if ((msg->date_stamp = (struct tm *)malloc(sizeof(struct tm))) == NULL) {
 			int error = errno;
 			ERR(log, "%s", strerror(error));
 			errno = error;
@@ -438,13 +427,12 @@ static int avc_msg_insert_syscall_info(seaudit_log_t *log, char *token, seaudit_
 	return 0;
 }
 
-static int avc_msg_insert_access_type(seaudit_log_t *log, char *token, seaudit_avc_message_t *avc)
+static int avc_msg_insert_access_type(seaudit_log_t * log, char *token, seaudit_avc_message_t * avc)
 {
 	if (strcmp(token, "granted") == 0) {
 		avc->msg = SEAUDIT_AVC_GRANTED;
 		return 0;
-	}
-	else if (strcmp(token, "denied") == 0) {
+	} else if (strcmp(token, "denied") == 0) {
 		avc->msg = SEAUDIT_AVC_DENIED;
 		return 0;
 	}
@@ -452,7 +440,7 @@ static int avc_msg_insert_access_type(seaudit_log_t *log, char *token, seaudit_a
 	return 1;
 }
 
-static int avc_msg_insert_scon(seaudit_log_t *log, seaudit_avc_message_t *avc, char *tmp)
+static int avc_msg_insert_scon(seaudit_log_t * log, seaudit_avc_message_t * avc, char *tmp)
 {
 	char *user, *role, *type;
 	int retval;
@@ -470,7 +458,7 @@ static int avc_msg_insert_scon(seaudit_log_t *log, seaudit_avc_message_t *avc, c
 	return 0;
 }
 
-static int avc_msg_insert_tcon(seaudit_log_t *log, seaudit_avc_message_t *avc, char *tmp)
+static int avc_msg_insert_tcon(seaudit_log_t * log, seaudit_avc_message_t * avc, char *tmp)
 {
 	char *user, *role, *type;
 	int retval;
@@ -488,11 +476,10 @@ static int avc_msg_insert_tcon(seaudit_log_t *log, seaudit_avc_message_t *avc, c
 	return 0;
 }
 
-static int avc_msg_insert_tclass(seaudit_log_t *log, seaudit_avc_message_t *avc, char *tmp)
+static int avc_msg_insert_tclass(seaudit_log_t * log, seaudit_avc_message_t * avc, char *tmp)
 {
 	char *tclass;
-	if ((tclass = strdup(tmp)) == NULL ||
-	    apol_bst_insert_and_get(log->classes, (void **) &tclass, NULL, free) < 0) {
+	if ((tclass = strdup(tmp)) == NULL || apol_bst_insert_and_get(log->classes, (void **)&tclass, NULL, free) < 0) {
 		int error = errno;
 		ERR(log, "%s", strerror(error));
 		errno = error;
@@ -503,7 +490,7 @@ static int avc_msg_insert_tclass(seaudit_log_t *log, seaudit_avc_message_t *avc,
 	return 0;
 }
 
-static int avc_msg_insert_string(seaudit_log_t *log, char *src, char **dest)
+static int avc_msg_insert_string(seaudit_log_t * log, char *src, char **dest)
 {
 	if ((*dest = strdup(src)) == NULL) {
 		int error = errno;
@@ -518,13 +505,13 @@ static int avc_msg_insert_string(seaudit_log_t *log, char *src, char **dest)
  * Removes quotes from a string, this is currently to remove quotes
  * from the command argument.
  */
-static int avc_msg_remove_quotes_insert_string(seaudit_log_t *log, char *src, char **dest)
+static int avc_msg_remove_quotes_insert_string(seaudit_log_t * log, char *src, char **dest)
 {
 	size_t i, j, l;
 
 	l = strlen(src);
 	/* see if there are any quotes to begin with if there aren't
-	   just run insert string */
+	 * just run insert string */
 	if (src[0] == '\"' && l > 0 && src[l - 1] == '\"') {
 		if ((*dest = calloc(1, l + 1)) == NULL) {
 			int error = errno;
@@ -560,7 +547,7 @@ static int avc_msg_is_valid_additional_field(char *orig_token)
 	return 1;
 }
 
-static int avc_msg_reformat_path(seaudit_log_t *log, seaudit_avc_message_t *avc, char *token)
+static int avc_msg_reformat_path(seaudit_log_t * log, seaudit_avc_message_t * avc, char *token)
 {
 	int error;
 	if (avc->path == NULL) {
@@ -570,8 +557,7 @@ static int avc_msg_reformat_path(seaudit_log_t *log, seaudit_avc_message_t *avc,
 			errno = error;
 			return -1;
 		}
-	}
-	else {
+	} else {
 		size_t len = strlen(avc->path) + strlen(token) + 2;
 		char *s = realloc(avc->path, len);
 		if (s == NULL) {
@@ -593,13 +579,14 @@ static int avc_msg_reformat_path(seaudit_log_t *log, seaudit_avc_message_t *avc,
  *
  * @return 0 on success, > 0 if warnings, < 0 on error
  */
-static int avc_msg_insert_additional_field_data(seaudit_log_t *log, apol_vector_t *tokens, seaudit_avc_message_t *avc, size_t *position)
+static int avc_msg_insert_additional_field_data(seaudit_log_t * log, apol_vector_t * tokens, seaudit_avc_message_t * avc,
+						size_t * position)
 {
 	char *token, *v;
 	int retval, has_warnings = 0;
 
 	avc->avc_type = SEAUDIT_AVC_DATA_FS;
-	for ( ; (*position) < apol_vector_get_size(tokens); (*position)++) {
+	for (; (*position) < apol_vector_get_size(tokens); (*position)++) {
 		token = apol_vector_get_element(tokens, (*position));
 		v = NULL;
 		if (strcmp(token, "") == 0) {
@@ -663,7 +650,6 @@ static int avc_msg_insert_additional_field_data(seaudit_log_t *log, apol_vector_
 			continue;
 		}
 
-
 		if (!avc->saddr && avc_msg_is_prefix(token, "saddr=", &v)) {
 			if (avc_msg_insert_string(log, v, &avc->saddr) < 0) {
 				return -1;
@@ -671,9 +657,7 @@ static int avc_msg_insert_additional_field_data(seaudit_log_t *log, apol_vector_
 			continue;
 		}
 
-		if (!avc->source &&
-		    (avc_msg_is_prefix(token, "source=", &v) ||
-		     avc_msg_is_prefix(token, "src=", &v))) {
+		if (!avc->source && (avc_msg_is_prefix(token, "source=", &v) || avc_msg_is_prefix(token, "src=", &v))) {
 			avc->source = atoi(v);
 			continue;
 		}
@@ -711,7 +695,6 @@ static int avc_msg_insert_additional_field_data(seaudit_log_t *log, apol_vector_
 			continue;
 		}
 
-
 		if (!avc->faddr && avc_msg_is_prefix(token, "faddr=", &v)) {
 			if (avc_msg_insert_string(log, v, &avc->faddr)) {
 				return -1;
@@ -731,13 +714,13 @@ static int avc_msg_insert_additional_field_data(seaudit_log_t *log, apol_vector_
 		}
 
 		if (!avc->is_src_sid && avc_msg_is_prefix(token, "ssid=", &v)) {
-			avc->src_sid = (unsigned int) strtoul(v, NULL, 10);
+			avc->src_sid = (unsigned int)strtoul(v, NULL, 10);
 			avc->is_src_sid = 1;
 			continue;
 		}
 
 		if (!avc->is_tgt_sid && avc_msg_is_prefix(token, "tsid=", &v)) {
-			avc->tgt_sid = (unsigned int) strtoul(v, NULL, 10);
+			avc->tgt_sid = (unsigned int)strtoul(v, NULL, 10);
 			avc->is_tgt_sid = 1;
 			continue;
 		}
@@ -773,8 +756,7 @@ static int avc_msg_insert_additional_field_data(seaudit_log_t *log, apol_vector_
 			retval = avc_msg_insert_scon(log, avc, v);
 			if (retval < 0) {
 				return retval;
-			}
-			else if (retval > 0) {
+			} else if (retval > 0) {
 				has_warnings = 1;
 			}
 			continue;
@@ -784,8 +766,7 @@ static int avc_msg_insert_additional_field_data(seaudit_log_t *log, apol_vector_
 			retval = avc_msg_insert_tcon(log, avc, v);
 			if (retval < 0) {
 				return retval;
-			}
-			else if (retval > 0) {
+			} else if (retval > 0) {
 				has_warnings = 1;
 			}
 			continue;
@@ -802,8 +783,7 @@ static int avc_msg_insert_additional_field_data(seaudit_log_t *log, apol_vector_
 	}
 
 	/* can't have both a sid and a context */
-	if ((avc->is_src_sid && avc->suser) ||
-	    (avc->is_tgt_sid && avc->tuser)) {
+	if ((avc->is_src_sid && avc->suser) || (avc->is_tgt_sid && avc->tuser)) {
 		has_warnings = 1;
 	}
 
@@ -818,11 +798,11 @@ static int avc_msg_insert_additional_field_data(seaudit_log_t *log, apol_vector_
 	return has_warnings;
 }
 
-static int avc_parse(seaudit_log_t *log, apol_vector_t *tokens)
+static int avc_parse(seaudit_log_t * log, apol_vector_t * tokens)
 {
-        seaudit_message_t *msg;
-        seaudit_avc_message_t *avc;
-        seaudit_message_type_e type;
+	seaudit_message_t *msg;
+	seaudit_avc_message_t *avc;
+	seaudit_message_type_e type;
 	int ret, has_warnings = 0;
 	size_t position = 0, num_tokens = apol_vector_get_size(tokens);
 	char *token;
@@ -850,11 +830,9 @@ static int avc_parse(seaudit_log_t *log, apol_vector_t *tokens)
 		ret = avc_msg_insert_syscall_info(log, token, msg, avc);
 		if (ret < 0) {
 			return ret;
-		}
-		else if (ret > 0) {
+		} else if (ret > 0) {
 			has_warnings = 1;
-		}
-		else {
+		} else {
 			position++;
 			if (position >= num_tokens) {
 				WARN(log, "%s", "Not enough tokens for new audit header.");
@@ -862,13 +840,11 @@ static int avc_parse(seaudit_log_t *log, apol_vector_t *tokens)
 			}
 			token = apol_vector_get_element(tokens, position);
 		}
-	}
-	else {
+	} else {
 		ret = insert_standard_msg_header(log, tokens, &position, msg);
 		if (ret < 0) {
 			return ret;
-		}
-		else if (ret > 0) {
+		} else if (ret > 0) {
 			has_warnings = 1;
 		}
 		if (position >= num_tokens) {
@@ -900,11 +876,9 @@ static int avc_parse(seaudit_log_t *log, apol_vector_t *tokens)
 			ret = avc_msg_insert_syscall_info(log, token, msg, avc);
 			if (ret < 0) {
 				return ret;
-			}
-			else if (ret > 0) {
+			} else if (ret > 0) {
 				has_warnings = 1;
-			}
-			else {
+			} else {
 				position++;
 				if (position >= num_tokens) {
 					WARN(log, "%s", "Not enough tokens for new audit header.");
@@ -920,8 +894,7 @@ static int avc_parse(seaudit_log_t *log, apol_vector_t *tokens)
 		/* Hold the position */
 		has_warnings = 1;
 		WARN(log, "%s", "Expected an avc: token here.");
-	}
-	else {
+	} else {
 		position++;
 		if (position >= num_tokens) {
 			WARN(log, "%s", "Not enough tokens for new audit header.");
@@ -933,8 +906,7 @@ static int avc_parse(seaudit_log_t *log, apol_vector_t *tokens)
 	/* Insert denied or granted */
 	if (avc_msg_insert_access_type(log, token, avc)) {
 		has_warnings = 1;
-	}
-	else {
+	} else {
 		position++;
 		if (position >= num_tokens) {
 			WARN(log, "%s", "Not enough tokens for new audit header.");
@@ -947,8 +919,7 @@ static int avc_parse(seaudit_log_t *log, apol_vector_t *tokens)
 	ret = avc_msg_insert_perms(log, tokens, &position, avc);
 	if (ret < 0) {
 		return ret;
-	}
-	else if (ret > 0) {
+	} else if (ret > 0) {
 		has_warnings = 1;
 	}
 	token = apol_vector_get_element(tokens, position);
@@ -973,18 +944,16 @@ static int avc_parse(seaudit_log_t *log, apol_vector_t *tokens)
 	ret = avc_msg_insert_additional_field_data(log, tokens, avc, &position);
 	if (ret < 0) {
 		return ret;
-	}
-	else if (ret > 0) {
+	} else if (ret > 0) {
 		has_warnings = 1;
 	}
 
 	return has_warnings;
 }
 
-
 /******************** boolean parsing ********************/
 
-static int boolean_msg_insert_bool(seaudit_log_t *log, seaudit_bool_message_t *bool, char *token)
+static int boolean_msg_insert_bool(seaudit_log_t * log, seaudit_bool_message_t * bool, char *token)
 {
 	size_t len = strlen(token);
 	int value;
@@ -1014,8 +983,7 @@ static int boolean_msg_insert_bool(seaudit_log_t *log, seaudit_bool_message_t *b
 	return bool_change_append(log, bool, token, value);
 }
 
-
-static int bool_parse(seaudit_log_t *log, apol_vector_t *tokens)
+static int bool_parse(seaudit_log_t * log, apol_vector_t * tokens)
 {
 	seaudit_message_t *msg;
 	seaudit_bool_message_t *bool;
@@ -1031,8 +999,7 @@ static int bool_parse(seaudit_log_t *log, apol_vector_t *tokens)
 		assert(num_messages > 0);
 		msg = apol_vector_get_element(log->messages, num_messages - 1);
 		log->next_line = 0;
-	}
-        else {
+	} else {
 		if ((msg = message_create(log, SEAUDIT_MESSAGE_TYPE_BOOL)) == NULL) {
 			return -1;
 		}
@@ -1042,8 +1009,7 @@ static int bool_parse(seaudit_log_t *log, apol_vector_t *tokens)
 	ret = insert_standard_msg_header(log, tokens, &position, msg);
 	if (ret < 0) {
 		return ret;
-	}
-	else if (ret > 0) {
+	} else if (ret > 0) {
 		has_warnings = 1;
 	}
 	if (position >= num_tokens) {
@@ -1120,7 +1086,7 @@ static int bool_parse(seaudit_log_t *log, apol_vector_t *tokens)
 		}
 	}
 
-	/* keep parsing until a closing brace is found.	 if end of
+	/* keep parsing until a closing brace is found.  if end of
 	 * tokens is reached, then keep parsing the next line */
 	while (position < num_tokens) {
 		token = apol_vector_get_element(tokens, position);
@@ -1137,8 +1103,7 @@ static int bool_parse(seaudit_log_t *log, apol_vector_t *tokens)
 		ret = boolean_msg_insert_bool(log, bool, token);
 		if (ret < 0) {
 			return ret;
-		}
-		else if (ret > 0) {
+		} else if (ret > 0) {
 			has_warnings = 1;
 		}
 	}
@@ -1148,9 +1113,7 @@ static int bool_parse(seaudit_log_t *log, apol_vector_t *tokens)
 	return has_warnings;
 }
 
-
 /******************** policy load parsing ********************/
-
 
 /**
  * Determine if a series of tokens represents the older style of a
@@ -1160,7 +1123,7 @@ static int bool_parse(seaudit_log_t *log, apol_vector_t *tokens)
  * error.  If it is the older style, then increment reference pointer
  * position to point to the next unprocessed token.
  */
-static int load_policy_msg_is_old_load_policy_string(seaudit_log_t *log, apol_vector_t *tokens, size_t *position)
+static int load_policy_msg_is_old_load_policy_string(seaudit_log_t * log, apol_vector_t * tokens, size_t * position)
 {
 	size_t i, length = 0;
 	int rt;
@@ -1169,11 +1132,11 @@ static int load_policy_msg_is_old_load_policy_string(seaudit_log_t *log, apol_ve
 		return 0;
 	}
 
-	for (i = 0 ; i < 4 ; i++) {
-		length += strlen((char *) apol_vector_get_element(tokens, i + *position));
+	for (i = 0; i < 4; i++) {
+		length += strlen((char *)apol_vector_get_element(tokens, i + *position));
 	}
 
-	if ((tmp = (char*) calloc(length + 1, sizeof(char))) == NULL) {
+	if ((tmp = (char *)calloc(length + 1, sizeof(char))) == NULL) {
 		int error = errno;
 		ERR(log, "%s", strerror(error));
 		errno = error;
@@ -1181,7 +1144,7 @@ static int load_policy_msg_is_old_load_policy_string(seaudit_log_t *log, apol_ve
 	}
 
 	for (i = 0; i < 4; i++) {
-		strcat(tmp, (char *) apol_vector_get_element(tokens, i + *position));
+		strcat(tmp, (char *)apol_vector_get_element(tokens, i + *position));
 	}
 
 	rt = strcmp(tmp, OLD_LOAD_POLICY_STRING);
@@ -1190,39 +1153,33 @@ static int load_policy_msg_is_old_load_policy_string(seaudit_log_t *log, apol_ve
 	if (rt == 0) {
 		*position += 4;
 		return 1;
-	}
-	else
+	} else
 		return 0;
 }
 
-static void load_policy_msg_get_policy_components(seaudit_load_message_t *load, apol_vector_t *tokens, size_t *position)
+static void load_policy_msg_get_policy_components(seaudit_load_message_t * load, apol_vector_t * tokens, size_t * position)
 {
 	char *arg = apol_vector_get_element(tokens, *position);
 	char *id = apol_vector_get_element(tokens, *position + 1);
 	assert(id != NULL && arg != NULL);
-	unsigned int val = (unsigned int) strtoul(arg, NULL, 10);
+	unsigned int val = (unsigned int)strtoul(arg, NULL, 10);
 	if (load->classes == 0 && strstr(id, "classes")) {
 		load->classes = val;
-	}
-	else if (load->rules == 0 && strstr(id, "rules")) {
+	} else if (load->rules == 0 && strstr(id, "rules")) {
 		load->rules = val;
-	}
-	else if (load->users == 0 && strstr(id, "users")) {
+	} else if (load->users == 0 && strstr(id, "users")) {
 		load->users = val;
-	}
-	else if (load->roles == 0 && strstr(id, "roles")) {
+	} else if (load->roles == 0 && strstr(id, "roles")) {
 		load->roles = val;
-	}
-	else if (load->types == 0 && strstr(id, "types")) {
+	} else if (load->types == 0 && strstr(id, "types")) {
 		load->types = val;
-	}
-	else if (load->bools == 0 && strstr(id, "bools")) {
+	} else if (load->bools == 0 && strstr(id, "bools")) {
 		load->bools = val;
 	}
 	*position += 2;
 }
 
-static int load_parse(seaudit_log_t *log, apol_vector_t *tokens)
+static int load_parse(seaudit_log_t * log, apol_vector_t * tokens)
 {
 	seaudit_message_t *msg;
 	seaudit_load_message_t *load;
@@ -1238,8 +1195,7 @@ static int load_parse(seaudit_log_t *log, apol_vector_t *tokens)
 		assert(num_messages > 0);
 		msg = apol_vector_get_element(log->messages, num_messages - 1);
 		log->next_line = 0;
-	}
-	else {
+	} else {
 		if ((msg = message_create(log, SEAUDIT_MESSAGE_TYPE_LOAD)) == NULL) {
 			return -1;
 		}
@@ -1249,8 +1205,7 @@ static int load_parse(seaudit_log_t *log, apol_vector_t *tokens)
 	ret = insert_standard_msg_header(log, tokens, &position, msg);
 	if (ret < 0) {
 		return ret;
-	}
-	else if (ret > 0) {
+	} else if (ret > 0) {
 		has_warnings = 1;
 	}
 	if (position >= num_tokens) {
@@ -1268,7 +1223,7 @@ static int load_parse(seaudit_log_t *log, apol_vector_t *tokens)
 		WARN(log, "%s", "Not enough tokens for policy load.");
 		return 1;
 	}
-	if (strcmp((char *) apol_vector_get_element(tokens, position + 1), "bools") == 0) {
+	if (strcmp((char *)apol_vector_get_element(tokens, position + 1), "bools") == 0) {
 		WARN(log, "%s", "Got an unexpected bools message.");
 		return 1;
 	}
@@ -1303,8 +1258,7 @@ static int load_parse(seaudit_log_t *log, apol_vector_t *tokens)
 	ret = load_policy_msg_is_old_load_policy_string(log, tokens, &position);
 	if (ret < 0) {
 		return ret;
-	}
-	else if (ret > 0) {
+	} else if (ret > 0) {
 		if (position >= num_tokens) {
 			WARN(log, "%s", "Not enough tokens for policy load.");
 			return 1;
@@ -1317,27 +1271,23 @@ static int load_parse(seaudit_log_t *log, apol_vector_t *tokens)
 			return -1;
 		}
 		log->next_line = 1;
-	}
-	else {
+	} else {
 		while (position < num_tokens) {
 			load_policy_msg_get_policy_components(load, tokens, &position);
 		}
 		/* Check to see if we have gathered ALL policy
 		 * components. If not, we need to load the next
 		 * line. */
-		if (load->classes == 0 || load->rules == 0 ||
-		    load->users == 0 || load->roles == 0 || load->types == 0) {
+		if (load->classes == 0 || load->rules == 0 || load->users == 0 || load->roles == 0 || load->types == 0) {
 			log->next_line = 1;
 		}
 	}
 	return has_warnings;
 }
 
-
 /******************** public functions below ********************/
 
-
-int seaudit_log_parse(seaudit_log_t *log, FILE *syslog)
+int seaudit_log_parse(seaudit_log_t * log, FILE * syslog)
 {
 	FILE *audit_file = syslog;
 	char *line = NULL, *line_dup = NULL;
@@ -1387,16 +1337,14 @@ int seaudit_log_parse(seaudit_log_t *log, FILE *syslog)
 		}
 		is_sel = is_selinux(line);
 		if (log->next_line) {
-			prev_message = apol_vector_get_element(log->messages,
-							       apol_vector_get_size(log->messages) - 1);
+			prev_message = apol_vector_get_element(log->messages, apol_vector_get_size(log->messages) - 1);
 			seaudit_message_get_data(prev_message, &prev_message_type);
 			if (!(is_sel == SEAUDIT_MESSAGE_TYPE_INVALID && prev_message_type == SEAUDIT_MESSAGE_TYPE_BOOL) &&
 			    !(is_sel == SEAUDIT_MESSAGE_TYPE_LOAD && prev_message_type == SEAUDIT_MESSAGE_TYPE_LOAD)) {
 				WARN(log, "%s", "Parser was in the middle of a line, but next message was not the correct format.");
 				has_warnings = 1;
 				log->next_line = 0;
-			}
-			else {
+			} else {
 				is_sel = prev_message_type;
 			}
 		}
@@ -1435,8 +1383,7 @@ int seaudit_log_parse(seaudit_log_t *log, FILE *syslog)
 			error = errno;
 			ERR(log, "%s", strerror(error));
 			goto cleanup;
-		}
-		else if (retval2 > 0) {
+		} else if (retval2 > 0) {
 			if (apol_vector_append(log->malformed_msgs, line_dup) < 0) {
 				error = errno;
 				ERR(log, "%s", strerror(error));
@@ -1448,7 +1395,7 @@ int seaudit_log_parse(seaudit_log_t *log, FILE *syslog)
 	}
 
 	retval = 0;
- cleanup:
+      cleanup:
 	free(line);
 	free(line_dup);
 	apol_vector_destroy(&tokens, NULL);
@@ -1456,9 +1403,9 @@ int seaudit_log_parse(seaudit_log_t *log, FILE *syslog)
 		seaudit_model_t *m = apol_vector_get_element(log->models, i);
 		model_notify_log_changed(m, log);
 	}
-        if (retval < 0) {
-                errno = error;
-                return -1;
-        }
+	if (retval < 0) {
+		errno = error;
+		return -1;
+	}
 	return has_warnings;
 }

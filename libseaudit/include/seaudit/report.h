@@ -36,7 +36,8 @@
 
 typedef struct seaudit_report seaudit_report_t;
 
-typedef enum seaudit_report_format {
+typedef enum seaudit_report_format
+{
 	SEAUDIT_REPORT_FORMAT_TEXT, SEAUDIT_REPORT_FORMAT_HTML
 } seaudit_report_format_e;
 
@@ -53,7 +54,7 @@ typedef enum seaudit_report_format {
  * @return A newly allocated report, or NULL upon error.  The caller
  * must call seaudit_report_destroy() afterwards.
  */
-extern seaudit_report_t *seaudit_report_create(seaudit_model_t *model, const char *out_file);
+extern seaudit_report_t *seaudit_report_create(seaudit_model_t * model, const char *out_file);
 
 /**
  * Destroy the referenced seaudit_report_t object.
@@ -61,7 +62,7 @@ extern seaudit_report_t *seaudit_report_create(seaudit_model_t *model, const cha
  * @param report Report to destroy.  The pointer will be set to NULL
  * afterwards.  (If pointer is already NULL then do nothing.)
  */
-extern void seaudit_report_destroy(seaudit_report_t **report);
+extern void seaudit_report_destroy(seaudit_report_t ** report);
 
 /**
  * Write the report with the messages currently stored in the report's
@@ -72,7 +73,7 @@ extern void seaudit_report_destroy(seaudit_report_t **report);
  *
  * @return 0 on successful write, < 0 on error.
  */
-extern int seaudit_report_write(seaudit_log_t *log, seaudit_report_t *report);
+extern int seaudit_report_write(seaudit_log_t * log, seaudit_report_t * report);
 
 /**
  * Set the output format of the report.  The default format is plain
@@ -84,7 +85,7 @@ extern int seaudit_report_write(seaudit_log_t *log, seaudit_report_t *report);
  *
  * @return 0 on success, < 0 on error.
  */
-extern int seaudit_report_set_format(seaudit_log_t *log, seaudit_report_t *report, seaudit_report_format_e format);
+extern int seaudit_report_set_format(seaudit_log_t * log, seaudit_report_t * report, seaudit_report_format_e format);
 
 /**
  * Set the report to use a particular report configuration file.
@@ -97,7 +98,7 @@ extern int seaudit_report_set_format(seaudit_log_t *log, seaudit_report_t *repor
  *
  * @return 0 on success, < 0 on error.
  */
-extern int seaudit_report_set_configuration(seaudit_log_t *log, seaudit_report_t *report, const char *file);
+extern int seaudit_report_set_configuration(seaudit_log_t * log, seaudit_report_t * report, const char *file);
 
 /**
  * Set the report to use a particular HTML stylesheet file.  Note that
@@ -112,7 +113,8 @@ extern int seaudit_report_set_configuration(seaudit_log_t *log, seaudit_report_t
  *
  * @return 0 on success, < 0 on error.
  */
-extern int seaudit_report_set_stylesheet(seaudit_log_t *log, seaudit_report_t *report, const char *file, const int use_stylesheet);
+extern int seaudit_report_set_stylesheet(seaudit_log_t * log, seaudit_report_t * report, const char *file,
+					 const int use_stylesheet);
 
 /**
  * Set the report to print messages that did not parse cleanly (i.e.,
@@ -125,6 +127,6 @@ extern int seaudit_report_set_stylesheet(seaudit_log_t *log, seaudit_report_t *r
  *
  * @return 0 on success, < 0 on error.
  */
-extern int seaudit_report_set_malformed(seaudit_log_t *log, seaudit_report_t *report, const int do_malformed);
+extern int seaudit_report_set_malformed(seaudit_log_t * log, seaudit_report_t * report, const int do_malformed);
 
 #endif
