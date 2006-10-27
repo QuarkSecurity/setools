@@ -58,7 +58,6 @@ static char *script_dir = NULL;
 /** location of the help file directory, set by Apol_GetHelpDir() */
 static char *help_dir = NULL;
 
-
 /**
  * Take the formated string, allocate space for it, and then write it
  * the policy's msg_callback_arg.  If there is already a string
@@ -66,8 +65,7 @@ static char *help_dir = NULL;
  * the previous one, overwrite the string if message level is less
  * than previous, else ignore the message.
  */
-static void apol_tcl_route_handle_to_string(apol_policy_t *p, int level,
-					    const char *fmt, va_list ap)
+static void apol_tcl_route_handle_to_string(apol_policy_t * p, int level, const char *fmt, va_list ap)
 {
 	char *s;
 	if (level == APOL_MSG_INFO && p->msg_level >= APOL_MSG_INFO) {
@@ -76,30 +74,26 @@ static void apol_tcl_route_handle_to_string(apol_policy_t *p, int level,
 		if (vasprintf(&s, fmt, ap) < 0) {
 			fprintf(stderr, "%s\n", strerror(ENOMEM));
 			return;
-		}
-		else {
+		} else {
 			p->msg_callback_arg = s;
 		}
 		Tcl_DoOneEvent(TCL_IDLE_EVENTS | TCL_DONT_WAIT);
-	}
-	else if (p->msg_callback_arg == NULL || level < p->msg_level) {
+	} else if (p->msg_callback_arg == NULL || level < p->msg_level) {
 		free(p->msg_callback_arg);
 		p->msg_callback_arg = NULL;
 		if (vasprintf(&s, fmt, ap) < 0) {
 			fprintf(stderr, "%s\n", strerror(ENOMEM));
 			return;
-		}
-		else {
+		} else {
 			p->msg_callback_arg = s;
 		}
 		p->msg_level = level;
-	}
-	else if (level == p->msg_level) {
+	} else if (level == p->msg_level) {
 		char *t;
 		if (vasprintf(&s, fmt, ap) < 0) {
 			fprintf(stderr, "%s\n", strerror(ENOMEM));
 		}
-		if (asprintf(&t, "%s\n%s", (char *) p->msg_callback_arg, s) < 0) {
+		if (asprintf(&t, "%s\n%s", (char *)p->msg_callback_arg, s) < 0) {
 			free(s);
 			fprintf(stderr, "%s\n", strerror(ENOMEM));
 			return;
@@ -119,7 +113,7 @@ void apol_tcl_clear_error(void)
 	}
 }
 
-void apol_tcl_write_error(Tcl_Interp *interp)
+void apol_tcl_write_error(Tcl_Interp * interp)
 {
 	if (policydb != NULL && policydb->msg_callback_arg != NULL) {
 		Tcl_Obj *obj = Tcl_NewStringObj(policydb->msg_callback_arg, -1);
@@ -129,8 +123,7 @@ void apol_tcl_write_error(Tcl_Interp *interp)
 	}
 }
 
-int apol_tcl_string_to_level(Tcl_Interp *interp, const char *level_string,
-			     apol_mls_level_t *level)
+int apol_tcl_string_to_level(Tcl_Interp * interp, const char *level_string, apol_mls_level_t * level)
 {
 	Tcl_Obj *level_obj, *sens_obj, *cats_list_obj, *cats_obj;
 	const char *sens_string, *cat_string;
@@ -153,8 +146,7 @@ int apol_tcl_string_to_level(Tcl_Interp *interp, const char *level_string,
 		return -1;
 	}
 	sens_string = Tcl_GetString(sens_obj);
-	if (qpol_policy_get_level_by_name(policydb->p,
-					     sens_string, &sens) < 0) {
+	if (qpol_policy_get_level_by_name(policydb->p, sens_string, &sens) < 0) {
 		/* unknown sensitivity */
 		return 1;
 	}
@@ -167,8 +159,7 @@ int apol_tcl_string_to_level(Tcl_Interp *interp, const char *level_string,
 			return -1;
 		}
 		cat_string = Tcl_GetString(cats_obj);
-		if (qpol_policy_get_cat_by_name(policydb->p,
-						   cat_string, &cat) < 0) {
+		if (qpol_policy_get_cat_by_name(policydb->p, cat_string, &cat) < 0) {
 			/* unknown category */
 			return 1;
 		}
@@ -176,16 +167,14 @@ int apol_tcl_string_to_level(Tcl_Interp *interp, const char *level_string,
 			return -1;
 		}
 	}
-	if (level->cats == NULL &&
-	    (level->cats = apol_vector_create()) == NULL) {
+	if (level->cats == NULL && (level->cats = apol_vector_create()) == NULL) {
 		ERR(policydb, "%s", strerror(ENOMEM));
 		return -1;
 	}
 	return 0;
 }
 
-int apol_tcl_string_to_range(Tcl_Interp *interp, const char *range_string,
-			     apol_mls_range_t *range)
+int apol_tcl_string_to_range(Tcl_Interp * interp, const char *range_string, apol_mls_range_t * range)
 {
 	Tcl_Obj *range_obj = NULL, *low_obj, *high_obj;
 	const char *low_string, *high_string;
@@ -213,8 +202,7 @@ int apol_tcl_string_to_range(Tcl_Interp *interp, const char *range_string,
 	/* for now set the high level to be the same as low level --
 	 * if there really is a high level in the string then that
 	 * will overwrite this entry */
-	if (apol_mls_range_set_low(policydb, range, low_level) < 0 ||
-	    apol_mls_range_set_high(policydb, range, low_level)) {
+	if (apol_mls_range_set_low(policydb, range, low_level) < 0 || apol_mls_range_set_high(policydb, range, low_level)) {
 		goto cleanup;
 	}
 	low_level = NULL;
@@ -241,29 +229,24 @@ int apol_tcl_string_to_range(Tcl_Interp *interp, const char *range_string,
 	}
 
 	retval = 0;
- cleanup:
+      cleanup:
 	apol_mls_level_destroy(&low_level);
 	apol_mls_level_destroy(&high_level);
 	return retval;
 }
 
-int apol_tcl_string_to_range_match(Tcl_Interp *interp, const char *range_match_string,
-				   unsigned int *flags)
+int apol_tcl_string_to_range_match(Tcl_Interp * interp, const char *range_match_string, unsigned int *flags)
 {
 	unsigned new_flag;
 	if (strcmp(range_match_string, "exact") == 0) {
 		new_flag = APOL_QUERY_EXACT;
-	}
-	else if (strcmp(range_match_string, "subset") == 0) {
+	} else if (strcmp(range_match_string, "subset") == 0) {
 		new_flag = APOL_QUERY_SUB;
-	}
-	else if (strcmp(range_match_string, "superset") == 0) {
+	} else if (strcmp(range_match_string, "superset") == 0) {
 		new_flag = APOL_QUERY_SUPER;
-	}
-	else if (strcmp(range_match_string, "intersect") == 0) {
+	} else if (strcmp(range_match_string, "intersect") == 0) {
 		new_flag = APOL_QUERY_INTERSECT;
-	}
-	else {
+	} else {
 		ERR(policydb, "Invalid range match string %s.", range_match_string);
 		return -1;
 	}
@@ -271,9 +254,8 @@ int apol_tcl_string_to_range_match(Tcl_Interp *interp, const char *range_match_s
 	return 0;
 }
 
-int apol_tcl_string_to_context(Tcl_Interp *interp,
-			       const char *context_string,
-			       apol_context_t *context) {
+int apol_tcl_string_to_context(Tcl_Interp * interp, const char *context_string, apol_context_t * context)
+{
 	int num_elems;
 	const char **context_elem = NULL;
 	const char *user, *role, *type, *range_string;
@@ -313,10 +295,10 @@ int apol_tcl_string_to_context(Tcl_Interp *interp,
 		}
 	}
 	retval = 0;
- cleanup:
+      cleanup:
 	apol_mls_range_destroy(&range);
 	if (context_elem != NULL) {
-		Tcl_Free((char *) context_elem);
+		Tcl_Free((char *)context_elem);
 	}
 	return retval;
 }
@@ -336,7 +318,7 @@ int apol_tcl_string_to_context(Tcl_Interp *interp,
  *
  * @param argv This function takes one parameter: file to find.
  */
-static int Apol_GetScriptDir(ClientData clientData, Tcl_Interp *interp, int argc, CONST char *argv[])
+static int Apol_GetScriptDir(ClientData clientData, Tcl_Interp * interp, int argc, CONST char *argv[])
 {
 	if (argc != 2) {
 		Tcl_SetResult(interp, "Need a filename.", TCL_STATIC);
@@ -354,10 +336,10 @@ static int Apol_GetScriptDir(ClientData clientData, Tcl_Interp *interp, int argc
 	return TCL_OK;
 }
 
-int apol_tcl_get_startup_script(Tcl_Interp *interp, char *name)
+int apol_tcl_get_startup_script(Tcl_Interp * interp, char *name)
 {
-        CONST char *args[2] = {NULL, name};
-        return Apol_GetScriptDir(NULL, interp, 2, args);
+	CONST char *args[2] = { NULL, name };
+	return Apol_GetScriptDir(NULL, interp, 2, args);
 }
 
 /**
@@ -370,16 +352,16 @@ int apol_tcl_get_startup_script(Tcl_Interp *interp, char *name)
  *
  * @param argv This function takes one parameter: file to find.
  */
-static int Apol_GetHelpDir(ClientData clientData, Tcl_Interp *interp, int argc, CONST char *argv[])
+static int Apol_GetHelpDir(ClientData clientData, Tcl_Interp * interp, int argc, CONST char *argv[])
 {
-	if(argc != 2) {
+	if (argc != 2) {
 		Tcl_SetResult(interp, "Need a filename.", TCL_STATIC);
 		return TCL_ERROR;
 	}
 
-	if(help_dir == NULL) {
+	if (help_dir == NULL) {
 		help_dir = apol_file_find(argv[1]);
-		if(help_dir == NULL) {
+		if (help_dir == NULL) {
 			Tcl_SetResult(interp, "Problem locating Tcl help file.", TCL_STATIC);
 			return TCL_ERROR;
 		}
@@ -394,12 +376,11 @@ static int Apol_GetHelpDir(ClientData clientData, Tcl_Interp *interp, int argc, 
  * If the current message stored withing the apol_policy_t handler is
  * an info string, then return it.  Otherwise return an empty string.
  */
-static int Apol_GetInfoString(ClientData clientData, Tcl_Interp *interp, int argc, CONST char *argv[])
+static int Apol_GetInfoString(ClientData clientData, Tcl_Interp * interp, int argc, CONST char *argv[])
 {
 	if (policydb != NULL && policydb->msg_level == APOL_MSG_INFO) {
 		Tcl_SetResult(interp, policydb->msg_callback_arg, TCL_VOLATILE);
-	}
-	else {
+	} else {
 		Tcl_SetResult(interp, "", TCL_STATIC);
 	}
 	return TCL_OK;
@@ -414,7 +395,7 @@ static int Apol_GetInfoString(ClientData clientData, Tcl_Interp *interp, int arg
  *
  * @param argv This function takes one parameter: policy to open.
  */
-static int Apol_OpenPolicy(ClientData clientData, Tcl_Interp *interp, int argc, CONST char *argv[])
+static int Apol_OpenPolicy(ClientData clientData, Tcl_Interp * interp, int argc, CONST char *argv[])
 {
 	if (argc != 2) {
 		Tcl_SetResult(interp, "Need a policy filename.", TCL_STATIC);
@@ -444,7 +425,7 @@ static int Apol_OpenPolicy(ClientData clientData, Tcl_Interp *interp, int argc, 
  * Close the currently opened policy.  If no policy is opened then do
  * nothing.
  */
-static int Apol_ClosePolicy(ClientData clientData, Tcl_Interp *interp, int argc, CONST char *argv[])
+static int Apol_ClosePolicy(ClientData clientData, Tcl_Interp * interp, int argc, CONST char *argv[])
 {
 	if (policydb != NULL) {
 		free(policydb->msg_callback_arg);
@@ -456,9 +437,9 @@ static int Apol_ClosePolicy(ClientData clientData, Tcl_Interp *interp, int argc,
 /**
  * Return a string that describes the current version if libapol.
  */
-static int Apol_GetVersion(ClientData clientData, Tcl_Interp *interp, int argc, CONST char *argv[])
+static int Apol_GetVersion(ClientData clientData, Tcl_Interp * interp, int argc, CONST char *argv[])
 {
-	Tcl_SetResult(interp, (char *) libapol_get_version(), TCL_STATIC);
+	Tcl_SetResult(interp, (char *)libapol_get_version(), TCL_STATIC);
 	return TCL_OK;
 }
 
@@ -471,25 +452,27 @@ static int Apol_GetVersion(ClientData clientData, Tcl_Interp *interp, int argc, 
  *   <li>"mls" or "non-mls"
  * </ol>
  */
-static int Apol_GetPolicyType(ClientData clientData, Tcl_Interp *interp, int argc, CONST char *argv[])
+static int Apol_GetPolicyType(ClientData clientData, Tcl_Interp * interp, int argc, CONST char *argv[])
 {
 	Tcl_Obj *result_elem[2], *result_list;
-        if (policydb == NULL) {
+	if (policydb == NULL) {
 		Tcl_SetResult(interp, "No current policy file is opened!", TCL_STATIC);
 		return TCL_ERROR;
 	}
 	switch (policydb->policy_type) {
 	case QPOL_POLICY_KERNEL_SOURCE:
-		result_elem[0] = Tcl_NewStringObj("source", -1); break;
+		result_elem[0] = Tcl_NewStringObj("source", -1);
+		break;
 	case QPOL_POLICY_KERNEL_BINARY:
-		result_elem[0] = Tcl_NewStringObj("binary", -1); break;
+		result_elem[0] = Tcl_NewStringObj("binary", -1);
+		break;
 	default:
-		result_elem[0] = Tcl_NewStringObj("unknown", -1); break;
+		result_elem[0] = Tcl_NewStringObj("unknown", -1);
+		break;
 	}
 	if (qpol_policy_is_mls_enabled(policydb->p)) {
 		result_elem[1] = Tcl_NewStringObj("mls", -1);
-	}
-	else {
+	} else {
 		result_elem[1] = Tcl_NewStringObj("non-mls", -1);
 	}
 	result_list = Tcl_NewListObj(2, result_elem);
@@ -502,7 +485,7 @@ static int Apol_GetPolicyType(ClientData clientData, Tcl_Interp *interp, int arg
  * gives the policy version, if it is source or binary, and if it is
  * MLS or not.
  */
-static int Apol_GetPolicyVersionString(ClientData clientData, Tcl_Interp *interp, int argc, CONST char *argv[])
+static int Apol_GetPolicyVersionString(ClientData clientData, Tcl_Interp * interp, int argc, CONST char *argv[])
 {
 	char *pol_string;
 	if (policydb == NULL) {
@@ -521,7 +504,7 @@ static int Apol_GetPolicyVersionString(ClientData clientData, Tcl_Interp *interp
 /**
  * Returns the policy version number for the currently opened policy.
  */
-static int Apol_GetPolicyVersionNumber(ClientData clientData, Tcl_Interp *interp, int argc, CONST char *argv[])
+static int Apol_GetPolicyVersionNumber(ClientData clientData, Tcl_Interp * interp, int argc, CONST char *argv[])
 {
 	unsigned int version;
 	Tcl_Obj *version_obj;
@@ -551,7 +534,8 @@ static int Apol_GetPolicyVersionNumber(ClientData clientData, Tcl_Interp *interp
  *
  * @return 0 on success, < 0 on error.
  */
-static int append_stats(Tcl_Interp *interp, char *name, size_t size, Tcl_Obj *result_list) {
+static int append_stats(Tcl_Interp * interp, char *name, size_t size, Tcl_Obj * result_list)
+{
 	Tcl_Obj *stat_elem[2];
 	stat_elem[0] = Tcl_NewStringObj(name, -1);
 	stat_elem[1] = Tcl_NewIntObj(size);
@@ -562,18 +546,19 @@ static int append_stats(Tcl_Interp *interp, char *name, size_t size, Tcl_Obj *re
 	return 0;
 }
 
-struct policy_stat {
-        char *name;
-        int (*iter_func)(qpol_policy_t *policy, qpol_iterator_t **iter);
+struct policy_stat
+{
+	char *name;
+	int (*iter_func) (qpol_policy_t * policy, qpol_iterator_t ** iter);
 };
 
 /**
  * Calculate and return statistics about the policy, in a format
  * suitable for [array set].
  */
-static int Apol_GetStats(ClientData clientData, Tcl_Interp *interp, int argc, CONST char *argv[])
+static int Apol_GetStats(ClientData clientData, Tcl_Interp * interp, int argc, CONST char *argv[])
 {
-	Tcl_Obj *result_obj  = Tcl_NewListObj(0, NULL);
+	Tcl_Obj *result_obj = Tcl_NewListObj(0, NULL);
 	qpol_iterator_t *iter = NULL;
 	int i, retval = TCL_ERROR;
 	apol_type_query_t *type_query = NULL;
@@ -590,7 +575,7 @@ static int Apol_GetStats(ClientData clientData, Tcl_Interp *interp, int argc, CO
 		{"users", qpol_policy_get_user_iter},
 		{"cond_bools", qpol_policy_get_bool_iter},
 
-                /* rbac */
+		/* rbac */
 		{"roleallow", qpol_policy_get_role_allow_iter},
 		{"roletrans", qpol_policy_get_role_trans_iter},
 
@@ -615,8 +600,7 @@ static int Apol_GetStats(ClientData clientData, Tcl_Interp *interp, int argc, CO
 	}
 	for (i = 0; i < sizeof(stats) / sizeof(stats[0]); i++) {
 		if (stats[i].iter_func(policydb->p, &iter) < 0 ||
-		    qpol_iterator_get_size(iter, &size) < 0 ||
-		    append_stats(interp, stats[i].name, size, result_obj) < 0) {
+		    qpol_iterator_get_size(iter, &size) < 0 || append_stats(interp, stats[i].name, size, result_obj) < 0) {
 			goto cleanup;
 		}
 		qpol_iterator_destroy(&iter);
@@ -626,8 +610,7 @@ static int Apol_GetStats(ClientData clientData, Tcl_Interp *interp, int argc, CO
 	 * compute their sizes */
 
 	if ((type_query = apol_type_query_create()) == NULL ||
-	    (attr_query = apol_attr_query_create()) == NULL ||
-	    (perm_query = apol_perm_query_create()) == NULL) {
+	    (attr_query = apol_attr_query_create()) == NULL || (perm_query = apol_perm_query_create()) == NULL) {
 		ERR(policydb, "%s", strerror(ENOMEM));
 	}
 
@@ -651,63 +634,56 @@ static int Apol_GetStats(ClientData clientData, Tcl_Interp *interp, int argc, CO
 
 	if (qpol_policy_get_avrule_iter(policydb->p,
 					QPOL_RULE_ALLOW, &iter) < 0 ||
-	    qpol_iterator_get_size(iter, &size) < 0 ||
-	    append_stats(interp, "teallow", size, result_obj) < 0) {
+	    qpol_iterator_get_size(iter, &size) < 0 || append_stats(interp, "teallow", size, result_obj) < 0) {
 		goto cleanup;
 	}
 	qpol_iterator_destroy(&iter);
 
 	if (qpol_policy_get_avrule_iter(policydb->p,
 					QPOL_RULE_NEVERALLOW, &iter) < 0 ||
-	    qpol_iterator_get_size(iter, &size) < 0 ||
-	    append_stats(interp, "neverallow", size, result_obj) < 0) {
+	    qpol_iterator_get_size(iter, &size) < 0 || append_stats(interp, "neverallow", size, result_obj) < 0) {
 		goto cleanup;
 	}
 	qpol_iterator_destroy(&iter);
 
 	if (qpol_policy_get_avrule_iter(policydb->p,
 					QPOL_RULE_AUDITALLOW, &iter) < 0 ||
-	    qpol_iterator_get_size(iter, &size) < 0 ||
-	    append_stats(interp, "auditallow", size, result_obj) < 0) {
+	    qpol_iterator_get_size(iter, &size) < 0 || append_stats(interp, "auditallow", size, result_obj) < 0) {
 		goto cleanup;
 	}
 	qpol_iterator_destroy(&iter);
 
 	if (qpol_policy_get_avrule_iter(policydb->p,
 					QPOL_RULE_DONTAUDIT, &iter) < 0 ||
-	    qpol_iterator_get_size(iter, &size) < 0 ||
-	    append_stats(interp, "dontaudit", size, result_obj) < 0) {
+	    qpol_iterator_get_size(iter, &size) < 0 || append_stats(interp, "dontaudit", size, result_obj) < 0) {
 		goto cleanup;
 	}
 	qpol_iterator_destroy(&iter);
 
 	if (qpol_policy_get_terule_iter(policydb->p,
 					QPOL_RULE_TYPE_TRANS, &iter) < 0 ||
-	    qpol_iterator_get_size(iter, &size) < 0 ||
-	    append_stats(interp, "tetrans", size, result_obj) < 0) {
+	    qpol_iterator_get_size(iter, &size) < 0 || append_stats(interp, "tetrans", size, result_obj) < 0) {
 		goto cleanup;
 	}
 	qpol_iterator_destroy(&iter);
 
 	if (qpol_policy_get_terule_iter(policydb->p,
 					QPOL_RULE_TYPE_MEMBER, &iter) < 0 ||
-	    qpol_iterator_get_size(iter, &size) < 0 ||
-	    append_stats(interp, "temember", size, result_obj) < 0) {
+	    qpol_iterator_get_size(iter, &size) < 0 || append_stats(interp, "temember", size, result_obj) < 0) {
 		goto cleanup;
 	}
 	qpol_iterator_destroy(&iter);
 
 	if (qpol_policy_get_terule_iter(policydb->p,
 					QPOL_RULE_TYPE_CHANGE, &iter) < 0 ||
-	    qpol_iterator_get_size(iter, &size) < 0 ||
-	    append_stats(interp, "techange", size, result_obj) < 0) {
+	    qpol_iterator_get_size(iter, &size) < 0 || append_stats(interp, "techange", size, result_obj) < 0) {
 		goto cleanup;
 	}
 	qpol_iterator_destroy(&iter);
 
 	Tcl_SetObjResult(interp, result_obj);
 	retval = TCL_OK;
- cleanup:
+      cleanup:
 	apol_type_query_destroy(&type_query);
 	apol_attr_query_destroy(&attr_query);
 	apol_perm_query_destroy(&perm_query);
@@ -725,7 +701,7 @@ static int Apol_GetStats(ClientData clientData, Tcl_Interp *interp, int argc, CO
  *
  * @param argv This function takes one parameter: a range (2-uple of levels).
  */
-static int Apol_IsValidRange(ClientData clientData, Tcl_Interp *interp, int argc, CONST char *argv[])
+static int Apol_IsValidRange(ClientData clientData, Tcl_Interp * interp, int argc, CONST char *argv[])
 {
 	apol_mls_range_t *range = NULL;
 	int retval = TCL_ERROR, retval2;
@@ -745,8 +721,7 @@ static int Apol_IsValidRange(ClientData clientData, Tcl_Interp *interp, int argc
 	retval2 = apol_tcl_string_to_range(interp, argv[1], range);
 	if (retval2 < 0) {
 		goto cleanup;
-	}
-	else if (retval2 == 1) {
+	} else if (retval2 == 1) {
 		Tcl_SetResult(interp, "0", TCL_STATIC);
 		retval = TCL_OK;
 		goto cleanup;
@@ -754,15 +729,13 @@ static int Apol_IsValidRange(ClientData clientData, Tcl_Interp *interp, int argc
 	retval2 = apol_mls_range_validate(policydb, range);
 	if (retval2 < 0) {
 		goto cleanup;
-	}
-	else if (retval2 == 0) {
+	} else if (retval2 == 0) {
 		Tcl_SetResult(interp, "0", TCL_STATIC);
-	}
-	else {
+	} else {
 		Tcl_SetResult(interp, "1", TCL_STATIC);
-        }
+	}
 	retval = TCL_OK;
- cleanup:
+      cleanup:
 	apol_mls_range_destroy(&range);
 	if (retval == TCL_ERROR) {
 		apol_tcl_write_error(interp);
@@ -770,12 +743,11 @@ static int Apol_IsValidRange(ClientData clientData, Tcl_Interp *interp, int argc
 	return retval;
 }
 
-
 /**
  * Checks if a context is partially valid or not according to the
  * policy.  Returns 1 if valid, 0 if invalid.
  */
-static int Apol_IsValidPartialContext(ClientData clientData, Tcl_Interp *interp, int argc, CONST char *argv[])
+static int Apol_IsValidPartialContext(ClientData clientData, Tcl_Interp * interp, int argc, CONST char *argv[])
 {
 	apol_context_t *context = NULL;
 	int retval = TCL_ERROR, retval2;
@@ -795,8 +767,7 @@ static int Apol_IsValidPartialContext(ClientData clientData, Tcl_Interp *interp,
 	retval2 = apol_tcl_string_to_context(interp, argv[1], context);
 	if (retval2 < 0) {
 		goto cleanup;
-	}
-	else if (retval2 == 1) {
+	} else if (retval2 == 1) {
 		Tcl_SetResult(interp, "0", TCL_STATIC);
 		retval = TCL_OK;
 		goto cleanup;
@@ -804,15 +775,13 @@ static int Apol_IsValidPartialContext(ClientData clientData, Tcl_Interp *interp,
 	retval2 = apol_context_validate_partial(policydb, context);
 	if (retval2 < 0) {
 		goto cleanup;
-	}
-	else if (retval2 == 0) {
+	} else if (retval2 == 0) {
 		Tcl_SetResult(interp, "0", TCL_STATIC);
-	}
-	else {
+	} else {
 		Tcl_SetResult(interp, "1", TCL_STATIC);
 	}
 	retval = TCL_OK;
- cleanup:
+      cleanup:
 	apol_context_destroy(&context);
 	if (retval == TCL_ERROR) {
 		apol_tcl_write_error(interp);
@@ -824,9 +793,9 @@ static int Apol_IsValidPartialContext(ClientData clientData, Tcl_Interp *interp,
  * Checks if the permission map has been loaded yet.  Returns 1 if so,
  * 0 if not.
  */
-static int Apol_IsPermMapLoaded(ClientData clientData, Tcl_Interp *interp, int argc, CONST char *argv[])
+static int Apol_IsPermMapLoaded(ClientData clientData, Tcl_Interp * interp, int argc, CONST char *argv[])
 {
-        Tcl_SetResult(interp, (policydb != NULL && policydb->pmap != NULL ? "1" : "0") , TCL_STATIC);
+	Tcl_SetResult(interp, (policydb != NULL && policydb->pmap != NULL ? "1" : "0"), TCL_STATIC);
 	return TCL_OK;
 }
 
@@ -840,7 +809,7 @@ static int Apol_IsPermMapLoaded(ClientData clientData, Tcl_Interp *interp, int a
  * error.  The caller is responsible for free()ing this string
  * afterwards.
  */
-static char* find_perm_map_file(const char *perm_map_fname)
+static char *find_perm_map_file(const char *perm_map_fname)
 {
 	char *script = NULL, *var = NULL;
 
@@ -881,7 +850,7 @@ static char* find_perm_map_file(const char *perm_map_fname)
  *   <li>base name for permission map file
  * </ol>
  */
-static int Apol_GetDefault_PermMap(ClientData clientData, Tcl_Interp *interp, int argc, CONST char *argv[])
+static int Apol_GetDefault_PermMap(ClientData clientData, Tcl_Interp * interp, int argc, CONST char *argv[])
 {
 	char *pmap_file;
 	if (argc != 2) {
@@ -908,7 +877,7 @@ static int Apol_GetDefault_PermMap(ClientData clientData, Tcl_Interp *interp, in
  *   <li>permission map file name
  * </ol>
  */
-static int Apol_LoadPermMap(ClientData clientData, Tcl_Interp *interp, int argc, CONST char *argv[])
+static int Apol_LoadPermMap(ClientData clientData, Tcl_Interp * interp, int argc, CONST char *argv[])
 {
 	int retval = TCL_ERROR, rt = 0;
 	apol_tcl_clear_error();
@@ -925,7 +894,7 @@ static int Apol_LoadPermMap(ClientData clientData, Tcl_Interp *interp, int argc,
 	}
 
 	retval = TCL_OK;
- cleanup:
+      cleanup:
 	if (retval == TCL_ERROR || rt > 0) {
 		apol_tcl_write_error(interp);
 	}
@@ -940,7 +909,7 @@ static int Apol_LoadPermMap(ClientData clientData, Tcl_Interp *interp, int argc,
  *   <li>permission map file name
  * </ol>
  */
-static int Apol_SavePermMap(ClientData clientData, Tcl_Interp *interp, int argc, CONST char *argv[])
+static int Apol_SavePermMap(ClientData clientData, Tcl_Interp * interp, int argc, CONST char *argv[])
 {
 	int retval = TCL_ERROR;
 	apol_tcl_clear_error();
@@ -961,7 +930,7 @@ static int Apol_SavePermMap(ClientData clientData, Tcl_Interp *interp, int argc,
 	}
 
 	retval = TCL_OK;
- cleanup:
+      cleanup:
 	if (retval == TCL_ERROR) {
 		apol_tcl_write_error(interp);
 	}
@@ -982,7 +951,8 @@ static int Apol_SavePermMap(ClientData clientData, Tcl_Interp *interp, int argc,
  *
  * @return 0 if permission was found, < 0 on error.
  */
-static int build_tcl_perm_list(Tcl_Interp *interp, char *class_name, char *perm_name, Tcl_Obj **obj) {
+static int build_tcl_perm_list(Tcl_Interp * interp, char *class_name, char *perm_name, Tcl_Obj ** obj)
+{
 	int map, weight;
 	char *map_str;
 	Tcl_Obj *perm_elem[3];
@@ -991,13 +961,24 @@ static int build_tcl_perm_list(Tcl_Interp *interp, char *class_name, char *perm_
 		return -1;
 	}
 	perm_elem[0] = Tcl_NewStringObj(perm_name, -1);
-	switch(map) {
-	case APOL_PERMMAP_READ: map_str = "r"; break;
-	case APOL_PERMMAP_WRITE: map_str = "w"; break;
-	case APOL_PERMMAP_BOTH: map_str = "b"; break;
-	case APOL_PERMMAP_NONE: map_str = "n"; break;
-	case APOL_PERMMAP_UNMAPPED: map_str = "u"; break;
-	default: map_str = "?";
+	switch (map) {
+	case APOL_PERMMAP_READ:
+		map_str = "r";
+		break;
+	case APOL_PERMMAP_WRITE:
+		map_str = "w";
+		break;
+	case APOL_PERMMAP_BOTH:
+		map_str = "b";
+		break;
+	case APOL_PERMMAP_NONE:
+		map_str = "n";
+		break;
+	case APOL_PERMMAP_UNMAPPED:
+		map_str = "u";
+		break;
+	default:
+		map_str = "?";
 	}
 	perm_elem[1] = Tcl_NewStringObj(map_str, -1);
 	perm_elem[2] = Tcl_NewIntObj(weight);
@@ -1023,11 +1004,10 @@ static int build_tcl_perm_list(Tcl_Interp *interp, char *class_name, char *perm_
  * If a parameter is passed, then only the class tuple for the given
  * parameter is returned.
  */
-static int Apol_GetPermMap(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+static int Apol_GetPermMap(ClientData clientData, Tcl_Interp * interp, int argc, const char *argv[])
 {
 	int retval = TCL_ERROR;
-	qpol_iterator_t *class_iter = NULL, *perm_iter = NULL,
-		*common_iter = NULL;
+	qpol_iterator_t *class_iter = NULL, *perm_iter = NULL, *common_iter = NULL;
 	Tcl_Obj *result_obj = Tcl_NewListObj(0, NULL);
 
 	apol_tcl_clear_error();
@@ -1042,40 +1022,35 @@ static int Apol_GetPermMap(ClientData clientData, Tcl_Interp *interp, int argc, 
 	if (qpol_policy_get_class_iter(policydb->p, &class_iter) < 0) {
 		goto cleanup;
 	}
-	for ( ; !qpol_iterator_end(class_iter); qpol_iterator_next(class_iter)) {
+	for (; !qpol_iterator_end(class_iter); qpol_iterator_next(class_iter)) {
 		qpol_class_t *c;
 		qpol_common_t *common;
 		char *class_name, *perm_name;
 		Tcl_Obj *class_elem[2], *class_list, *perm_list;
-		if (qpol_iterator_get_item(class_iter, (void **) &c) < 0 ||
-		    qpol_class_get_name(policydb->p, c, &class_name) < 0) {
+		if (qpol_iterator_get_item(class_iter, (void **)&c) < 0 || qpol_class_get_name(policydb->p, c, &class_name) < 0) {
 			goto cleanup;
 		}
 		if (argc >= 2 && strcmp(argv[1], class_name) != 0) {
 			continue;
 		}
-		if (qpol_class_get_perm_iter(policydb->p, c, &perm_iter) < 0 ||
-		    qpol_class_get_common(policydb->p, c, &common) < 0) {
+		if (qpol_class_get_perm_iter(policydb->p, c, &perm_iter) < 0 || qpol_class_get_common(policydb->p, c, &common) < 0) {
 			goto cleanup;
 		}
-		if (common != NULL &&
-		    qpol_common_get_perm_iter(policydb->p, common, &common_iter) < 0) {
+		if (common != NULL && qpol_common_get_perm_iter(policydb->p, common, &common_iter) < 0) {
 			goto cleanup;
 		}
 		class_elem[0] = Tcl_NewStringObj(class_name, -1);
 		class_elem[1] = Tcl_NewListObj(0, NULL);
-		for ( ; !qpol_iterator_end(perm_iter); qpol_iterator_next(perm_iter)) {
-			if (qpol_iterator_get_item(perm_iter, (void **) &perm_name) < 0 ||
+		for (; !qpol_iterator_end(perm_iter); qpol_iterator_next(perm_iter)) {
+			if (qpol_iterator_get_item(perm_iter, (void **)&perm_name) < 0 ||
 			    build_tcl_perm_list(interp, class_name, perm_name,
 						&perm_list) < 0 ||
 			    Tcl_ListObjAppendElement(interp, class_elem[1], perm_list) == TCL_ERROR) {
 				goto cleanup;
 			}
 		}
-		for ( ;
-		      common_iter != NULL && !qpol_iterator_end(common_iter);
-		      qpol_iterator_next(common_iter)) {
-			if (qpol_iterator_get_item(common_iter, (void **) &perm_name) < 0 ||
+		for (; common_iter != NULL && !qpol_iterator_end(common_iter); qpol_iterator_next(common_iter)) {
+			if (qpol_iterator_get_item(common_iter, (void **)&perm_name) < 0 ||
 			    build_tcl_perm_list(interp, class_name, perm_name,
 						&perm_list) < 0 ||
 			    Tcl_ListObjAppendElement(interp, class_elem[1], perm_list) == TCL_ERROR) {
@@ -1091,7 +1066,7 @@ static int Apol_GetPermMap(ClientData clientData, Tcl_Interp *interp, int argc, 
 	}
 	Tcl_SetObjResult(interp, result_obj);
 	retval = TCL_OK;
- cleanup:
+      cleanup:
 	qpol_iterator_destroy(&class_iter);
 	qpol_iterator_destroy(&perm_iter);
 	qpol_iterator_destroy(&common_iter);
@@ -1113,7 +1088,7 @@ static int Apol_GetPermMap(ClientData clientData, Tcl_Interp *interp, int argc, 
  *   APOL_PERMMAP_MAX_WEIGHT, inclusive
  * </ol>
  */
-static int Apol_SetPermMap(ClientData clientData, Tcl_Interp *interp, int argc, CONST char *argv[])
+static int Apol_SetPermMap(ClientData clientData, Tcl_Interp * interp, int argc, CONST char *argv[])
 {
 	int retval = TCL_ERROR, map, weight;
 	apol_tcl_clear_error();
@@ -1130,11 +1105,21 @@ static int Apol_SetPermMap(ClientData clientData, Tcl_Interp *interp, int argc, 
 		goto cleanup;
 	}
 	switch (*argv[3]) {
-	case 'r': map = APOL_PERMMAP_READ; break;
-	case 'w': map = APOL_PERMMAP_WRITE; break;
-	case 'b': map = APOL_PERMMAP_BOTH; break;
-	case 'n': map = APOL_PERMMAP_NONE; break;
-	case 'u': map = APOL_PERMMAP_UNMAPPED; break;
+	case 'r':
+		map = APOL_PERMMAP_READ;
+		break;
+	case 'w':
+		map = APOL_PERMMAP_WRITE;
+		break;
+	case 'b':
+		map = APOL_PERMMAP_BOTH;
+		break;
+	case 'n':
+		map = APOL_PERMMAP_NONE;
+		break;
+	case 'u':
+		map = APOL_PERMMAP_UNMAPPED;
+		break;
 	default:
 		ERR(policydb, "Invalid perm map %s.", argv[3]);
 		goto cleanup;
@@ -1146,7 +1131,7 @@ static int Apol_SetPermMap(ClientData clientData, Tcl_Interp *interp, int argc, 
 		goto cleanup;
 	}
 	retval = TCL_OK;
- cleanup:
+      cleanup:
 	if (retval == TCL_ERROR) {
 		apol_tcl_write_error(interp);
 	}
@@ -1154,9 +1139,9 @@ static int Apol_SetPermMap(ClientData clientData, Tcl_Interp *interp, int argc, 
 }
 
 /* Package initialization */
-int apol_tcl_init(Tcl_Interp *interp)
+int apol_tcl_init(Tcl_Interp * interp)
 {
-	Tcl_CreateCommand(interp, "apol_GetScriptDir", Apol_GetScriptDir, NULL,  NULL);
+	Tcl_CreateCommand(interp, "apol_GetScriptDir", Apol_GetScriptDir, NULL, NULL);
 	Tcl_CreateCommand(interp, "apol_GetHelpDir", Apol_GetHelpDir, NULL, NULL);
 	Tcl_CreateCommand(interp, "apol_GetInfoString", Apol_GetInfoString, NULL, NULL);
 	Tcl_CreateCommand(interp, "apol_OpenPolicy", Apol_OpenPolicy, NULL, NULL);
@@ -1165,7 +1150,7 @@ int apol_tcl_init(Tcl_Interp *interp)
 	Tcl_CreateCommand(interp, "apol_GetPolicyType", Apol_GetPolicyType, NULL, NULL);
 	Tcl_CreateCommand(interp, "apol_GetPolicyVersionString", Apol_GetPolicyVersionString, NULL, NULL);
 	Tcl_CreateCommand(interp, "apol_GetPolicyVersionNumber", Apol_GetPolicyVersionNumber, NULL, NULL);
-        Tcl_CreateCommand(interp, "apol_GetStats", Apol_GetStats, NULL, NULL);
+	Tcl_CreateCommand(interp, "apol_GetStats", Apol_GetStats, NULL, NULL);
 	Tcl_CreateCommand(interp, "apol_IsValidRange", Apol_IsValidRange, NULL, NULL);
 	Tcl_CreateCommand(interp, "apol_IsValidPartialContext", Apol_IsValidPartialContext, NULL, NULL);
 	Tcl_CreateCommand(interp, "apol_IsPermMapLoaded", Apol_IsPermMapLoaded, NULL, NULL);
@@ -1178,11 +1163,10 @@ int apol_tcl_init(Tcl_Interp *interp)
 	if (apol_tcl_render_init(interp) != TCL_OK ||
 	    apol_tcl_components_init(interp) != TCL_OK ||
 	    apol_tcl_rules_init(interp) != TCL_OK ||
-	    apol_tcl_fc_init(interp) != TCL_OK ||
-	    apol_tcl_analysis_init(interp) != TCL_OK) {
+	    apol_tcl_fc_init(interp) != TCL_OK || apol_tcl_analysis_init(interp) != TCL_OK) {
 		return TCL_ERROR;
 	}
-	Tcl_PkgProvide(interp, "apol", (char*)libapol_get_version());
+	Tcl_PkgProvide(interp, "apol", (char *)libapol_get_version());
 
 	return TCL_OK;
 }

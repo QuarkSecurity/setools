@@ -17,7 +17,8 @@
 /* interval in seconds */
 #define DEFAULT_LOG_UPDATE_INTERVAL 1000
 
-typedef struct seaudit_conf {
+typedef struct seaudit_conf
+{
 	char **recent_log_files;
 	int num_recent_log_files;
 	char **recent_policy_files;
@@ -31,15 +32,15 @@ typedef struct seaudit_conf {
 	char *default_seaudit_report_css_file;
 } seaudit_conf_t;
 
-int load_seaudit_conf_file(seaudit_conf_t *conf_file);
-int save_seaudit_conf_file(seaudit_conf_t *conf_file);
-void free_seaudit_conf(seaudit_conf_t *conf_file);
-int add_path_to_recent_log_files(const char *path, seaudit_conf_t *conf_file);
-int add_path_to_recent_policy_files(const char *path, seaudit_conf_t *conf_file);
-int set_seaudit_conf_default_policy(seaudit_conf_t *conf_file, const char *filename);
-int set_seaudit_conf_default_log(seaudit_conf_t *conf_file, const char *filename);
+int load_seaudit_conf_file(seaudit_conf_t * conf_file);
+int save_seaudit_conf_file(seaudit_conf_t * conf_file);
+void free_seaudit_conf(seaudit_conf_t * conf_file);
+int add_path_to_recent_log_files(const char *path, seaudit_conf_t * conf_file);
+int add_path_to_recent_policy_files(const char *path, seaudit_conf_t * conf_file);
+int set_seaudit_conf_default_policy(seaudit_conf_t * conf_file, const char *filename);
+int set_seaudit_conf_default_log(seaudit_conf_t * conf_file, const char *filename);
 
 /* load the preferences window */
-void on_preferences_activate(GtkWidget *widget, GdkEvent *event, gpointer callback_data);
+void on_preferences_activate(GtkWidget * widget, GdkEvent * event, gpointer callback_data);
 
 #endif
