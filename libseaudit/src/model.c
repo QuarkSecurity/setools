@@ -34,24 +34,57 @@ struct seaudit_model
 	 * messages from these logs */
 	apol_vector_t *logs;
 	/** vector of seaudit_message_t pointers; these point into
-	 * messages from the watched logs */
+	 * messages from the watched logs (only valid if dirty == 0) */
 	apol_vector_t *messages;
 	/** vector of char * pointers; these point into malformed
-	 * messages from the watched logs */
+	 * messages from the watched logs (only valid if dirty == 0) */
 	apol_vector_t *malformed_messages;
+	/** vector of seaudit_filter_t */
+	apol_vector_t *filters;
+	/** if more than one filter is being applied, then accept
+         * messages if any match or if all match */
+	seaudit_filter_match_e match;
 	/** vector of seaudit_sort_t, order from highest priority to lowest */
 	apol_vector_t *sorts;
-	/* number of allow messages in the model (only valid if dirty == 0) */
+	/** number of allow messages in the model (only valid if dirty == 0) */
 	size_t num_allows;
-	/* number of deny messages in the model (only valid if dirty == 0) */
+	/** number of deny messages in the model (only valid if dirty == 0) */
 	size_t num_denies;
-	/* number of boolean changes in the model (only valid if dirty == 0) */
+	/** number of boolean changes in the model (only valid if dirty == 0) */
 	size_t num_bools;
-	/* number of policy loads in the model (only valid if dirty == 0) */
+	/** number of policy loads in the model (only valid if dirty == 0) */
 	size_t num_loads;
 	/** non-zero whenever this model needs to be recalculated */
 	int dirty;
 };
+
+/**
+ * Apply all of the model's filters to the message.
+ *
+ * @param model Model containing filters to apply.
+ * @param m Message to check.
+ *
+ * @return Non-zero if the message is accepted by the filters, 0 if not.
+ */
+static int model_filter_message(seaudit_model_t * model, const seaudit_message_t * m)
+{
+	size_t i;
+	int compval;
+	if (apol_vector_get_size(model->filters) == 0) {
+		return 1;
+	}
+	for (i = 0; i < apol_vector_get_size(model->filters); i++) {
+		seaudit_filter_t *f = apol_vector_get_element(model->filters, i);
+		compval = filter_is_accepted(f, m);
+		if (model->match == SEAUDIT_FILTER_MATCH_ALL && compval == 0) {
+			return 0;
+		}
+		if (model->match == SEAUDIT_FILTER_MATCH_ANY && compval != 0) {
+			return 1;
+		}
+	}
+	return 0;
+}
 
 /**
  * Callback for sorting the model's messages vector.
@@ -221,7 +254,7 @@ static int model_refresh(seaudit_log_t * log, seaudit_model_t * model)
 		v = log_get_messages(l);
 		for (j = 0; j < apol_vector_get_size(v); j++) {
 			message = apol_vector_get_element(v, j);
-			if (apol_vector_append(model->messages, message) < 0) {
+			if (model_filter_message(model, message) && apol_vector_append(model->messages, message) < 0) {
 				error = errno;
 				ERR(log, "%s", strerror(error));
 				errno = error;
@@ -242,6 +275,17 @@ static int model_refresh(seaudit_log_t * log, seaudit_model_t * model)
 	model_recalc_stats(model);
 	model->dirty = 0;
 	return 0;
+}
+
+/**
+ * Callback invoked when free()ing a vector of filters.
+ *
+ * @param v Filter object to free.
+ */
+static void filter_free(void *v)
+{
+	seaudit_filter_t *f = v;
+	seaudit_filter_destroy(&f);
 }
 
 /**
@@ -266,7 +310,9 @@ seaudit_model_t *seaudit_model_create(seaudit_log_t * log)
 		return NULL;
 	}
 
-	if ((m->logs = apol_vector_create_with_capacity(1)) == NULL || (m->sorts = apol_vector_create_with_capacity(1)) == NULL) {
+	if ((m->logs = apol_vector_create_with_capacity(1)) == NULL ||
+	    (m->filters = apol_vector_create_with_capacity(1)) == NULL ||
+	    (m->sorts = apol_vector_create_with_capacity(1)) == NULL) {
 		error = errno;
 		seaudit_model_destroy(&m);
 		ERR(log, "%s", strerror(error));
@@ -297,6 +343,7 @@ void seaudit_model_destroy(seaudit_model_t ** model)
 		log_remove_model(l, *model);
 	}
 	apol_vector_destroy(&(*model)->logs, NULL);
+	apol_vector_destroy(&(*model)->filters, filter_free);
 	apol_vector_destroy(&(*model)->sorts, sort_free);
 	apol_vector_destroy(&(*model)->messages, NULL);
 	apol_vector_destroy(&(*model)->malformed_messages, NULL);
@@ -319,6 +366,36 @@ int seaudit_model_append_log(seaudit_model_t * model, seaudit_log_t * log)
 	}
 	model->dirty = 1;
 	return 0;
+}
+
+int seaudit_model_append_filter(seaudit_model_t * model, seaudit_filter_t * filter)
+{
+	if (model == NULL || filter == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+	if (apol_vector_append(model->filters, filter) < 0) {
+		return -1;
+	}
+	filter_set_model(filter, model);
+	model->dirty = 1;
+	return 0;
+}
+
+int seaudit_model_set_filter_match(seaudit_model_t * model, seaudit_filter_match_e match)
+{
+	if (model == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+	model->match = match;
+	model->dirty = 1;
+	return 0;
+}
+
+seaudit_filter_match_e seaudit_model_get_filter_match(seaudit_model_t * model)
+{
+	return model->match;
 }
 
 int seaudit_model_append_sort(seaudit_model_t * model, seaudit_sort_t * sort)
@@ -445,126 +522,10 @@ void model_notify_log_changed(seaudit_model_t * model, seaudit_log_t * log)
 	}
 }
 
-#if 0
-
-static void sort_kept_messages(int *kept, int num_kept, filter_info_t * info);
-
-/* filter the log into the view */
-int audit_log_view_do_filter(audit_log_view_t * view, int **deleted, int *num_deleted)
+void model_notify_filter_changed(seaudit_model_t * model, seaudit_filter_t * filter)
 {
-	filter_info_t *info;
-	bool_t found, show;
-	int i, j, msg_index, *kept, num_kept, *added, num_added;
-
-	if (!view || !view->my_log)
-		return -1;
-
-	/* by default append everything that is not already filtered */
-	if (!view->multifilter) {
-		view->fltr_msgs = (int *)realloc(view->fltr_msgs, sizeof(int) * apol_vector_get_size(view->my_log->msg_list));
-		for (i = 0; i < apol_vector_get_size(view->my_log->msg_list); i++) {
-			found = FALSE;
-			for (j = 0; j < view->num_fltr_msgs; j++)
-				if (view->fltr_msgs[j] == i)
-					found = TRUE;
-			if (!found) {
-				view->fltr_msgs[view->num_fltr_msgs] = i;
-				view->num_fltr_msgs++;
-			}
-		}
-		(*num_deleted) = 0;
-		(*deleted) = NULL;
-		return 0;
+	size_t i;
+	if (apol_vector_get_index(model->filters, filter, NULL, NULL, &i) == 0) {
+		model->dirty = 1;
 	}
-
-	(*deleted) = (int *)malloc(sizeof(int) * view->num_fltr_msgs);
-	if (!(*deleted)) {
-		fprintf(stderr, "out of memory");
-		return -1;
-	}
-	(*num_deleted) = 0;
-	kept = (int *)malloc(sizeof(int) * view->num_fltr_msgs);
-	if (!kept) {
-		free(*deleted);
-		fprintf(stderr, "out of memory");
-		return -1;
-	}
-	num_kept = 0;
-	added = (int *)malloc(sizeof(int) * apol_vector_get_size(view->my_log->msg_list));
-	if (!added) {
-		free(*deleted);
-		free(kept);
-		fprintf(stderr, "out of memory");
-		return -1;
-	}
-	num_added = 0;
-	info = (filter_info_t *) malloc(sizeof(filter_info_t) * apol_vector_get_size(view->my_log->msg_list));
-	if (!info) {
-		free(*deleted);
-		free(kept);
-		free(added);
-		fprintf(stderr, "out of memory");
-		return -1;
-	}
-	memset(info, 0, sizeof(filter_info_t) * apol_vector_get_size(view->my_log->msg_list));
-	for (i = 0; i < view->num_fltr_msgs; i++) {
-		msg_index = view->fltr_msgs[i];
-		info[msg_index].orig_indx = i;
-		info[msg_index].filtered = TRUE;
-	}
-	/* filter log into view */
-	audit_log_view_purge_fltr_msgs(view);
-	seaudit_multifilter_make_dirty_filters(view->multifilter);
-	for (i = 0; i < apol_vector_get_size(view->my_log->msg_list); i++) {
-		msg_t *msg;
-		msg = apol_vector_get_element(view->my_log->msg_list, i);
-		show = seaudit_multifilter_should_message_show(view->multifilter, msg, view->my_log);
-		if (show) {
-			if (info[i].filtered == TRUE) {
-				kept[num_kept] = i;
-				num_kept++;
-			} else {
-				added[num_added] = i;
-				num_added++;
-			}
-			view->num_fltr_msgs++;
-		} else {
-			if (info[i].filtered == TRUE) {
-				(*deleted)[(*num_deleted)] = info[i].orig_indx;
-				(*num_deleted)++;
-			}
-		}
-	}
-
-	sort_kept_messages(kept, num_kept, info);
-	free(info);
-	view->fltr_msgs = (int *)malloc(sizeof(int) * (num_kept + num_added));
-	if (!view->fltr_msgs) {
-		fprintf(stderr, "out of memory");
-		return -1;
-	}
-	memcpy(view->fltr_msgs, kept, sizeof(int) * num_kept);
-	memcpy(&view->fltr_msgs[num_kept], added, sizeof(int) * (num_added));
-	free(added);
-	free(kept);
-	return 0;
 }
-
-static void sort_kept_messages(int *kept, int num_kept, filter_info_t * info)
-{
-	int i, j, msg_a, msg_b, tmp;
-	for (j = 0; j < num_kept; j++) {
-		for (i = 0; i < num_kept - 1 - j; i++) {
-			msg_a = kept[i];
-			msg_b = kept[i + 1];
-			if (info[msg_a].orig_indx > info[msg_b].orig_indx) {
-				tmp = kept[i];
-				kept[i] = kept[i + 1];
-				kept[i + 1] = tmp;
-			}
-		}
-	}
-	return;
-}
-
-#endif

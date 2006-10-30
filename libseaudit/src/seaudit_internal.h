@@ -29,6 +29,7 @@
 
 #include <seaudit/avc_message.h>
 #include <seaudit/bool_message.h>
+#include <seaudit/filter.h>
 #include <seaudit/load_message.h>
 #include <seaudit/log.h>
 #include <seaudit/message.h>
@@ -419,13 +420,47 @@ char *load_message_to_string_html(seaudit_load_message_t * load, const char *dat
 void model_remove_log(seaudit_model_t * model, seaudit_log_t * log);
 
 /**
- * Notify a model to that a log has been changed; the model will need
- * to recalculate its messages.
+ * Notify a model that a log has been changed; the model will need to
+ * recalculate its messages.
  *
  * @param model Model to notify.
  * @param log Log that has been changed.
  */
 void model_notify_log_changed(seaudit_model_t * model, seaudit_log_t * log);
+
+/**
+ * Notify a model that a filter has been changed; the model will need
+ * to recalculate its messages.
+ *
+ * @param model Model to notify.
+ * @param filter Filter that has been changed.
+ */
+void model_notify_filter_changed(seaudit_model_t * model, seaudit_filter_t * filter);
+
+/*************** filter functions (defined in filter.c) ***************/
+
+/**
+ * Link a model to a filter.  Whenever the filter changes, it should
+ * call model_notify_filter_changed(); that way the model will
+ * recalculate itself.
+ *
+ * @param filter Filter to be watched.
+ * @param model Model that is watching.
+ */
+void filter_set_model(seaudit_filter_t * filter, seaudit_model_t * model);
+
+/**
+ * Given a filter and a message, return non-zero if the msg is
+ * accepted by the filter according to the filter's criteria.  If the
+ * filter does not have enough information to decide (because the
+ * message is incomplete) then this should return 0.
+ *
+ * @param filter Filter to apply.
+ * @param msg Message to check.
+ *
+ * @return Non-zero if message is accepted, 0 if not.
+ */
+int filter_is_accepted(seaudit_filter_t * filter, const seaudit_message_t * msg);
 
 /*************** sort functions (defined in sort.c) ***************/
 

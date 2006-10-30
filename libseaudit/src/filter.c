@@ -1,98 +1,128 @@
-/* Copyright (C) 2004 Tresys Technology, LLC
- * see file 'COPYING' for use and warranty information */
-
-/*
- * Author: Kevin Carr <kcarr@tresys.com>
- * Date: February 06, 2004
+/**
+ *  @file filter.c
+ *  Implementation of seaudit filters.
  *
- * This file contains the implementation of filters.h
+ *  @author Jeremy A. Mowery jmowery@tresys.com
+ *  @author Jason Tang jtang@tresys.com
  *
- * filters.c
+ *  Copyright (C) 2004-2006 Tresys Technology, LLC
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <seaudit/filters.h>
+#include "seaudit_internal.h"
+
+#include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 #include <libxml/uri.h>
 
+struct seaudit_filter
+{
+	seaudit_filter_match_e match;
+	char *name;
+	char *desc;
+    /** model that is watching this filter */
+	seaudit_model_t *model;
+};
+
 seaudit_filter_t *seaudit_filter_create(void)
 {
-	seaudit_filter_t *rt = NULL;
+	seaudit_filter_t *s = calloc(1, sizeof(*s));
+	return s;
+}
 
-	rt = (seaudit_filter_t *) malloc(sizeof(seaudit_filter_t));
-	if (rt == NULL) {
-		fprintf(stderr, "out of memory");
-		return NULL;
+void seaudit_filter_destroy(seaudit_filter_t ** filter)
+{
+	if (filter != NULL && *filter != NULL) {
+		free((*filter)->name);
+		free((*filter)->desc);
+		free(*filter);
+		*filter = NULL;
 	}
-	seaudit_filter_init(rt);
-	return rt;
 }
 
-void seaudit_filter_init(seaudit_filter_t * seaudit_filter)
+int seaudit_filter_set_match(seaudit_filter_t * filter, seaudit_filter_match_e match)
 {
-	if (seaudit_filter == NULL)
-		return;
-
-	memset(seaudit_filter, 0, sizeof(seaudit_filter_t));
-}
-
-void seaudit_filter_destroy(seaudit_filter_t * seaudit_filter)
-{
-	apol_vector_t *criteria_vector;
-	seaudit_criteria_t *criteria;
-	int i;
-
-	if (seaudit_filter == NULL)
-		return;
-
-	criteria_vector = (apol_vector_t *) seaudit_filter_get_list(seaudit_filter);
-	for (i = 0; i < apol_vector_get_size(criteria_vector); i++) {
-		/* free current and return next */
-		criteria = apol_vector_get_element(criteria_vector, i);
-		seaudit_criteria_destroy(criteria);
+	if (filter == NULL) {
+		errno = EINVAL;
+		return -1;
 	}
-	apol_vector_destroy(&criteria_vector, 0);
-}
-
-void seaudit_filter_set_match(seaudit_filter_t * seaudit_filter, enum seaudit_filter_match_t match)
-{
-	if (seaudit_filter == NULL || (match != SEAUDIT_FILTER_MATCH_ALL && match != SEAUDIT_FILTER_MATCH_ANY))
-		return;
-
-	seaudit_filter->match = match;
-}
-
-void seaudit_filter_set_name(seaudit_filter_t * seaudit_filter, const char *name)
-{
-	if (!seaudit_filter)
-		return;
-	if (seaudit_filter->name)
-		free(seaudit_filter->name);
-	seaudit_filter->name = strdup(name);
-}
-
-void seaudit_filter_set_desc(seaudit_filter_t * seaudit_filter, const char *desc)
-{
-	if (!seaudit_filter)
-		return;
-	if (seaudit_filter->desc)
-		free(seaudit_filter->desc);
-	seaudit_filter->desc = strdup(desc);
-}
-
-void seaudit_filter_make_dirty_criterias(seaudit_filter_t * seaudit_filter)
-{
-	seaudit_criteria_t *criteria;
-	apol_vector_t *criteria_vector;
-	int i;
-
-	criteria_vector = (apol_vector_t *) seaudit_filter_get_list(seaudit_filter);
-	for (i = 0; i < apol_vector_get_size(criteria_vector); i++) {
-		criteria = apol_vector_get_element(criteria_vector, i);
-		if (criteria)
-			criteria->dirty = TRUE;
+	filter->match = match;
+	if (filter->model != NULL) {
+		model_notify_filter_changed(filter->model, filter);
 	}
-	apol_vector_destroy(&criteria_vector, 0);
+	return 0;
 }
+
+seaudit_filter_match_e seaudit_filter_get_match(seaudit_filter_t * filter)
+{
+	return filter->match;
+}
+
+int seaudit_filter_set_name(seaudit_filter_t * filter, const char *name)
+{
+	if (filter == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+	free(filter->name);
+	filter->name = NULL;
+	if (name != NULL && (filter->name = strdup(name)) == NULL) {
+		return -1;
+	}
+	return 0;
+}
+
+char *seaudit_filter_get_name(seaudit_filter_t * filter)
+{
+	return filter->name;
+}
+
+int seaudit_filter_set_description(seaudit_filter_t * filter, const char *desc)
+{
+	if (filter == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+	free(filter->desc);
+	filter->desc = NULL;
+	if (desc != NULL && (filter->desc = strdup(desc)) == NULL) {
+		return -1;
+	}
+	return 0;
+}
+
+char *seaudit_filter_get_description(seaudit_filter_t * filter)
+{
+	return filter->desc;
+}
+
+/******************** protected functions below ********************/
+
+void filter_set_model(seaudit_filter_t * filter, seaudit_model_t * model)
+{
+	filter->model = model;
+}
+
+int filter_is_accepted(seaudit_filter_t * filter, const seaudit_message_t * msg)
+{
+	return -1;		       /* FIX ME */
+}
+
+#if 0
 
 bool_t seaudit_filter_does_message_match(seaudit_filter_t * filter, msg_t * message, audit_log_t * log)
 {
@@ -216,3 +246,5 @@ void seaudit_filter_append_to_file(seaudit_filter_t * filter, FILE * file, int t
 	apol_vector_destroy(&criteria_vector, 0);
 	fprintf(file, "\t</filter>\n");
 }
+
+#endif

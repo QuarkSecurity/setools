@@ -28,6 +28,7 @@
 #ifndef SEAUDIT_MODEL_H
 #define SEAUDIT_MODEL_H
 
+#include "filter.h"
 #include "log.h"
 #include "message.h"
 #include "sort.h"
@@ -66,17 +67,51 @@ extern void seaudit_model_destroy(seaudit_model_t ** model);
  * @return 0 on success, < 0 on error.
  */
 extern int seaudit_model_append_log(seaudit_model_t * model, seaudit_log_t * log);
+
+/**
+ * Append a filter to a model.  The next time the model's messages are
+ * retrieved only those messages that match this filter will be
+ * returned.  Multiple filters may be applied to a model.  Upon
+ * success, the model takes ownership of the filter.
+ *
+ * @param model Model to modify.
+ * @param filter Additional filter to be applied.
+ *
+ * @return 0 on success, < 0 on error.
+ */
+extern int seaudit_model_append_filter(seaudit_model_t * model, seaudit_filter_t * filter);
+
+/**
+ * Set a model to accept a message if all filters are met (default
+ * behavior) or if any filter is met.
+ *
+ * @param model Model to modify.
+ * @param match Matching behavior if model has multiple filters.
+ *
+ * @return 0 on success, < 0 on error.
+ */
+extern int seaudit_model_set_filter_match(seaudit_model_t * model, seaudit_filter_match_e match);
+
+/**
+ * Get the current filter match value for a model.
+ *
+ * @param model Model containing filter match value.
+ *
+ * @return One of SEAUDIT_FILTER_MATCH_ALL or SEAUDIT_FILTER_MATCH_ANY.
+ */
+extern seaudit_filter_match_e seaudit_model_get_filter_match(seaudit_model_t * model);
+
 /**
  * Append a sort criterion to a model.  The next time the model's
  * messages are retrieved they will be sorted by this criterion.  If
  * the model already has sort criteria, they will have a higher
- * priority than this new criterion.
+ * priority than this new criterion.  Upon success, the model takes
+ * ownership of the sort object
  *
  * @param model Model to modify.
  * @param sort Additional sort criterion.
  *
- * @return 0 on success, < 0 on error.  Upon success, the model takes
- * ownership of the sort object.
+ * @return 0 on success, < 0 on error.
  */
 extern int seaudit_model_append_sort(seaudit_model_t * model, seaudit_sort_t * sort);
 

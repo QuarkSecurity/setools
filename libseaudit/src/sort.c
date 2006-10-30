@@ -1,5 +1,5 @@
 /**
- *  @file model.c
+ *  @file sort.c
  *  Implementation of seaudit sort routines.
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com
@@ -28,8 +28,15 @@
 
 #include <string.h>
 
+/**
+ * Callback that compares two messages.
+ */
 typedef int (sort_comp_func) (seaudit_sort_t * sort, const seaudit_message_t * a, const seaudit_message_t * b);
 
+/**
+ * Callback that returns non-zero if the sort routine can handle the
+ * given message, 0 if not supported.
+ */
 typedef int (sort_supported_func) (seaudit_sort_t * sort, const seaudit_message_t * m);
 
 struct seaudit_sort
