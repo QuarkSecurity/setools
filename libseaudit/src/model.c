@@ -70,9 +70,20 @@ static int message_comp(const void *a, const void *b, void *data)
 	seaudit_model_t *model = data;
 	size_t i;
 	seaudit_sort_t *s;
-	int compval;
+	int compval, s1, s2;
 	for (i = 0; i < apol_vector_get_size(model->sorts); i++) {
 		s = apol_vector_get_element(model->sorts, i);
+		s1 = sort_is_supported(s, m1);
+		s2 = sort_is_supported(s, m2);
+		if (!s1 && !s2) {
+			continue;
+		}
+		if (!s2) {
+			return -1;
+		}
+		if (!s1) {
+			return 1;
+		}
 		if ((compval = sort_comp(s, m1, m2)) != 0) {
 			return compval;
 		}
@@ -85,7 +96,7 @@ static int message_comp(const void *a, const void *b, void *data)
  * first holds messages that are sortable, according to the list of
  * sort objects.  Sort them in their priority order.  The second
  * vector holds messages that are not sortable; append those messages
- * to the end of the first vector.
+ * to the end of the first (now sorted) vector.
  *
  * @param log Error handling log.
  * @param model Model to sort.
@@ -306,6 +317,7 @@ int seaudit_model_append_log(seaudit_model_t * model, seaudit_log_t * log)
 		errno = error;
 		return -1;
 	}
+	model->dirty = 1;
 	return 0;
 }
 
@@ -318,6 +330,7 @@ int seaudit_model_append_sort(seaudit_model_t * model, seaudit_sort_t * sort)
 	if (apol_vector_append(model->sorts, sort) < 0) {
 		return -1;
 	}
+	model->dirty = 1;
 	return 0;
 }
 
@@ -331,6 +344,7 @@ int seaudit_model_remove_all_sort(seaudit_model_t * model)
 	if ((model->sorts = apol_vector_create_with_capacity(1)) == NULL) {
 		return -1;
 	}
+	model->dirty = 1;
 	return 0;
 }
 
@@ -344,7 +358,7 @@ apol_vector_t *seaudit_model_get_messages(seaudit_log_t * log, seaudit_model_t *
 	if (model_refresh(log, model) < 0) {
 		return NULL;
 	}
-	return log->messages;
+	return apol_vector_create_from_vector(model->messages);
 }
 
 apol_vector_t *seaudit_model_get_malformed_messages(seaudit_log_t * log, seaudit_model_t * model)
@@ -357,7 +371,7 @@ apol_vector_t *seaudit_model_get_malformed_messages(seaudit_log_t * log, seaudit
 	if (model_refresh(log, model) < 0) {
 		return NULL;
 	}
-	return model->malformed_messages;
+	return apol_vector_create_from_vector(model->malformed_messages);
 }
 
 size_t seaudit_model_get_num_allows(seaudit_log_t * log, seaudit_model_t * model)

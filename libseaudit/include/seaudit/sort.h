@@ -39,6 +39,31 @@ typedef struct seaudit_sort seaudit_sort_t;
 extern void seaudit_sort_destroy(seaudit_sort_t ** sort);
 
 /**
+ * Instruct a model to sort messages by message type: boolean changes,
+ * then avc denies, then avc allows, then policy load messages.
+ *
+ * @param direction Direction to sort.  Non-negative for ascending,
+ * negative for descending.
+ *
+ * @return Sort object for this criterion, or NULL upon error.  The
+ * caller is responsible for calling seaudit_sort_destroy()
+ * afterwards.
+ */
+extern seaudit_sort_t *seaudit_sort_by_message_type(int direction);
+
+/**
+ * Instruct a model to sort messages by chronological order.
+ *
+ * @param direction Direction to sort.  Non-negative for ascending,
+ * negative for descending.
+ *
+ * @return Sort object for this criterion, or NULL upon error.  The
+ * caller is responsible for calling seaudit_sort_destroy()
+ * afterwards.
+ */
+extern seaudit_sort_t *seaudit_sort_by_date(int direction);
+
+/**
  * Instruct a model to sort messages by host name, alphabetically.
  *
  * @param direction Direction to sort.  Non-negative for ascending,
@@ -50,35 +75,186 @@ extern void seaudit_sort_destroy(seaudit_sort_t ** sort);
  */
 extern seaudit_sort_t *seaudit_sort_by_host(int direction);
 
-#if 0
-struct sort_action_node;
-typedef int (*sort_action_t) (const msg_t * a, const msg_t * b);
+/**
+ * Instruct a model to sort AVC messages by permissions,
+ * alphabetically.  Non-AVC messages will be placed below AVC ones.
+ *
+ * @param direction Direction to sort.  Non-negative for ascending,
+ * negative for descending.
+ *
+ * @return Sort object for this criterion, or NULL upon error.  The
+ * caller is responsible for calling seaudit_sort_destroy()
+ * afterwards.
+ */
+extern seaudit_sort_t *seaudit_sort_by_permission(int direction);
 
-typedef struct sort_action_node
-{
-	int msg_types;
-	sort_action_t sort;
-	struct sort_action_node *prev;
-	struct sort_action_node *next;
-} sort_action_node_t;
+/**
+ * Instruct a model to sort AVC messages by source context's user,
+ * alphabetically.  Non-AVC messages will be placed below AVC ones.
+ *
+ * @param direction Direction to sort.  Non-negative for ascending,
+ * negative for descending.
+ *
+ * @return Sort object for this criterion, or NULL upon error.  The
+ * caller is responsible for calling seaudit_sort_destroy()
+ * afterwards.
+ */
+extern seaudit_sort_t *seaudit_sort_by_source_user(int direction);
 
-sort_action_node_t *msg_sort_action_create(void);
-sort_action_node_t *host_sort_action_create(void);
-sort_action_node_t *perm_sort_action_create(void);
-sort_action_node_t *date_sort_action_create(void);
-sort_action_node_t *src_user_sort_action_create(void);
-sort_action_node_t *tgt_user_sort_action_create(void);
-sort_action_node_t *src_role_sort_action_create(void);
-sort_action_node_t *tgt_role_sort_action_create(void);
-sort_action_node_t *src_type_sort_action_create(void);
-sort_action_node_t *tgt_type_sort_action_create(void);
-sort_action_node_t *obj_class_sort_action_create(void);
-sort_action_node_t *exe_sort_action_create(void);
-sort_action_node_t *comm_sort_action_create(void);
-sort_action_node_t *path_sort_action_create(void);
-sort_action_node_t *dev_sort_action_create(void);
-sort_action_node_t *inode_sort_action_create(void);
-sort_action_node_t *pid_sort_action_create(void);
-#endif
+/**
+ * Instruct a model to sort AVC messages by source context's role,
+ * alphabetically.  Non-AVC messages will be placed below AVC ones.
+ *
+ * @param direction Direction to sort.  Non-negative for ascending,
+ * negative for descending.
+ *
+ * @return Sort object for this criterion, or NULL upon error.  The
+ * caller is responsible for calling seaudit_sort_destroy()
+ * afterwards.
+ */
+extern seaudit_sort_t *seaudit_sort_by_source_role(int direction);
+
+/**
+ * Instruct a model to sort AVC messages by source context's type,
+ * alphabetically.  Non-AVC messages will be placed below AVC ones.
+ *
+ * @param direction Direction to sort.  Non-negative for ascending,
+ * negative for descending.
+ *
+ * @return Sort object for this criterion, or NULL upon error.  The
+ * caller is responsible for calling seaudit_sort_destroy()
+ * afterwards.
+ */
+extern seaudit_sort_t *seaudit_sort_by_source_type(int direction);
+
+/**
+ * Instruct a model to sort AVC messages by target context's user,
+ * alphabetically.  Non-AVC messages will be placed below AVC ones.
+ *
+ * @param direction Direction to sort.  Non-negative for ascending,
+ * negative for descending.
+ *
+ * @return Sort object for this criterion, or NULL upon error.  The
+ * caller is responsible for calling seaudit_sort_destroy()
+ * afterwards.
+ */
+extern seaudit_sort_t *seaudit_sort_by_target_user(int direction);
+
+/**
+ * Instruct a model to sort AVC messages by target context's role,
+ * alphabetically.  Non-AVC messages will be placed below AVC ones.
+ *
+ * @param direction Direction to sort.  Non-negative for ascending,
+ * negative for descending.
+ *
+ * @return Sort object for this criterion, or NULL upon error.  The
+ * caller is responsible for calling seaudit_sort_destroy()
+ * afterwards.
+ */
+extern seaudit_sort_t *seaudit_sort_by_target_role(int direction);
+
+/**
+ * Instruct a model to sort AVC messages by target context's type,
+ * alphabetically.  Non-AVC messages will be placed below AVC ones.
+ *
+ * @param direction Direction to sort.  Non-negative for ascending,
+ * negative for descending.
+ *
+ * @return Sort object for this criterion, or NULL upon error.  The
+ * caller is responsible for calling seaudit_sort_destroy()
+ * afterwards.
+ */
+extern seaudit_sort_t *seaudit_sort_by_target_type(int direction);
+
+/**
+ * Instruct a model to sort AVC messages by object class,
+ * alphabetically.  Non-AVC messages will be placed below AVC ones.
+ *
+ * @param direction Direction to sort.  Non-negative for ascending,
+ * negative for descending.
+ *
+ * @return Sort object for this criterion, or NULL upon error.  The
+ * caller is responsible for calling seaudit_sort_destroy()
+ * afterwards.
+ */
+extern seaudit_sort_t *seaudit_sort_by_object_class(int direction);
+
+/**
+ * Instruct a model to sort AVC messages by the executable,
+ * alphabetically.  Non-AVC messages will be placed below AVC ones.
+ *
+ * @param direction Direction to sort.  Non-negative for ascending,
+ * negative for descending.
+ *
+ * @return Sort object for this criterion, or NULL upon error.  The
+ * caller is responsible for calling seaudit_sort_destroy()
+ * afterwards.
+ */
+extern seaudit_sort_t *seaudit_sort_by_executable(int direction);
+
+/**
+ * Instruct a model to sort AVC messages by the command,
+ * alphabetically.  Non-AVC messages will be placed below AVC ones.
+ *
+ * @param direction Direction to sort.  Non-negative for ascending,
+ * negative for descending.
+ *
+ * @return Sort object for this criterion, or NULL upon error.  The
+ * caller is responsible for calling seaudit_sort_destroy()
+ * afterwards.
+ */
+extern seaudit_sort_t *seaudit_sort_by_command(int direction);
+
+/**
+ * Instruct a model to sort AVC messages by the path, alphabetically.
+ * Non-AVC messages will be placed below AVC ones.
+ *
+ * @param direction Direction to sort.  Non-negative for ascending,
+ * negative for descending.
+ *
+ * @return Sort object for this criterion, or NULL upon error.  The
+ * caller is responsible for calling seaudit_sort_destroy()
+ * afterwards.
+ */
+extern seaudit_sort_t *seaudit_sort_by_path(int direction);
+
+/**
+ * Instruct a model to sort AVC messages by the device, alphabetically.
+ * Non-AVC messages will be placed below AVC ones.
+ *
+ * @param direction Direction to sort.  Non-negative for ascending,
+ * negative for descending.
+ *
+ * @return Sort object for this criterion, or NULL upon error.  The
+ * caller is responsible for calling seaudit_sort_destroy()
+ * afterwards.
+ */
+extern seaudit_sort_t *seaudit_sort_by_device(int direction);
+
+/**
+ * Instruct a model to sort AVC messages by the object's inode.
+ * Non-AVC messages will be placed below AVC ones.
+ *
+ * @param direction Direction to sort.  Non-negative for ascending,
+ * negative for descending.
+ *
+ * @return Sort object for this criterion, or NULL upon error.  The
+ * caller is responsible for calling seaudit_sort_destroy()
+ * afterwards.
+ */
+extern seaudit_sort_t *seaudit_sort_by_inode(int direction);
+
+/**
+ * Instruct a model to sort AVC messages by the process ID.  Non-AVC
+ * messages will be placed below AVC ones.
+ *
+ * @param direction Direction to sort.  Non-negative for ascending,
+ * negative for descending.
+ *
+ * @return Sort object for this criterion, or NULL upon error.  The
+ * caller is responsible for calling seaudit_sort_destroy()
+ * afterwards.
+ */
+extern seaudit_sort_t *seaudit_sort_by_pid(int direction);
 
 #endif

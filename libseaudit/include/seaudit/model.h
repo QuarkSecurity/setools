@@ -97,8 +97,10 @@ extern int seaudit_model_remove_all_sort(seaudit_model_t * model);
  * @param log Log to which report error messages.
  * @param model Model containing messages.
  *
- * @return Vector of seaudit_message_t, pre-filtered and pre-sorted,
- * or NULL upon error.
+ * @return A newly allocated vector of seaudit_message_t, pre-filtered
+ * and pre-sorted, or NULL upon error.  The caller is responsible for
+ * calling apol_vector_destroy() upon this value, passing NULL as the
+ * second parameter.
  */
 extern apol_vector_t *seaudit_model_get_messages(seaudit_log_t * log, seaudit_model_t * model);
 
@@ -111,8 +113,10 @@ extern apol_vector_t *seaudit_model_get_messages(seaudit_log_t * log, seaudit_mo
  * @param log Log to which report error messages.
  * @param model Model containing malformed messages.
  *
- * @return Vector of strings, or NULL upon error.  Treat the contents
- * of the vector as const char *.
+ * @return A newly allocated vector of strings, or NULL upon error.
+ * Treat the contents of the vector as const char *.  The caller is
+ * responsible for calling apol_vector_destroy() upon this value,
+ * passing NULL as the second parameter.
  */
 extern apol_vector_t *seaudit_model_get_malformed_messages(seaudit_log_t * log, seaudit_model_t * model);
 

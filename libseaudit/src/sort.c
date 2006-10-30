@@ -24,6 +24,8 @@
 
 #include "seaudit_internal.h"
 
+#include <apol/util.h>
+
 #include <string.h>
 
 typedef int (sort_comp_func) (seaudit_sort_t * sort, const seaudit_message_t * a, const seaudit_message_t * b);
@@ -45,27 +47,327 @@ void seaudit_sort_destroy(seaudit_sort_t ** sort)
 	}
 }
 
-static int sort_host_comp(seaudit_sort_t * sort, const seaudit_message_t * a, const seaudit_message_t * b)
+static seaudit_sort_t *sort_create(sort_comp_func * comp, sort_supported_func support, int direction)
 {
-	int val = strcmp(a->host, b->host);
-	return (sort->direction >= 0 ? val : -1 * val);
+	seaudit_sort_t *s = calloc(1, sizeof(*s));
+	if (s == NULL) {
+		return NULL;
+	}
+	s->comp = comp;
+	s->support = support;
+	s->direction = direction;
+	return s;
 }
 
-static int sort_host_support(seaudit_sort_t * sort, const seaudit_message_t * msg)
+static int sort_message_type_comp(seaudit_sort_t * sort
+				  __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
+{
+	if (a->type != b->type) {
+		return a->type - b->type;
+	}
+	if (a->type == SEAUDIT_MESSAGE_TYPE_AVC) {
+		return a->data.avc->msg - b->data.avc->msg;
+	}
+	return 0;
+}
+
+static int sort_message_type_support(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
+{
+	return msg->type != SEAUDIT_MESSAGE_TYPE_INVALID;
+}
+
+seaudit_sort_t *seaudit_sort_by_message_type(int direction)
+{
+	return sort_create(sort_message_type_comp, sort_message_type_support, direction);
+}
+
+/**
+ * Given two dates compare them, checking to see if the dates passed
+ * in have valid years and correcting if not before comparing.
+ */
+static int sort_date_comp(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
+{
+	/* tm has year, month, day, hour, min, sec */
+	/* if we should compare the years */
+	struct tm *t1 = a->date_stamp;
+	struct tm *t2 = b->date_stamp;
+	int retval;
+	if (t1->tm_year != 0 && t2->tm_year != 0 && (retval = t1->tm_year - t2->tm_year) != 0) {
+		return retval;
+	}
+	if ((retval = t1->tm_mon - t2->tm_mon) != 0) {
+		return retval;
+	}
+	if ((retval = t1->tm_mday - t2->tm_mday) != 0) {
+		return retval;
+	}
+	if ((retval = t1->tm_hour - t2->tm_hour) != 0) {
+		return retval;
+	}
+	if ((retval = t1->tm_min - t2->tm_min) != 0) {
+		return retval;
+	}
+	if ((retval = t1->tm_sec - t2->tm_sec) != 0) {
+		return retval;
+	}
+	return 0;
+}
+
+static int sort_date_support(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
+{
+	return msg->date_stamp != NULL;
+}
+
+seaudit_sort_t *seaudit_sort_by_date(int direction)
+{
+	return sort_create(sort_date_comp, sort_date_support, direction);
+}
+
+static int sort_host_comp(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
+{
+	return strcmp(a->host, b->host);
+}
+
+static int sort_host_support(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
 {
 	return msg->host != NULL;
 }
 
 seaudit_sort_t *seaudit_sort_by_host(int direction)
 {
-	seaudit_sort_t *s = calloc(1, sizeof(*s));
-	if (s == NULL) {
-		return NULL;
+	return sort_create(sort_host_comp, sort_host_support, direction);
+}
+
+static int sort_perm_comp(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
+{
+	size_t i;
+	return apol_vector_compare(a->data.avc->perms, b->data.avc->perms, apol_str_strcmp, NULL, &i);
+}
+
+static int sort_perm_support(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
+{
+	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC &&
+		msg->data.avc->perms != NULL && apol_vector_get_size(msg->data.avc->perms) >= 1;
+}
+
+seaudit_sort_t *seaudit_sort_by_permission(int direction)
+{
+	return sort_create(sort_perm_comp, sort_perm_support, direction);
+}
+
+static int sort_source_user_comp(seaudit_sort_t * sort
+				 __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
+{
+	return strcmp(a->data.avc->suser, b->data.avc->suser);
+}
+
+static int sort_source_user_support(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
+{
+	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && msg->data.avc->suser != NULL;
+}
+
+seaudit_sort_t *seaudit_sort_by_source_user(int direction)
+{
+	return sort_create(sort_source_user_comp, sort_source_user_support, direction);
+}
+
+static int sort_source_role_comp(seaudit_sort_t * sort __attribute((unused)), const seaudit_message_t * a,
+				 const seaudit_message_t * b)
+{
+	return strcmp(a->data.avc->srole, b->data.avc->srole);
+}
+
+static int sort_source_role_support(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
+{
+	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && msg->data.avc->srole != NULL;
+}
+
+seaudit_sort_t *seaudit_sort_by_source_role(int direction)
+{
+	return sort_create(sort_source_role_comp, sort_source_role_support, direction);
+}
+
+static int sort_source_type_comp(seaudit_sort_t * sort
+				 __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
+{
+	return strcmp(a->data.avc->stype, b->data.avc->stype);
+}
+
+static int sort_source_type_support(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
+{
+	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && msg->data.avc->stype != NULL;
+}
+
+seaudit_sort_t *seaudit_sort_by_source_type(int direction)
+{
+	return sort_create(sort_source_type_comp, sort_source_type_support, direction);
+}
+
+static int sort_target_user_comp(seaudit_sort_t * sort
+				 __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
+{
+	return strcmp(a->data.avc->tuser, b->data.avc->tuser);
+}
+
+static int sort_target_user_support(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
+{
+	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && msg->data.avc->tuser != NULL;
+}
+
+seaudit_sort_t *seaudit_sort_by_target_user(int direction)
+{
+	return sort_create(sort_target_user_comp, sort_target_user_support, direction);
+}
+
+static int sort_target_role_comp(seaudit_sort_t * sort
+				 __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
+{
+	return strcmp(a->data.avc->trole, b->data.avc->trole);
+}
+
+static int sort_target_role_support(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
+{
+	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && msg->data.avc->trole != NULL;
+}
+
+seaudit_sort_t *seaudit_sort_by_target_role(int direction)
+{
+	return sort_create(sort_target_role_comp, sort_target_role_support, direction);
+}
+
+static int sort_target_type_comp(seaudit_sort_t * sort
+				 __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
+{
+	return strcmp(a->data.avc->ttype, b->data.avc->ttype);
+}
+
+static int sort_target_type_support(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
+{
+	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && msg->data.avc->ttype != NULL;
+}
+
+seaudit_sort_t *seaudit_sort_by_target_type(int direction)
+{
+	return sort_create(sort_target_type_comp, sort_target_type_support, direction);
+}
+
+static int sort_object_class_comp(seaudit_sort_t * sort
+				  __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
+{
+	return strcmp(a->data.avc->tclass, b->data.avc->tclass);
+}
+
+static int sort_object_class_support(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
+{
+	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && msg->data.avc->tclass != NULL;
+}
+
+seaudit_sort_t *seaudit_sort_by_object_class(int direction)
+{
+	return sort_create(sort_object_class_comp, sort_object_class_support, direction);
+}
+
+static int sort_executable_comp(seaudit_sort_t * sort
+				__attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
+{
+	return strcmp(a->data.avc->exe, b->data.avc->exe);
+}
+
+static int sort_executable_support(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
+{
+	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && msg->data.avc->exe != NULL;
+}
+
+seaudit_sort_t *seaudit_sort_by_executable(int direction)
+{
+	return sort_create(sort_executable_comp, sort_executable_support, direction);
+}
+
+static int sort_command_comp(seaudit_sort_t * sort
+			     __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
+{
+	return strcmp(a->data.avc->comm, b->data.avc->comm);
+}
+
+static int sort_command_support(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
+{
+	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && msg->data.avc->comm != NULL;
+}
+
+seaudit_sort_t *seaudit_sort_by_command(int direction)
+{
+	return sort_create(sort_command_comp, sort_command_support, direction);
+}
+
+static int sort_path_comp(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
+{
+	return strcmp(a->data.avc->path, b->data.avc->path);
+}
+
+static int sort_path_support(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
+{
+	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && msg->data.avc->path != NULL;
+}
+
+seaudit_sort_t *seaudit_sort_by_path(int direction)
+{
+	return sort_create(sort_path_comp, sort_path_support, direction);
+}
+
+static int sort_device_comp(seaudit_sort_t * sort
+			    __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
+{
+	return strcmp(a->data.avc->dev, b->data.avc->dev);
+}
+
+static int sort_device_support(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
+{
+	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && msg->data.avc->dev != NULL;
+}
+
+seaudit_sort_t *seaudit_sort_by_device(int direction)
+{
+	return sort_create(sort_device_comp, sort_device_support, direction);
+}
+
+static int sort_inode_comp(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
+{
+	/* need this logic because inodes are unsigned, so subtraction
+	 * could overflow */
+	if (a->data.avc->inode < b->data.avc->inode) {
+		return -1;
 	}
-	s->comp = sort_host_comp;
-	s->support = sort_host_support;
-	s->direction = direction;
-	return s;
+	return a->data.avc->inode - b->data.avc->inode;
+}
+
+static int sort_inode_support(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
+{
+	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && msg->data.avc->inode > 0;
+}
+
+seaudit_sort_t *seaudit_sort_by_inode(int direction)
+{
+	return sort_create(sort_inode_comp, sort_inode_support, direction);
+}
+
+static int sort_pid_comp(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
+{
+	/* need this logic because pids are unsigned, so subtraction
+	 * could overflow */
+	if (a->data.avc->pid < b->data.avc->pid) {
+		return -1;
+	}
+	return a->data.avc->pid - b->data.avc->pid;
+}
+
+static int sort_pid_support(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
+{
+	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && msg->data.avc->pid > 0;
+}
+
+seaudit_sort_t *seaudit_sort_by_pid(int direction)
+{
+	return sort_create(sort_pid_comp, sort_pid_support, direction);
 }
 
 /******************** protected functions below ********************/
@@ -77,546 +379,6 @@ int sort_is_supported(seaudit_sort_t * sort, const seaudit_message_t * msg)
 
 int sort_comp(seaudit_sort_t * sort, const seaudit_message_t * a, const seaudit_message_t * b)
 {
-	return sort->comp(sort, a, b);
+	int retval = sort->comp(sort, a, b);
+	return (sort->direction >= 0 ? retval : -1 * retval);
 }
-
-#if 0
-
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
-
-static sort_action_node_t *current_list = NULL;
-static int reverse_sort = 0;
-static audit_log_t *audit_log = NULL;
-
-
-
-static int msg_field_compare(const msg_t * a, const msg_t * b)
-{
-	/* if message types in auditlog.h are in alpha order then this function doesn't need to change */
-
-	if (a->msg_type < b->msg_type)
-		return -1;	       /* a=avc msg, b=load policy msg OR a=bool, b=avc|load */
-	if (a->msg_type == b->msg_type) {
-		if (a->msg_type != AVC_MSG)
-			return 0;      /* a = b and not AVC */
-		if (a->msg_data.avc_msg->msg < b->msg_data.avc_msg->msg)
-			return -1;     /* a=denied, b=granted */
-		if (a->msg_data.avc_msg->msg > b->msg_data.avc_msg->msg)
-			return 1;      /* a=granted, b=denied */
-		return 0;	       /* a->msg = b->msg */
-	}
-	return 1;		       /* a=load policy msg, b=avc|bool  msg OR a=avc, b=boolean */
-}
-
-static int perm_compare(const msg_t * a, const msg_t * b)
-{
-	if (a->msg_type < b->msg_type)
-		return -1;
-	if (apol_vector_get_size(msg_get_avc_data(a)->perms) > 0 && apol_vector_get_size(msg_get_avc_data(b)->perms) > 0) {
-		return strcmp(apol_vector_get_element(msg_get_avc_data(a)->perms, 0),
-			      apol_vector_get_element(msg_get_avc_data(b)->perms, 0));
-	}
-	/* If one of the messages does not contain permissions, then always return a NONMATCH value. */
-	return 1;
-}
-
-static int date_compare(const msg_t * a, const msg_t * b)
-{
-	return date_time_compare(a->date_stamp, b->date_stamp);
-}
-
-/* given two dates compare them, checking to see if the dates passed in
- * have valid years and correcting if not before comparing */
-int date_time_compare(struct tm *t1, struct tm *t2)
-{
-	/* tm has year, month, day, hour, min, sec */
-	/* if we should compare the years */
-	if (t1->tm_year != 0 && t2->tm_year != 0) {
-		if (t1->tm_year > t2->tm_year)
-			return 1;
-		else if (t1->tm_year < t2->tm_year)
-			return -1;
-	}
-
-	if (t1->tm_mon > t2->tm_mon)
-		return 1;
-	else if (t1->tm_mon < t2->tm_mon)
-		return -1;
-
-	if (t1->tm_mday > t2->tm_mday)
-		return 1;
-	else if (t1->tm_mday < t2->tm_mday)
-		return -1;
-
-	if (t1->tm_hour > t2->tm_hour)
-		return 1;
-	else if (t1->tm_hour < t2->tm_hour)
-		return -1;
-
-	if (t1->tm_min > t2->tm_min)
-		return 1;
-	else if (t1->tm_min < t2->tm_min)
-		return -1;
-
-	if (t1->tm_sec > t2->tm_sec)
-		return 1;
-	else if (t1->tm_sec < t2->tm_sec)
-		return -1;
-
-	return 0;
-}
-
-static int src_user_compare(const msg_t * a, const msg_t * b)
-{
-	int i_a, i_b;
-	const char *sa, *sb;
-
-	i_a = msg_get_avc_data(a)->src_user;
-	i_b = msg_get_avc_data(b)->src_user;
-
-	if (i_a < 0)
-		return -1;
-	if (i_b < 0)
-		return 1;
-
-	sa = audit_log_get_user(audit_log, i_a);
-	sb = audit_log_get_user(audit_log, i_b);
-
-	assert(sa && sb);
-
-	return strcmp(sa, sb);
-}
-
-static int tgt_user_compare(const msg_t * a, const msg_t * b)
-{
-	int i_a, i_b;
-	const char *sa, *sb;
-
-	i_a = msg_get_avc_data(a)->tgt_user;
-	i_b = msg_get_avc_data(b)->tgt_user;
-
-	if (i_a < 0)
-		return -1;
-	if (i_b < 0)
-		return 1;
-
-	sa = audit_log_get_user(audit_log, i_a);
-	sb = audit_log_get_user(audit_log, i_b);
-
-	assert(sa && sb);
-
-	return strcmp(sa, sb);
-}
-
-static int src_role_compare(const msg_t * a, const msg_t * b)
-{
-	int i_a, i_b;
-	const char *sa, *sb;
-
-	i_a = msg_get_avc_data(a)->src_role;
-	i_b = msg_get_avc_data(b)->src_role;
-
-	if (i_a < 0)
-		return -1;
-	if (i_b < 0)
-		return 1;
-
-	sa = audit_log_get_role(audit_log, i_a);
-	sb = audit_log_get_role(audit_log, i_b);
-
-	assert(sa && sb);
-
-	return strcmp(sa, sb);
-}
-
-static int tgt_role_compare(const msg_t * a, const msg_t * b)
-{
-	int i_a, i_b;
-	const char *sa, *sb;
-
-	i_a = msg_get_avc_data(a)->tgt_role;
-	i_b = msg_get_avc_data(b)->tgt_role;
-
-	if (i_a < 0)
-		return -1;
-	if (i_b < 0)
-		return 1;
-
-	sa = audit_log_get_role(audit_log, i_a);
-	sb = audit_log_get_role(audit_log, i_b);
-
-	assert(sa && sb);
-
-	return strcmp(sa, sb);
-}
-
-static int src_type_compare(const msg_t * a, const msg_t * b)
-{
-	int i_a, i_b;
-	const char *sa, *sb;
-
-	i_a = msg_get_avc_data(a)->src_type;
-	i_b = msg_get_avc_data(b)->src_type;
-
-	if (i_a < 0)
-		return -1;
-	if (i_b < 0)
-		return 1;
-
-	sa = audit_log_get_type(audit_log, i_a);
-	sb = audit_log_get_type(audit_log, i_b);
-
-	assert(sa && sb);
-
-	return strcmp(sa, sb);
-}
-
-static int tgt_type_compare(const msg_t * a, const msg_t * b)
-{
-	int i_a, i_b;
-	const char *sa, *sb;
-
-	i_a = msg_get_avc_data(a)->tgt_type;
-	i_b = msg_get_avc_data(b)->tgt_type;
-
-	if (i_a < 0)
-		return -1;
-	if (i_b < 0)
-		return 1;
-
-	sa = audit_log_get_type(audit_log, i_a);
-	sb = audit_log_get_type(audit_log, i_b);
-
-	assert(sa && sb);
-
-	return strcmp(sa, sb);
-}
-
-static int obj_class_compare(const msg_t * a, const msg_t * b)
-{
-	int i_a, i_b;
-	const char *sa, *sb;
-
-	i_a = msg_get_avc_data(a)->obj_class;
-	i_b = msg_get_avc_data(b)->obj_class;
-
-	if (i_a < 0)
-		return -1;
-	if (i_b < 0)
-		return 1;
-
-	sa = audit_log_get_obj(audit_log, i_a);
-	sb = audit_log_get_obj(audit_log, i_b);
-
-	assert(sa && sb);
-
-	return strcmp(sa, sb);
-}
-
-static int exe_compare(const msg_t * a, const msg_t * b)
-{
-	char *exe_a, *exe_b;
-	int ret;
-	exe_a = msg_get_avc_data(a)->exe;
-	exe_b = msg_get_avc_data(b)->exe;
-
-	if (!exe_a)
-		return -1;
-	if (!exe_b)
-		return 1;
-
-	ret = strcmp(exe_a, exe_b);
-	if (ret == 0)
-		return 0;
-	else
-		return ret;
-}
-
-static int comm_compare(const msg_t * a, const msg_t * b)
-{
-	char *comm_a, *comm_b;
-	int ret;
-	comm_a = msg_get_avc_data(a)->comm;
-	comm_b = msg_get_avc_data(b)->comm;
-
-	if (!comm_a)
-		return -1;
-	if (!comm_b)
-		return 1;
-
-	ret = strcmp(comm_a, comm_b);
-	if (ret == 0)
-		return 0;
-	else
-		return ret;
-}
-
-static int path_compare(const msg_t * a, const msg_t * b)
-{
-	char *sa, *sb;
-
-	sa = msg_get_avc_data(a)->path;
-	sb = msg_get_avc_data(b)->path;
-
-	if (!sa)
-		return -1;
-	if (!sb)
-		return 1;
-	return strcmp(sa, sb);
-}
-
-static int dev_compare(const msg_t * a, const msg_t * b)
-{
-	char *sa, *sb;
-
-	sa = msg_get_avc_data(a)->dev;
-	sb = msg_get_avc_data(b)->dev;
-
-	if (!sa)
-		return -1;
-	if (!sb)
-		return 1;
-	return strcmp(sa, sb);
-}
-
-static int inode_compare(const msg_t * a, const msg_t * b)
-{
-	if (msg_get_avc_data(a)->inode == msg_get_avc_data(b)->inode) {
-		return 0;
-	} else if (msg_get_avc_data(a)->inode < msg_get_avc_data(b)->inode) {
-		return -1;
-	} else {
-		return 1;
-	}
-}
-
-static int pid_compare(const msg_t * a, const msg_t * b)
-{
-	if (msg_get_avc_data(a)->pid == msg_get_avc_data(b)->pid) {
-		return 0;
-	} else if (msg_get_avc_data(a)->pid < msg_get_avc_data(b)->pid) {
-		return -1;
-	} else {
-		return 1;
-	}
-}
-
-static sort_action_node_t *sort_action_node_create(void)
-{
-	sort_action_node_t *cl;
-	cl = (sort_action_node_t *) malloc(sizeof(sort_action_node_t));
-	if (!cl) {
-		fprintf(stderr, "Out of memory\n");
-		return NULL;
-	}
-	memset(cl, 0, sizeof(sort_action_node_t));
-	return cl;
-}
-
-sort_action_node_t *msg_sort_action_create(void)
-{
-	sort_action_node_t *node = sort_action_node_create();
-	if (!node) {
-		fprintf(stderr, "Out of memory!\n");
-		return NULL;
-	}
-	node->msg_types = AVC_MSG | LOAD_POLICY_MSG | BOOLEAN_MSG;
-	node->sort = &msg_field_compare;
-	return node;
-}
-
-sort_action_node_t *host_sort_action_create(void)
-{
-	sort_action_node_t *node = sort_action_node_create();
-	if (!node) {
-		fprintf(stderr, "Out of memory!\n");
-		return NULL;
-	}
-	node->msg_types = AVC_MSG | LOAD_POLICY_MSG | BOOLEAN_MSG;
-	node->sort = &host_field_compare;
-	return node;
-}
-
-sort_action_node_t *perm_sort_action_create(void)
-{
-	sort_action_node_t *node = sort_action_node_create();
-	if (!node) {
-		fprintf(stderr, "Out of memory!\n");
-		return NULL;
-	}
-	node->msg_types = AVC_MSG;
-	node->sort = &perm_compare;
-	return node;
-}
-
-sort_action_node_t *date_sort_action_create(void)
-{
-	sort_action_node_t *node = sort_action_node_create();
-	if (!node) {
-		fprintf(stderr, "Out of memory!\n");
-		return NULL;
-	}
-	node->msg_types = AVC_MSG | LOAD_POLICY_MSG | BOOLEAN_MSG;
-	node->sort = &date_compare;
-	return node;
-}
-
-sort_action_node_t *src_user_sort_action_create(void)
-{
-	sort_action_node_t *node = sort_action_node_create();
-	if (!node) {
-		fprintf(stderr, "Out of memory!\n");
-		return NULL;
-	}
-	node->msg_types = AVC_MSG;
-	node->sort = &src_user_compare;
-	return node;
-}
-
-sort_action_node_t *tgt_user_sort_action_create(void)
-{
-	sort_action_node_t *node = sort_action_node_create();
-	if (!node) {
-		fprintf(stderr, "Out of memory!\n");
-		return NULL;
-	}
-	node->msg_types = AVC_MSG;
-	node->sort = &tgt_user_compare;
-	return node;
-}
-
-sort_action_node_t *src_role_sort_action_create(void)
-{
-	sort_action_node_t *node = sort_action_node_create();
-	if (!node) {
-		fprintf(stderr, "Out of memory!\n");
-		return NULL;
-	}
-	node->msg_types = AVC_MSG;
-	node->sort = &src_role_compare;
-	return node;
-}
-
-sort_action_node_t *tgt_role_sort_action_create(void)
-{
-	sort_action_node_t *node = sort_action_node_create();
-	if (!node) {
-		fprintf(stderr, "Out of memory!\n");
-		return NULL;
-	}
-	node->msg_types = AVC_MSG;
-	node->sort = &tgt_role_compare;
-	return node;
-}
-
-sort_action_node_t *src_type_sort_action_create(void)
-{
-	sort_action_node_t *node = sort_action_node_create();
-	if (!node) {
-		fprintf(stderr, "Out of memory!\n");
-		return NULL;
-	}
-	node->msg_types = AVC_MSG;
-	node->sort = &src_type_compare;
-	return node;
-}
-
-sort_action_node_t *tgt_type_sort_action_create(void)
-{
-	sort_action_node_t *node = sort_action_node_create();
-	if (!node) {
-		fprintf(stderr, "Out of memory!\n");
-		return NULL;
-	}
-	node->msg_types = AVC_MSG;
-	node->sort = &tgt_type_compare;
-	return node;
-}
-
-sort_action_node_t *obj_class_sort_action_create(void)
-{
-	sort_action_node_t *node = sort_action_node_create();
-	if (!node) {
-		fprintf(stderr, "Out of memory!\n");
-		return NULL;
-	}
-	node->msg_types = AVC_MSG;
-	node->sort = &obj_class_compare;
-	return node;
-}
-
-sort_action_node_t *exe_sort_action_create(void)
-{
-	sort_action_node_t *node = sort_action_node_create();
-	if (!node) {
-		fprintf(stderr, "Out of memory!\n");
-		return NULL;
-	}
-	node->msg_types = AVC_MSG;
-	node->sort = &exe_compare;
-	return node;
-}
-
-sort_action_node_t *comm_sort_action_create(void)
-{
-	sort_action_node_t *node = sort_action_node_create();
-	if (!node) {
-		fprintf(stderr, "Out of memory!\n");
-		return NULL;
-	}
-	node->msg_types = AVC_MSG;
-	node->sort = &comm_compare;
-	return node;
-}
-
-sort_action_node_t *path_sort_action_create(void)
-{
-	sort_action_node_t *node = sort_action_node_create();
-	if (!node) {
-		fprintf(stderr, "Out of memory!\n");
-		return NULL;
-	}
-	node->msg_types = AVC_MSG;
-	node->sort = &path_compare;
-	return node;
-}
-
-sort_action_node_t *dev_sort_action_create(void)
-{
-	sort_action_node_t *node = sort_action_node_create();
-	if (!node) {
-		fprintf(stderr, "Out of memory!\n");
-		return NULL;
-	}
-	node->msg_types = AVC_MSG;
-	node->sort = &dev_compare;
-	return node;
-}
-
-sort_action_node_t *inode_sort_action_create(void)
-{
-	sort_action_node_t *node = sort_action_node_create();
-	if (!node) {
-		fprintf(stderr, "Out of memory!\n");
-		return NULL;
-	}
-	node->msg_types = AVC_MSG;
-	node->sort = &inode_compare;
-	return node;
-}
-
-sort_action_node_t *pid_sort_action_create(void)
-{
-	sort_action_node_t *node = sort_action_node_create();
-	if (!node) {
-		fprintf(stderr, "Out of memory!\n");
-		return NULL;
-	}
-	node->msg_types = AVC_MSG;
-	node->sort = &pid_compare;
-	return node;
-}
-
-#endif
