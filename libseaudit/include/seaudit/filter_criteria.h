@@ -54,12 +54,6 @@ typedef struct seaudit_criteria
 #define FILTER_CRITERIA_DT_OPTION_BETWEEN 2
 
 /* create a criteria */
-seaudit_criteria_t *src_type_criteria_create(char **types, int num_types);
-seaudit_criteria_t *tgt_type_criteria_create(char **types, int num_types);
-seaudit_criteria_t *src_role_criteria_create(char **roles, int num_roles);
-seaudit_criteria_t *tgt_role_criteria_create(char **roles, int num_roles);
-seaudit_criteria_t *src_user_criteria_create(char **users, int num_users);
-seaudit_criteria_t *tgt_user_criteria_create(char **users, int num_users);
 seaudit_criteria_t *class_criteria_create(char **classes, int num_classes);
 seaudit_criteria_t *exe_criteria_create(const char *exe);
 seaudit_criteria_t *host_criteria_create(const char *host);
@@ -72,12 +66,6 @@ seaudit_criteria_t *date_time_criteria_create(struct tm *start, struct tm *end, 
 seaudit_criteria_t *msg_criteria_create(int msg);
 
 apol_vector_t *strs_criteria_get_strs(seaudit_criteria_t * criteria);
-#define src_type_criteria_get_strs(criteria) strs_criteria_get_strs(criteria)
-#define tgt_type_criteria_get_strs(criteria) strs_criteria_get_strs(criteria)
-#define src_user_criteria_get_strs(criteria) strs_criteria_get_strs(criteria)
-#define tgt_user_criteria_get_strs(criteria) strs_criteria_get_strs(criteria)
-#define src_role_criteria_get_strs(criteria) strs_criteria_get_strs(criteria)
-#define tgt_role_criteria_get_strs(criteria) strs_criteria_get_strs(criteria)
 #define class_criteria_get_strs(criteria) strs_criteria_get_strs(criteria)
 
 const char *glob_criteria_get_str(seaudit_criteria_t * criteria);

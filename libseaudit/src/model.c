@@ -382,6 +382,29 @@ int seaudit_model_append_filter(seaudit_model_t * model, seaudit_filter_t * filt
 	return 0;
 }
 
+apol_vector_t *seaudit_model_get_filters(seaudit_model_t * model)
+{
+	if (model == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return model->filters;
+}
+
+int seaudit_model_remove_filter(seaudit_model_t * model, size_t i)
+{
+	seaudit_filter_t *f;
+	if (model == NULL || i >= apol_vector_get_size(model->filters)) {
+		errno = EINVAL;
+		return -1;
+	}
+	f = apol_vector_get_element(model->filters, i);
+	seaudit_filter_destroy(&f);
+	apol_vector_remove(model->filters, i);
+	model->dirty = 1;
+	return 0;
+}
+
 int seaudit_model_set_filter_match(seaudit_model_t * model, seaudit_filter_match_e match)
 {
 	if (model == NULL) {

@@ -82,6 +82,33 @@ extern int seaudit_model_append_log(seaudit_model_t * model, seaudit_log_t * log
 extern int seaudit_model_append_filter(seaudit_model_t * model, seaudit_filter_t * filter);
 
 /**
+ * Get the list of filters for a model.  Whenever a filter is modified
+ * the model will be recomputed.  Note: to remove a filter from the
+ * model use seaudit_model_removed_filter().
+ *
+ * @param model Model containing filters.
+ *
+ * @return Vector of seaudit_filter_t objects, or NULL upon error.
+ * Note that the vector my be empty.  Do not destroy or otherwise
+ * modify this vector.  (It is safe to manipulate the elements within
+ * the vector.)
+ */
+extern apol_vector_t *seaudit_model_get_filters(seaudit_model_t * model);
+
+/**
+ * Remove a filter from a model.  Filters are identified by their
+ * element position within the vector returned by
+ * seaudit_model_get_filters().  The model well be recomputed
+ * afterwards.
+ *
+ * @param model Model to modify.
+ * @param i Index for the filter to be removed.
+ *
+ * @return 0 on success, < 0 on error.
+ */
+extern int seaudit_model_remove_filter(seaudit_model_t * model, size_t i);
+
+/**
  * Set a model to accept a message if all filters are met (default
  * behavior) or if any filter is met.
  *
@@ -121,6 +148,8 @@ extern int seaudit_model_append_sort(seaudit_model_t * model, seaudit_sort_t * s
  * provided by the model's logs.
  *
  * @param model Model to modify.
+ *
+ * @return 0 on success, < 0 on error.
  */
 extern int seaudit_model_remove_all_sort(seaudit_model_t * model);
 

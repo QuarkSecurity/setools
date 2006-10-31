@@ -26,6 +26,8 @@
 #ifndef SEAUDIT_FILTER_H
 #define SEAUDIT_FILTER_H
 
+#include <apol/vector.h>
+
 typedef struct seaudit_filter seaudit_filter_t;
 
 /**
@@ -120,6 +122,168 @@ extern int seaudit_filter_set_description(seaudit_filter_t * filter, const char 
  */
 extern char *seaudit_filter_get_description(seaudit_filter_t * filter);
 
+/**
+ * Set the list of source users.  A message is accepted if its source
+ * user is within this list.  Upon success the filter takes ownership
+ * of the vector and the strings within.
+ *
+ * @param filter Filter to modify.
+ * @param v Vector of allocated strings, or NULL to clear current
+ * settings.
+ *
+ * @return 0 on success, < 0 on error.
+ */
+extern int seaudit_filter_set_source_user(seaudit_filter_t * filter, apol_vector_t * v);
+
+/**
+ * Return the current list of source users for a filter.  This will be
+ * a vector of strings.  Treat the vector and its contents as const.
+ *
+ * @param filter Filter to get values.
+ *
+ * @return Vector of strings, or NULL if no value has been set.
+ */
+extern apol_vector_t *seaudit_filter_get_source_user(seaudit_filter_t * filter);
+
+/**
+ * Set the list of source roles.  A message is accepted if its source
+ * role is within this list.  Upon success the filter takes ownership
+ * of the vector and the strings within.
+ *
+ * @param filter Filter to modify.
+ * @param v Vector of allocated strings, or NULL to clear current
+ * settings.
+ *
+ * @return 0 on success, < 0 on error.
+ */
+extern int seaudit_filter_set_source_role(seaudit_filter_t * filter, apol_vector_t * v);
+
+/**
+ * Return the current list of source roles for a filter.  This will be
+ * a vector of strings.  Treat the vector and its contents as const.
+ *
+ * @param filter Filter to get values.
+ *
+ * @return Vector of strings, or NULL if no value has been set.
+ */
+extern apol_vector_t *seaudit_filter_get_source_role(seaudit_filter_t * filter);
+
+/**
+ * Set the list of source types.  A message is accepted if its source
+ * type is within this list.  Upon success the filter takes ownership
+ * of the vector and the strings within.
+ *
+ * @param filter Filter to modify.
+ * @param v Vector of allocated strings, or NULL to clear current
+ * settings.
+ *
+ * @return 0 on success, < 0 on error.
+ */
+extern int seaudit_filter_set_source_type(seaudit_filter_t * filter, apol_vector_t * v);
+
+/**
+ * Return the current list of source types for a filter.  This will be
+ * a vector of strings.  Treat the vector and its contents as const.
+ *
+ * @param filter Filter to get values.
+ *
+ * @return Vector of strings, or NULL if no value has been set.
+ */
+extern apol_vector_t *seaudit_filter_get_source_type(seaudit_filter_t * filter);
+
+/**
+ * Set the list of target users.  A message is accepted if its target
+ * user is within this list.  Upon success the filter takes ownership
+ * of the vector and the strings within.
+ *
+ * @param filter Filter to modify.
+ * @param v Vector of allocated strings, or NULL to clear current
+ * settings.
+ *
+ * @return 0 on success, < 0 on error.
+ */
+extern int seaudit_filter_set_target_user(seaudit_filter_t * filter, apol_vector_t * v);
+
+/**
+ * Return the current list of target users for a filter.  This will be
+ * a vector of strings.  Treat the vector and its contents as const.
+ *
+ * @param filter Filter to get values.
+ *
+ * @return Vector of strings, or NULL if no value has been set.
+ */
+extern apol_vector_t *seaudit_filter_get_target_user(seaudit_filter_t * filter);
+
+/**
+ * Set the list of target roles.  A message is accepted if its target
+ * role is within this list.  Upon success the filter takes ownership
+ * of the vector and the strings within.
+ *
+ * @param filter Filter to modify.
+ * @param v Vector of allocated strings, or NULL to clear current
+ * settings.
+ *
+ * @return 0 on success, < 0 on error.
+ */
+extern int seaudit_filter_set_target_role(seaudit_filter_t * filter, apol_vector_t * v);
+
+/**
+ * Return the current list of target roles for a filter.  This will be
+ * a vector of strings.  Treat the vector and its contents as const.
+ *
+ * @param filter Filter to get values.
+ *
+ * @return Vector of strings, or NULL if no value has been set.
+ */
+extern apol_vector_t *seaudit_filter_get_target_role(seaudit_filter_t * filter);
+
+/**
+ * Set the list of target types.  A message is accepted if its target
+ * type is within this list.  Upon success the filter takes ownership
+ * of the vector and the strings within.
+ *
+ * @param filter Filter to modify.
+ * @param v Vector of allocated strings, or NULL to clear current
+ * settings.
+ *
+ * @return 0 on success, < 0 on error.
+ */
+extern int seaudit_filter_set_target_type(seaudit_filter_t * filter, apol_vector_t * v);
+
+/**
+ * Return the current list of target types for a filter.  This will be
+ * a vector of strings.  Treat the vector and its contents as const.
+ *
+ * @param filter Filter to get values.
+ *
+ * @return Vector of strings, or NULL if no value has been set.
+ */
+extern apol_vector_t *seaudit_filter_get_target_type(seaudit_filter_t * filter);
+
+/**
+ * Set the list of target object classes.  A message is accepted if
+ * its target class is within this list.  Upon success the filter
+ * takes ownership of the vector and the strings within.
+ *
+ * @param filter Filter to modify.
+ * @param v Vector of allocated strings, or NULL to clear current
+ * settings.
+ *
+ * @return 0 on success, < 0 on error.
+ */
+extern int seaudit_filter_set_target_class(seaudit_filter_t * filter, apol_vector_t * v);
+
+/**
+ * Return the current list of target object classes for a filter.
+ * This will be a vector of strings.  Treat the vector and its
+ * contents as const.
+ *
+ * @param filter Filter to get values.
+ *
+ * @return Vector of strings, or NULL if no value has been set.
+ */
+extern apol_vector_t *seaudit_filter_get_target_class(seaudit_filter_t * filter);
+
 #if 0
 
 #include <apol/util.h>
@@ -130,12 +294,6 @@ extern char *seaudit_filter_get_description(seaudit_filter_t * filter);
 
 typedef struct seaudit_filter
 {
-	seaudit_criteria_t *src_type_criteria;
-	seaudit_criteria_t *tgt_type_criteria;
-	seaudit_criteria_t *src_role_criteria;
-	seaudit_criteria_t *tgt_role_criteria;
-	seaudit_criteria_t *src_user_criteria;
-	seaudit_criteria_t *tgt_user_criteria;
 	seaudit_criteria_t *class_criteria;
 	seaudit_criteria_t *exe_criteria;
 	seaudit_criteria_t *comm_criteria;
