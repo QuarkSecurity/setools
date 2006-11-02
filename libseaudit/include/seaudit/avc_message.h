@@ -28,4 +28,14 @@
 
 typedef struct seaudit_avc_message seaudit_avc_message_t;
 
+/**
+ * AVC messages may be either a granted (i.e., an allow) or a denied.
+ */
+typedef enum seaudit_avc_message_type
+{
+	SEAUDIT_AVC_UNKNOWN = 0,
+	SEAUDIT_AVC_DENIED,
+	SEAUDIT_AVC_GRANTED
+} seaudit_avc_message_type_e;
+
 #endif

@@ -98,6 +98,8 @@ void seaudit_report_destroy(seaudit_report_t ** report)
 		return;
 	}
 	free((*report)->out_file);
+	free((*report)->config);
+	free((*report)->stylesheet);
 	free(*report);
 	*report = NULL;
 }
@@ -430,36 +432,33 @@ static int report_parse_custom_attribs(seaudit_log_t * log, seaudit_report_t * r
 static seaudit_filter_t *report_enforce_toggle_filter_create(seaudit_log_t * log, seaudit_report_t * report)
 {
 	seaudit_filter_t *filter = NULL;
-	apol_vector_t *v = NULL;
+	apol_vector_t *type_v = NULL, *class_v;
 	int retval = -1, error;
-	const char *tgt_type = "security_t";
-	const char *obj_class = "security";
-	char *s;
+	char *tgt_type = "security_t";
+	char *obj_class = "security";
 
 	if ((filter = seaudit_filter_create()) == NULL) {
 		error = errno;
 		ERR(log, "%s", strerror(error));
 		goto cleanup;
 	}
-	if ((s = strdup(tgt_type)) == NULL ||
-	    (v = apol_vector_create_with_capacity(1)) == NULL ||
-	    apol_vector_append(v, s) < 0 || seaudit_filter_set_target_type(filter, v) < 0) {
+	if ((type_v = apol_vector_create_with_capacity(1)) == NULL ||
+	    apol_vector_append(type_v, tgt_type) < 0 || seaudit_filter_set_target_type(filter, type_v) < 0) {
 		error = errno;
 		ERR(log, "%s", strerror(error));
 		goto cleanup;
 	}
-	v = NULL;
-	if ((s = strdup(obj_class)) == NULL ||
-	    (v = apol_vector_create_with_capacity(1)) == NULL ||
-	    apol_vector_append(v, s) < 0 || seaudit_filter_set_target_class(filter, v) < 0) {
+	if ((class_v = apol_vector_create_with_capacity(1)) == NULL ||
+	    apol_vector_append(class_v, obj_class) < 0 || seaudit_filter_set_target_class(filter, class_v) < 0) {
 		error = errno;
 		ERR(log, "%s", strerror(error));
 		goto cleanup;
 	}
 	retval = 0;
       cleanup:
+	apol_vector_destroy(&type_v, NULL);
+	apol_vector_destroy(&class_v, NULL);
 	if (retval != 0) {
-		apol_vector_destroy(&v, free);
 		seaudit_filter_destroy(&filter);
 		errno = error;
 		return NULL;
@@ -525,6 +524,7 @@ static int report_print_enforce_toggles(seaudit_log_t * log, seaudit_report_t * 
 		}
 		if (s == NULL) {
 			int error = errno;
+			apol_vector_destroy(&v, NULL);
 			v = seaudit_model_get_filters(report->model);
 			i = apol_vector_get_size(v);
 			assert(i >= 1);
@@ -537,6 +537,7 @@ static int report_print_enforce_toggles(seaudit_log_t * log, seaudit_report_t * 
 		fputc('\n', outfile);
 		free(s);
 	}
+	apol_vector_destroy(&v, NULL);
 	/* remove the enforce toggle filter */
 	v = seaudit_model_get_filters(report->model);
 	i = apol_vector_get_size(v);
@@ -570,6 +571,7 @@ static int report_print_policy_booleans(seaudit_log_t * log, seaudit_report_t * 
 			}
 			if (s == NULL) {
 				int error = errno;
+				apol_vector_destroy(&v, NULL);
 				ERR(log, "%s", strerror(error));
 				errno = error;
 				return -1;
@@ -579,6 +581,7 @@ static int report_print_policy_booleans(seaudit_log_t * log, seaudit_report_t * 
 			free(s);
 		}
 	}
+	apol_vector_destroy(&v, NULL);
 	return 0;
 }
 
@@ -607,6 +610,7 @@ static int report_print_policy_loads(seaudit_log_t * log, seaudit_report_t * rep
 			}
 			if (s == NULL) {
 				int error = errno;
+				apol_vector_destroy(&v, NULL);
 				ERR(log, "%s", strerror(error));
 				errno = error;
 				return -1;
@@ -616,6 +620,7 @@ static int report_print_policy_loads(seaudit_log_t * log, seaudit_report_t * rep
 			free(s);
 		}
 	}
+	apol_vector_destroy(&v, NULL);
 	return 0;
 }
 
@@ -651,6 +656,7 @@ static int report_print_avc_listing(seaudit_log_t * log, seaudit_report_t * repo
 			}
 			if (s == NULL) {
 				int error = errno;
+				apol_vector_destroy(&v, NULL);
 				ERR(log, "%s", strerror(error));
 				errno = error;
 				return -1;
@@ -660,15 +666,19 @@ static int report_print_avc_listing(seaudit_log_t * log, seaudit_report_t * repo
 			free(s);
 		}
 	}
+	apol_vector_destroy(&v, NULL);
 	return 0;
 }
 
 static int report_print_stats(seaudit_log_t * log, seaudit_report_t * report, FILE * outfile)
 {
+	apol_vector_t *v = seaudit_model_get_messages(log, report->model);
+	size_t num_messages = apol_vector_get_size(v);
+	apol_vector_destroy(&v, NULL);
 	if (report->format == SEAUDIT_REPORT_FORMAT_HTML) {
 		fprintf(outfile,
 			"<font class=\"stats_label\">Number of total messages:</font> <b class=\"stats_count\">%zd</b><br>\n",
-			apol_vector_get_size(seaudit_model_get_messages(log, report->model)));
+			num_messages);
 		fprintf(outfile,
 			"<font class=\"stats_label\">Number of policy load messages:</font> <b class=\"stats_count\">%zd</b><br>\n",
 			seaudit_model_get_num_loads(log, report->model));
@@ -682,8 +692,7 @@ static int report_print_stats(seaudit_log_t * log, seaudit_report_t * report, FI
 			"<font class=\"stats_label\">Number of denied messages:</font> <b class=\"stats_count\">%zd</b><br>\n",
 			seaudit_model_get_num_denies(log, report->model));
 	} else {
-		fprintf(outfile, "Number of total messages: %d\n",
-			apol_vector_get_size(seaudit_model_get_messages(log, report->model)));
+		fprintf(outfile, "Number of total messages: %d\n", num_messages);
 		fprintf(outfile, "Number of policy load messages: %d\n", seaudit_model_get_num_loads(log, report->model));
 		fprintf(outfile, "Number of policy boolean messages: %d\n", seaudit_model_get_num_bools(log, report->model));
 		fprintf(outfile, "Number of allow messages: %d\n", seaudit_model_get_num_allows(log, report->model));
@@ -979,6 +988,7 @@ static int report_print_malformed(seaudit_log_t * log, seaudit_report_t * report
 			fprintf(outfile, "%s\n", malformed_msg);
 	}
 	fprintf(outfile, "\n");
+	apol_vector_destroy(&v, NULL);
 	return 0;
 }
 

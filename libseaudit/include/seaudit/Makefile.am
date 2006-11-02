@@ -2,7 +2,6 @@ seauditdir = $(includedir)/seaudit
 
 seaudit_HEADERS = \
 	filter.h
-	filter_criteria.h \
 	log.h \
 	model.h \
 	multifilter.h \

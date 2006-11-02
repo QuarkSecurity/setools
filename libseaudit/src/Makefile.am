@@ -21,7 +21,6 @@ libseaudit_a_SOURCES = \
 	util.c \
 	seaudit_internal.h
 
-#	filter_criteria.c \
 #	multifilter.c \
 #
 

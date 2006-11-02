@@ -80,8 +80,6 @@ static seaudit_model_t *model = NULL;
  */
 static seaudit_report_t *report = NULL;
 
-#define STYLESHEET_FILE "FIX ME!"
-
 static void seaudit_report_info_usage(const char *program_name, int brief)
 {
 	printf("%s (seaudit-report ver. %s)\n\n", COPYRIGHT_INFO, VERSION);
@@ -101,7 +99,7 @@ static void seaudit_report_info_usage(const char *program_name, int brief)
 	printf("  -v, --version            Display version information and exit.\n");
 	printf("  -h, --help               Display this help and exit.\n");
 	printf("\n");
-	printf("Example stylesheet is at %s/%s.\n", APOL_INSTALL_DIR, STYLESHEET_FILE);
+	printf("Default stylesheet is in %s.\n", APOL_INSTALL_DIR);
 }
 
 static void parse_command_line_args(int argc, char **argv)
@@ -134,6 +132,7 @@ static void parse_command_line_args(int argc, char **argv)
 			break;
 		case 'H':	       /* Set the output to format to html */
 			format = SEAUDIT_REPORT_FORMAT_HTML;
+			do_style = 1;
 			break;
 		case 'v':
 			/* display version */
@@ -169,7 +168,7 @@ static void parse_command_line_args(int argc, char **argv)
 	if ((first_log = seaudit_log_create(NULL, NULL)) == NULL || seaudit_model_append_log(model, first_log) < 0) {
 		exit(-1);
 	}
-	if (apol_vector_append(logs, first_log) < 0) {
+	if ((logs = apol_vector_create()) == NULL || apol_vector_append(logs, first_log) < 0) {
 		fprintf(stderr, "ERROR: %s\n", strerror(errno));
 		exit(-1);
 	}
@@ -235,6 +234,6 @@ int main(int argc, char **argv)
 		seaudit_log_t *l = apol_vector_get_element(logs, i);
 		seaudit_log_destroy(&l);
 	}
-
+	apol_vector_destroy(&logs, NULL);
 	return 0;
 }

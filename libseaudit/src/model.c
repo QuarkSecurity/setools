@@ -69,19 +69,31 @@ struct seaudit_model
 static int model_filter_message(seaudit_model_t * model, const seaudit_message_t * m)
 {
 	size_t i;
-	int compval;
+	int compval, filters_passed = 0;
 	if (apol_vector_get_size(model->filters) == 0) {
 		return 1;
 	}
 	for (i = 0; i < apol_vector_get_size(model->filters); i++) {
 		seaudit_filter_t *f = apol_vector_get_element(model->filters, i);
 		compval = filter_is_accepted(f, m);
-		if (model->match == SEAUDIT_FILTER_MATCH_ALL && compval == 0) {
-			return 0;
+		if (compval) {
+			if (model->match == SEAUDIT_FILTER_MATCH_ANY) {
+				return 1;
+			}
+			filters_passed++;
+		} else {
+			if (model->match == SEAUDIT_FILTER_MATCH_ALL) {
+				return 0;
+			}
 		}
-		if (model->match == SEAUDIT_FILTER_MATCH_ANY && compval != 0) {
-			return 1;
-		}
+	}
+	if (model->match == SEAUDIT_FILTER_MATCH_ANY) {
+		/* if got here, then no filters were met */
+		return 0;
+	}
+	/* if got here, then all criteria were met */
+	if (filters_passed) {
+		return 1;
 	}
 	return 0;
 }

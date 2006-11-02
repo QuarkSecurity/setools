@@ -144,13 +144,6 @@ void message_free(void *msg);
 
 /*************** avc messages (defined in avc_message.c) ***************/
 
-typedef enum seaudit_avc_message_type
-{
-	SEAUDIT_AVC_UNKNOWN = 0,
-	SEAUDIT_AVC_DENIED,
-	SEAUDIT_AVC_GRANTED
-} seaudit_avc_message_type_e;
-
 typedef enum seaudit_avc_message_class
 {
 	SEAUDIT_AVC_DATA_INVALID = 0,
