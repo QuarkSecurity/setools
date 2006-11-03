@@ -162,7 +162,7 @@ static void parse_command_line_args(int argc, char **argv)
 		exit(-1);
 	}
 
-	if ((model = seaudit_model_create(NULL)) == NULL) {
+	if ((model = seaudit_model_create("seaudit-report", NULL)) == NULL) {
 		exit(-1);
 	}
 	if ((first_log = seaudit_log_create(NULL, NULL)) == NULL || seaudit_model_append_log(model, first_log) < 0) {

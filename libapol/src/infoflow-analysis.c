@@ -543,7 +543,7 @@ static apol_vector_t *apol_infoflow_graph_create_required_types(apol_policy_t * 
 	}
 	for (i = 0; i < apol_vector_get_size(v); i++) {
 		s = (char *)apol_vector_get_element(v, i);
-		expanded_types = apol_query_create_candidate_type_list(p, s, 0, 1);
+		expanded_types = apol_query_create_candidate_type_list(p, s, 0, 1, APOL_QUERY_CANDIDATE_BOTH);
 		if (expanded_types == NULL) {
 			goto cleanup;
 		}
@@ -769,7 +769,7 @@ static int apol_infoflow_graph_get_nodes_for_type(apol_policy_t * p, apol_infofl
 	size_t i, j;
 	apol_vector_t *cand_list = NULL;
 	int retval = -1;
-	if ((cand_list = apol_query_create_candidate_type_list(p, type, 0, 1)) == NULL) {
+	if ((cand_list = apol_query_create_candidate_type_list(p, type, 0, 1, APOL_QUERY_CANDIDATE_BOTH)) == NULL) {
 		goto cleanup;
 	}
 	for (i = 0; i < apol_vector_get_size(g->nodes); i++) {
@@ -1291,7 +1291,7 @@ static int apol_infoflow_trans_define(apol_policy_t * p,
 		}
 		length += edge->length;
 		if ((step = calloc(1, sizeof(*step))) == NULL ||
-		    (step->rules = apol_vector_create_from_vector(edge->rules)) == NULL ||
+		    (step->rules = apol_vector_create_from_vector(edge->rules, NULL, NULL)) == NULL ||
 		    apol_vector_append((*result)->steps, step) < 0) {
 			apol_infoflow_step_free(step);
 			ERR(p, "%s", strerror(ENOMEM));
@@ -2005,7 +2005,7 @@ apol_infoflow_result_t *apol_infoflow_result_create_from_result(apol_infoflow_re
 	for (i = 0; i < apol_vector_get_size(result->steps); i++) {
 		step = (apol_infoflow_step_t *) apol_vector_get_element(result->steps, i);
 		if ((new_step = calloc(1, sizeof(*new_step))) == NULL ||
-		    (new_step->rules = apol_vector_create_from_vector(step->rules)) == NULL ||
+		    (new_step->rules = apol_vector_create_from_vector(step->rules, NULL, NULL)) == NULL ||
 		    apol_vector_append(new_r->steps, new_step) < 0) {
 			apol_infoflow_step_free(new_step);
 			goto cleanup;

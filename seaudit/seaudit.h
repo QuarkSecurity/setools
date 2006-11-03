@@ -10,17 +10,22 @@
 #ifndef SEAUDIT_H
 #define SEAUDIT_H
 
-#include <seaudit/auditlog.h>
 #include "auditlogmodel.h"
-#include "seaudit_window.h"
 #include "filter_window.h"
 #include "preferences.h"
 #include "report_window.h"
+#include "seaudit_window.h"
+
+#include <seaudit/log.h>
+#include <seaudit/model.h>
+
 #include <apol/util.h>
 #include <apol/policy.h>
 #include <apol/vector.h>
-#include <gtk/gtk.h>
+
 #include <glade/glade.h>
+#include <gtk/gtk.h>
+
 #include <assert.h>
 
 #ifndef STR_SIZE
@@ -38,7 +43,9 @@
 typedef struct seaudit
 {
 	apol_policy_t *cur_policy;
-	audit_log_t *cur_log;
+	seaudit_log_t *cur_log;
+	gchar *last_log_message;
+	int last_log_level;
 	seaudit_window_t *window;
 	GtkTextBuffer *policy_text;
 	GList *callbacks;
@@ -65,7 +72,7 @@ void seaudit_view_entire_selection_update_sensitive(bool_t disable);
 /* Functions related to exporting log files */
 
 void seaudit_save_log_file(bool_t selected_only);
-int seaudit_write_log_file(const audit_log_view_t * log_view, const char *filename);
+int seaudit_write_log_file(const seaudit_model_t * log_view, const char *filename);
 audit_log_view_t *seaudit_get_current_audit_log_view();
 void generate_message_header(char *message_header, audit_log_t * audit_log, struct tm *date_stamp, char *host);
 void write_avc_message_to_file(FILE * log_file, const avc_msg_t * message, const char *message_header, audit_log_t * audit_log);

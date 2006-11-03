@@ -10,20 +10,22 @@
 
 #include <config.h>
 
-#include "seaudit.h"
-#include <seaudit/parse.h>
-#include <seaudit/auditlog.h>
 #include "auditlogmodel.h"
-#include "query_window.h"
 #include "filter_window.h"
-#include "utilgui.h"
 #include "preferences.h"
-#include "seaudit_callback.h"
+#include "query_window.h"
 #include "report_window.h"
-#include <stdio.h>
-#include <string.h>
+#include "seaudit.h"
+#include "seaudit_callback.h"
+#include "utilgui.h"
+
+#include <seaudit/log.h>
+#include <seaudit/parse.h>
+
 #include <errno.h>
 #include <getopt.h>
+#include <stdio.h>
+#include <string.h>
 
 /* The following should be defined in the make environment */
 #ifndef VERSION
@@ -86,8 +88,8 @@ seaudit_t *seaudit_init(void)
 
 void seaudit_destroy(seaudit_t * seaudit_ap)
 {
-	if (seaudit_ap->cur_policy)
-		apol_policy_destroy(&seaudit_ap->cur_policy);
+	apol_policy_destroy(&seaudit_ap->cur_policy);
+	seaudit_log_destroy(&seaudit_ap->cur_log);
 	seaudit_callbacks_free();
 	if (seaudit_ap->log_file_ptr)
 		fclose(seaudit_ap->log_file_ptr);
@@ -96,7 +98,6 @@ void seaudit_destroy(seaudit_t * seaudit_ap)
 	g_string_free(seaudit_ap->audit_log_file, TRUE);
 	report_window_destroy(seaudit_ap->report_window);
 	free(seaudit_ap);
-	seaudit_ap = NULL;
 }
 
 /* change the sensitive state of widget by name */
@@ -262,16 +263,14 @@ int seaudit_open_policy(seaudit_t * seaudit, const char *filename)
 
 	rt = apol_policy_open(filename, &tmp_policy, NULL, NULL);
 	if (rt != 0) {
-		if (tmp_policy)
-			apol_policy_destroy(&tmp_policy);
+		apol_policy_destroy(&tmp_policy);
 		msg = g_string_new("");
 		g_string_append(msg, "The specified file does not appear to be a valid\nSE Linux Policy\n\n");
 		message_display(seaudit->window->window, GTK_MESSAGE_ERROR, msg->str);
 		clear_wait_cursor(GTK_WIDGET(seaudit->window->window));
 		return -1;
 	}
-	if (seaudit->cur_policy)
-		apol_policy_destroy(&seaudit->cur_policy);
+	apol_policy_destroy(&seaudit->cur_policy);
 	seaudit->cur_policy = tmp_policy;
 
 	g_string_assign(seaudit->policy_file, filename);
@@ -287,13 +286,26 @@ int seaudit_open_policy(seaudit_t * seaudit, const char *filename)
 	return 0;
 }
 
+/**
+ * Callback invoked by libseaudit whenever a message is generated.
+ */
+static void seaudit_handle_callback(void *arg, seaudit_log_t * log, int level, const char *fmt, va_list va_args)
+{
+	seaudit_t *ap = arg;
+	gchar *s = NULL;
+	g_vasprintf(&s, fmt, va_args);
+	free(ap->last_log_message);
+	ap->last_log_message = s;
+	ap->last_log_level = level;
+}
+
 int seaudit_open_log_file(seaudit_t * seaudit, const char *filename)
 {
 	FILE *tmp_file;
 	unsigned int rt = 0;
 	int i;
 	GString *msg = NULL;
-	audit_log_t *new_log = NULL;
+	seaudit_log_t *new_log = NULL;
 
 	if (filename == NULL)
 		return -1;
@@ -308,23 +320,19 @@ int seaudit_open_log_file(seaudit_t * seaudit, const char *filename)
 		goto dont_load_log;
 	}
 
-	new_log = audit_log_create();
-	rt |= audit_log_parse(new_log, tmp_file);
-	if (rt & PARSE_RET_MEMORY_ERROR) {
-		message_display(seaudit->window->window, GTK_MESSAGE_ERROR, PARSE_MEMORY_ERROR_MSG);
+	new_log = seaudit_log_create(seaudle_handle_callback, seaudit);
+	rt = seaudit_log_parse(new_log, tmp_file);
+	if (rt < 0) {
+		message_display(seaudit->window->window, GTK_MESSAGE_ERROR, seaudit->last_log_message);
 		goto dont_load_log;
-	} else if (rt & PARSE_RET_NO_SELINUX_ERROR) {
-		message_display(seaudit->window->window, GTK_MESSAGE_ERROR, PARSE_NO_SELINUX_ERROR_MSG);
-		goto dont_load_log;
-	} else if (rt & PARSE_RET_INVALID_MSG_WARN) {
-		message_display(seaudit->window->window, GTK_MESSAGE_WARNING, PARSE_INVALID_MSG_WARN_MSG);
+	} else if (rt > 0) {
+		message_display(seaudit->window->window, GTK_MESSAGE_WARNING, seaudit->last_log_message);
 		goto load_log;
 	} else
 		goto load_log;
 
       dont_load_log:
-	if (new_log)
-		audit_log_destroy(new_log);
+	seaudit_log_destroy(&new_log);
 	if (tmp_file)
 		fclose(tmp_file);
 	if (msg)
@@ -333,7 +341,7 @@ int seaudit_open_log_file(seaudit_t * seaudit, const char *filename)
 	return -1;
 
       load_log:
-	audit_log_destroy(seaudit->cur_log);
+	seaudit_log_destroy(&seaudit->cur_log);
 	seaudit->cur_log = new_log;
 	seaudit->log_file_ptr = tmp_file;
 
