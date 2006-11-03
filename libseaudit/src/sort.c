@@ -26,6 +26,7 @@
 
 #include <apol/util.h>
 
+#include <errno.h>
 #include <string.h>
 
 /**
@@ -64,6 +65,15 @@ static seaudit_sort_t *sort_create(sort_comp_func * comp, sort_supported_func su
 	s->support = support;
 	s->direction = direction;
 	return s;
+}
+
+seaudit_sort_t *sort_create_from_sort(const seaudit_sort_t * sort)
+{
+	if (sort == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return sort_create(sort->comp, sort->support, sort->direction);
 }
 
 static int sort_message_type_comp(seaudit_sort_t * sort

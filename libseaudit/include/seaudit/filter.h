@@ -46,6 +46,17 @@ typedef enum seaudit_filter_match
 } seaudit_filter_match_e;
 
 /**
+ * By default, only messages accepted by filters will be shown by the
+ * model.  This behavior can be changed such that filters are used to
+ * select messages to hide.
+ */
+typedef enum seaudit_filter_visible
+{
+	SEAUDIT_FILTER_VISIBLE_SHOW = 0,
+	SEAUDIT_FILTER_VISIBLE_HIDE
+} seaudit_filter_visible_e;
+
+/**
  * When specifying a date/time for the filter, one must also give how
  * to match the date and time.
  */
@@ -60,10 +71,25 @@ typedef enum seaudit_filter_date_match
  * Create a new filter object.  The default matching behavior is to
  * reject all messages.
  *
+ * @param name Name for the filter; the string will be duplicated.  If
+ * NULL then the filter will be assigned a default name.
+ *
  * @return A newly allocated filter.  The caller is responsible for
  * calling seaudit_filter_destroy() afterwards.
  */
-extern seaudit_filter_t *seaudit_filter_create(void);
+extern seaudit_filter_t *seaudit_filter_create(const char *name);
+
+/**
+ * Create a new filter object, initialized with the data from an
+ * existing filter.  This will do a deep copy of the original filter.
+ * The new filter will not be attached to any models.
+ *
+ * @param filter Filter to clone.
+ *
+ * @return A cloned filter, or NULL upon error.  The caller is
+ * responsible for calling seaudit_filter_destroy() afterwards.
+ */
+extern seaudit_filter_t *seaudit_filter_create_from_filter(const seaudit_filter_t * filter);
 
 /**
  * Create and return a vector of filters (type seaudit_filter_t),
@@ -76,7 +102,6 @@ extern seaudit_filter_t *seaudit_filter_create(void);
  * passing seaudit_filter_destroy() as the second parameter.
  *
  * @see seaudit_filter_save_to_file()
- * @see seaudit_filter_append_to_file()
  */
 extern apol_vector_t *seaudit_filter_create_from_file(const char *filename);
 
@@ -101,17 +126,6 @@ extern void seaudit_filter_destroy(seaudit_filter_t ** filter);
  * @see seaudit_filter_create_from_file()
  */
 extern int seaudit_filter_save_to_file(seaudit_filter_t * filter, const char *filename);
-
-/**
- * Append the given filter's values, in XML format, to a file handler.
- * This includes the filter's name and criteria.
- *
- * @param filter Filter to save.
- * @param file File to which write.
- *
- * @see seaudit_filter_create_from_file()
- */
-extern void seaudit_filter_append_to_file(seaudit_filter_t * filter, FILE * file, int tabs);
 
 /**
  * Set a filter to accept a message if all criteria are met (default

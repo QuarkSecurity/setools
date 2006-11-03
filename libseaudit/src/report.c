@@ -437,7 +437,7 @@ static seaudit_filter_t *report_enforce_toggle_filter_create(seaudit_log_t * log
 	char *tgt_type = "security_t";
 	char *obj_class = "security";
 
-	if ((filter = seaudit_filter_create()) == NULL) {
+	if ((filter = seaudit_filter_create(NULL)) == NULL) {
 		error = errno;
 		ERR(log, "%s", strerror(error));
 		goto cleanup;
@@ -753,13 +753,25 @@ static int report_print_standard_section(seaudit_log_t * log, seaudit_report_t *
 static int report_print_loaded_view(seaudit_log_t * log, seaudit_report_t * report, xmlChar * view_filePath, FILE * outfile)
 {
 	size_t i;
+	apol_vector_t *loaded_filters = NULL;
 	seaudit_message_t *msg;
 	char *s;
 	seaudit_filter_t *filter = NULL;
 	apol_vector_t *v;
 	int retval = -1, error = 0;
 
-	/* FIX ME: load filter to and add to model */
+	/* FIX ME
+	 * 1. dup existing model
+	 * 2. load new filters
+	 * 3. append new filters to dupped model
+	 * 4. do report
+	 * 5. destroy dup
+	 * if ((loaded_filters = seaudit_filter_create_from_file(view_filePath)) == NULL) {
+	 * error = errno;
+	 * ERR(log, "Error parsing file %s.", view_filePath);
+	 * goto cleanup;
+	 * }
+	 */
 	if (seaudit_model_append_filter(report->model, filter) < 0) {
 		error = errno;
 		ERR(log, "%s", strerror(error));
@@ -806,8 +818,9 @@ static int report_print_loaded_view(seaudit_log_t * log, seaudit_report_t * repo
 		/* filter was already added to the model */
 		v = seaudit_model_get_filters(report->model);
 		i = apol_vector_get_size(v);
-		assert(i > 0);
-		seaudit_model_remove_filter(report->model, i - 1);
+		if (i > 0) {
+			seaudit_model_remove_filter(report->model, i - 1);
+		}
 	}
 	if (error != 0) {
 		errno = error;

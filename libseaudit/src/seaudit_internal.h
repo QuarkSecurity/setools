@@ -39,6 +39,10 @@
 #include <apol/bst.h>
 #include <apol/vector.h>
 
+#include <libxml/uri.h>
+
+#define FILTER_FILE_FORMAT_VERSION "1.3"
+
 /*************** master seaudit log object (defined in log.c) ***************/
 
 struct seaudit_log
@@ -432,6 +436,34 @@ void model_notify_filter_changed(seaudit_model_t * model, seaudit_filter_t * fil
 
 /*************** filter functions (defined in filter.c) ***************/
 
+typedef int (filter_read_func) (seaudit_filter_t * filter, const xmlChar * ch);
+
+struct filter_parse_state
+{
+    /** vector of filters created, appended to by <filter> tags;
+        caller must destroy this */
+	apol_vector_t *filters;
+    /** string from name attribute in a <view> tag; caller must free()
+        this */
+	char *view_name;
+    /** value from match attribute in a <view> tag */
+	seaudit_filter_match_e view_match;
+    /** value form show attribute in a <view> tag */
+	seaudit_filter_visible_e view_visible;
+
+    /****
+        The following are to be considered private data and may only
+        be used by filter.c.
+    ****/
+    /** the most recently read string that was not part of a tag */
+	xmlChar *cur_string;
+	int warnings;
+    /** filter currently being parsed, set by most recent <filter> tag */
+	seaudit_filter_t *cur_filter;
+    /** pointer to a filter parsing function, set by <criteria> tag */
+	filter_read_func *cur_filter_read;
+};
+
 /**
  * Link a model to a filter.  Whenever the filter changes, it should
  * call model_notify_filter_changed(); that way the model will
@@ -455,7 +487,42 @@ void filter_set_model(seaudit_filter_t * filter, seaudit_model_t * model);
  */
 int filter_is_accepted(seaudit_filter_t * filter, const seaudit_message_t * msg);
 
+/**
+ * Parse the given XML file and fill in the passed in struct.  The
+ * caller must create the struct and the vector within.  Upon return,
+ * the caller must destroy the vector and free view_name.
+ *
+ * @param state An initialized state struct for parsing.
+ * @param filename Name of XML file to parse.
+ *
+ * @return 0 on success, > 0 if parse warnings, < 0 on error.
+ */
+int filter_parse_xml(struct filter_parse_state *state, const char *filename);
+
+/**
+ * Append the given filter's values, in XML format, to a file handler.
+ * This includes the filter's name and criteria.
+ *
+ * @param filter Filter to save.
+ * @param file File to which write.
+ *
+ * @see seaudit_filter_create_from_file()
+ */
+void filter_append_to_file(seaudit_filter_t * filter, FILE * file, int tabs);
+
 /*************** sort functions (defined in sort.c) ***************/
+
+/**
+ * Create and return a new sort object, initialized with the data from
+ * an existing sort object.  The new sort object will not be attached
+ * to any models.
+ *
+ * @param sort Sort object to clone.
+ *
+ * @return A cloned sort object, or NULL upon error.  The caller is
+ * responsible for calling seaudit_sort_destroy() afterwards.
+ */
+seaudit_sort_t *sort_create_from_sort(const seaudit_sort_t * sort);
 
 /**
  * Given a sort object and a message, return non-zero if this sort

@@ -42,12 +42,40 @@ typedef struct seaudit_model seaudit_model_t;
  * seaudit_log_t.  The model will be initialized with the default
  * filter (i.e., accept all of the messages from the log).
  *
+ * @param Name for the model; the string will be duplicated.  If NULL
+ * then the model will be assigned a default name.
  * @param log Log to model.  If NULL then do not watch any log files.
  *
  * @return An initialized model, or NULL upon error.  The caller must
  * call seaudit_model_destroy() afterwards.
  */
-extern seaudit_model_t *seaudit_model_create(seaudit_log_t * log);
+extern seaudit_model_t *seaudit_model_create(const char *name, seaudit_log_t * log);
+
+/**
+ * Create a new seaudit_model object, initialized with the data from
+ * an existing model.  This will do a deep copy of the original model.
+ * The new model will be watch the same logs that the original model
+ * was watching.
+ *
+ * @param model Model to clone.
+ *
+ * @return A cloned model, or NULL upon error.  The caller must call
+ * seaudit_model_destroy() afterwards.
+ */
+extern seaudit_model_t *seaudit_model_create_from_model(const seaudit_model_t * model);
+
+/**
+ * Create and return a model initialized from the contents of a XML
+ * configuration file.  This will also load filters into the model.
+ * The model will not be associated with any logs; for that call
+ * seaudit_model_append_log().
+ *
+ * @param filename File containing one or more filter data.
+ *
+ * @return An initialized model, or NULL upon error.  The caller must
+ * call seaudit_model_destroy() afterwards.
+ */
+extern apol_vector_t *seaudit_filter_create_from_file(const char *filename);
 
 /**
  * Destroy the referenced seadit_model_t object.
@@ -56,6 +84,19 @@ extern seaudit_model_t *seaudit_model_create(seaudit_log_t * log);
  * afterwards.  (If pointer is already NULL then do nothing.)
  */
 extern void seaudit_model_destroy(seaudit_model_t ** model);
+
+/**
+ * Save to disk, in XML format, the given model's values.  This includes the filters contained within the model as well.
+ *
+ * @param model Model to save.
+ * @param filename Name of the file to write.  If the file already
+ * exists it will be overwritten.
+ *
+ * @return 0 on success, < 0 on error.
+ *
+ * @see seaudit_model_create_from_file()
+ */
+extern int seaudit_model_save_to_file(seaudit_model_t * model, const char *filename);
 
 /**
  * Have the given model start watching the given log file, in addition
@@ -110,7 +151,8 @@ extern int seaudit_model_remove_filter(seaudit_model_t * model, size_t i);
 
 /**
  * Set a model to accept a message if all filters are met (default
- * behavior) or if any filter is met.
+ * behavior) or if any filter is met.  Note that is independent from
+ * the setting given to seaudit_model_set_filter_visibility().
  *
  * @param model Model to modify.
  * @param match Matching behavior if model has multiple filters.
@@ -127,6 +169,28 @@ extern int seaudit_model_set_filter_match(seaudit_model_t * model, seaudit_filte
  * @return One of SEAUDIT_FILTER_MATCH_ALL or SEAUDIT_FILTER_MATCH_ANY.
  */
 extern seaudit_filter_match_e seaudit_model_get_filter_match(seaudit_model_t * model);
+
+/**
+ * Set a model to either show (default behavior) or hide messages
+ * accepted by the filters.  Note that is independent from the setting
+ * given to seaudit_model_set_filter_match().
+ *
+ * @param model Model to modify.
+ * @param visible Messages to show if model has any filters.
+ *
+ * @return 0 on success, < 0 on error.
+ */
+extern int seaudit_model_set_filter_visible(seaudit_model_t * model, seaudit_filter_visible_e visible);
+
+/**
+ * Get the current filter visibility value for a model.
+ *
+ * @param model Model containing filter visibility value.
+ *
+ * @return One of SEAUDIT_FILTER_VISIBLE_SHOW or
+ * SEAUDIT_FILTER_VISIBLE_HIDE.
+ */
+extern seaudit_filter_visible_e seaudit_model_get_filter_visible(seaudit_model_t * model);
 
 /**
  * Append a sort criterion to a model.  The next time the model's

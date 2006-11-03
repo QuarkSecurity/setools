@@ -27,9 +27,11 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libxml/uri.h>
 
 struct seaudit_model
 {
+	char *name;
 	/** vector of seaudit_log_t pointers; this model will get
 	 * messages from these logs */
 	apol_vector_t *logs;
@@ -44,6 +46,9 @@ struct seaudit_model
 	/** if more than one filter is being applied, then accept
          * messages if any match or if all match */
 	seaudit_filter_match_e match;
+	/** if a filter is being applied, then either show/hide
+         * messages selected by filter */
+	seaudit_filter_visible_e visible;
 	/** vector of seaudit_sort_t, order from highest priority to lowest */
 	apol_vector_t *sorts;
 	/** number of allow messages in the model (only valid if dirty == 0) */
@@ -248,7 +253,7 @@ static int model_refresh(seaudit_log_t * log, seaudit_model_t * model)
 	seaudit_log_t *l;
 	apol_vector_t *v;
 	seaudit_message_t *message;
-	int error;
+	int error, filter_match;
 
 	if (!model->dirty) {
 		return 0;
@@ -266,7 +271,10 @@ static int model_refresh(seaudit_log_t * log, seaudit_model_t * model)
 		v = log_get_messages(l);
 		for (j = 0; j < apol_vector_get_size(v); j++) {
 			message = apol_vector_get_element(v, j);
-			if (model_filter_message(model, message) && apol_vector_append(model->messages, message) < 0) {
+			filter_match = model_filter_message(model, message);
+			if (((filter_match && model->visible == SEAUDIT_FILTER_VISIBLE_SHOW) ||
+			     (!filter_match && model->visible == SEAUDIT_FILTER_VISIBLE_HIDE)) &&
+			    apol_vector_append(model->messages, message) < 0) {
 				error = errno;
 				ERR(log, "%s", strerror(error));
 				errno = error;
@@ -311,7 +319,7 @@ static void sort_free(void *v)
 	seaudit_sort_destroy(&sort);
 }
 
-seaudit_model_t *seaudit_model_create(seaudit_log_t * log)
+seaudit_model_t *seaudit_model_create(const char *name, seaudit_log_t * log)
 {
 	seaudit_model_t *m = NULL;
 	int error;
@@ -321,8 +329,11 @@ seaudit_model_t *seaudit_model_create(seaudit_log_t * log)
 		errno = error;
 		return NULL;
 	}
-
-	if ((m->logs = apol_vector_create_with_capacity(1)) == NULL ||
+	if (name == NULL) {
+		name = "Untitled";
+	}
+	if ((m->name = strdup(name)) == NULL ||
+	    (m->logs = apol_vector_create_with_capacity(1)) == NULL ||
 	    (m->filters = apol_vector_create_with_capacity(1)) == NULL ||
 	    (m->sorts = apol_vector_create_with_capacity(1)) == NULL) {
 		error = errno;
@@ -344,6 +355,102 @@ seaudit_model_t *seaudit_model_create(seaudit_log_t * log)
 	return m;
 }
 
+static void *model_filter_dup(const void *elem, void *data)
+{
+	const seaudit_filter_t *filter = elem;
+	seaudit_model_t *model = data;
+	seaudit_filter_t *f;
+	if ((f = seaudit_filter_create_from_filter(filter)) == NULL) {
+		return NULL;
+	}
+	filter_set_model(f, model);
+	return f;
+}
+
+static void *model_sort_dup(const void *elem, void *data __attribute__ ((unused)))
+{
+	const seaudit_sort_t *sort = elem;
+	return sort_create_from_sort(sort);
+}
+
+seaudit_model_t *seaudit_model_create_from_model(const seaudit_model_t * model)
+{
+	seaudit_model_t *m = NULL;
+	int error = 0;
+	size_t i;
+
+	if (model == NULL) {
+		error = EINVAL;
+		goto cleanup;
+	}
+	if ((m = seaudit_model_create(model->name, NULL)) == NULL) {
+		error = errno;
+		goto cleanup;
+	}
+	if ((m->logs = apol_vector_create_from_vector(model->logs, NULL, NULL)) == NULL) {
+		error = errno;
+		goto cleanup;
+	}
+	if ((m->filters = apol_vector_create_from_vector(model->filters, model_filter_dup, (void *)model)) == NULL) {
+		error = errno;
+		goto cleanup;
+	}
+	if ((m->sorts = apol_vector_create_from_vector(model->sorts, model_sort_dup, (void *)model)) == NULL) {
+		error = errno;
+		goto cleanup;
+	}
+	m->match = model->match;
+	m->visible = model->visible;
+	/* link this new model to the old model's logs */
+	for (i = 0; i < apol_vector_get_size(m->logs); i++) {
+		seaudit_log_t *log = apol_vector_get_element(m->logs, i);
+		if (log_append_model(log, m) < 0) {
+			error = errno;
+			goto cleanup;
+		}
+	}
+      cleanup:
+	if (error != 0) {
+		seaudit_model_destroy(&m);
+		errno = error;
+		return NULL;
+	}
+	return m;
+}
+
+seaudit_model_t *seaudit_model_create_from_file(const char *filename)
+{
+	struct filter_parse_state state;
+	int retval, error;
+	seaudit_model_t *m;
+	memset(&state, 0, sizeof(state));
+	if ((state.filters = apol_vector_create()) == NULL) {
+		return NULL;
+	}
+	retval = filter_parse_xml(&state, filename);
+	if (retval < 0) {
+		error = errno;
+		free(state.view_name);
+		apol_vector_destroy(&state.filters, filter_free);
+		errno = errno;
+		return NULL;
+	}
+	if ((m = seaudit_model_create(state.view_name, NULL)) == NULL) {
+		error = errno;
+		free(state.view_name);
+		apol_vector_destroy(&state.filters, filter_free);
+		errno = error;
+		return NULL;
+	}
+	free(state.view_name);
+	apol_vector_destroy(&m->filters, filter_free);
+	m->filters = state.filters;
+	state.filters = NULL;
+	seaudit_model_set_filter_match(m, state.view_match);
+	seaudit_model_set_filter_visible(m, state.view_visible);
+	return m;
+}
+
 void seaudit_model_destroy(seaudit_model_t ** model)
 {
 	size_t i;
@@ -354,6 +461,7 @@ void seaudit_model_destroy(seaudit_model_t ** model)
 		seaudit_log_t *l = apol_vector_get_element((*model)->logs, i);
 		log_remove_model(l, *model);
 	}
+	free((*model)->name);
 	apol_vector_destroy(&(*model)->logs, NULL);
 	apol_vector_destroy(&(*model)->filters, filter_free);
 	apol_vector_destroy(&(*model)->sorts, sort_free);
@@ -361,6 +469,34 @@ void seaudit_model_destroy(seaudit_model_t ** model)
 	apol_vector_destroy(&(*model)->malformed_messages, NULL);
 	free(*model);
 	*model = NULL;
+}
+
+int seaudit_model_save_to_file(seaudit_model_t * model, const char *filename)
+{
+	FILE *file;
+	const char *XML_VER = "<?xml version=\"1.0\"?>\n";
+	seaudit_filter_t *filter;
+	size_t i;
+
+	if (model == NULL || filename == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+	if ((file = fopen(filename, "w")) == NULL) {
+		return -1;
+	}
+	fprintf(file, XML_VER);
+	fprintf(file, "<view xmlns=\"http://oss.tresys.com/projects/setools/seaudit-%s/\" name=\"%s\" match=\"%s\" show=\"%s\">\n",
+		FILTER_FILE_FORMAT_VERSION, model->name,
+		model->match == SEAUDIT_FILTER_MATCH_ALL ? "all" : "any",
+		model->visible == SEAUDIT_FILTER_VISIBLE_SHOW ? "true" : "false");
+	for (i = 0; i < apol_vector_get_size(model->filters); i++) {
+		filter = apol_vector_get_element(model->filters, i);
+		filter_append_to_file(filter, file, 1);
+	}
+	fprintf(file, "</view>\n");
+	fclose(file);
+	return 0;
 }
 
 int seaudit_model_append_log(seaudit_model_t * model, seaudit_log_t * log)
@@ -430,7 +566,31 @@ int seaudit_model_set_filter_match(seaudit_model_t * model, seaudit_filter_match
 
 seaudit_filter_match_e seaudit_model_get_filter_match(seaudit_model_t * model)
 {
+	if (model == NULL) {
+		errno = EINVAL;
+		return SEAUDIT_FILTER_MATCH_ALL;
+	}
 	return model->match;
+}
+
+int seaudit_model_set_filter_visible(seaudit_model_t * model, seaudit_filter_visible_e visible)
+{
+	if (model == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+	model->visible = visible;
+	model->dirty = 1;
+	return 0;
+}
+
+seaudit_filter_visible_e seaudit_model_get_filter_visible(seaudit_model_t * model)
+{
+	if (model == NULL) {
+		errno = EINVAL;
+		return SEAUDIT_FILTER_VISIBLE_SHOW;
+	}
+	return model->visible;
 }
 
 int seaudit_model_append_sort(seaudit_model_t * model, seaudit_sort_t * sort)
@@ -470,7 +630,7 @@ apol_vector_t *seaudit_model_get_messages(seaudit_log_t * log, seaudit_model_t *
 	if (model_refresh(log, model) < 0) {
 		return NULL;
 	}
-	return apol_vector_create_from_vector(model->messages);
+	return apol_vector_create_from_vector(model->messages, NULL, NULL);
 }
 
 apol_vector_t *seaudit_model_get_malformed_messages(seaudit_log_t * log, seaudit_model_t * model)
@@ -483,7 +643,7 @@ apol_vector_t *seaudit_model_get_malformed_messages(seaudit_log_t * log, seaudit
 	if (model_refresh(log, model) < 0) {
 		return NULL;
 	}
-	return apol_vector_create_from_vector(model->malformed_messages);
+	return apol_vector_create_from_vector(model->malformed_messages, NULL, NULL);
 }
 
 size_t seaudit_model_get_num_allows(seaudit_log_t * log, seaudit_model_t * model)

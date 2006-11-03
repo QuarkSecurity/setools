@@ -21,9 +21,6 @@ libseaudit_a_SOURCES = \
 	util.c \
 	seaudit_internal.h
 
-#	multifilter.c \
-#
-
 libseaudit_a_DEPENDENCIES = $(top_builddir)/libapol/src/libapol.so
 
 libseaudit_so_OBJS = $(patsubst %.c,%.o,$(filter %.c,$(libseaudit_a_SOURCES)))
