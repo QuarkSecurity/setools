@@ -378,15 +378,24 @@ seaudit_model_t *seaudit_model_create_from_model(const seaudit_model_t * model)
 	seaudit_model_t *m = NULL;
 	int error = 0;
 	size_t i;
+	const char *name;
 
 	if (model == NULL) {
 		error = EINVAL;
 		goto cleanup;
 	}
-	if ((m = seaudit_model_create(model->name, NULL)) == NULL) {
+	if ((m = calloc(1, sizeof(*m))) == NULL) {
 		error = errno;
 		goto cleanup;
 	}
+	if ((name = model->name) == NULL) {
+		name = "Untitled";
+	}
+	if ((m->name = strdup(name)) == NULL) {
+		error = errno;
+		goto cleanup;
+	}
+	m->dirty = 1;
 	if ((m->logs = apol_vector_create_from_vector(model->logs, NULL, NULL)) == NULL) {
 		error = errno;
 		goto cleanup;

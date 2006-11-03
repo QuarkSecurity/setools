@@ -1227,7 +1227,7 @@ const static struct filter_criteria_t filter_criteria[] = {
 	{"tgt_user", filter_tgt_user_support, filter_tgt_user_accept, filter_tgt_user_read, filter_tgt_user_print},
 	{"tgt_role", filter_tgt_role_support, filter_tgt_role_accept, filter_tgt_role_read, filter_tgt_role_print},
 	{"tgt_type", filter_tgt_type_support, filter_tgt_type_accept, filter_tgt_type_read, filter_tgt_type_print},
-	{"tgt_class", filter_tgt_class_support, filter_tgt_class_accept, filter_tgt_class_read, filter_tgt_class_print},
+	{"obj_class", filter_tgt_class_support, filter_tgt_class_accept, filter_tgt_class_read, filter_tgt_class_print},
 	{"exe", filter_exe_support, filter_exe_accept, filter_exe_read, filter_exe_print},
 	{"host", filter_host_support, filter_host_accept, filter_host_read, filter_host_print},
 	{"path", filter_path_support, filter_path_accept, filter_path_read, filter_path_print},
@@ -1328,7 +1328,7 @@ static void filter_parse_start_element(void *user_data, const xmlChar * name, co
 	}
 	if (xmlStrcmp(name, (xmlChar *) "view") == 0) {
 		for (i = 0; attrs[i] != NULL && attrs[i + 1] != NULL; i += 2) {
-			if (xmlStrcmp(attrs[i], (xmlChar *) "name")) {
+			if (xmlStrcmp(attrs[i], (xmlChar *) "name") == 0) {
 				free(state->view_name);
 				state->view_name = xmlURIUnescapeString((const char *)attrs[i + 1], 0, NULL);
 			} else if (xmlStrcmp(attrs[i], (xmlChar *) "match") == 0) {
@@ -1349,9 +1349,8 @@ static void filter_parse_start_element(void *user_data, const xmlChar * name, co
 		/* create a new filter and set it to be the one that is currently being parsed */
 		char *filter_name = NULL;
 		seaudit_filter_match_e match = SEAUDIT_FILTER_MATCH_ALL;
-		size_t i;
 		for (i = 0; attrs[i] != NULL && attrs[i + 1] != NULL; i += 2) {
-			if (xmlStrcmp(attrs[i], (xmlChar *) "name")) {
+			if (xmlStrcmp(attrs[i], (xmlChar *) "name") == 0) {
 				free(filter_name);
 				filter_name = xmlURIUnescapeString((const char *)attrs[i + 1], 0, NULL);
 			} else if (xmlStrcmp(attrs[i], (xmlChar *) "match") == 0) {
@@ -1371,8 +1370,10 @@ static void filter_parse_start_element(void *user_data, const xmlChar * name, co
 		}
 		free(filter_name);
 	} else if (xmlStrcmp(name, (xmlChar *) "criteria") == 0) {
-		if (attrs[0] != NULL && attrs[1] != NULL && xmlStrcmp(attrs[0], (xmlChar *) "type") == 0) {
-			state->cur_filter_read = filter_get_read_func(attrs[1]);
+		for (i = 0; attrs[i] != NULL && attrs[i + 1] != NULL; i += 2) {
+			if (xmlStrcmp(attrs[i], (xmlChar *) "type") == 0) {
+				state->cur_filter_read = filter_get_read_func(attrs[i + 1]);
+			}
 		}
 	}
 	free(state->cur_string);
@@ -1414,7 +1415,7 @@ static void filter_parse_characters(void *user_data, const xmlChar * ch, int len
 {
 	struct filter_parse_state *state = user_data;
 	free(state->cur_string);
-	state->cur_string = xmlStrdup(ch);
+	state->cur_string = xmlStrndup(ch, len);
 }
 
 int filter_parse_xml(struct filter_parse_state *state, const char *filename)
@@ -1428,6 +1429,7 @@ int filter_parse_xml(struct filter_parse_state *state, const char *filename)
 	handler.characters = filter_parse_characters;
 	err = xmlSAXUserParseFile(&handler, state, filename);
 	free(state->cur_string);
+	state->cur_string = NULL;
 	if (err) {
 		errno = EIO;
 		return -1;

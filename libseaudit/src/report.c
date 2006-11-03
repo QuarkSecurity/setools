@@ -1,5 +1,5 @@
 /**
- *  @file parse.c
+ *  @file report.c
  *  Implementation of seaudit report generator.
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com
@@ -469,27 +469,30 @@ static seaudit_filter_t *report_enforce_toggle_filter_create(seaudit_log_t * log
 static int report_print_enforce_toggles(seaudit_log_t * log, seaudit_report_t * report, FILE * outfile)
 {
 	seaudit_filter_t *filter = NULL;
+	seaudit_model_t *dup_model = NULL;
 	size_t i, j, num_setenforce = 0;
-	apol_vector_t *v;
+	apol_vector_t *v = NULL;
 	seaudit_message_t *msg;
 	seaudit_avc_message_t *avc;
 	seaudit_message_type_e type;
 	char *s;
 	char *perm = "setenforce";
+	int retval = -1, error = 0;
 
 	if ((filter = report_enforce_toggle_filter_create(log, report)) == NULL) {
-		return -1;
+		error = errno;
+		goto cleanup;
 	}
-	if (seaudit_model_append_filter(report->model, filter) < 0) {
-		int error = errno;
-		seaudit_filter_destroy(&filter);
+	if ((dup_model = seaudit_model_create_from_model(report->model)) == NULL ||
+	    seaudit_model_append_filter(dup_model, filter) < 0) {
+		error = errno;
 		ERR(log, "%s", strerror(error));
-		errno = error;
-		return -1;
+		goto cleanup;
 	}
+	filter = NULL;
 	/* Loop through and get the number of avc allow messages with
 	 * the setenforce permission. */
-	v = seaudit_model_get_messages(log, report->model);
+	v = seaudit_model_get_messages(log, dup_model);
 	for (i = 0; i < apol_vector_get_size(v); i++) {
 		msg = apol_vector_get_element(v, i);
 		avc = seaudit_message_get_data(msg, &type);
@@ -523,27 +526,23 @@ static int report_print_enforce_toggles(seaudit_log_t * log, seaudit_report_t * 
 			s = seaudit_message_to_string(msg);
 		}
 		if (s == NULL) {
-			int error = errno;
-			apol_vector_destroy(&v, NULL);
-			v = seaudit_model_get_filters(report->model);
-			i = apol_vector_get_size(v);
-			assert(i >= 1);
-			seaudit_model_remove_filter(report->model, i - 1);
+			error = errno;
 			ERR(log, "%s", strerror(error));
-			errno = error;
-			return -1;
+			goto cleanup;
 		}
 		fputs(s, outfile);
 		fputc('\n', outfile);
 		free(s);
 	}
+	retval = 0;
+      cleanup:
 	apol_vector_destroy(&v, NULL);
-	/* remove the enforce toggle filter */
-	v = seaudit_model_get_filters(report->model);
-	i = apol_vector_get_size(v);
-	assert(i >= 1);
-	seaudit_model_remove_filter(report->model, i - 1);
-	return 0;
+	seaudit_filter_destroy(&filter);
+	seaudit_model_destroy(&dup_model);
+	if (error != 0) {
+		errno = error;
+	}
+	return retval;
 }
 
 static int report_print_policy_booleans(seaudit_log_t * log, seaudit_report_t * report, FILE * outfile)
@@ -752,34 +751,34 @@ static int report_print_standard_section(seaudit_log_t * log, seaudit_report_t *
 
 static int report_print_loaded_view(seaudit_log_t * log, seaudit_report_t * report, xmlChar * view_filePath, FILE * outfile)
 {
-	size_t i;
+	size_t i, filters_added = 0;
 	apol_vector_t *loaded_filters = NULL;
+	seaudit_model_t *dup_model = NULL;
+	seaudit_filter_t *filter;
 	seaudit_message_t *msg;
 	char *s;
-	seaudit_filter_t *filter = NULL;
-	apol_vector_t *v;
+	apol_vector_t *v = NULL;
 	int retval = -1, error = 0;
 
-	/* FIX ME
-	 * 1. dup existing model
-	 * 2. load new filters
-	 * 3. append new filters to dupped model
-	 * 4. do report
-	 * 5. destroy dup
-	 * if ((loaded_filters = seaudit_filter_create_from_file(view_filePath)) == NULL) {
-	 * error = errno;
-	 * ERR(log, "Error parsing file %s.", view_filePath);
-	 * goto cleanup;
-	 * }
-	 */
-	if (seaudit_model_append_filter(report->model, filter) < 0) {
+	if ((loaded_filters = seaudit_filter_create_from_file((char *)view_filePath)) == NULL) {
+		error = errno;
+		ERR(log, "Error parsing file %s.", view_filePath);
+		goto cleanup;
+	}
+	if ((dup_model = seaudit_model_create_from_model(report->model)) == NULL) {
 		error = errno;
 		ERR(log, "%s", strerror(error));
 		goto cleanup;
 	}
-	filter = NULL;
-
-	if ((v = seaudit_model_get_messages(log, report->model)) == NULL) {
+	for (i = 0; i < apol_vector_get_size(loaded_filters); i++, filters_added++) {
+		filter = apol_vector_get_element(loaded_filters, i);
+		if (seaudit_model_append_filter(dup_model, filter) < 0) {
+			error = errno;
+			ERR(log, "%s", strerror(error));
+			goto cleanup;
+		}
+	}
+	if ((v = seaudit_model_get_messages(log, dup_model)) == NULL) {
 		error = errno;
 		ERR(log, "%s", strerror(error));
 		goto cleanup;
@@ -812,16 +811,17 @@ static int report_print_loaded_view(seaudit_log_t * log, seaudit_report_t * repo
 	}
 	retval = 0;
       cleanup:
-	if (filter != NULL) {
-		seaudit_filter_destroy(&filter);
-	} else {
-		/* filter was already added to the model */
-		v = seaudit_model_get_filters(report->model);
-		i = apol_vector_get_size(v);
-		if (i > 0) {
-			seaudit_model_remove_filter(report->model, i - 1);
+	/* only destroy filters that were not added to the model
+	 * (recall that model takes ownership of filters) */
+	if (loaded_filters != NULL) {
+		for (i = filters_added; i < apol_vector_get_size(loaded_filters); i++) {
+			filter = apol_vector_get_element(loaded_filters, i);
+			seaudit_filter_destroy(&filter);
 		}
+		apol_vector_destroy(&loaded_filters, NULL);
 	}
+	seaudit_model_destroy(&dup_model);
+	apol_vector_destroy(&v, NULL);
 	if (error != 0) {
 		errno = error;
 	}

@@ -119,10 +119,9 @@ char *bool_message_to_string_html(seaudit_bool_message_t * bool, const char *dat
 	if (apol_str_appendf(&s, &len,
 			     "<font class=\"message_date\">%s</font> "
 			     "<font class=\"host_name\">%s</font> "
-			     "kernel: security: committed booleans: %s", date, host, open_brace) < 1) {
+			     "kernel: security: committed booleans: %s", date, host, open_brace) < 0) {
 		return NULL;
 	}
-	len = strlen(s) + 1;
 	for (i = 0; i < apol_vector_get_size(bool->changes); i++) {
 		seaudit_bool_change_t *bc = apol_vector_get_element(bool->changes, i);
 		if (apol_str_appendf(&s, &len, "%s%s:%d", (i == 0 ? "" : ", "), bc->bool, bc->value) < 0) {
