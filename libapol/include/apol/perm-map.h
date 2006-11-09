@@ -30,12 +30,14 @@
 #ifndef APOL_PERMMAP_H
 #define APOL_PERMMAP_H
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 #include "policy.h"
 
 #define APOL_PERMMAP_MAX_WEIGHT 10
 #define APOL_PERMMAP_MIN_WEIGHT 1
-
-typedef struct apol_permmap apol_permmap_t;
 
 #define APOL_PERMMAP_UNMAPPED	0x00   /* defined object/perm, but no map */
 #define	APOL_PERMMAP_READ	0x01
@@ -44,22 +46,13 @@ typedef struct apol_permmap apol_permmap_t;
 #define APOL_PERMMAP_NONE	0x10
 
 /**
- * Deallocate all space associated with a permmap, including the
- * pointer itself.  Afterwards set the pointer to NULL.
- *
- * @param p Reference to an apol_permmap_t to destroy.
- */
-extern void apol_permmap_destroy(apol_permmap_t ** p);
-
-/**
  * Read a permission map from a file into a policy.  If there is a
  * non-fatal error while loading (e.g., file declared an object class
  * that does not exist within the policy) then generate a warning
  * string and send it to the error handler stored within the policy.
  *
  * If a permission map was already loaded, then it will be first
- * destroyed.  The caller is responsible for callaing
- * apol_permmap_destroy() upon the policy's pmap afterwards.
+ * destroyed.
  *
  * @param p Policy to which store permission map.
  * @param filename Name of file containing permission map.
@@ -113,5 +106,9 @@ extern int apol_permmap_get(apol_policy_t * p, const char *class_name, const cha
  * found.
  */
 extern int apol_permmap_set(apol_policy_t * p, const char *class_name, const char *perm_name, int map, int weight);
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif				       /*APOL_PERMMAP_H */

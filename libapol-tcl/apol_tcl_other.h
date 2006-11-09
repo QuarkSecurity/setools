@@ -28,6 +28,10 @@
 #ifndef APOL_TCL_OTHER_H
 #define APOL_TCL_OTHER_H
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 #include <tcl.h>
 
 #include <qpol/policy_query.h>
@@ -36,8 +40,12 @@
 #include <apol/policy-query.h>
 
 /** Global SELinux policy (either read from source or from binary
- *  policy file, defined in apol_tcl_other.c. */
+ *  policy file), defined in apol_tcl_other.c. */
 extern apol_policy_t *policydb;
+
+/** Global SELinux policy's qpol structure; this is derived from
+ *  policydb and is defined in apol_tcl_other.c. */
+extern qpol_policy_t *qpolicydb;
 
 /**
  * Initializes the libapol-tcl library and registers all of the
@@ -138,5 +146,9 @@ int apol_tcl_string_to_range_match(Tcl_Interp * interp, const char *range_match_
  * according to the policy, <0 on error.
  */
 extern int apol_tcl_string_to_context(Tcl_Interp * interp, const char *context_string, apol_context_t * context);
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif

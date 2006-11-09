@@ -66,8 +66,8 @@ void poldiff_attrib_get_stats(poldiff_t * diff, size_t stats[5])
 char *poldiff_attrib_to_string(poldiff_t * diff, const void *attrib)
 {
 	poldiff_attrib_t *at = (poldiff_attrib_t *) attrib;
-	size_t num_added, num_removed, len, i;
-	char *s = NULL, *t = NULL, *type;
+	size_t num_added, num_removed, len = 0, i;
+	char *s = NULL, *type;
 	if (diff == NULL || attrib == NULL) {
 		ERR(diff, "%s", strerror(EINVAL));
 		errno = EINVAL;
@@ -77,73 +77,42 @@ char *poldiff_attrib_to_string(poldiff_t * diff, const void *attrib)
 	num_removed = apol_vector_get_size(at->removed_types);
 	switch (at->form) {
 	case POLDIFF_FORM_ADDED:{
-			if (asprintf(&s, "+ %s", at->name) < 0) {
-				s = NULL;
+			if (apol_str_appendf(&s, &len, "+ %s", at->name) < 0) {
 				break;
 			}
 			return s;
 		}
 	case POLDIFF_FORM_REMOVED:{
-			if (asprintf(&s, "- %s", at->name) < 0) {
-				s = NULL;
+			if (apol_str_appendf(&s, &len, "- %s", at->name) < 0) {
 				break;
 			}
 			return s;
 		}
 	case POLDIFF_FORM_MODIFIED:{
-			if (asprintf(&s, "* %s (", at->name) < 0) {
-				s = NULL;
+			if (apol_str_appendf(&s, &len, "* %s (", at->name) < 0) {
 				break;
 			}
-			len = strlen(s);
-			if (num_added > 0) {
-				if (asprintf(&t, "%d Added Types", num_added) < 0) {
-					t = NULL;
-					break;
-				}
-				if (apol_str_append(&s, &len, t) < 0) {
-					break;
-				}
-				free(t);
-				t = NULL;
+			if (num_added > 0 && apol_str_appendf(&s, &len, "%d Added Types", num_added) < 0) {
+				break;
 			}
-			if (num_removed > 0) {
-				if (asprintf(&t, "%s%d Removed Types", (num_added > 0 ? ", " : ""), num_removed) < 0) {
-					t = NULL;
-					break;
-				}
-				if (apol_str_append(&s, &len, t) < 0) {
-					break;
-				}
-				free(t);
-				t = NULL;
+			if (num_removed > 0
+			    && apol_str_appendf(&s, &len, "%s%d Removed Types", (num_added > 0 ? ", " : ""), num_removed) < 0) {
+				break;
 			}
 			if (apol_str_append(&s, &len, ")\n") < 0) {
 				break;
 			}
 			for (i = 0; i < apol_vector_get_size(at->added_types); i++) {
 				type = (char *)apol_vector_get_element(at->added_types, i);
-				if (asprintf(&t, "\t+ %s\n", type) < 0) {
-					t = NULL;
+				if (apol_str_appendf(&s, &len, "\t+ %s\n", type) < 0) {
 					goto err;
 				}
-				if (apol_str_append(&s, &len, t) < 0) {
-					goto err;
-				}
-				free(t);
-				t = NULL;
 			}
 			for (i = 0; i < apol_vector_get_size(at->removed_types); i++) {
 				type = (char *)apol_vector_get_element(at->removed_types, i);
-				if (asprintf(&t, "\t- %s\n", type) < 0) {
-					t = NULL;
+				if (apol_str_appendf(&s, &len, "\t- %s\n", type) < 0) {
 					goto err;
 				}
-				if (apol_str_append(&s, &len, t) < 0) {
-					goto err;
-				}
-				free(t);
-				t = NULL;
 			}
 			return s;
 		}
@@ -156,7 +125,6 @@ char *poldiff_attrib_to_string(poldiff_t * diff, const void *attrib)
       err:
 	/* if this is reached then an error occurred */
 	free(s);
-	free(t);
 	ERR(diff, "%s", strerror(ENOMEM));
 	errno = ENOMEM;
 	return NULL;
@@ -272,8 +240,9 @@ static int attrib_name_comp(const void *x, const void *y, void *arg)
 	qpol_type_t *r1 = (qpol_type_t *) x;
 	qpol_type_t *r2 = (qpol_type_t *) y;
 	apol_policy_t *p = (apol_policy_t *) arg;
+	qpol_policy_t *q = apol_policy_get_qpol(p);
 	char *name1, *name2;
-	if (qpol_type_get_name(p->p, r1, &name1) < 0 || qpol_type_get_name(p->p, r2, &name2) < 0) {
+	if (qpol_type_get_name(q, r1, &name1) < 0 || qpol_type_get_name(q, r2, &name2) < 0) {
 		return 0;
 	}
 	return strcmp(name1, name2);
@@ -283,8 +252,9 @@ apol_vector_t *attrib_get_items(poldiff_t * diff, apol_policy_t * policy)
 {
 	qpol_iterator_t *iter = NULL;
 	apol_vector_t *v = NULL;
+	qpol_policy_t *q = apol_policy_get_qpol(policy);
 	int error = 0;
-	if (qpol_policy_get_type_iter(policy->p, &iter) < 0) {
+	if (qpol_policy_get_type_iter(q, &iter) < 0) {
 		return NULL;
 	}
 	v = apol_vector_create();
@@ -299,7 +269,7 @@ apol_vector_t *attrib_get_items(poldiff_t * diff, apol_policy_t * policy)
 		unsigned char isattr;
 		qpol_type_t *type;
 		qpol_iterator_get_item(iter, (void **)&type);
-		qpol_type_get_isattr(policy->p, type, &isattr);
+		qpol_type_get_isattr(q, type, &isattr);
 		if (isattr) {
 			apol_vector_append(v, type);
 		}
@@ -314,7 +284,7 @@ int attrib_comp(const void *x, const void *y, poldiff_t * diff)
 	qpol_type_t *r1 = (qpol_type_t *) x;
 	qpol_type_t *r2 = (qpol_type_t *) y;
 	char *name1, *name2;
-	if (qpol_type_get_name(diff->orig_pol->p, r1, &name1) < 0 || qpol_type_get_name(diff->mod_pol->p, r2, &name2) < 0) {
+	if (qpol_type_get_name(diff->orig_qpol, r1, &name1) < 0 || qpol_type_get_name(diff->mod_qpol, r2, &name2) < 0) {
 		return 0;
 	}
 	return strcmp(name1, name2);
@@ -356,9 +326,9 @@ int attrib_new_diff(poldiff_t * diff, poldiff_form_e form, const void *item)
 	poldiff_attrib_t *pr;
 	int error;
 	if ((form == POLDIFF_FORM_ADDED &&
-	     qpol_type_get_name(diff->mod_pol->p, r, &name) < 0) ||
+	     qpol_type_get_name(diff->mod_qpol, r, &name) < 0) ||
 	    ((form == POLDIFF_FORM_REMOVED || form == POLDIFF_FORM_MODIFIED) &&
-	     qpol_type_get_name(diff->orig_pol->p, r, &name) < 0)) {
+	     qpol_type_get_name(diff->orig_qpol, r, &name) < 0)) {
 		return -1;
 	}
 	pr = make_diff(diff, form, name);
@@ -406,11 +376,11 @@ static apol_vector_t *attrib_get_types(poldiff_t * diff, qpol_type_t * attrib, i
 		goto cleanup;
 	}
 	if (which == POLDIFF_POLICY_ORIG) {
-		if (qpol_type_get_type_iter(diff->orig_pol->p, attrib, &iter) < 0) {
+		if (qpol_type_get_type_iter(diff->orig_qpol, attrib, &iter) < 0) {
 			goto cleanup;
 		}
 	} else {
-		if (qpol_type_get_type_iter(diff->mod_pol->p, attrib, &iter) < 0) {
+		if (qpol_type_get_type_iter(diff->mod_qpol, attrib, &iter) < 0) {
 			goto cleanup;
 		}
 	}
@@ -449,7 +419,7 @@ int attrib_deep_diff(poldiff_t * diff, const void *x, const void *y)
 	qpol_type_t *t;
 	size_t i, j;
 	int retval = -1, error = 0;
-	if (qpol_type_get_name(diff->orig_pol->p, r1, &name) < 0 ||
+	if (qpol_type_get_name(diff->orig_qpol, r1, &name) < 0 ||
 	    (v1 = attrib_get_types(diff, r1, POLDIFF_POLICY_ORIG)) == NULL ||
 	    (v2 = attrib_get_types(diff, r2, POLDIFF_POLICY_MOD)) == NULL) {
 		error = errno;
@@ -515,7 +485,7 @@ int attrib_deep_diff(poldiff_t * diff, const void *x, const void *y)
 			}
 			for (j = 0; j < apol_vector_get_size(reverse_v); j++) {
 				t = (qpol_type_t *) apol_vector_get_element(reverse_v, j);
-				if (qpol_type_get_name(diff->orig_pol->p, t, &name) < 0) {
+				if (qpol_type_get_name(diff->orig_qpol, t, &name) < 0) {
 					error = errno;
 					goto cleanup;
 				}
@@ -535,7 +505,7 @@ int attrib_deep_diff(poldiff_t * diff, const void *x, const void *y)
 			}
 			for (j = 0; j < apol_vector_get_size(reverse_v); j++) {
 				t = (qpol_type_t *) apol_vector_get_element(reverse_v, j);
-				if (qpol_type_get_name(diff->mod_pol->p, t, &name) < 0) {
+				if (qpol_type_get_name(diff->mod_qpol, t, &name) < 0) {
 					error = errno;
 					goto cleanup;
 				}

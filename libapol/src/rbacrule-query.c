@@ -49,6 +49,11 @@ struct apol_role_trans_query
 
 int apol_get_role_allow_by_query(apol_policy_t * p, apol_role_allow_query_t * r, apol_vector_t ** v)
 {
+	return apol_role_allow_get_by_query(p, r, v);
+}
+
+int apol_role_allow_get_by_query(apol_policy_t * p, apol_role_allow_query_t * r, apol_vector_t ** v)
+{
 	qpol_iterator_t *iter = NULL;
 	apol_vector_t *source_list = NULL, *target_list = NULL;
 	int retval = -1, source_as_any = 0;
@@ -253,6 +258,11 @@ char *apol_role_allow_render(apol_policy_t * policy, qpol_role_allow_t * rule)
 
 int apol_get_role_trans_by_query(apol_policy_t * p, apol_role_trans_query_t * r, apol_vector_t ** v)
 {
+	return apol_role_trans_get_by_query(p, r, v);
+}
+
+int apol_role_trans_get_by_query(apol_policy_t * p, apol_role_trans_query_t * r, apol_vector_t ** v)
+{
 	qpol_iterator_t *iter = NULL;
 	apol_vector_t *source_list = NULL, *target_list = NULL, *default_list = NULL;
 	int retval = -1, source_as_any = 0;
@@ -267,7 +277,7 @@ int apol_get_role_trans_by_query(apol_policy_t * p, apol_role_trans_query_t * r,
 		    (target_list =
 		     apol_query_create_candidate_type_list(p, r->target, r->flags & APOL_QUERY_REGEX,
 							   r->flags & APOL_QUERY_TARGET_INDIRECT,
-							   APOL_QUERY_CANDIDATE_BOTH)) == NULL) {
+							   APOL_QUERY_SYMBOL_IS_BOTH)) == NULL) {
 			goto cleanup;
 		}
 		if ((r->flags & APOL_QUERY_SOURCE_AS_ANY) && r->source != NULL) {

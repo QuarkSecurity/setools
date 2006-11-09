@@ -26,6 +26,10 @@
 #ifndef APOL_FSCON_QUERY_H
 #define APOL_FSCON_QUERY_H
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 #include "policy.h"
 #include "vector.h"
 #include "context-query.h"
@@ -36,6 +40,27 @@ typedef struct apol_genfscon_query apol_genfscon_query_t;
 typedef struct apol_fs_use_query apol_fs_use_query_t;
 
 /******************** genfscon queries ********************/
+
+/**
+ * Execute a query against all genfscons within the policy.  The
+ * returned genfscons will be unordered.
+ * @depricated This function has been renamed apol_genfscon_get_by_query().
+ * This name has been retained for compatibility but may be removed
+ * in a future release.
+ *
+ * @param p Policy within which to look up genfscons.
+ * @param g Structure containing parameters for query.	If this is
+ * NULL then return all genfscons.
+ * @param v Reference to a vector of qpol_genfscon_t. The vector will
+ * be allocated by this function. The caller must call
+ * apol_vector_destroy() afterwards, <b>passing free() as the second
+ * parameter</b>.  This will be set to NULL upon no results or upon
+ * error.
+ *
+ * @return 0 on success (including none found), negative on error.
+ */
+extern int apol_get_genfscon_by_query(apol_policy_t * p, apol_genfscon_query_t * g, apol_vector_t ** v)
+	__attribute__ ((deprecated));
 
 /**
  * Execute a query against all genfscons within the policy.  The
@@ -52,7 +77,7 @@ typedef struct apol_fs_use_query apol_fs_use_query_t;
  *
  * @return 0 on success (including none found), negative on error.
  */
-extern int apol_get_genfscon_by_query(apol_policy_t * p, apol_genfscon_query_t * g, apol_vector_t ** v);
+extern int apol_genfscon_get_by_query(apol_policy_t * p, apol_genfscon_query_t * g, apol_vector_t ** v);
 
 /**
  * Allocate and return a new genfscon query structure.	All fields are
@@ -149,6 +174,9 @@ extern char *apol_genfscon_render(apol_policy_t * p, qpol_genfscon_t * genfscon)
 /**
  * Execute a query against all fs_uses within the policy.  The
  * returned fs_use statements will be unordered.
+ * @depricated This function has been renamed apol_fs_use_get_by_query().
+ * This name has been retained for compatibility but may be removed
+ * in a future release.
  *
  * @param p Policy within which to look up fs_use statements.
  * @param f Structure containing parameters for query.	If this is
@@ -161,7 +189,24 @@ extern char *apol_genfscon_render(apol_policy_t * p, qpol_genfscon_t * genfscon)
  *
  * @return 0 on success (including none found), negative on error.
  */
-extern int apol_get_fs_use_by_query(apol_policy_t * p, apol_fs_use_query_t * f, apol_vector_t ** v);
+extern int apol_get_fs_use_by_query(apol_policy_t * p, apol_fs_use_query_t * f, apol_vector_t ** v) __attribute__ ((deprecated));
+
+/**
+ * Execute a query against all fs_uses within the policy.  The
+ * returned fs_use statements will be unordered.
+ *
+ * @param p Policy within which to look up fs_use statements.
+ * @param f Structure containing parameters for query.	If this is
+ * NULL then return all fs_use statements.
+ * @param v Reference to a vector of qpol_fs_use_t.  The vector will
+ * be allocated by this function. The caller must call
+ * apol_vector_destroy() afterwards, but <b>must not</b> free the
+ * elements within it.	This will be set to NULL upon no results or
+ * upon error.
+ *
+ * @return 0 on success (including none found), negative on error.
+ */
+extern int apol_fs_use_get_by_query(apol_policy_t * p, apol_fs_use_query_t * f, apol_vector_t ** v);
 
 /**
  * Allocate and return a new fs_use query structure. All fields are
@@ -239,5 +284,9 @@ extern int apol_fs_use_query_set_context(apol_policy_t * p,
  * NULL on error.
  */
 extern char *apol_fs_use_render(apol_policy_t * p, qpol_fs_use_t * fsuse);
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif				       /* APOL_FSCON_QUERY_H */

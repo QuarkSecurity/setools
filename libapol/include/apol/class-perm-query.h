@@ -27,6 +27,10 @@
 #ifndef APOL_CLASS_PERM_QUERY_H
 #define APOL_CLASS_PERM_QUERY_H
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 #include "policy.h"
 #include "vector.h"
 #include <qpol/policy_query.h>
@@ -36,6 +40,26 @@ typedef struct apol_common_query apol_common_query_t;
 typedef struct apol_perm_query apol_perm_query_t;
 
 /******************** object class queries ********************/
+
+/**
+ * Execute a query against all classes within the policy.  The results
+ * will only contain object classes, not common classes.
+ * @depricated This function has been renamed apol_class_get_by_query().
+ * This name has been retained for compatibility but may be removed
+ * in a future release.
+ *
+ * @param p Policy within which to look up classes.
+ * @param c Structure containing parameters for query.	If this is
+ * NULL then return all object classes.
+ * @param v Reference to a vector of qpol_class_t.  The vector will be
+ * allocated by this function. The caller must call
+ * apol_vector_destroy() afterwards, but <b>must not</b> free the
+ * elements within it.  This will be set to NULL upon no results or
+ * upon error.
+ *
+ * @return 0 on success (including none found), negative on error.
+ */
+extern int apol_get_class_by_query(apol_policy_t * p, apol_class_query_t * c, apol_vector_t ** v) __attribute__ ((deprecated));
 
 /**
  * Execute a query against all classes within the policy.  The results
@@ -52,7 +76,7 @@ typedef struct apol_perm_query apol_perm_query_t;
  *
  * @return 0 on success (including none found), negative on error.
  */
-extern int apol_get_class_by_query(apol_policy_t * p, apol_class_query_t * c, apol_vector_t ** v);
+extern int apol_class_get_by_query(apol_policy_t * p, apol_class_query_t * c, apol_vector_t ** v);
 
 /**
  * Allocate and return a new class query structure.  All fields are
@@ -118,6 +142,9 @@ extern int apol_class_query_set_regex(apol_policy_t * p, apol_class_query_t * c,
 /**
  * Execute a query against all common classes within the policy.  The
  * results will only contain common classes, not object classes.
+ * @depricated This function has been renamed apol_common_get_by_query().
+ * This name has been retained for compatibility but may be removed
+ * in a future release.
  *
  * @param p Policy within which to look up common classes.
  * @param c Structure containing parameters for query.	If this is
@@ -130,7 +157,24 @@ extern int apol_class_query_set_regex(apol_policy_t * p, apol_class_query_t * c,
  *
  * @return 0 on success (including none found), negative on error.
  */
-extern int apol_get_common_by_query(apol_policy_t * p, apol_common_query_t * c, apol_vector_t ** v);
+extern int apol_get_common_by_query(apol_policy_t * p, apol_common_query_t * c, apol_vector_t ** v) __attribute__ ((deprecated));
+
+/**
+ * Execute a query against all common classes within the policy.  The
+ * results will only contain common classes, not object classes.
+ *
+ * @param p Policy within which to look up common classes.
+ * @param c Structure containing parameters for query.	If this is
+ * NULL then return all common classes.
+ * @param v Reference to a vector of qpol_common_t.  The vector will
+ * be allocated by this function. The caller must call
+ * apol_vector_destroy() afterwards, but <b>must not</b> free the
+ * elements within it.  This will be set to NULL upon no results or
+ * upon error.
+ *
+ * @return 0 on success (including none found), negative on error.
+ */
+extern int apol_common_get_by_query(apol_policy_t * p, apol_common_query_t * c, apol_vector_t ** v);
 
 /**
  * Allocate and return a new common query structure.  All fields are
@@ -186,6 +230,9 @@ extern int apol_common_query_set_regex(apol_policy_t * p, apol_common_query_t * 
  * permission name is declared within multiple classes (e.g.,
  * <tt>file/read</tt> and <tt>socket/read</tt>) then only one instance
  * of <tt>read</tt> is returned.
+ * @depricated This function has been renamed apol_perm_get_by_query().
+ * This name has been retained for compatibility but may be removed
+ * in a future release.
  *
  * @param p Policy within which to look up permissions.
  * @param pq Structure containing parameters for query.	 If this is
@@ -198,7 +245,28 @@ extern int apol_common_query_set_regex(apol_policy_t * p, apol_common_query_t * 
  *
  * @return 0 on success (including none found), negative on error.
  */
-extern int apol_get_perm_by_query(apol_policy_t * p, apol_perm_query_t * pq, apol_vector_t ** v);
+extern int apol_get_perm_by_query(apol_policy_t * p, apol_perm_query_t * pq, apol_vector_t ** v) __attribute__ ((deprecated));
+
+/**
+ * Execute a query against all permissions (both those declared in
+ * classes as well as commons) within the policy.  The results will
+ * contain char pointers to permission names.  Thus if the same
+ * permission name is declared within multiple classes (e.g.,
+ * <tt>file/read</tt> and <tt>socket/read</tt>) then only one instance
+ * of <tt>read</tt> is returned.
+ *
+ * @param p Policy within which to look up permissions.
+ * @param pq Structure containing parameters for query.	 If this is
+ * NULL then return all permissions.
+ * @param v Reference to a vector of character pointers.  The vector
+ * will be allocated by this function.  The caller must call
+ * apol_vector_destroy() afterwards, but <b>must not</b> free the
+ * elements within it.  This will be set to NULL upon no results or
+ * upon error.
+ *
+ * @return 0 on success (including none found), negative on error.
+ */
+extern int apol_perm_get_by_query(apol_policy_t * p, apol_perm_query_t * pq, apol_vector_t ** v);
 
 /**
  * Allocate and return a new permission query structure.  All fields
@@ -245,5 +313,9 @@ extern int apol_perm_query_set_perm(apol_policy_t * p, apol_perm_query_t * pq, c
  * @return Always 0.
  */
 extern int apol_perm_query_set_regex(apol_policy_t * p, apol_perm_query_t * pq, int is_regex);
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif

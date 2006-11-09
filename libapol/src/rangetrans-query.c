@@ -41,6 +41,11 @@ struct apol_range_trans_query
 
 int apol_get_range_trans_by_query(apol_policy_t * p, apol_range_trans_query_t * r, apol_vector_t ** v)
 {
+	return apol_range_trans_get_by_query(p, r, v);
+}
+
+int apol_range_trans_get_by_query(apol_policy_t * p, apol_range_trans_query_t * r, apol_vector_t ** v)
+{
 	qpol_iterator_t *iter = NULL;
 	apol_vector_t *source_list = NULL, *target_list = NULL;
 	apol_mls_range_t *range = NULL;
@@ -52,7 +57,7 @@ int apol_get_range_trans_by_query(apol_policy_t * p, apol_range_trans_query_t * 
 		    (source_list =
 		     apol_query_create_candidate_type_list(p, r->source, r->flags & APOL_QUERY_REGEX,
 							   r->flags & APOL_QUERY_SOURCE_INDIRECT,
-							   APOL_QUERY_CANDIDATE_BOTH)) == NULL) {
+							   APOL_QUERY_SYMBOL_IS_BOTH)) == NULL) {
 			goto cleanup;
 		}
 		if ((r->flags & APOL_QUERY_SOURCE_AS_ANY) && r->source != NULL) {
@@ -62,7 +67,7 @@ int apol_get_range_trans_by_query(apol_policy_t * p, apol_range_trans_query_t * 
 			   (target_list =
 			    apol_query_create_candidate_type_list(p, r->target, r->flags & APOL_QUERY_REGEX,
 								  r->flags & APOL_QUERY_TARGET_INDIRECT,
-								  APOL_QUERY_CANDIDATE_BOTH)) == NULL) {
+								  APOL_QUERY_SYMBOL_IS_BOTH)) == NULL) {
 			goto cleanup;
 		}
 	}

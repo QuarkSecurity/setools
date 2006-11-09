@@ -119,6 +119,7 @@ static void sediff_policy_stats_textview_populate(apol_policy_t * p, GtkTextView
 		num_dontaudit = 0, num_roles = 0, num_roleallow = 0, num_role_trans = 0, num_users = 0, num_bools = 0;
 	apol_vector_t *vec = NULL;
 	qpol_iterator_t *i = NULL;
+	qpol_policy_t *q = apol_policy_get_qpol(p);
 
 	/* grab the text buffer for our tree_view */
 	txt = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textview));
@@ -136,15 +137,15 @@ static void sediff_policy_stats_textview_populate(apol_policy_t * p, GtkTextView
 	gtk_text_buffer_insert(txt, &iter, contents, -1);
 	g_free(contents);
 
-	apol_get_class_by_query(p, NULL, &vec);
+	apol_class_get_by_query(p, NULL, &vec);
 	num_classes = apol_vector_get_size(vec);
 	apol_vector_destroy(&vec, NULL);
 
-	apol_get_common_by_query(p, NULL, &vec);
+	apol_common_get_by_query(p, NULL, &vec);
 	num_commons = apol_vector_get_size(vec);
 	apol_vector_destroy(&vec, NULL);
 
-	apol_get_perm_by_query(p, NULL, &vec);
+	apol_perm_get_by_query(p, NULL, &vec);
 	num_perms = apol_vector_get_size(vec);
 	apol_vector_destroy(&vec, NULL);
 
@@ -155,11 +156,11 @@ static void sediff_policy_stats_textview_populate(apol_policy_t * p, GtkTextView
 	gtk_text_buffer_insert(txt, &iter, contents, -1);
 	g_free(contents);
 
-	apol_get_type_by_query(p, NULL, &vec);
+	apol_type_get_by_query(p, NULL, &vec);
 	num_types = apol_vector_get_size(vec);
 	apol_vector_destroy(&vec, NULL);
 
-	apol_get_attr_by_query(p, NULL, &vec);
+	apol_attr_get_by_query(p, NULL, &vec);
 	num_attribs = apol_vector_get_size(vec);
 	apol_vector_destroy(&vec, NULL);
 
@@ -169,27 +170,27 @@ static void sediff_policy_stats_textview_populate(apol_policy_t * p, GtkTextView
 	gtk_text_buffer_insert(txt, &iter, contents, -1);
 	g_free(contents);
 
-	qpol_policy_get_avrule_iter(p->p, QPOL_RULE_ALLOW, &i);
+	qpol_policy_get_avrule_iter(q, QPOL_RULE_ALLOW, &i);
 	qpol_iterator_get_size(i, &num_allow);
 	qpol_iterator_destroy(&i);
 
-	qpol_policy_get_avrule_iter(p->p, QPOL_RULE_NEVERALLOW, &i);
+	qpol_policy_get_avrule_iter(q, QPOL_RULE_NEVERALLOW, &i);
 	qpol_iterator_get_size(i, &num_neverallow);
 	qpol_iterator_destroy(&i);
 
-	qpol_policy_get_avrule_iter(p->p, QPOL_RULE_AUDITALLOW, &i);
+	qpol_policy_get_avrule_iter(q, QPOL_RULE_AUDITALLOW, &i);
 	qpol_iterator_get_size(i, &num_auditallow);
 	qpol_iterator_destroy(&i);
 
-	qpol_policy_get_avrule_iter(p->p, QPOL_RULE_DONTAUDIT, &i);
+	qpol_policy_get_avrule_iter(q, QPOL_RULE_DONTAUDIT, &i);
 	qpol_iterator_get_size(i, &num_dontaudit);
 	qpol_iterator_destroy(&i);
 
-	qpol_policy_get_terule_iter(p->p, QPOL_RULE_TYPE_TRANS, &i);
+	qpol_policy_get_terule_iter(q, QPOL_RULE_TYPE_TRANS, &i);
 	qpol_iterator_get_size(i, &num_type_trans);
 	qpol_iterator_destroy(&i);
 
-	qpol_policy_get_terule_iter(p->p, QPOL_RULE_TYPE_CHANGE, &i);
+	qpol_policy_get_terule_iter(q, QPOL_RULE_TYPE_CHANGE, &i);
 	qpol_iterator_get_size(i, &num_type_change);
 	qpol_iterator_destroy(&i);
 
@@ -205,15 +206,15 @@ static void sediff_policy_stats_textview_populate(apol_policy_t * p, GtkTextView
 	gtk_text_buffer_insert(txt, &iter, contents, -1);
 	g_free(contents);
 
-	apol_get_role_by_query(p, NULL, &vec);
+	apol_role_get_by_query(p, NULL, &vec);
 	num_roles = apol_vector_get_size(vec);
 	apol_vector_destroy(&vec, NULL);
 
-	qpol_policy_get_role_allow_iter(p->p, &i);
+	qpol_policy_get_role_allow_iter(q, &i);
 	qpol_iterator_get_size(i, &num_roleallow);
 	qpol_iterator_destroy(&i);
 
-	qpol_policy_get_role_trans_iter(p->p, &i);
+	qpol_policy_get_role_trans_iter(q, &i);
 	qpol_iterator_get_size(i, &num_roleallow);
 	qpol_iterator_destroy(&i);
 
@@ -224,11 +225,11 @@ static void sediff_policy_stats_textview_populate(apol_policy_t * p, GtkTextView
 	gtk_text_buffer_insert(txt, &iter, contents, -1);
 	g_free(contents);
 
-	apol_get_user_by_query(p, NULL, &vec);
+	apol_user_get_by_query(p, NULL, &vec);
 	num_users = apol_vector_get_size(vec);
 	apol_vector_destroy(&vec, NULL);
 
-	apol_get_bool_by_query(p, NULL, &vec);
+	apol_bool_get_by_query(p, NULL, &vec);
 	num_bools = apol_vector_get_size(vec);
 	apol_vector_destroy(&vec, NULL);
 
@@ -513,7 +514,7 @@ static gpointer sediff_load_policy_runner(gpointer data)
 		g_string_free(string, TRUE);
 		return NULL;
 	}
-	qpol_policy_get_policy_version(l->p->p, &p_ver);
+	qpol_policy_get_policy_version(apol_policy_get_qpol(l->p), &p_ver);
 	if (p_ver < 12) {
 		string = g_string_new("");
 		g_string_printf(string,

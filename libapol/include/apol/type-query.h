@@ -27,6 +27,10 @@
 #ifndef APOL_TYPE_QUERY_H
 #define APOL_TYPE_QUERY_H
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 #include "policy.h"
 #include "vector.h"
 #include <qpol/policy_query.h>
@@ -35,6 +39,26 @@ typedef struct apol_type_query apol_type_query_t;
 typedef struct apol_attr_query apol_attr_query_t;
 
 /******************** type queries ********************/
+
+/**
+ * Execute a query against all types within the policy.	 The results
+ * will only contain types, not aliases nor attributes.
+ * @deprecated This function has been renamed apol_type_get_by_query().
+ * This name has been retained for compatibility but may be removed
+ * in a future release.
+ *
+ * @param p Policy within which to look up types.
+ * @param t Structure containing parameters for query.	If this is
+ * NULL then return all types.
+ * @param v Reference to a vector of qpol_type_t.  The vector
+ * will be allocated by this function.  The caller must call
+ * apol_vector_destroy() afterwards, but <b>must not</b> free the
+ * elements within it.  This will be set to NULL upon no results or
+ * upon error.
+ *
+ * @return 0 on success (including none found), negative on error.
+ */
+extern int apol_get_type_by_query(apol_policy_t * p, apol_type_query_t * t, apol_vector_t ** v) __attribute__ ((deprecated));
 
 /**
  * Execute a query against all types within the policy.	 The results
@@ -51,7 +75,7 @@ typedef struct apol_attr_query apol_attr_query_t;
  *
  * @return 0 on success (including none found), negative on error.
  */
-extern int apol_get_type_by_query(apol_policy_t * p, apol_type_query_t * t, apol_vector_t ** v);
+extern int apol_type_get_by_query(apol_policy_t * p, apol_type_query_t * t, apol_vector_t ** v);
 
 /**
  * Allocate and return a new type query structure.  All fields are
@@ -104,6 +128,9 @@ extern int apol_type_query_set_regex(apol_policy_t * p, apol_type_query_t * t, i
 /**
  * Execute a query against all attributes within the policy.  The
  * results will only contain attributes, not types nor aliases.
+ * @deprecated This function has been renamed apol_attr_get_by_query().
+ * This name has been retained for compatibility but may be removed
+ * in a future release.
  *
  * @param p Policy within which to look up attributes.
  * @param a Structure containing parameters for query.	If this is
@@ -116,7 +143,24 @@ extern int apol_type_query_set_regex(apol_policy_t * p, apol_type_query_t * t, i
  *
  * @return 0 on success (including none found), negative on error.
  */
-extern int apol_get_attr_by_query(apol_policy_t * p, apol_attr_query_t * a, apol_vector_t ** v);
+extern int apol_get_attr_by_query(apol_policy_t * p, apol_attr_query_t * a, apol_vector_t ** v) __attribute__ ((deprecated));
+
+/**
+ * Execute a query against all attributes within the policy.  The
+ * results will only contain attributes, not types nor aliases.
+ *
+ * @param p Policy within which to look up attributes.
+ * @param a Structure containing parameters for query.	If this is
+ * NULL then return all attributes.
+ * @param v Reference to a vector of qpol_type_t.  The vector
+ * will be allocated by this function.  The caller must call
+ * apol_vector_destroy() afterwards, but <b>must not</b> free the
+ * elements within it.  This will be set to NULL upon no results or
+ * upon error.
+ *
+ * @return 0 on success (including none found), negative on error.
+ */
+extern int apol_attr_get_by_query(apol_policy_t * p, apol_attr_query_t * a, apol_vector_t ** v);
 
 /**
  * Allocate and return a new attribute query structure.	 All fields
@@ -162,5 +206,9 @@ extern int apol_attr_query_set_attr(apol_policy_t * p, apol_attr_query_t * a, co
  * @return Always 0.
  */
 extern int apol_attr_query_set_regex(apol_policy_t * p, apol_attr_query_t * a, int is_regex);
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif

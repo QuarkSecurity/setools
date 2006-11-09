@@ -26,6 +26,10 @@
 #ifndef APOL_USER_QUERY_H
 #define APOL_USER_QUERY_H
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 #include "policy.h"
 #include "vector.h"
 #include "mls-query.h"
@@ -34,6 +38,25 @@
 typedef struct apol_user_query apol_user_query_t;
 
 /******************** user queries ********************/
+
+/**
+ * Execute a query against all users within the policy.
+ * @deprecated This function has been renamed apol_user_get_by_query().
+ * This name has been retained for compatibility but may be removed
+ * in a future release.
+ *
+ * @param p Policy within which to look up users.
+ * @param u Structure containing parameters for query.	If this is
+ * NULL then return all users.
+ * @param v Reference to a vector of qpol_user_t.  The vector will be
+ * allocated by this function. The caller must call
+ * apol_vector_destroy() afterwards, but <b>must not</b> free the
+ * elements within it.  This will be set to NULL upon no results or
+ * upon error.
+ *
+ * @return 0 on success (including none found), negative on error.
+ */
+extern int apol_get_user_by_query(apol_policy_t * p, apol_user_query_t * u, apol_vector_t ** v) __attribute__ ((deprecated));
 
 /**
  * Execute a query against all users within the policy.
@@ -49,7 +72,7 @@ typedef struct apol_user_query apol_user_query_t;
  *
  * @return 0 on success (including none found), negative on error.
  */
-extern int apol_get_user_by_query(apol_policy_t * p, apol_user_query_t * u, apol_vector_t ** v);
+extern int apol_user_get_by_query(apol_policy_t * p, apol_user_query_t * u, apol_vector_t ** v);
 
 /**
  * Allocate and return a new user query structure.  All fields are
@@ -138,5 +161,9 @@ extern int apol_user_query_set_range(apol_policy_t * p, apol_user_query_t * u, a
  * @return Always 0.
  */
 extern int apol_user_query_set_regex(apol_policy_t * p, apol_user_query_t * u, int is_regex);
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif				       /* APOL_USER_QUERY_H */

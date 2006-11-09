@@ -28,11 +28,34 @@
 #ifndef APOL_TERULE_QUERY_H
 #define APOL_TERULE_QUERY_H
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 #include "policy.h"
 #include "vector.h"
 #include <qpol/policy_query.h>
 
 typedef struct apol_terule_query apol_terule_query_t;
+
+/**
+ * Execute a query against all type enforcement rules within the policy.
+ * @deprecated This function has been renamed apol_terule_get_by_query().
+ * This name has been retained for compatibility but may be removed
+ * in a future release.
+ *
+ * @param p Policy within which to look up terules.
+ * @param t Structure containing parameters for query.	If this is
+ * NULL then return all terules.
+ * @param v Reference to a vector of qpol_terule_t.  The vector
+ * will be allocated by this function.  The caller must call
+ * apol_vector_destroy() afterwards, but <b>must not</b> free the
+ * elements within it.  This will be set to NULL upon no results or
+ * upon error.
+ *
+ * @return 0 on success (including none found), negative on error.
+ */
+extern int apol_get_terule_by_query(apol_policy_t * p, apol_terule_query_t * t, apol_vector_t ** v) __attribute__ ((deprecated));
 
 /**
  * Execute a query against all type enforcement rules within the policy.
@@ -48,13 +71,17 @@ typedef struct apol_terule_query apol_terule_query_t;
  *
  * @return 0 on success (including none found), negative on error.
  */
-extern int apol_get_terule_by_query(apol_policy_t * p, apol_terule_query_t * t, apol_vector_t ** v);
+extern int apol_terule_get_by_query(apol_policy_t * p, apol_terule_query_t * t, apol_vector_t ** v);
 
 /**
- * Execute a query against all syntactic type enforcement rules 
+ * Execute a query against all syntactic type enforcement rules
  * within the policy.
+ * @deprecated This function has been renamed apol_syn_terule_get_by_query().
+ * This name has been retained for compatibility but may be removed
+ * in a future release.
  *
- * @param p Policy within which to look up terules. <b>Must be a source policy.</b>
+ * @param p Policy within which to look up terules. <b>Must be a
+ * source policy.</b>
  * @param t Structure containing parameters for query.	If this is
  * NULL then return all terules.
  * @param v Reference to a vector of qpol_syn_terule_t.  The vector
@@ -65,7 +92,26 @@ extern int apol_get_terule_by_query(apol_policy_t * p, apol_terule_query_t * t, 
  *
  * @return 0 on success (including none found), negative on error.
  */
-extern int apol_get_syn_terule_by_query(apol_policy_t * p, apol_terule_query_t * t, apol_vector_t ** v);
+extern int apol_get_syn_terule_by_query(apol_policy_t * p, apol_terule_query_t * t, apol_vector_t ** v)
+	__attribute__ ((deprecated));
+
+/**
+ * Execute a query against all syntactic type enforcement rules
+ * within the policy.
+ *
+ * @param p Policy within which to look up terules. <b>Must be a
+ * source policy.</b>
+ * @param t Structure containing parameters for query.	If this is
+ * NULL then return all terules.
+ * @param v Reference to a vector of qpol_syn_terule_t.  The vector
+ * will be allocated by this function.  The caller must call
+ * apol_vector_destroy() afterwards, but <b>must not</b> free the
+ * elements within it.  This will be set to NULL upon no results or
+ * upon error.
+ *
+ * @return 0 on success (including none found), negative on error.
+ */
+extern int apol_syn_terule_get_by_query(apol_policy_t * p, apol_terule_query_t * t, apol_vector_t ** v);
 
 /**
  * Allocate and return a new terule query structure.  All fields are
@@ -127,8 +173,9 @@ extern int apol_terule_query_set_source(apol_policy_t * p, apol_terule_query_t *
  *
  * @param p Policy handler, to report errors.
  * @param t TE rule query to set.
- * @param component Bit-wise or'ed set of APOL_QUERY_SOURCE_TYPE and 
- * APOL_QUERY_SOURCE_ATTRIBUTE indicating the type of component to match.
+ * @param component Bit-wise or'ed set of APOL_QUERY_SYMBOL_IS_TYPE
+ * and APOL_QUERY_SYMBOL_IS_ATTRIBUTE indicating the type of component
+ * to match.
  *
  * @return 0 on success, negative on error.
  */
@@ -160,8 +207,9 @@ extern int apol_terule_query_set_target(apol_policy_t * p, apol_terule_query_t *
  *
  * @param p Policy handler, to report errors.
  * @param t TE rule query to set.
- * @param component Bit-wise or'ed set of APOL_QUERY_TARGET_TYPE and 
- * APOL_QUERY_TARGET_ATTRIBUTE indicating the type of component to match.
+ * @param component Bit-wise or'ed set of APOL_QUERY_SYMBOL_IS_TYPE
+ * and APOL_QUERY_SYMBOL_IS_ATTRIBUTE indicating the type of component
+ * to match.
  *
  * @return 0 on success, negative on error.
  */
@@ -303,5 +351,9 @@ extern char *apol_terule_render(apol_policy_t * policy, qpol_terule_t * rule);
  *  for calling free() on the returned string.
 */
 extern char *apol_syn_terule_render(apol_policy_t * policy, qpol_syn_terule_t * rule);
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif

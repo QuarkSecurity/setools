@@ -1,6 +1,6 @@
 /**
  *  @file roles_wo_allow.c
- *  Implementation of the roles without allow rules module. 
+ *  Implementation of the roles without allow rules module.
  *
  *  @author Kevin Carr kcarr@tresys.com
  *  @author Jeremy A. Mowery jmowery@tresys.com
@@ -171,7 +171,7 @@ int roles_wo_allow_init(sechk_module_t * mod, apol_policy_t * policy, void *arg 
 }
 
 /* The run function performs the check. This function runs only once
- * even if called multiple times. This function allocates the result 
+ * even if called multiple times. This function allocates the result
  * structure and fills in all relavant item and proof data. */
 int roles_wo_allow_run(sechk_module_t * mod, apol_policy_t * policy, void *arg __attribute__ ((unused)))
 {
@@ -219,7 +219,7 @@ int roles_wo_allow_run(sechk_module_t * mod, apol_policy_t * policy, void *arg _
 		goto roles_wo_allow_run_fail;
 	}
 
-	if (apol_get_role_by_query(policy, NULL, &role_vector) < 0) {
+	if (apol_role_get_by_query(policy, NULL, &role_vector) < 0) {
 		error = errno;
 		ERR(policy, "%s", strerror(ENOMEM));
 		goto roles_wo_allow_run_fail;
@@ -235,14 +235,14 @@ int roles_wo_allow_run(sechk_module_t * mod, apol_policy_t * policy, void *arg _
 		char *role_name;
 
 		role = apol_vector_get_element(role_vector, i);
-		qpol_role_get_name(policy->p, role, &role_name);
+		qpol_role_get_name(apol_policy_get_qpol(policy), role, &role_name);
 
 		if (!strcmp(role_name, "object_r"))
 			continue;
 
 		apol_role_allow_query_set_source(policy, role_allow_query, role_name);
 		apol_role_allow_query_set_source_any(policy, role_allow_query, 1);
-		apol_get_role_allow_by_query(policy, role_allow_query, &role_allow_vector);
+		apol_role_allow_get_by_query(policy, role_allow_query, &role_allow_vector);
 		if (apol_vector_get_size(role_allow_vector) > 0) {
 			apol_vector_destroy(&role_allow_vector, NULL);
 			continue;
@@ -352,7 +352,7 @@ int roles_wo_allow_print(sechk_module_t * mod, apol_policy_t * policy, void *arg
 			j %= 4;
 			item = apol_vector_get_element(mod->result->items, i);
 			role = (qpol_role_t *) item->item;
-			qpol_role_get_name(policy->p, role, &role_name);
+			qpol_role_get_name(apol_policy_get_qpol(policy), role, &role_name);
 			printf("%s%s", role_name, (char *)((j && i != num_items - 1) ? ", " : "\n"));
 		}
 		printf("\n");

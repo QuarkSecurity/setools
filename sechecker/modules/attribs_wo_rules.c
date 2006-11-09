@@ -1,6 +1,6 @@
 /**
  *  @file attribs_wo_rules.c
- *  Implementation of the attributes without rules module. 
+ *  Implementation of the attributes without rules module.
  *
  *  @author Kevin Carr kcarr@tresys.com
  *  @author Jeremy A. Mowery jmowery@tresys.com
@@ -199,6 +199,7 @@ int attribs_wo_rules_run(sechk_module_t * mod, apol_policy_t * policy, void *arg
 	qpol_iterator_t *constraint_iter;
 	qpol_iterator_t *node_iter = NULL;
 	qpol_iterator_t *name_iter = NULL;
+	qpol_policy_t *q = apol_policy_get_qpol(policy);
 	int found = 0, error = 0;
 
 	if (!mod || !policy) {
@@ -251,16 +252,16 @@ int attribs_wo_rules_run(sechk_module_t * mod, apol_policy_t * policy, void *arg
 		goto attribs_wo_rules_run_fail;
 	}
 
-	apol_get_attr_by_query(policy, NULL, &attr_vector);
+	apol_attr_get_by_query(policy, NULL, &attr_vector);
 	for (i = 0; i < apol_vector_get_size(attr_vector); i++) {
 		qpol_type_t *attr;
 		char *attr_name;
 		attr = apol_vector_get_element(attr_vector, i);
-		qpol_type_get_name(policy->p, attr, &attr_name);
+		qpol_type_get_name(q, attr, &attr_name);
 
 		/* access rules */
 		apol_avrule_query_set_source(policy, avrule_query, attr_name, 0);
-		apol_get_avrule_by_query(policy, avrule_query, &avrule_vector);
+		apol_avrule_get_by_query(policy, avrule_query, &avrule_vector);
 		if (apol_vector_get_size(avrule_vector) > 0) {
 			apol_vector_destroy(&avrule_vector, NULL);
 			continue;
@@ -269,7 +270,7 @@ int attribs_wo_rules_run(sechk_module_t * mod, apol_policy_t * policy, void *arg
 
 		apol_avrule_query_set_source(policy, avrule_query, NULL, 0);
 		apol_avrule_query_set_target(policy, avrule_query, attr_name, 0);
-		apol_get_avrule_by_query(policy, avrule_query, &avrule_vector);
+		apol_avrule_get_by_query(policy, avrule_query, &avrule_vector);
 		if (apol_vector_get_size(avrule_vector) > 0) {
 			apol_vector_destroy(&avrule_vector, NULL);
 			continue;
@@ -279,7 +280,7 @@ int attribs_wo_rules_run(sechk_module_t * mod, apol_policy_t * policy, void *arg
 
 		/* type rules */
 		apol_terule_query_set_source(policy, terule_query, attr_name, 0);
-		apol_get_terule_by_query(policy, terule_query, &terule_vector);
+		apol_terule_get_by_query(policy, terule_query, &terule_vector);
 		if (apol_vector_get_size(terule_vector) > 0) {
 			apol_vector_destroy(&terule_vector, NULL);
 			continue;
@@ -288,7 +289,7 @@ int attribs_wo_rules_run(sechk_module_t * mod, apol_policy_t * policy, void *arg
 
 		apol_terule_query_set_source(policy, terule_query, NULL, 0);
 		apol_terule_query_set_target(policy, terule_query, attr_name, 0);
-		apol_get_terule_by_query(policy, terule_query, &terule_vector);
+		apol_terule_get_by_query(policy, terule_query, &terule_vector);
 		if (apol_vector_get_size(terule_vector) > 0) {
 			apol_vector_destroy(&terule_vector, NULL);
 			continue;
@@ -298,7 +299,7 @@ int attribs_wo_rules_run(sechk_module_t * mod, apol_policy_t * policy, void *arg
 
 		/* role trans */
 		apol_role_query_set_type(policy, role_query, attr_name);
-		apol_get_role_by_query(policy, role_query, &role_vector);
+		apol_role_get_by_query(policy, role_query, &role_vector);
 		if (apol_vector_get_size(role_vector) > 0) {
 			apol_vector_destroy(&role_vector, NULL);
 			continue;
@@ -310,22 +311,22 @@ int attribs_wo_rules_run(sechk_module_t * mod, apol_policy_t * policy, void *arg
 		node_iter = NULL;
 		name_iter = NULL;
 		found = 0;
-		qpol_policy_get_constraint_iter(policy->p, &constraint_iter);
+		qpol_policy_get_constraint_iter(q, &constraint_iter);
 		for (; !qpol_iterator_end(constraint_iter); qpol_iterator_next(constraint_iter)) {
 			qpol_constraint_t *constraint;
 
 			qpol_iterator_get_item(constraint_iter, (void **)&constraint);
-			qpol_constraint_get_expr_iter(policy->p, constraint, &node_iter);
+			qpol_constraint_get_expr_iter(q, constraint, &node_iter);
 
 			for (; !qpol_iterator_end(node_iter); qpol_iterator_next(node_iter)) {
 				qpol_constraint_expr_node_t *constraint_node;
 				size_t node_type;
 
 				qpol_iterator_get_item(node_iter, (void **)&constraint_node);
-				qpol_constraint_expr_node_get_expr_type(policy->p, constraint_node, &node_type);
+				qpol_constraint_expr_node_get_expr_type(q, constraint_node, &node_type);
 
 				if (node_type == QPOL_CEXPR_TYPE_NAMES) {
-					qpol_constraint_expr_node_get_names_iter(policy->p, constraint_node, &name_iter);
+					qpol_constraint_expr_node_get_names_iter(q, constraint_node, &name_iter);
 
 					for (; !qpol_iterator_end(name_iter); qpol_iterator_next(name_iter)) {
 						char *name;
@@ -422,6 +423,7 @@ int attribs_wo_rules_print(sechk_module_t * mod, apol_policy_t * policy, void *a
 	sechk_proof_t *proof = NULL;
 	size_t i = 0, j = 0, k = 0, l = 0, num_items;
 	qpol_type_t *type;
+	qpol_policy_t *q = apol_policy_get_qpol(policy);
 	char *type_name;
 
 	if (!mod || !policy) {
@@ -461,7 +463,7 @@ int attribs_wo_rules_print(sechk_module_t * mod, apol_policy_t * policy, void *a
 			j++;
 			item = apol_vector_get_element(mod->result->items, i);
 			type = item->item;
-			qpol_type_get_name(policy->p, type, &type_name);
+			qpol_type_get_name(q, type, &type_name);
 			j %= 4;
 			printf("%s%s", type_name, (char *)((j && i != num_items - 1) ? ", " : "\n"));
 		}
@@ -474,7 +476,7 @@ int attribs_wo_rules_print(sechk_module_t * mod, apol_policy_t * policy, void *a
 			item = apol_vector_get_element(mod->result->items, k);
 			if (item) {
 				type = item->item;
-				qpol_type_get_name(policy->p, type, &type_name);
+				qpol_type_get_name(q, type, &type_name);
 				printf("%s\n", type_name);
 				for (l = 0; l < apol_vector_get_size(item->proof); l++) {
 					proof = apol_vector_get_element(item->proof, l);

@@ -1,6 +1,6 @@
 /**
  *  @file find_domains.c
- *  Implementation of the find domains utility module. 
+ *  Implementation of the find domains utility module.
  *
  *  @author Kevin Carr kcarr@tresys.com
  *  @author Jeremy A. Mowery jmowery@tresys.com
@@ -146,6 +146,7 @@ int find_domains_init(sechk_module_t * mod, apol_policy_t * policy, void *arg __
 	qpol_type_t *attr = NULL;
 	apol_vector_t *attr_vector = NULL;
 	apol_attr_query_t *attr_query = apol_attr_query_create();
+	qpol_policy_t *q = apol_policy_get_qpol(policy);
 
 	if (!mod || !policy) {
 		ERR(policy, "%s", "Invalid parameters");
@@ -177,11 +178,11 @@ int find_domains_init(sechk_module_t * mod, apol_policy_t * policy, void *arg __
 		opt = apol_vector_get_element(mod->options, i);
 		if (!strcmp(opt->name, "domain_attribute")) {
 			apol_attr_query_set_attr(policy, attr_query, opt->value);
-			apol_get_attr_by_query(policy, attr_query, &attr_vector);
+			apol_attr_get_by_query(policy, attr_query, &attr_vector);
 			for (j = 0; j < apol_vector_get_size(attr_vector); j++) {
 				char *domain_attrib;
 				attr = apol_vector_get_element(attr_vector, j);
-				qpol_type_get_name(policy->p, attr, &domain_attrib);
+				qpol_type_get_name(q, attr, &domain_attrib);
 				if (apol_vector_append(datum->domain_attribs, (void *)domain_attrib) < 0) {
 					apol_vector_destroy(&attr_vector, NULL);
 					ERR(policy, "%s", strerror(ENOMEM));
@@ -211,6 +212,7 @@ int find_domains_run(sechk_module_t * mod, apol_policy_t * policy, void *arg __a
 	apol_avrule_query_t *avrule_query = NULL;
 	apol_role_query_t *role_query = NULL;
 	qpol_iterator_t *domain_attr_iter = NULL;
+	qpol_policy_t *q = apol_policy_get_qpol(policy);
 
 	if (!mod || !policy) {
 		ERR(policy, "%s", strerror(EINVAL));
@@ -249,7 +251,7 @@ int find_domains_run(sechk_module_t * mod, apol_policy_t * policy, void *arg __a
 		goto find_domains_run_fail;
 	}
 
-	if (apol_get_type_by_query(policy, NULL, &domain_vector) < 0) {
+	if (apol_type_get_by_query(policy, NULL, &domain_vector) < 0) {
 		goto find_domains_run_fail;
 	}
 
@@ -259,9 +261,9 @@ int find_domains_run(sechk_module_t * mod, apol_policy_t * policy, void *arg __a
 
 	for (i = 0; i < apol_vector_get_size(domain_vector); i++) {
 		qpol_type_t *type = apol_vector_get_element(domain_vector, i);
-		qpol_type_get_name(policy->p, type, &type_name);
+		qpol_type_get_name(q, type, &type_name);
 
-		if (qpol_type_get_attr_iter(policy->p, type, &domain_attr_iter) < 0) {
+		if (qpol_type_get_attr_iter(q, type, &domain_attr_iter) < 0) {
 			error = errno;
 			ERR(policy, "Can't get attributes for type %s", type_name);
 			goto find_domains_run_fail;
@@ -273,7 +275,7 @@ int find_domains_run(sechk_module_t * mod, apol_policy_t * policy, void *arg __a
 			int nfta;
 
 			qpol_iterator_get_item(domain_attr_iter, (void **)&attr);
-			qpol_type_get_name(policy->p, attr, &attr_name);
+			qpol_type_get_name(q, attr, &attr_name);
 			for (nfta = 0; nfta < apol_vector_get_size(datum->domain_attribs); nfta++) {
 				char *domain_attrib;
 
@@ -326,7 +328,7 @@ int find_domains_run(sechk_module_t * mod, apol_policy_t * policy, void *arg __a
 			goto find_domains_run_fail;
 		}
 		apol_avrule_query_set_source(policy, avrule_query, type_name, 0);
-		if (apol_get_avrule_by_query(policy, avrule_query, &avrule_vector) < 0) {
+		if (apol_avrule_get_by_query(policy, avrule_query, &avrule_vector) < 0) {
 			error = errno;
 			ERR(policy, "%s", "Unable to retrieve AV rules");
 			goto find_domains_run_fail;
@@ -337,8 +339,8 @@ int find_domains_run(sechk_module_t * mod, apol_policy_t * policy, void *arg __a
 			char *class_name = NULL;
 
 			avrule = apol_vector_get_element(avrule_vector, j);
-			qpol_avrule_get_object_class(policy->p, avrule, &class);
-			qpol_class_get_name(policy->p, class, &class_name);
+			qpol_avrule_get_object_class(q, avrule, &class);
+			qpol_class_get_name(q, class, &class_name);
 			if (strcmp("filesystem", class_name)) {
 				proof = sechk_proof_new(NULL);
 				if (!proof) {
@@ -382,7 +384,7 @@ int find_domains_run(sechk_module_t * mod, apol_policy_t * policy, void *arg __a
 		}
 		apol_terule_query_set_default(policy, terule_query, type_name);
 		apol_terule_query_append_class(policy, terule_query, "process");
-		if (apol_get_terule_by_query(policy, terule_query, &terule_vector) < 0) {
+		if (apol_terule_get_by_query(policy, terule_query, &terule_vector) < 0) {
 			error = errno;
 			ERR(policy, "%s", "Unable to retrieve TE rules");
 			goto find_domains_run_fail;
@@ -435,13 +437,13 @@ int find_domains_run(sechk_module_t * mod, apol_policy_t * policy, void *arg __a
 			goto find_domains_run_fail;
 		}
 		apol_role_query_set_type(policy, role_query, type_name);
-		apol_get_role_by_query(policy, role_query, &role_vector);
+		apol_role_get_by_query(policy, role_query, &role_vector);
 		for (j = 0; j < apol_vector_get_size(role_vector); j++) {
 			qpol_role_t *role;
 			char *role_name;
 
 			role = (qpol_role_t *) apol_vector_get_element(role_vector, j);
-			qpol_role_get_name(policy->p, role, &role_name);
+			qpol_role_get_name(q, role, &role_name);
 			if (!strcmp("object_r", role_name))
 				continue;
 			proof = sechk_proof_new(NULL);
@@ -532,6 +534,7 @@ int find_domains_print(sechk_module_t * mod, apol_policy_t * policy, void *arg _
 	int i = 0, j = 0, k = 0, l = 0, num_items;
 	sechk_proof_t *proof = NULL;
 	qpol_type_t *type;
+	qpol_policy_t *q = apol_policy_get_qpol(policy);
 	char *type_name;
 
 	if (!mod || !policy) {
@@ -571,7 +574,7 @@ int find_domains_print(sechk_module_t * mod, apol_policy_t * policy, void *arg _
 			j++;
 			item = apol_vector_get_element(mod->result->items, i);
 			type = item->item;
-			qpol_type_get_name(policy->p, type, &type_name);
+			qpol_type_get_name(q, type, &type_name);
 			j %= 4;
 			printf("%s%s", type_name, (char *)((j && i != num_items - 1) ? ", " : "\n"));
 		}
@@ -584,7 +587,7 @@ int find_domains_print(sechk_module_t * mod, apol_policy_t * policy, void *arg _
 			item = apol_vector_get_element(mod->result->items, k);
 			if (item) {
 				type = item->item;
-				qpol_type_get_name(policy->p, type, &type_name);
+				qpol_type_get_name(q, type, &type_name);
 				printf("%s\n", (char *)type_name);
 				for (l = 0; l < apol_vector_get_size(item->proof); l++) {
 					proof = apol_vector_get_element(item->proof, l);
