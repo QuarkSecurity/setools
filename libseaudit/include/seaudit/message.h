@@ -26,6 +26,11 @@
 #ifndef SEAUDIT_MESSAGE_H
 #define SEAUDIT_MESSAGE_H
 
+#ifdef  __cplusplus
+extern "C"
+{
+#endif
+
 #include <time.h>
 
 typedef struct seaudit_message seaudit_message_t;
@@ -105,5 +110,9 @@ extern char *seaudit_message_to_string(seaudit_message_t * msg);
  * The caller is responsible for free()ing the string afterwards.
  */
 extern char *seaudit_message_to_string_html(seaudit_message_t * msg);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif

@@ -28,6 +28,11 @@
 #ifndef SEAUDIT_LOG_H
 #define SEAUDIT_LOG_H
 
+#ifdef  __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdarg.h>
 #include <apol/vector.h>
 
@@ -69,5 +74,9 @@ extern seaudit_log_t *seaudit_log_create(seaudit_handle_fn_t fn, void *callback_
  * no-op.)
  */
 extern void seaudit_log_destroy(seaudit_log_t ** log);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif

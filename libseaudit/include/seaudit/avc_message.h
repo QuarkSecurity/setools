@@ -26,6 +26,11 @@
 #ifndef SEAUDIT_AVC_MESSAGE_H
 #define SEAUDIT_AVC_MESSAGE_H
 
+#ifdef  __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct seaudit_avc_message seaudit_avc_message_t;
 
 /**
@@ -37,5 +42,9 @@ typedef enum seaudit_avc_message_type
 	SEAUDIT_AVC_DENIED,
 	SEAUDIT_AVC_GRANTED
 } seaudit_avc_message_type_e;
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif

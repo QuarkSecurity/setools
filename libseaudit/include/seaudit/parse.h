@@ -26,6 +26,11 @@
 #ifndef SEAUDIT_PARSE_H
 #define SEAUDIT_PARSE_H
 
+#ifdef  __cplusplus
+extern "C"
+{
+#endif
+
 #include "log.h"
 #include <stdio.h>
 
@@ -42,5 +47,9 @@
  * be set.
  */
 extern int seaudit_log_parse(seaudit_log_t * log, FILE * syslog);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif

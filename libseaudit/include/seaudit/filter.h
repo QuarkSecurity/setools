@@ -26,6 +26,11 @@
 #ifndef SEAUDIT_FILTER_H
 #define SEAUDIT_FILTER_H
 
+#ifdef  __cplusplus
+extern "C"
+{
+#endif
+
 #include <seaudit/avc_message.h>
 
 #include <apol/vector.h>
@@ -558,5 +563,9 @@ extern int seaudit_filter_set_date(seaudit_filter_t * filter, const struct tm *s
  */
 extern void seaudit_filter_get_date(seaudit_filter_t * filter, struct tm **start, struct tm **end,
 				    seaudit_filter_date_match_e * match);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif

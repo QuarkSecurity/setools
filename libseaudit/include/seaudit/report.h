@@ -32,6 +32,11 @@
 #ifndef SEAUDIT_REPORT_H
 #define SEAUDIT_REPORT_H
 
+#ifdef  __cplusplus
+extern "C"
+{
+#endif
+
 #include "model.h"
 
 typedef struct seaudit_report seaudit_report_t;
@@ -128,5 +133,9 @@ extern int seaudit_report_set_stylesheet(seaudit_log_t * log, seaudit_report_t *
  * @return 0 on success, < 0 on error.
  */
 extern int seaudit_report_set_malformed(seaudit_log_t * log, seaudit_report_t * report, const int do_malformed);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif

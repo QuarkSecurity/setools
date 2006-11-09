@@ -28,6 +28,11 @@
 #ifndef SEAUDIT_MODEL_H
 #define SEAUDIT_MODEL_H
 
+#ifdef  __cplusplus
+extern "C"
+{
+#endif
+
 #include "filter.h"
 #include "log.h"
 #include "message.h"
@@ -296,5 +301,9 @@ extern size_t seaudit_model_get_num_bools(seaudit_log_t * log, seaudit_model_t *
  * @return Number of load messages in the model.  This could be zero.
  */
 extern size_t seaudit_model_get_num_loads(seaudit_log_t * log, seaudit_model_t * model);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif

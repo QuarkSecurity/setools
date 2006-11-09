@@ -26,6 +26,15 @@
 #ifndef SEAUDIT_BOOL_MESSAGE_H
 #define SEAUDIT_BOOL_MESSAGE_H
 
+#ifdef  __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct seaudit_bool_message seaudit_bool_message_t;
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif

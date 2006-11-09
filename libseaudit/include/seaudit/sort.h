@@ -29,6 +29,11 @@
 #ifndef SEAUDIT_SORT_H
 #define SEAUDIT_SORT_H
 
+#ifdef  __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct seaudit_sort seaudit_sort_t;
 
 /**
@@ -257,5 +262,9 @@ extern seaudit_sort_t *seaudit_sort_by_inode(int direction);
  * afterwards.
  */
 extern seaudit_sort_t *seaudit_sort_by_pid(int direction);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif
