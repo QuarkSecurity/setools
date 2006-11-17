@@ -27,10 +27,13 @@
 #include <stdio.h>
 #include <string.h>
 
-/* The following should be defined in the make environment */
+#include <gdk-pixbuf/gdk-pixbuf.h>
+
 #ifndef VERSION
 #define VERSION "UNKNOWN"
 #endif
+
+#define COPYRIGHT_INFO "Copyright (c) 2003-2006 Tresys Technology, LLC"
 
 seaudit_t *seaudit_app = NULL;
 
@@ -56,6 +59,34 @@ static void seaudit_log_file_open_from_recent_menu(GtkWidget * widget, gpointer 
 static gboolean seaudit_real_time_update_log(gpointer callback_data);
 static void seaudit_exit_app(void);
 
+static void init_icons(GtkWindow * main_window)
+{
+	const char *icon_names[] = { "seaudit-small.png", "seaudit.png" };
+	GdkPixbuf *icon;
+	char *dir, *path;
+	GList *icon_list = NULL;
+	size_t i;
+	int rt;
+	for (i = 0; i < sizeof(icon_names) / sizeof(icon_names[0]); i++) {
+		if ((dir = apol_file_find(icon_names[i])) == NULL) {
+			continue;
+		}
+		rt = asprintf(&path, "%s/%s", dir, icon_names[i]);
+		free(dir);
+		if (rt < 0) {
+			continue;
+		}
+		icon = gdk_pixbuf_new_from_file(path, NULL);
+		free(path);
+		if (icon == NULL) {
+			continue;
+		}
+		icon_list = g_list_append(icon_list, icon);
+	}
+	gtk_window_set_default_icon_list(icon_list);
+	gtk_window_set_icon_list(main_window, icon_list);
+}
+
 /* seaudit object */
 seaudit_t *seaudit_init(void)
 {
@@ -80,6 +111,7 @@ seaudit_t *seaudit_init(void)
 		free(seaudit);
 		return NULL;
 	}
+	init_icons(seaudit->window->window);
 	seaudit->policy_file = g_string_new("");
 	seaudit->audit_log_file = g_string_new("");
 
@@ -1173,25 +1205,10 @@ void seaudit_on_FileQuit_activate(GtkWidget * widget, gpointer user_data)
  */
 void seaudit_on_about_seaudit_activate(GtkWidget * widget, GdkEvent * event, gpointer callback_data)
 {
-	GtkWidget *dialog;
-	GString *str;
-
-	str = g_string_new("");
-	g_string_assign(str, "Audit Log Analysis Tool for Security \nEnhanced Linux");
-	g_string_append(str, "\n\nCopyright (c) 2003-2006\nTresys Technology, LLC\nhttp://oss.tresys.com/projects/setools");
-	g_string_append(str, "\n\nGUI version ");
-	g_string_append(str, VERSION);
-	g_string_append(str, "\nlibseaudit version ");
-	g_string_append(str, libseaudit_get_version());
-	g_string_append(str, "\nlibapol version ");
-	g_string_append(str, libapol_get_version());	/* the libapol version */
-
-	dialog = gtk_message_dialog_new(seaudit_app->window->window,
-					GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_INFO, GTK_BUTTONS_CLOSE, str->str);
-	gtk_dialog_run(GTK_DIALOG(dialog));
-	gtk_widget_destroy(dialog);
-	g_string_free(str, TRUE);
-	return;
+	gtk_show_about_dialog(seaudit_app->window->window,
+			      "comments", "Audit Log Analysis Tool for Security Enhanced Linux",
+			      "copyright", COPYRIGHT_INFO,
+			      "name", "seaudit", "version", VERSION, "website", "http://oss.tresys.com/projects/setools", NULL);
 }
 
 void seaudit_on_help_activate(GtkWidget * widget, GdkEvent * event, gpointer callback_data)
@@ -1208,21 +1225,19 @@ void seaudit_on_help_activate(GtkWidget * widget, GdkEvent * event, gpointer cal
 
 	window = gtk_dialog_new_with_buttons("seaudit Help",
 					     GTK_WINDOW(seaudit_app->window->window),
-					     GTK_DIALOG_DESTROY_WITH_PARENT, GTK_STOCK_CLOSE, GTK_RESPONSE_NONE, NULL);
+					     GTK_DIALOG_DESTROY_WITH_PARENT, GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE, NULL);
+	gtk_dialog_set_default_response(GTK_DIALOG(window), GTK_RESPONSE_CLOSE);
 	g_signal_connect_swapped(window, "response", G_CALLBACK(gtk_widget_destroy), window);
 	scroll = gtk_scrolled_window_new(NULL, NULL);
 	text_view = gtk_text_view_new();
-	gtk_window_set_default_size(GTK_WINDOW(window), 500, 300);
+	gtk_window_set_default_size(GTK_WINDOW(window), 520, 300);
 	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(window)->vbox), scroll);
 	gtk_container_add(GTK_CONTAINER(scroll), text_view);
-	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text_view), GTK_WRAP_WORD);
+	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text_view), GTK_WRAP_NONE);
 	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
 	dir = apol_file_find("seaudit_help.txt");
 	if (!dir) {
-		string = g_string_new("");
-		g_string_assign(string, "Cannot find help file");
-		message_display(seaudit_app->window->window, GTK_MESSAGE_ERROR, string->str);
-		g_string_free(string, TRUE);
+		message_display(seaudit_app->window->window, GTK_MESSAGE_ERROR, "Cannot find help file.");
 		return;
 	}
 	string = g_string_new(dir);
@@ -1231,8 +1246,7 @@ void seaudit_on_help_activate(GtkWidget * widget, GdkEvent * event, gpointer cal
 	rt = apol_file_read_to_buffer(string->str, &help_text, &len);
 	g_string_free(string, TRUE);
 	if (rt != 0) {
-		if (help_text)
-			free(help_text);
+		free(help_text);
 		return;
 	}
 	gtk_text_buffer_set_text(buffer, help_text, len);
@@ -1240,8 +1254,7 @@ void seaudit_on_help_activate(GtkWidget * widget, GdkEvent * event, gpointer cal
 	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER_ON_PARENT);
 	gtk_widget_show(text_view);
 	gtk_widget_show(scroll);
-	gtk_widget_show(window);
-	return;
+	gtk_dialog_run(GTK_DIALOG(window));
 }
 
 /*

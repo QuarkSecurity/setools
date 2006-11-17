@@ -1,26 +1,26 @@
-AC_INIT(setools, 3.0, [Tresys Technology <setools@tresys.com>], [setools])
+AC_INIT(setools, 3.0.1, [Tresys Technology <setools@tresys.com>], [setools])
 AC_CONFIG_SRCDIR(awish/awish.c)
 AC_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(setools, 3.0)
+AM_INIT_AUTOMAKE(setools, 3.0.1)
 
 dnl *** update these variables as versions change; also update AC_INIT ***
-libqpol_version=1.0.0
+libqpol_version=1.0.1
 libqpol_soname=libqpol.so.1
 
-libapol_version=3.0.0
+libapol_version=3.0.1
 libapol_soname=libapol.so.3
 libapol_tcl_soname=libapol-tcl.so.3
 
-libpoldiff_version=1.0.0
+libpoldiff_version=1.0.1
 libpoldiff_soname=libpoldiff.so.1
 
-libsefs_version=3.0.0
+libsefs_version=3.0.1
 libsefs_soname=libsefs.so.3
 
 libseaudit_version=4.0.0
 libseaudit_soname=libseaudit.so.4
 
-setoolsdir='${prefix}/share/setools-3.0'
+setoolsdir='${prefix}/share/setools-3.0.1'
 
 version_min_sepol_major=1
 version_min_sepol_minor=12
@@ -431,6 +431,20 @@ if test "x${build_gui}" = xyes; then
   AC_SUBST(GLADE_CFLAGS)
   AC_SUBST(GLADE_LIBS)
 
+  dnl check for gdk-pixbuf
+  AC_MSG_CHECKING([for gdk-pixbuf])
+  PIXBUF_CFLAGS=`pkg-config --cflags gdk-pixbuf-2.0`
+  if test -z "${PIXBUF_CFLAGS}"; then
+     AC_MSG_ERROR([could not find libgdk-pixbuf headers])
+  fi
+  PIXBUF_LIBS=`pkg-config --libs gdk-pixbuf-2.0`
+  if test -z "${PIXBUF_LIBS}"; then
+     AC_MSG_ERROR([could not find libgdk-pixbuf libraries])
+  fi
+  AC_MSG_RESULT([yes])
+  AC_SUBST(PIXBUF_CFLAGS)
+  AC_SUBST(PIXBUF_LIBS)
+
   dnl check for gthread
   AC_MSG_CHECKING([for gthread])
   GTHREAD_CFLAGS=`pkg-config --cflags gthread-2.0`
@@ -518,7 +532,23 @@ EOF
    else
         echo "" > ./config.tcl
    fi
-]], [bwidget_ver=$bwidget_ver])
+   if test "x${enable_debug}" = xyes; then
+        cat >> ./config.tcl <<EOF
+namespace eval ::tkcon {
+    variable OPT
+    variable PRIV
+    set PRIV(showOnStartup) 0
+    set PRIV(root) .console
+    set PRIV(protocol) {tkcon hide}
+    set OPT(exec) ""
+}
+if {![catch {source tkcon.tcl}]} {
+    package require tkcon
+    bind . <F8> {tkcon show}
+}
+EOF
+   fi
+]], [bwidget_ver=$bwidget_ver; enable_debug=$enable_debug])
 
 AC_CONFIG_FILES([Makefile VERSION \
                  libqpol/Makefile libqpol/src/Makefile libqpol/include/Makefile libqpol/include/qpol/Makefile \

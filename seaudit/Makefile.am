@@ -4,11 +4,11 @@ sbin_PROGRAMS = seaudit
 
 AM_CFLAGS = @DEBUGCFLAGS@ @WARNCFLAGS@ @PROFILECFLAGS@ @SELINUX_CFLAGS@ \
 	@QPOL_CFLAGS@ @APOL_CFLAGS@ @SEAUDIT_CFLAGS@ \
-	@GTK_CFLAGS@ @GLADE_CFLAGS@ @XML_CFLAGS@ \
+	@GTK_CFLAGS@ @PIXBUF_CFLAGS@ @GLADE_CFLAGS@ @XML_CFLAGS@ \
 	-DAPOL_INSTALL_DIR='"${setoolsdir}"' -I$(top_srcdir)/libseaudit
 # need the -rdynamic flag below - glade uses dlopen() upon seaudit callbacks
 AM_LDFLAGS = @DEBUGLDFLAGS@ @WARNLDFLAGS@ @PROFILELDFLAGS@ \
-	@GTK_LIBS@ @GLADE_LIBS@ @XML_LIBS@ -rdynamic
+	@GTK_LIBS@ @PIXBUF_LIBS@ @GLADE_LIBS@ @XML_LIBS@ -rdynamic
 LDADD = @SELINUX_LIB_FLAG@ @SEAUDIT_LIB_FLAG@ @APOL_LIB_FLAG@ @QPOL_LIB_FLAG@
 
 dist_setools_DATA = \
@@ -21,7 +21,8 @@ dist_setools_DATA = \
 	seaudit.glade \
 	seaudit_help.txt \
 	seaudit-report.conf \
-	seaudit-report.css
+	seaudit-report.css \
+	seaudit.png seaudit-small.png
 
 nodist_setools_DATA = \
 	dot_seaudit \

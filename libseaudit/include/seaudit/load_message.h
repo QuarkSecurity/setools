@@ -31,7 +31,7 @@ extern "C"
 {
 #endif
 
-typedef struct seaudit_load_message seaudit_load_message_t;
+	typedef struct seaudit_load_message seaudit_load_message_t;
 
 #ifdef  __cplusplus
 }

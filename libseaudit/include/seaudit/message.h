@@ -33,25 +33,25 @@ extern "C"
 
 #include <time.h>
 
-typedef struct seaudit_message seaudit_message_t;
+	typedef struct seaudit_message seaudit_message_t;
 
 /**
  * This enum defines the different types of audit messages this
  * library will handle.  Message types are put in alphabetical order
  * to make msg_field_compare() in sort.c easier.
  */
-typedef enum seaudit_message_type
-{
-	SEAUDIT_MESSAGE_TYPE_INVALID = 0,
+	typedef enum seaudit_message_type
+	{
+		SEAUDIT_MESSAGE_TYPE_INVALID = 0,
 	/** BOOL is the message that results when changing booleans in
 	    a conditional policy. */
-	SEAUDIT_MESSAGE_TYPE_BOOL,
+		SEAUDIT_MESSAGE_TYPE_BOOL,
 	/** AVC is a standard 'allowed' or 'denied' type message. */
-	SEAUDIT_MESSAGE_TYPE_AVC,
+		SEAUDIT_MESSAGE_TYPE_AVC,
 	/** LOAD is the message that results when a policy is loaded
 	    into the system. */
-	SEAUDIT_MESSAGE_TYPE_LOAD
-} seaudit_message_type_e;
+		SEAUDIT_MESSAGE_TYPE_LOAD
+	} seaudit_message_type_e;
 
 /**
  * Get a pointer to a message's specific data.  This returns a void
@@ -65,7 +65,7 @@ typedef enum seaudit_message_type
  *
  * @return Pointer to message's specific type, or NULL upon error.
  */
-extern void *seaudit_message_get_data(seaudit_message_t * msg, seaudit_message_type_e * type);
+	extern void *seaudit_message_get_data(seaudit_message_t * msg, seaudit_message_type_e * type);
 
 /**
  * Return the time that this audit message was generated.
@@ -77,7 +77,7 @@ extern void *seaudit_message_get_data(seaudit_message_t * msg, seaudit_message_t
  *
  * @see localtime(3)
  */
-extern struct tm *seaudit_message_get_time(seaudit_message_t * msg);
+	extern struct tm *seaudit_message_get_time(seaudit_message_t * msg);
 
 /**
  * Return the name of the host that generated this audit message.
@@ -86,7 +86,7 @@ extern struct tm *seaudit_message_get_time(seaudit_message_t * msg);
  *
  * @return Host of the message.  Do not modify this string.
  */
-extern char *seaudit_message_get_host(seaudit_message_t * msg);
+	extern char *seaudit_message_get_host(seaudit_message_t * msg);
 
 /**
  * Given a message, allocate and return a string that approximates the
@@ -97,7 +97,7 @@ extern char *seaudit_message_get_host(seaudit_message_t * msg);
  * @return String representation for message, or NULL upon error.  The
  * caller is responsible for free()ing the string afterwards.
  */
-extern char *seaudit_message_to_string(seaudit_message_t * msg);
+	extern char *seaudit_message_to_string(seaudit_message_t * msg);
 
 /**
  * Given a message, allocate and return a string, formatted in HTML,
@@ -109,7 +109,7 @@ extern char *seaudit_message_to_string(seaudit_message_t * msg);
  * @return HTML String representation for message, or NULL upon error.
  * The caller is responsible for free()ing the string afterwards.
  */
-extern char *seaudit_message_to_string_html(seaudit_message_t * msg);
+	extern char *seaudit_message_to_string_html(seaudit_message_t * msg);
 
 #ifdef  __cplusplus
 }

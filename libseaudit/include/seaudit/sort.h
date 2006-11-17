@@ -34,7 +34,7 @@ extern "C"
 {
 #endif
 
-typedef struct seaudit_sort seaudit_sort_t;
+	typedef struct seaudit_sort seaudit_sort_t;
 
 /**
  * Destroy the referenced seaudit_sort_t object.
@@ -42,7 +42,7 @@ typedef struct seaudit_sort seaudit_sort_t;
  * @param sort Sort object to destroy.  The pointer will be set to
  * NULL afterwards.  (If pointer is already NULL then do nothing.)
  */
-extern void seaudit_sort_destroy(seaudit_sort_t ** sort);
+	extern void seaudit_sort_destroy(seaudit_sort_t ** sort);
 
 /**
  * Instruct a model to sort messages by message type: boolean changes,
@@ -55,7 +55,7 @@ extern void seaudit_sort_destroy(seaudit_sort_t ** sort);
  * caller is responsible for calling seaudit_sort_destroy()
  * afterwards.
  */
-extern seaudit_sort_t *seaudit_sort_by_message_type(int direction);
+	extern seaudit_sort_t *seaudit_sort_by_message_type(int direction);
 
 /**
  * Instruct a model to sort messages by chronological order.
@@ -67,7 +67,7 @@ extern seaudit_sort_t *seaudit_sort_by_message_type(int direction);
  * caller is responsible for calling seaudit_sort_destroy()
  * afterwards.
  */
-extern seaudit_sort_t *seaudit_sort_by_date(int direction);
+	extern seaudit_sort_t *seaudit_sort_by_date(int direction);
 
 /**
  * Instruct a model to sort messages by host name, alphabetically.
@@ -79,7 +79,7 @@ extern seaudit_sort_t *seaudit_sort_by_date(int direction);
  * caller is responsible for calling seaudit_sort_destroy()
  * afterwards.
  */
-extern seaudit_sort_t *seaudit_sort_by_host(int direction);
+	extern seaudit_sort_t *seaudit_sort_by_host(int direction);
 
 /**
  * Instruct a model to sort AVC messages by permissions,
@@ -92,7 +92,7 @@ extern seaudit_sort_t *seaudit_sort_by_host(int direction);
  * caller is responsible for calling seaudit_sort_destroy()
  * afterwards.
  */
-extern seaudit_sort_t *seaudit_sort_by_permission(int direction);
+	extern seaudit_sort_t *seaudit_sort_by_permission(int direction);
 
 /**
  * Instruct a model to sort AVC messages by source context's user,
@@ -105,7 +105,7 @@ extern seaudit_sort_t *seaudit_sort_by_permission(int direction);
  * caller is responsible for calling seaudit_sort_destroy()
  * afterwards.
  */
-extern seaudit_sort_t *seaudit_sort_by_source_user(int direction);
+	extern seaudit_sort_t *seaudit_sort_by_source_user(int direction);
 
 /**
  * Instruct a model to sort AVC messages by source context's role,
@@ -118,7 +118,7 @@ extern seaudit_sort_t *seaudit_sort_by_source_user(int direction);
  * caller is responsible for calling seaudit_sort_destroy()
  * afterwards.
  */
-extern seaudit_sort_t *seaudit_sort_by_source_role(int direction);
+	extern seaudit_sort_t *seaudit_sort_by_source_role(int direction);
 
 /**
  * Instruct a model to sort AVC messages by source context's type,
@@ -131,7 +131,7 @@ extern seaudit_sort_t *seaudit_sort_by_source_role(int direction);
  * caller is responsible for calling seaudit_sort_destroy()
  * afterwards.
  */
-extern seaudit_sort_t *seaudit_sort_by_source_type(int direction);
+	extern seaudit_sort_t *seaudit_sort_by_source_type(int direction);
 
 /**
  * Instruct a model to sort AVC messages by target context's user,
@@ -144,7 +144,7 @@ extern seaudit_sort_t *seaudit_sort_by_source_type(int direction);
  * caller is responsible for calling seaudit_sort_destroy()
  * afterwards.
  */
-extern seaudit_sort_t *seaudit_sort_by_target_user(int direction);
+	extern seaudit_sort_t *seaudit_sort_by_target_user(int direction);
 
 /**
  * Instruct a model to sort AVC messages by target context's role,
@@ -157,7 +157,7 @@ extern seaudit_sort_t *seaudit_sort_by_target_user(int direction);
  * caller is responsible for calling seaudit_sort_destroy()
  * afterwards.
  */
-extern seaudit_sort_t *seaudit_sort_by_target_role(int direction);
+	extern seaudit_sort_t *seaudit_sort_by_target_role(int direction);
 
 /**
  * Instruct a model to sort AVC messages by target context's type,
@@ -170,7 +170,7 @@ extern seaudit_sort_t *seaudit_sort_by_target_role(int direction);
  * caller is responsible for calling seaudit_sort_destroy()
  * afterwards.
  */
-extern seaudit_sort_t *seaudit_sort_by_target_type(int direction);
+	extern seaudit_sort_t *seaudit_sort_by_target_type(int direction);
 
 /**
  * Instruct a model to sort AVC messages by object class,
@@ -183,7 +183,7 @@ extern seaudit_sort_t *seaudit_sort_by_target_type(int direction);
  * caller is responsible for calling seaudit_sort_destroy()
  * afterwards.
  */
-extern seaudit_sort_t *seaudit_sort_by_object_class(int direction);
+	extern seaudit_sort_t *seaudit_sort_by_object_class(int direction);
 
 /**
  * Instruct a model to sort AVC messages by the executable,
@@ -196,7 +196,7 @@ extern seaudit_sort_t *seaudit_sort_by_object_class(int direction);
  * caller is responsible for calling seaudit_sort_destroy()
  * afterwards.
  */
-extern seaudit_sort_t *seaudit_sort_by_executable(int direction);
+	extern seaudit_sort_t *seaudit_sort_by_executable(int direction);
 
 /**
  * Instruct a model to sort AVC messages by the command,
@@ -209,7 +209,7 @@ extern seaudit_sort_t *seaudit_sort_by_executable(int direction);
  * caller is responsible for calling seaudit_sort_destroy()
  * afterwards.
  */
-extern seaudit_sort_t *seaudit_sort_by_command(int direction);
+	extern seaudit_sort_t *seaudit_sort_by_command(int direction);
 
 /**
  * Instruct a model to sort AVC messages by the path, alphabetically.
@@ -222,7 +222,7 @@ extern seaudit_sort_t *seaudit_sort_by_command(int direction);
  * caller is responsible for calling seaudit_sort_destroy()
  * afterwards.
  */
-extern seaudit_sort_t *seaudit_sort_by_path(int direction);
+	extern seaudit_sort_t *seaudit_sort_by_path(int direction);
 
 /**
  * Instruct a model to sort AVC messages by the device, alphabetically.
@@ -235,7 +235,7 @@ extern seaudit_sort_t *seaudit_sort_by_path(int direction);
  * caller is responsible for calling seaudit_sort_destroy()
  * afterwards.
  */
-extern seaudit_sort_t *seaudit_sort_by_device(int direction);
+	extern seaudit_sort_t *seaudit_sort_by_device(int direction);
 
 /**
  * Instruct a model to sort AVC messages by the object's inode.
@@ -248,7 +248,7 @@ extern seaudit_sort_t *seaudit_sort_by_device(int direction);
  * caller is responsible for calling seaudit_sort_destroy()
  * afterwards.
  */
-extern seaudit_sort_t *seaudit_sort_by_inode(int direction);
+	extern seaudit_sort_t *seaudit_sort_by_inode(int direction);
 
 /**
  * Instruct a model to sort AVC messages by the process ID.  Non-AVC
@@ -261,7 +261,7 @@ extern seaudit_sort_t *seaudit_sort_by_inode(int direction);
  * caller is responsible for calling seaudit_sort_destroy()
  * afterwards.
  */
-extern seaudit_sort_t *seaudit_sort_by_pid(int direction);
+	extern seaudit_sort_t *seaudit_sort_by_pid(int direction);
 
 #ifdef  __cplusplus
 }

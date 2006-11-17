@@ -35,7 +35,7 @@ extern "C"
  *
  * @return String describing this library.
  */
-extern const char *libseaudit_get_version(void);
+	extern const char *libseaudit_get_version(void);
 
 #ifdef  __cplusplus
 }
