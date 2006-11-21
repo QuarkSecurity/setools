@@ -28,6 +28,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/******************** protected functions below ********************/
+
 seaudit_load_message_t *load_message_create(void)
 {
 	return calloc(1, sizeof(seaudit_load_message_t));
@@ -64,6 +66,17 @@ char *load_message_to_string_html(seaudit_load_message_t * load, const char *dat
 		     "<font class=\"host_name\">%s</font> "
 		     "kernel: security: %d classes, %d rules<br>",
 		     date, host, load->users, load->roles, load->types, load->bools, date, host, load->classes, load->rules) < 0) {
+		return NULL;
+	}
+	return s;
+}
+
+char *load_message_to_misc_string(seaudit_load_message_t * load)
+{
+	char *s = NULL;
+	if (asprintf(&s,
+		     "users=%d roles=%d types=%d bools=%d classes=%d rules=%d",
+		     load->users, load->roles, load->types, load->bools, load->classes, load->rules) < 0) {
 		return NULL;
 	}
 	return s;

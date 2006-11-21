@@ -26,6 +26,8 @@
 #ifndef SEAUDIT_BOOL_MESSAGE_H
 #define SEAUDIT_BOOL_MESSAGE_H
 
+#include <apol/vector.h>
+
 #ifdef  __cplusplus
 extern "C"
 {

@@ -279,15 +279,27 @@ char *avc_message_to_string(seaudit_avc_message_t * avc, const char *date, const
  */
 char *avc_message_to_string_html(seaudit_avc_message_t * avc, const char *date, const char *host);
 
+/**
+ * Given an avc change message, allocate and return a string that
+ * gives miscellaneous info (e.g., ports, IP addresses).
+ *
+ * @param avc Message from which to get miscellaneous information.
+ *
+ * @return Miscellaneous message string representation, or NULL upon
+ * error.  The caller is responsible for free()ing the string
+ * afterwards.
+ */
+char *avc_message_to_misc_string(seaudit_avc_message_t * avc);
+
 /*************** bool messages (defined in bool_message.c) ***************/
 
-typedef struct seaudit_bool_change
+typedef struct seaudit_bool_message_change
 {
 	/** pointer into log's bools BST */
 	char *bool;
 	/** new value for the boolean */
 	int value;
-} seaudit_bool_change_t;
+} seaudit_bool_message_change_t;
 
 struct seaudit_bool_message
 {
@@ -351,6 +363,19 @@ char *bool_message_to_string(seaudit_bool_message_t * bool, const char *date, co
  */
 char *bool_message_to_string_html(seaudit_bool_message_t * bool, const char *date, const char *host);
 
+/**
+ * Given a boolean change message, allocate and return a string that
+ * gives miscellaneous info (i.e., list of boolean names and their new
+ * values.)
+ *
+ * @param bool Message from which to get miscellaneous information.
+ *
+ * @return Miscellaneous message string representation, or NULL upon
+ * error.  The caller is responsible for free()ing the string
+ * afterwards.
+ */
+char *bool_message_to_misc_string(seaudit_bool_message_t * bool);
+
 /*************** load messages (defined in load_message.c) ***************/
 
 struct seaudit_load_message
@@ -405,6 +430,18 @@ char *load_message_to_string(seaudit_load_message_t * load, const char *date, co
  * caller is responsible for free()ing the string afterwards.
  */
 char *load_message_to_string_html(seaudit_load_message_t * load, const char *date, const char *host);
+
+/**
+ * Given a load message, allocate and return a string that gives
+ * miscellaneous info (e.g., number of types in the new policy).
+ *
+ * @param load Message from which to get miscellaneous information.
+ *
+ * @return Miscellaneous message string representation, or NULL upon
+ * error.  The caller is responsible for free()ing the string
+ * afterwards.
+ */
+char *load_message_to_misc_string(seaudit_load_message_t * load);
 
 /*************** model functions (defined in model.h) ***************/
 

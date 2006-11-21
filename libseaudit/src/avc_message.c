@@ -28,6 +28,141 @@
 
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
+
+seaudit_avc_message_type_e seaudit_avc_message_get_message_type(seaudit_avc_message_t * avc)
+{
+	if (avc == NULL) {
+		errno = EINVAL;
+		return SEAUDIT_AVC_UNKNOWN;
+	}
+	return avc->msg;
+}
+
+char *seaudit_avc_message_get_source_user(seaudit_avc_message_t * avc)
+{
+	if (avc == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return avc->suser;
+}
+
+char *seaudit_avc_message_get_source_role(seaudit_avc_message_t * avc)
+{
+	if (avc == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return avc->srole;
+}
+
+char *seaudit_avc_message_get_source_type(seaudit_avc_message_t * avc)
+{
+	if (avc == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return avc->stype;
+}
+
+char *seaudit_avc_message_get_target_user(seaudit_avc_message_t * avc)
+{
+	if (avc == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return avc->tuser;
+}
+
+char *seaudit_avc_message_get_target_role(seaudit_avc_message_t * avc)
+{
+	if (avc == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return avc->trole;
+}
+
+char *seaudit_avc_message_get_target_type(seaudit_avc_message_t * avc)
+{
+	if (avc == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return avc->ttype;
+}
+
+char *seaudit_avc_message_get_object_class(seaudit_avc_message_t * avc)
+{
+	if (avc == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return avc->tclass;
+}
+
+apol_vector_t *seaudit_avc_message_get_perm(seaudit_avc_message_t * avc)
+{
+	if (avc == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return avc->perms;
+}
+
+char *seaudit_avc_message_get_exe(seaudit_avc_message_t * avc)
+{
+	if (avc == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return avc->exe;
+}
+
+char *seaudit_avc_message_get_comm(seaudit_avc_message_t * avc)
+{
+	if (avc == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return avc->comm;
+}
+
+unsigned int seaudit_avc_message_get_pid(seaudit_avc_message_t * avc)
+{
+	if (avc == NULL) {
+		errno = EINVAL;
+		return 0;
+	}
+	if (!avc->is_pid) {
+		return 0;
+	}
+	return avc->pid;
+}
+
+unsigned long seaudit_avc_message_get_inode(seaudit_avc_message_t * avc)
+{
+	if (avc == NULL) {
+		errno = EINVAL;
+		return 0;
+	}
+	if (!avc->is_inode) {
+		return 0;
+	}
+	return avc->inode;
+}
+
+char *seaudit_avc_message_get_path(seaudit_avc_message_t * avc)
+{
+	if (avc == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return avc->path;
+}
+
+/******************** protected functions below ********************/
 
 seaudit_avc_message_t *avc_message_create(void)
 {
@@ -63,9 +198,61 @@ void avc_message_free(seaudit_avc_message_t * avc)
 	}
 }
 
+/**
+ * Build the misc string sans timestamp and serial number.
+ */
+static char *avc_message_get_misc_string(seaudit_avc_message_t * avc)
+{
+	char *s = NULL;
+	size_t len = 0;
+	if (avc->dev && apol_str_appendf(&s, &len, "dev=%s ", avc->dev) < 0) {
+		return NULL;
+	}
+	if (avc->ipaddr && apol_str_appendf(&s, &len, "ipaddr=%s ", avc->ipaddr) < 0) {
+		return NULL;
+	}
+	if (avc->laddr && apol_str_appendf(&s, &len, "laddr=%s ", avc->laddr) < 0) {
+		return NULL;
+	}
+	if (avc->lport != 0 && apol_str_appendf(&s, &len, "lport=%d ", avc->lport) < 0) {
+		return NULL;
+	}
+	if (avc->faddr && apol_str_appendf(&s, &len, "faddr=%s ", avc->faddr) < 0) {
+		return NULL;
+	}
+	if (avc->fport != 0 && apol_str_appendf(&s, &len, "fport=%d ", avc->fport) < 0) {
+		return NULL;
+	}
+	if (avc->daddr && apol_str_appendf(&s, &len, "daddr=%s ", avc->daddr) < 0) {
+		return NULL;
+	}
+	if (avc->dest != 0 && apol_str_appendf(&s, &len, "dest=%d ", avc->dest) < 0) {
+		return NULL;
+	}
+	if (avc->port != 0 && apol_str_appendf(&s, &len, "port=%d ", avc->port) < 0) {
+		return NULL;
+	}
+	if (avc->saddr && apol_str_appendf(&s, &len, "saddr=%s ", avc->saddr) < 0) {
+		return NULL;
+	}
+	if (avc->source != 0 && apol_str_appendf(&s, &len, "source=%d ", avc->source) < 0) {
+		return NULL;
+	}
+	if (avc->netif && apol_str_appendf(&s, &len, "netif=%s ", avc->netif) < 0) {
+		return NULL;
+	}
+	if (avc->is_key && apol_str_appendf(&s, &len, "key=%d ", avc->key) < 0) {
+		return NULL;
+	}
+	if (avc->is_capability && apol_str_appendf(&s, &len, "capability=%d ", avc->capability) < 0) {
+		return NULL;
+	}
+	return s;
+}
+
 char *avc_message_to_string(seaudit_avc_message_t * avc, const char *date, const char *host)
 {
-	char *s = NULL, *perm;
+	char *s = NULL, *misc_string = NULL, *perm;
 	size_t i, len = 0;
 	if (apol_str_appendf(&s, &len, "%s %s kernel: ", date, host) < 0) {
 		return NULL;
@@ -105,49 +292,16 @@ char *avc_message_to_string(seaudit_avc_message_t * avc, const char *date, const
 	if (avc->path && apol_str_appendf(&s, &len, "path=%s ", avc->path) < 0) {
 		return NULL;
 	}
-	if (avc->dev && apol_str_appendf(&s, &len, "dev=%s ", avc->dev) < 0) {
-		return NULL;
-	}
 	if (avc->is_inode && apol_str_appendf(&s, &len, "ino=%lu ", avc->inode) < 0) {
 		return NULL;
 	}
-	if (avc->laddr && apol_str_appendf(&s, &len, "laddr=%s ", avc->laddr) < 0) {
+	if ((misc_string = avc_message_get_misc_string(avc)) == NULL || apol_str_append(&s, &len, misc_string) < 0) {
+		int error = errno;
+		free(misc_string);
+		errno = error;
 		return NULL;
 	}
-	if (avc->lport != 0 && apol_str_appendf(&s, &len, "lport=%d ", avc->lport) < 0) {
-		return NULL;
-	}
-	if (avc->faddr && apol_str_appendf(&s, &len, "faddr=%s ", avc->faddr) < 0) {
-		return NULL;
-	}
-	if (avc->fport != 0 && apol_str_appendf(&s, &len, "fport=%d ", avc->fport) < 0) {
-		return NULL;
-	}
-	if (avc->daddr && apol_str_appendf(&s, &len, "daddr=%s ", avc->daddr) < 0) {
-		return NULL;
-	}
-	if (avc->dest != 0 && apol_str_appendf(&s, &len, "dest=%d ", avc->dest) < 0) {
-		return NULL;
-	}
-	if (avc->port != 0 && apol_str_appendf(&s, &len, "port=%d ", avc->port) < 0) {
-		return NULL;
-	}
-	if (avc->saddr && apol_str_appendf(&s, &len, "saddr=%s ", avc->saddr) < 0) {
-		return NULL;
-	}
-	if (avc->source != 0 && apol_str_appendf(&s, &len, "source=%d ", avc->source) < 0) {
-		return NULL;
-	}
-	if (avc->netif && apol_str_appendf(&s, &len, "netif=%s ", avc->netif) < 0) {
-		return NULL;
-	}
-	if (avc->is_key && apol_str_appendf(&s, &len, "key=%d ", avc->key) < 0) {
-		return NULL;
-	}
-	if (avc->is_capability && apol_str_appendf(&s, &len, "capability=%d ", avc->capability) < 0) {
-		return NULL;
-	}
-
+	free(misc_string);
 	if (avc->suser && apol_str_appendf(&s, &len, "scontext=%s:%s:%s ", avc->suser, avc->srole, avc->stype) < 0) {
 		return NULL;
 	}
@@ -162,7 +316,7 @@ char *avc_message_to_string(seaudit_avc_message_t * avc, const char *date, const
 
 char *avc_message_to_string_html(seaudit_avc_message_t * avc, const char *date, const char *host)
 {
-	char *s = NULL, *perm;
+	char *s = NULL, *misc_string = NULL, *perm;
 	size_t i, len = 0;
 	if (apol_str_appendf(&s, &len,
 			     "<font class=\"message_date\">%s</font> "
@@ -206,49 +360,16 @@ char *avc_message_to_string_html(seaudit_avc_message_t * avc, const char *date, 
 	if (avc->path && apol_str_appendf(&s, &len, "path=%s ", avc->path) < 0) {
 		return NULL;
 	}
-	if (avc->dev && apol_str_appendf(&s, &len, "dev=%s ", avc->dev) < 0) {
-		return NULL;
-	}
 	if (avc->is_inode && apol_str_appendf(&s, &len, "ino=%lu ", avc->inode) < 0) {
 		return NULL;
 	}
-	if (avc->laddr && apol_str_appendf(&s, &len, "laddr=%s ", avc->laddr) < 0) {
+	if ((misc_string = avc_message_get_misc_string(avc)) == NULL || apol_str_append(&s, &len, misc_string) < 0) {
+		int error = errno;
+		free(misc_string);
+		errno = error;
 		return NULL;
 	}
-	if (avc->lport != 0 && apol_str_appendf(&s, &len, "lport=%d ", avc->lport) < 0) {
-		return NULL;
-	}
-	if (avc->faddr && apol_str_appendf(&s, &len, "faddr=%s ", avc->faddr) < 0) {
-		return NULL;
-	}
-	if (avc->fport != 0 && apol_str_appendf(&s, &len, "fport=%d ", avc->fport) < 0) {
-		return NULL;
-	}
-	if (avc->daddr && apol_str_appendf(&s, &len, "daddr=%s ", avc->daddr) < 0) {
-		return NULL;
-	}
-	if (avc->dest != 0 && apol_str_appendf(&s, &len, "dest=%d ", avc->dest) < 0) {
-		return NULL;
-	}
-	if (avc->port != 0 && apol_str_appendf(&s, &len, "port=%d ", avc->port) < 0) {
-		return NULL;
-	}
-	if (avc->saddr && apol_str_appendf(&s, &len, "saddr=%s ", avc->saddr) < 0) {
-		return NULL;
-	}
-	if (avc->source != 0 && apol_str_appendf(&s, &len, "source=%d ", avc->source) < 0) {
-		return NULL;
-	}
-	if (avc->netif && apol_str_appendf(&s, &len, "netif=%s ", avc->netif) < 0) {
-		return NULL;
-	}
-	if (avc->is_key && apol_str_appendf(&s, &len, "key=%d ", avc->key) < 0) {
-		return NULL;
-	}
-	if (avc->is_capability && apol_str_appendf(&s, &len, "capability=%d ", avc->capability) < 0) {
-		return NULL;
-	}
-
+	free(misc_string);
 	if (avc->suser &&
 	    apol_str_appendf(&s, &len, "<font class=\"src_context\">scontext=%s:%s:%s</font> ",
 			     avc->suser, avc->srole, avc->stype) < 0) {
@@ -264,6 +385,22 @@ char *avc_message_to_string_html(seaudit_avc_message_t * avc, const char *date, 
 	}
 	if (apol_str_appendf(&s, &len, "<br>") < 0) {
 		return NULL;
+	}
+	return s;
+}
+
+char *avc_message_to_misc_string(seaudit_avc_message_t * avc)
+{
+	char *s = avc_message_get_misc_string(avc);
+	size_t len;
+	if (s == NULL) {
+		return NULL;
+	}
+	len = strlen(s) + 1;
+	if (!(avc->tm_stmp_sec == 0 && avc->tm_stmp_nano == 0 && avc->serial == 0)) {
+		if (apol_str_appendf(&s, &len, "audit(%lu.%03lu:%u): ", avc->tm_stmp_sec, avc->tm_stmp_nano, avc->serial) < 0) {
+			return NULL;
+		}
 	}
 	return s;
 }

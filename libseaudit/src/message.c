@@ -115,6 +115,25 @@ char *seaudit_message_to_string_html(seaudit_message_t * msg)
 	}
 }
 
+char *seaudit_message_to_misc_string(seaudit_message_t * msg)
+{
+	if (msg == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	switch (msg->type) {
+	case SEAUDIT_MESSAGE_TYPE_AVC:
+		return avc_message_to_misc_string(msg->data.avc);
+	case SEAUDIT_MESSAGE_TYPE_BOOL:
+		return bool_message_to_misc_string(msg->data.bool);
+	case SEAUDIT_MESSAGE_TYPE_LOAD:
+		return load_message_to_misc_string(msg->data.load);
+	default:
+		errno = EINVAL;
+		return NULL;
+	}
+}
+
 /******************** protected functions below ********************/
 
 seaudit_message_t *message_create(seaudit_log_t * log, seaudit_message_type_e type)

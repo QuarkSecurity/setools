@@ -43,13 +43,14 @@ extern "C"
 	typedef enum seaudit_message_type
 	{
 		SEAUDIT_MESSAGE_TYPE_INVALID = 0,
-	/** BOOL is the message that results when changing booleans in
-	    a conditional policy. */
+		/** BOOL is the message that results when changing
+		    booleans in a conditional policy. */
 		SEAUDIT_MESSAGE_TYPE_BOOL,
-	/** AVC is a standard 'allowed' or 'denied' type message. */
+		/** AVC is a standard 'allowed' or 'denied' type
+		    message. */
 		SEAUDIT_MESSAGE_TYPE_AVC,
-	/** LOAD is the message that results when a policy is loaded
-	    into the system. */
+		/** LOAD is the message that results when a policy is
+		    loaded into the system. */
 		SEAUDIT_MESSAGE_TYPE_LOAD
 	} seaudit_message_type_e;
 
@@ -110,6 +111,20 @@ extern "C"
  * The caller is responsible for free()ing the string afterwards.
  */
 	extern char *seaudit_message_to_string_html(seaudit_message_t * msg);
+
+/**
+ * Given a message, allocate and return a string that gives
+ * miscellaneous (i.e., uncategorized) information about the message.
+ * To get the more important values you will need to use more specific
+ * accessor methods.
+ *
+ * @param msg Message from which to get miscellaneous information.
+ *
+ * @return Miscellaneous message string representation, or NULL upon
+ * error.  The caller is responsible for free()ing the string
+ * afterwards.
+ */
+	extern char *seaudit_message_to_misc_string(seaudit_message_t * msg);
 
 #ifdef  __cplusplus
 }
