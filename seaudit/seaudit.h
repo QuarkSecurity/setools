@@ -1,14 +1,68 @@
-/* Copyright (C) 2003-2006 Tresys Technology, LLC
- * see file 'COPYING' for use and warranty information */
-
-/*
- * Author: Karl MacMillan <kmacmillan@tresys.com>
- *         Kevin Carr <kcarr@tresys.com>
- *         Jeremy Stitz <jstitz@tresys.com>
+/**
+ *  @file seaudit.h
+ *  Declaration of the main driver class for seaudit.
+ *
+ *  @author Jeremy A. Mowery jmowery@tresys.com
+ *  @author Jason Tang jtang@tresys.com
+ *
+ *  Copyright (C) 2003-2007 Tresys Technology, LLC
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #ifndef SEAUDIT_H
 #define SEAUDIT_H
+
+#include "preferences.h"
+#include <apol/policy.h>
+#include <seaudit/log.h>
+
+typedef struct seaudit seaudit_t;
+
+/**
+ * Retrieve the preferences object associated with the seaudit object.
+ *
+ * @param s seaudit object to query.
+ *
+ * @return Pointer to a preferences object.  Do not free() this pointer.
+ */
+seaudit_prefs_t *seaudit_get_prefs(seaudit_t * s);
+
+/**
+ * Retrieve the currently loaded policy.
+ *
+ * @param s seaudit object to query.
+ *
+ * @return Pointer to an apol policy, or NULL if none loaded.  Treat
+ * this as a const pointer.
+ */
+apol_policy_t *seaudit_get_policy(seaudit_t * s);
+
+/**
+ * Retrieve the currently loaded log file.
+ *
+ * @param s seaudit object to query.
+ *
+ * @return Pointer to a libseaudit log, or NULL if none loaded.  Treat
+ * this as a const pointer.
+ */
+seaudit_log_t *seaudit_get_log(seaudit_t * s);
+
+#define COPYRIGHT_INFO "Copyright (c) 2003-2006 Tresys Technology, LLC"
+
+#if 0
 
 #include "auditlogmodel.h"
 #include "filter_window.h"
@@ -42,8 +96,6 @@
 
 typedef struct seaudit
 {
-	apol_policy_t *cur_policy;
-	seaudit_log_t *cur_log;
 	gchar *last_log_message;
 	int last_log_level;
 	seaudit_window_t *window;
@@ -81,5 +133,7 @@ void write_boolean_message_to_file(FILE * log_file, const boolean_msg_t * messag
 				   audit_log_t * audit_log);
 void seaudit_window_view_entire_message_in_textbox(int *tree_item_idx);
 void seaudit_on_export_selection_activated(void);
+
+#endif
 
 #endif

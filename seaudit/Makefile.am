@@ -28,18 +28,21 @@ nodist_setools_DATA = \
 	dot_seaudit \
 	seaudit-report-service
 
+#seaudit_SOURCES = \
+#	auditlogmodel.c auditlogmodel.h \
+#	filtered_view.c filtered_view.h \
+#	filter_window.c filter_window.h \
+#	multifilter_window.c multifilter_window.h \
+#	query_window.c query_window.h \
+#	report_window.c report_window.h \
+#	seaudit_callback.c seaudit_callback.h \
+#	seaudit_window.c seaudit_window.h \
+#	utilgui.c utilgui.h
+
 seaudit_SOURCES = \
-	auditlogmodel.c auditlogmodel.h \
-	filtered_view.c filtered_view.h \
-	filter_window.c filter_window.h \
-	multifilter_window.c multifilter_window.h \
 	preferences.c preferences.h \
-	query_window.c query_window.h \
-	report_window.c report_window.h \
-	seaudit.c seaudit_callback.c \
-	seaudit_callback.h seaudit.h \
-	seaudit_window.c seaudit_window.h \
-	utilgui.c utilgui.h
+	seaudit.c seaudit.h
+
 seaudit_DEPENDENCIES = $(top_builddir)/libseaudit/src/libseaudit.so \
                        $(top_builddir)/libapol/src/libapol.so \
                        $(top_builddir)/libqpol/src/libqpol.so

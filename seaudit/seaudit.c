@@ -1,14 +1,186 @@
-/* Copyright (C) 2003-2006 Tresys Technology, LLC
- * see file 'COPYING' for use and warranty information */
-
-/*
- * Author: Karl MacMillan <kmacmillan@tresys.com>
- *         Kevin Carr <kcarr@tresys.com>
- *         Jeremy Stitz <jstitz@tresys.com>
- *	   don.patterson@tresys.com 10-2004
+/**
+ *  @file seaudit.c
+ *  Main driver for the seaudit application.  This file also
+ *  implements the main class seaudit_t.
+ *
+ *  @author Jeremy A. Mowery jmowery@tresys.com
+ *  @author Jason Tang jtang@tresys.com
+ *
+ *  Copyright (C) 2003-2007 Tresys Technology, LLC
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include <config.h>
+
+#include "seaudit.h"
+
+#include <apol/util.h>
+#include <seaudit/util.h>
+
+#include <errno.h>
+#include <getopt.h>
+#include <stdlib.h>
+#include <string.h>
+#include <gtk/gtk.h>
+
+struct seaudit
+{
+	seaudit_prefs_t *prefs;
+	apol_policy_t *policy;
+	seaudit_log_t *log;
+};
+
+static struct option const opts[] = {
+	{"log", required_argument, NULL, 'l'},
+	{"policy", required_argument, NULL, 'p'},
+	{"help", no_argument, NULL, 'h'},
+	{"version", no_argument, NULL, 'v'},
+	{NULL, 0, NULL, 0}
+};
+
+seaudit_prefs_t *seaudit_get_prefs(seaudit_t * s)
+{
+	return s->prefs;
+}
+
+apol_policy_t *seaudit_get_policy(seaudit_t * s)
+{
+	return s->policy;
+}
+
+seaudit_log_t *seaudit_get_log(seaudit_t * s)
+{
+	return s->log;
+}
+
+static seaudit_t *seaudit_create(seaudit_prefs_t * prefs)
+{
+	seaudit_t *s = calloc(1, sizeof(*s));
+	if (s != NULL) {
+		s->prefs = prefs;
+	}
+	return s;
+}
+
+static void seaudit_destroy(seaudit_t ** s)
+{
+	if (s != NULL && *s != NULL) {
+		apol_policy_destroy(&(*s)->policy);
+		seaudit_log_destroy(&(*s)->log);
+		seaudit_prefs_destroy(&(*s)->prefs);
+		free(*s);
+		*s = NULL;
+	}
+}
+
+static void print_version_info(void)
+{
+	printf("Audit Log analysis tool for Security Enhanced Linux\n\n");
+	printf("   GUI version %s\n", VERSION);
+	printf("   libapol version %s\n", libapol_get_version());
+	printf("   libseaudit version %s\n\n", libseaudit_get_version());
+}
+
+static void print_usage_info(const char *program_name, int brief)
+{
+	printf("Usage:%s [options]\n", program_name);
+	if (brief) {
+		printf("\tTry %s --help for more help.\n", program_name);
+		return;
+	}
+	printf("Audit Log analysis tool for Security Enhanced Linux\n\n");
+	printf("   -l FILE, --log FILE     open log file named FILE\n");
+	printf("   -p FILE, --policy FILE  open policy file named FILE\n");
+	printf("   -h, --help              display this help and exit\n");
+	printf("   -v, --version           display version information\n\n");
+}
+
+static void seaudit_parse_command_line(seaudit_t * seaudit, int argc, char **argv, char **log, char **policy)
+{
+	int optc;
+	*log = NULL;
+	*policy = NULL;
+	while ((optc = getopt_long(argc, argv, "l:p:hv", opts, NULL)) != -1) {
+		switch (optc) {
+		case 'l':{
+				*log = optarg;
+				break;
+			}
+		case 'p':{
+				*policy = optarg;
+				break;
+			}
+		case 'h':{
+				print_usage_info(argv[0], 0);
+				seaudit_destroy(&seaudit);
+				exit(EXIT_SUCCESS);
+			}
+		case 'v':{
+				print_version_info();
+				seaudit_destroy(&seaudit);
+				exit(EXIT_SUCCESS);
+			}
+		case '?':
+		default:{
+				/* unrecognized argument give full usage */
+				print_usage_info(argv[0], 0);
+				seaudit_destroy(&seaudit);
+				exit(EXIT_FAILURE);
+			}
+		}
+	}
+	if (optind < argc) {	       /* trailing non-options */
+		print_usage_info(argv[0], 0);
+		seaudit_destroy(&seaudit);
+		exit(EXIT_FAILURE);
+	}
+	if (*log == NULL) {
+		*log = seaudit_prefs_get_log(seaudit->prefs);
+	}
+	if (*policy == NULL) {
+		*policy = seaudit_prefs_get_policy(seaudit->prefs);
+	}
+}
+
+int main(int argc, char **argv)
+{
+	seaudit_prefs_t *prefs;
+	seaudit_t *app;
+	char *log, *policy;
+
+	if ((prefs = seaudit_prefs_create()) == NULL) {
+		ERR(NULL, "%s", strerror(ENOMEM));
+		exit(EXIT_FAILURE);
+	}
+	if ((app = seaudit_create(prefs)) == NULL) {
+		ERR(NULL, "%s", strerror(ENOMEM));
+		exit(EXIT_FAILURE);
+	}
+	seaudit_parse_command_line(app, argc, argv, &log, &policy);
+	/* FIX ME: if log != NULL, load a log */
+	/* FIX ME: if policy != NULL, load a policy */
+	gtk_main();
+	if (seaudit_prefs_write_to_conf_file(app->prefs) < 0) {
+		ERR(NULL, "%s", strerror(ENOMEM));
+	}
+	seaudit_destroy(&app);
+	exit(EXIT_SUCCESS);
+}
+
+#if 0
 
 #include "auditlogmodel.h"
 #include "filter_window.h"
@@ -22,29 +194,10 @@
 #include <seaudit/log.h>
 #include <seaudit/parse.h>
 
-#include <errno.h>
-#include <getopt.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
-
-#ifndef VERSION
-#define VERSION "UNKNOWN"
-#endif
-
-#define COPYRIGHT_INFO "Copyright (c) 2003-2006 Tresys Technology, LLC"
-
-seaudit_t *seaudit_app = NULL;
-
-/* command line options */
-static struct option const opts[] = {
-	{"log", required_argument, NULL, 'l'},
-	{"policy", required_argument, NULL, 'p'},
-	{"help", no_argument, NULL, 'h'},
-	{"version", no_argument, NULL, 'v'},
-	{NULL, 0, NULL, 0}
-};
 
 static void seaudit_set_real_time_log_button_state(bool_t state);
 static int seaudit_read_policy_conf(const char *fname);
@@ -90,30 +243,12 @@ static void init_icons(GtkWindow * main_window)
 /* seaudit object */
 seaudit_t *seaudit_init(void)
 {
-	seaudit_t *seaudit;
-
-	seaudit = (seaudit_t *) malloc(sizeof(seaudit_t));
-	if (!seaudit) {
-		fprintf(stderr, "memory error\n");
-		return NULL;
-	}
-	memset(seaudit, 0, sizeof(seaudit_t));
-
-	/* we load user configuration first so the window can be set up
-	 * set up properly on create */
-	if (load_seaudit_conf_file(&(seaudit->seaudit_conf)) != 0) {
-		free(seaudit);
-		return NULL;
-	}
-
 	seaudit->window = seaudit_window_create(NULL, seaudit->seaudit_conf.column_visibility);
 	if (seaudit->window == NULL) {
 		free(seaudit);
 		return NULL;
 	}
 	init_icons(seaudit->window->window);
-	seaudit->policy_file = g_string_new("");
-	seaudit->audit_log_file = g_string_new("");
 
 	return seaudit;
 }
@@ -949,15 +1084,19 @@ int main(int argc, char **argv)
 		if (seaudit_app->seaudit_conf.default_policy_file) {
 			filenames.policy_filename = g_string_new(seaudit_app->seaudit_conf.default_policy_file);
 		} else {
-			/* There was no default policy file specified at the command-line or
-			 * in the users .seaudit file, so use the policy default logic from
-			 * libapol. With seaudit we prefer the source policy over binary. */
+			/* There was no default policy file specified
+			 * at the command-line or in the users
+			 * .seaudit file, so use the policy default
+			 * logic from libapol. With seaudit we prefer
+			 * the source policy over binary. */
 			rt = qpol_find_default_policy_file((QPOL_TYPE_SOURCE | QPOL_TYPE_BINARY), &policy_file);
 			if (rt == QPOL_GENERAL_ERROR) {
 				message_display(seaudit_app->window->window, GTK_MESSAGE_WARNING, "Error loading default policy.");
 			} else if (rt != QPOL_FIND_DEFAULT_SUCCESS) {
 				printf("Default policy search failed: %s\n", qpol_find_default_policy_file_strerr(rt));
-				/* no policy to use, so warn the user and then start up without a default policy. */
+				/* no policy to use, so warn the user
+				 * and then start up without a default
+				 * policy. */
 				msg = g_string_new
 					("Could not find system default policy to open. \nUse the File menu to open a policy");
 				message_display(seaudit_app->window->window, GTK_MESSAGE_WARNING, msg->str);
@@ -979,7 +1118,6 @@ int main(int argc, char **argv)
 	/* finish loading later */
 	g_idle_add(&delayed_main, &filenames);
 
-	/* go */
 	gtk_main();
 
 	return 0;
@@ -991,7 +1129,7 @@ int main(int argc, char **argv)
  */
 void seaudit_on_TopWindow_destroy(GtkWidget * widget)
 {
-	seaudit_exit_app();
+	gtk_main_quit();
 }
 
 /*
@@ -1430,84 +1568,6 @@ static int seaudit_read_policy_conf(const char *fname)
 	return 0;
 }
 
-static void seaudit_print_version_info(void)
-{
-	printf("Audit Log analysis tool for Security Enhanced Linux\n\n");
-	printf("   GUI version %s\n", VERSION);
-	printf("   libapol version %s\n", libapol_get_version());
-	printf("   libseaudit version %s\n\n", libseaudit_get_version());
-}
-
-static void seaudit_print_usage_info(const char *program_name, bool_t brief)
-{
-	printf("Usage:%s [options]\n", program_name);
-	if (brief) {
-		printf("\tTry %s --help for more help.\n", program_name);
-		return;
-	}
-	printf("Audit Log analysis tool for Security Enhanced Linux\n\n");
-	printf("   -l FILE, --log FILE     open log file named FILE\n");
-	printf("   -p FILE, --policy FILE  open policy file named FILE\n");
-	printf("   -h, --help              display this help and exit\n");
-	printf("   -v, --version           display version information\n\n");
-	return;
-}
-
-static void seaudit_parse_command_line(int argc, char **argv, GString ** policy_filename, GString ** log_filename)
-{
-	int optc;
-	bool_t help, ver;
-
-	help = ver = FALSE;
-	g_assert(*log_filename == NULL);
-	g_assert(*policy_filename == NULL);
-	while ((optc = getopt_long(argc, argv, "l:p:hv", opts, NULL)) != -1) {
-		switch (optc) {
-		case 'l':
-			*log_filename = g_string_new("");
-			g_string_assign(*log_filename, optarg);
-			break;
-		case 'p':
-			*policy_filename = g_string_new("");
-			g_string_assign(*policy_filename, optarg);
-			break;
-		case '?':	       /* unrecognized argument give full usage */
-			seaudit_print_usage_info(argv[0], FALSE);
-			goto exit_main;
-		case 'h':
-			help = TRUE;
-			break;
-		case 'v':
-			ver = TRUE;
-			break;
-		default:
-			break;
-		}
-	}
-	if (help || ver) {
-		if (help)
-			seaudit_print_usage_info(argv[0], FALSE);
-		if (ver)
-			seaudit_print_version_info();
-		goto exit_main;
-	}
-	if (optind < argc) {	       /* trailing non-options */
-		printf("non-option arguments: ");
-		while (optind < argc)
-			printf("%s ", argv[optind++]);
-		printf("\n");
-		goto exit_main;
-	}
-	return;
-
-      exit_main:
-	if (*log_filename)
-		g_string_free(*log_filename, TRUE);
-	if (*policy_filename)
-		g_string_free(*policy_filename, TRUE);
-	exit(1);
-}
-
 static void seaudit_exit_app(void)
 {
 	save_seaudit_conf_file(&(seaudit_app->seaudit_conf));
@@ -1539,3 +1599,5 @@ static void seaudit_update_title_bar(void *user_data)
 	snprintf(str, STR_SIZE, "seaudit - %s %s", log_str, policy_str);
 	gtk_window_set_title(seaudit_app->window->window, (gchar *) str);
 }
+
+#endif

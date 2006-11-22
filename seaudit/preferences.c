@@ -1,11 +1,368 @@
-/* Copyright (C) 2004-2006 Tresys Technology, LLC
- * see file 'COPYING' for use and warranty information */
-
-/*
- * Author: Kevin Carr <kcarr@tresys.com>
- * Date: December 31, 2003
- * Modified: don.patterson@tresys.com 10-2004
+/**
+ *  @file preferences.c
+ *  Implementation of the storage class seaudit_prefs_t.
+ *
+ *  @author Jeremy A. Mowery jmowery@tresys.com
+ *  @author Jason Tang jtang@tresys.com
+ *
+ *  Copyright (C) 2003-2007 Tresys Technology, LLC
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
+
+#include <config.h>
+
+#include "preferences.h"
+
+#include <apol/util.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+
+/** default frequency, in milliseconds, to poll log file for changes */
+#define DEFAULT_LOG_UPDATE_INTERVAL 1000
+
+/** maximum number of recent log files and recent policy files to remember */
+#define MAX_RECENT_ENTRIES 5
+
+/** name of the user's seaudit personal preferences file */
+#define USER_SEAUDIT_CONF ".seaudit"
+
+/** name of the system seaudit preference file */
+#define SYSTEM_SEAUDIT_CONF "dot_seaudit"
+
+struct visible_field
+{
+	const char *field;
+	int visible;
+};
+
+static const struct visible_field default_visible_fields[] = {
+	{"host_field", 1},
+	{"date_field", 1},
+	{"msg_field", 1},
+	{"src_usr_field", 0},
+	{"src_role_field", 0},
+	{"src_type_field", 1},
+	{"tgt_usr_field", 0},
+	{"tgt_role_field", 0},
+	{"tgt_type_field", 1},
+	{"obj_class_field", 1},
+	{"perm_field", 1},
+	{"inode_field", 0},
+	{"path_field", 0},
+	{"exe_field", 1},
+	{"comm_field", 1},
+	{"pid_field", 0},
+	{"other_field", 1}
+};
+static size_t num_visible_fields = sizeof(default_visible_fields) / sizeof(default_visible_fields[0]);
+
+struct seaudit_prefs
+{
+	/** path to default system log file */
+	char *log;
+	/** path to default policy */
+	char *policy;
+	/** default path when writing reports */
+	char *report;
+	/** default path to the stylesheet, used during report writing */
+	char *stylesheet;
+	/** vector of paths (strings) to recently opened log files */
+	apol_vector_t *recent_log_files;
+	/** vector of paths (strings) to recently opened policy files */
+	apol_vector_t *recent_policy_files;
+	/** non-zero if seaudit should poll the log file for changes */
+	int real_time_log;
+	/** frequency, in milliesconds, to poll log file */
+	int real_time_interval;
+	struct visible_field *fields;
+};
+
+seaudit_prefs_t *seaudit_prefs_create(void)
+{
+	seaudit_prefs_t *prefs = NULL;
+	FILE *file = NULL;
+	char *path = NULL, *value;
+	apol_vector_t *v = NULL;
+	size_t i, j;
+	int error = 0;
+
+	if ((prefs = calloc(1, sizeof(*prefs))) == NULL ||
+	    (prefs->recent_log_files = apol_vector_create()) == NULL ||
+	    (prefs->recent_policy_files = apol_vector_create()) == NULL ||
+	    (prefs->fields = calloc(num_visible_fields, sizeof(struct visible_field))) == NULL) {
+		error = errno;
+		goto cleanup;
+	}
+	prefs->real_time_interval = DEFAULT_LOG_UPDATE_INTERVAL;
+	memcpy(prefs->fields, default_visible_fields, num_visible_fields * sizeof(struct visible_field));
+	path = apol_file_find_user_config(USER_SEAUDIT_CONF);
+	if (!path) {
+		if ((path = apol_file_find_path(SYSTEM_SEAUDIT_CONF)) == NULL) {
+			return prefs;
+		}
+	}
+	if ((file = fopen(path, "r")) == NULL) {
+		error = errno;
+		goto cleanup;
+	}
+	prefs->log = apol_config_get_var("DEFAULT_LOG_FILE", file);
+	prefs->policy = apol_config_get_var("DEFAULT_POLICY_FILE", file);
+	prefs->report = apol_config_get_var("DEFAULT_REPORT_CONFIG_FILE", file);
+	prefs->stylesheet = apol_config_get_var("DEFAULT_REPORT_CSS_FILE", file);
+	if ((v = apol_config_split_var("RECENT_LOG_FILES", file)) == NULL) {
+		error = errno;
+		goto cleanup;
+	}
+	apol_vector_destroy(&prefs->recent_log_files, free);
+	prefs->recent_log_files = v;
+	if ((v = apol_config_split_var("RECENT_POLICY_FILES", file)) == NULL) {
+		error = errno;
+		goto cleanup;
+	}
+	apol_vector_destroy(&prefs->recent_policy_files, free);
+	prefs->recent_policy_files = v;
+
+	if ((v = apol_config_split_var("LOG_COLUMNS_HIDDEN", file)) == NULL) {
+		error = errno;
+		goto cleanup;
+	}
+	for (j = 0; j < num_visible_fields; j++) {
+		prefs->fields[j].visible = 1;
+	}
+	for (i = 0; i < apol_vector_get_size(v); i++) {
+		char *s = apol_vector_get_element(v, i);
+		for (j = 0; j < num_visible_fields; j++) {
+			if (strcmp(s, prefs->fields[j].field) == 0) {
+				prefs->fields[j].visible = 0;
+				break;
+			}
+		}
+	}
+	apol_vector_destroy(&v, free);
+	value = apol_config_get_var("REAL_TIME_LOG_MONITORING", file);
+	if (value != NULL && value[0] != '0') {
+		prefs->real_time_log = 1;
+	}
+	free(value);
+	value = apol_config_get_var("REAL_TIME_LOG_UPDATE_INTERVAL", file);
+	if (value != NULL) {
+		prefs->real_time_interval = atoi(value);
+	}
+	free(value);
+      cleanup:
+	free(path);
+	if (file != NULL) {
+		fclose(file);
+	}
+	if (error != 0) {
+		seaudit_prefs_destroy(&prefs);
+		errno = error;
+		return NULL;
+	}
+	return prefs;
+}
+
+void seaudit_prefs_destroy(seaudit_prefs_t ** prefs)
+{
+	if (prefs != NULL && *prefs != NULL) {
+		free((*prefs)->log);
+		free((*prefs)->policy);
+		free((*prefs)->report);
+		free((*prefs)->stylesheet);
+		apol_vector_destroy(&(*prefs)->recent_log_files, free);
+		apol_vector_destroy(&(*prefs)->recent_policy_files, free);
+		free((*prefs)->fields);
+		free(*prefs);
+		*prefs = NULL;
+	}
+}
+
+int seaudit_prefs_write_to_conf_file(seaudit_prefs_t * prefs)
+{
+	FILE *file = NULL;
+	char *home, *conf_file = NULL, *value;
+	apol_vector_t *hidden_fields = NULL;
+	size_t i;
+	int retval = 0, error = 0;
+
+	/* we need to open ~/.seaudit */
+	home = getenv("HOME");
+	if (!home) {
+		error = EBADRQC;
+		goto cleanup;
+	}
+	if (asprintf(&conf_file, "%s/%s", home, USER_SEAUDIT_CONF) < 0) {
+		error = errno;
+		goto cleanup;
+	}
+
+	if ((file = fopen(conf_file, "w")) == NULL) {
+		error = errno;
+		goto cleanup;
+	}
+
+	fprintf(file, "# configuration file for seaudit - an audit log tool for Security Enhanced Linux.\n");
+	fprintf(file, "# this file is auto-generated\n\n");
+
+	if (prefs->log != NULL) {
+		fprintf(file, "DEFAULT_LOG_FILE %s\n", prefs->log);
+	}
+	if (prefs->policy != NULL) {
+		fprintf(file, "DEFAULT_POLICY_FILE %s\n", prefs->policy);
+	}
+	if (prefs->report != NULL) {
+		fprintf(file, "DEFAULT_REPORT_CONFIG_FILE %s\n", prefs->report);
+	}
+	if (prefs->stylesheet != NULL) {
+		fprintf(file, "DEFAULT_REPORT_CSS_FILE %s\n", prefs->stylesheet);
+	}
+	if ((value = apol_config_join_var(prefs->recent_log_files)) == NULL) {
+		error = errno;
+		goto cleanup;
+	}
+	fprintf(file, "RECENT_LOG_FILES %s\n", value);
+	free(value);
+	if ((value = apol_config_join_var(prefs->recent_policy_files)) == NULL) {
+		error = errno;
+		goto cleanup;
+	}
+	fprintf(file, "RECENT_POLICY_FILES %s\n", value);
+	free(value);
+	if ((hidden_fields = apol_vector_create()) == NULL) {
+		error = errno;
+		goto cleanup;
+	}
+	for (i = 0; i < num_visible_fields; i++) {
+		if (!prefs->fields[i].visible && apol_vector_append(hidden_fields, (char *)prefs->fields[i].field) < 0) {
+			error = errno;
+			goto cleanup;
+		}
+	}
+	if ((value = apol_config_join_var(hidden_fields)) == NULL) {
+		error = errno;
+		goto cleanup;
+	}
+	fprintf(file, "LOG_COLUMNS_HIDDEN %s\n", value);
+	free(value);
+	fprintf(file, "REAL_TIME_LOG_MONITORING %d\n", prefs->real_time_log);
+	fprintf(file, "REAL_TIME_LOG_UPDATE_INTERVAL %d\n", prefs->real_time_interval);
+	retval = 0;
+      cleanup:
+	free(conf_file);
+	apol_vector_destroy(&hidden_fields, NULL);
+	if (file != NULL) {
+		fclose(file);
+	}
+	errno = error;
+	return retval;
+}
+
+int seaudit_prefs_set_log(seaudit_prefs_t * prefs, const char *log)
+{
+	free(prefs->log);
+	if ((prefs->log = strdup(log)) == NULL) {
+		return -1;
+	}
+	return 0;
+}
+
+char *seaudit_prefs_get_log(seaudit_prefs_t * prefs)
+{
+	return prefs->log;
+}
+
+int seaudit_prefs_set_policy(seaudit_prefs_t * prefs, const char *policy)
+{
+	free(prefs->policy);
+	if ((prefs->policy = strdup(policy)) == NULL) {
+		return -1;
+	}
+	return 0;
+}
+
+char *seaudit_prefs_get_policy(seaudit_prefs_t * prefs)
+{
+	return prefs->policy;
+}
+
+int seaudit_prefs_set_report(seaudit_prefs_t * prefs, const char *report)
+{
+	free(prefs->report);
+	if ((prefs->report = strdup(report)) == NULL) {
+		return -1;
+	}
+	return 0;
+}
+
+char *seaudit_prefs_get_report(seaudit_prefs_t * prefs)
+{
+	return prefs->report;
+}
+
+int seaudit_prefs_set_stylesheet(seaudit_prefs_t * prefs, const char *stylesheet)
+{
+	free(prefs->stylesheet);
+	if ((prefs->stylesheet = strdup(stylesheet)) == NULL) {
+		return -1;
+	}
+	return 0;
+}
+
+char *seaudit_prefs_get_stylesheet(seaudit_prefs_t * prefs)
+{
+	return prefs->stylesheet;
+}
+
+/**
+ * Add an entry to a vector, discarding the oldest entry if the vector
+ * size is too large.
+ */
+static int prefs_add_recent_vector(apol_vector_t * v, const char *entry)
+{
+	size_t i;
+	char *s;
+	if (apol_vector_get_index(v, (void *)entry, apol_str_strcmp, NULL, &i) == 0) {
+		return 0;
+	}
+	if ((s = strdup(entry)) == NULL || apol_vector_append(v, s) < 0) {
+		int error = errno;
+		free(s);
+		errno = error;
+		return -1;
+	}
+	if (apol_vector_get_size(v) >= MAX_RECENT_ENTRIES) {
+		s = apol_vector_get_element(v, 0);
+		free(s);
+		return apol_vector_remove(v, 0);
+	}
+	return 0;
+}
+
+int seaudit_prefs_add_recent_log(seaudit_prefs_t * prefs, const char *log)
+{
+	return prefs_add_recent_vector(prefs->recent_log_files, log);
+}
+
+int seaudit_prefs_add_recent_policy(seaudit_prefs_t * prefs, const char *policy)
+{
+	return prefs_add_recent_vector(prefs->recent_policy_files, policy);
+}
+
+#if 0
 
 #include "preferences.h"
 #include "utilgui.h"
@@ -19,371 +376,6 @@ extern seaudit_t *seaudit_app;
 static void on_preference_toggled(GtkToggleButton * toggle, gpointer user_data);
 static void on_browse_policy_button_clicked(GtkWidget * widget, gpointer user_data);
 static void on_browse_log_button_clicked(GtkWidget * widget, gpointer user_data);
-
-int set_seaudit_conf_default_policy(seaudit_conf_t * conf, const char *filename)
-{
-	if (conf->default_policy_file)
-		free(conf->default_policy_file);
-	if (filename) {
-		conf->default_policy_file = (char *)malloc(sizeof(char) * (1 + strlen(filename)));
-		if (conf->default_policy_file == NULL) {
-			fprintf(stderr, "Out of memory.\n");
-			return -1;
-		}
-		strcpy(conf->default_policy_file, filename);
-	} else
-		conf->default_policy_file = NULL;
-
-	return 0;
-}
-
-int set_seaudit_conf_default_log(seaudit_conf_t * conf, const char *filename)
-{
-	if (conf->default_log_file)
-		free(conf->default_log_file);
-
-	if (filename) {
-		conf->default_log_file = (char *)malloc(sizeof(char) * (1 + strlen(filename)));
-		if (conf->default_log_file == NULL) {
-			fprintf(stderr, "Out of memory.\n");
-			return -1;
-		}
-		strcpy(conf->default_log_file, filename);
-	} else
-		conf->default_log_file = NULL;
-
-	return 0;
-}
-
-static int set_seaudit_conf_file_path(char **conf_variable, const char *filename)
-{
-	assert(conf_variable != NULL);
-	if (*conf_variable)
-		free(*conf_variable);
-
-	if (filename) {
-		*conf_variable = (char *)malloc(sizeof(char) * (1 + strlen(filename)));
-		if (*conf_variable == NULL) {
-			fprintf(stderr, "Out of memory.\n");
-			return -1;
-		}
-		strcpy(*conf_variable, filename);
-	} else
-		*conf_variable = NULL;
-
-	return 0;
-}
-
-int load_seaudit_conf_file(seaudit_conf_t * conf)
-{
-	FILE *file;
-	int i, j, index;
-	size_t size;
-	GString *path;
-	char *value, **list, *dir;
-
-	if (conf == NULL)
-		return -1;
-
-	dir = apol_file_find_user_config(".seaudit");
-	if (!dir) {
-		dir = apol_file_find("dot_seaudit");
-		if (!dir)
-			return -1;
-		else {
-			path = g_string_new(dir);
-			free(dir);
-			g_string_append(path, "/dot_seaudit");
-		}
-	} else {
-		path = g_string_new(dir);
-		free(dir);
-		g_string_append(path, "/.seaudit");
-	}
-	file = fopen(path->str, "r");
-	g_string_free(path, TRUE);
-	if (!file)
-		return -1;
-	value = apol_config_get_var("DEFAULT_LOG_FILE", file);
-	if (set_seaudit_conf_default_log(conf, value) != 0)
-		goto err;
-
-	if (value)
-		free(value);
-	value = apol_config_get_var("DEFAULT_POLICY_FILE", file);
-	if (set_seaudit_conf_default_policy(conf, value) != 0)
-		goto err;
-
-	if (value)
-		free(value);
-
-	value = apol_config_get_var("DEFAULT_REPORT_CONFIG_FILE", file);
-	if (set_seaudit_conf_file_path(&conf->default_seaudit_report_config_file, value) != 0)
-		goto err;
-
-	if (value)
-		free(value);
-
-	value = apol_config_get_var("DEFAULT_REPORT_CSS_FILE", file);
-	if (set_seaudit_conf_file_path(&conf->default_seaudit_report_css_file, value) != 0)
-		goto err;
-
-	if (value)
-		free(value);
-
-	list = apol_config_get_varlist("RECENT_LOG_FILES", file, &size);
-	if (list) {
-		for (i = 0; i < size; i++) {
-			if (add_path_to_recent_log_files(list[i], conf) != 0) {
-				/* Free the remaining paths that exist in the list */
-				for (j = i; j < size; j++)
-					free(list[j]);
-				free(list);
-				goto err;
-			}
-			free(list[i]);
-		}
-		free(list);
-	} else
-		conf->recent_log_files = NULL;
-
-	list = apol_config_get_varlist("RECENT_POLICY_FILES", file, &size);
-	if (list) {
-		for (i = 0; i < size; i++) {
-			if (add_path_to_recent_policy_files(list[i], conf) != 0) {
-				/* Free the remaining paths that exist in the list */
-				for (j = i; j < size; j++)
-					free(list[j]);
-				free(list);
-				goto err;
-			}
-			free(list[i]);
-		}
-		free(list);
-	} else
-		conf->recent_policy_files = NULL;
-
-	for (i = 0; i < NUM_FIELDS; i++)
-		conf->column_visibility[i] = TRUE;
-	list = apol_config_get_varlist("LOG_COLUMNS_HIDDEN", file, &size);
-	if (list) {
-		for (i = 0; i < size; i++) {
-			assert(list[i]);
-			index = audit_log_field_strs_get_index(list[i]);
-			if (index >= 0)
-				conf->column_visibility[index] = FALSE;
-			free(list[i]);
-		}
-		free(list);
-	}
-	value = apol_config_get_var("REAL_TIME_LOG_MONITORING", file);
-	if (!value)
-		conf->real_time_log = FALSE;
-	else {
-		conf->real_time_log = atoi(value);
-		free(value);
-	}
-	value = apol_config_get_var("REAL_TIME_LOG_UPDATE_INTERVAL", file);
-	if (!value)
-		conf->real_time_interval = DEFAULT_LOG_UPDATE_INTERVAL;
-	else {
-		conf->real_time_interval = atoi(value);
-		free(value);
-	}
-	fclose(file);
-
-	return 0;
-      err:
-	free_seaudit_conf(conf);
-	return -1;
-}
-
-int add_path_to_recent_log_files(const char *path, seaudit_conf_t * conf_file)
-{
-	int i;
-	char **ptr = NULL;
-
-	assert(path != NULL || conf_file != NULL);
-
-	/* make sure we don't add duplicates */
-	for (i = 0; i < conf_file->num_recent_log_files; i++)
-		if (strcmp(path, conf_file->recent_log_files[i]) == 0)
-			return 0;
-	if (conf_file->num_recent_log_files >= 5) {
-		free(conf_file->recent_log_files[0]);
-		for (i = 1; i < conf_file->num_recent_log_files; i++)
-			conf_file->recent_log_files[i - 1] = conf_file->recent_log_files[i];
-		conf_file->recent_log_files[conf_file->num_recent_log_files - 1] =
-			(char *)malloc(sizeof(char) * (strlen(path) + 1));
-		if (conf_file->recent_log_files[conf_file->num_recent_log_files - 1] == NULL) {
-			fprintf(stderr, "Out of memory.\n");
-			return -1;
-		}
-		strcpy(conf_file->recent_log_files[conf_file->num_recent_log_files - 1], path);
-	} else {
-		ptr = (char **)realloc(conf_file->recent_log_files, sizeof(char *) * (conf_file->num_recent_log_files + 1));
-		if (ptr == NULL) {
-			fprintf(stderr, "Out of memory.\n");
-			return -1;
-		}
-		conf_file->recent_log_files = ptr;
-		conf_file->num_recent_log_files++;
-		conf_file->recent_log_files[conf_file->num_recent_log_files - 1] =
-			(char *)malloc(sizeof(char) * (strlen(path) + 1));
-		if (conf_file->recent_log_files[conf_file->num_recent_log_files - 1] == NULL) {
-			fprintf(stderr, "Out of memory.\n");
-			return -1;
-		}
-		strcpy(conf_file->recent_log_files[conf_file->num_recent_log_files - 1], path);
-	}
-	return 0;
-}
-
-int add_path_to_recent_policy_files(const char *path, seaudit_conf_t * conf_file)
-{
-	int i;
-	char **ptr = NULL;
-
-	assert(path != NULL || conf_file != NULL);
-
-	/* make sure we don't add duplicates */
-	for (i = 0; i < conf_file->num_recent_policy_files; i++)
-		if (strcmp(path, conf_file->recent_policy_files[i]) == 0)
-			return 0;
-	if (conf_file->num_recent_policy_files >= 5) {
-		free(conf_file->recent_policy_files[0]);
-		for (i = 1; i < conf_file->num_recent_policy_files; i++)
-			conf_file->recent_policy_files[i - 1] = conf_file->recent_policy_files[i];
-		if (conf_file->recent_policy_files[conf_file->num_recent_policy_files - 1] == NULL) {
-			fprintf(stderr, "Out of memory.\n");
-			return -1;
-		}
-		strcpy(conf_file->recent_policy_files[conf_file->num_recent_policy_files - 1], path);
-	} else {
-		ptr = (char **)realloc(conf_file->recent_policy_files, sizeof(char *) * (conf_file->num_recent_policy_files + 1));
-		if (ptr == NULL) {
-			fprintf(stderr, "Out of memory.\n");
-			return -1;
-		}
-		conf_file->recent_policy_files = ptr;
-		conf_file->num_recent_policy_files++;
-		conf_file->recent_policy_files[conf_file->num_recent_policy_files - 1] =
-			(char *)malloc(sizeof(char) * (strlen(path) + 1));
-		if (conf_file->recent_policy_files[conf_file->num_recent_policy_files - 1] == NULL) {
-			fprintf(stderr, "Out of memory.\n");
-			return -1;
-		}
-		strcpy(conf_file->recent_policy_files[conf_file->num_recent_policy_files - 1], path);
-	}
-	return 0;
-}
-
-int save_seaudit_conf_file(seaudit_conf_t * conf)
-{
-	FILE *file;
-	int i, num_hiden = 0;
-	char *value = NULL, *home;
-	const char **hiden_columns = NULL;
-	GString *path;
-
-	/* we need to open ~/.seaudit */
-	home = getenv("HOME");
-	if (!home)
-		return -1;
-	path = g_string_new(home);
-	g_string_append(path, "/.seaudit");
-	file = fopen(path->str, "w");
-	g_string_free(path, TRUE);
-	if (!file)
-		return -1;
-
-	fprintf(file, "# configuration file for seaudit - an audit log tool for Security Enhanced Linux.\n");
-	fprintf(file, "# this file is auto-generated\n\n");
-
-	fprintf(file, "DEFAULT_LOG_FILE");
-	if (conf->default_log_file)
-		fprintf(file, " %s\n", conf->default_log_file);
-	else
-		fprintf(file, "\n");
-	fprintf(file, "DEFAULT_POLICY_FILE");
-	if (conf->default_policy_file)
-		fprintf(file, " %s\n", conf->default_policy_file);
-	else
-		fprintf(file, "\n");
-	fprintf(file, "DEFAULT_REPORT_CONFIG_FILE");
-	if (conf->default_seaudit_report_config_file)
-		fprintf(file, " %s\n", conf->default_seaudit_report_config_file);
-	else
-		fprintf(file, "\n");
-	fprintf(file, "DEFAULT_REPORT_CSS_FILE");
-	if (conf->default_seaudit_report_css_file)
-		fprintf(file, " %s\n", conf->default_seaudit_report_css_file);
-	else
-		fprintf(file, "\n");
-	fprintf(file, "RECENT_LOG_FILES");
-	value = apol_config_varlist_to_str((const char **)conf->recent_log_files, conf->num_recent_log_files);
-	if (value) {
-		fprintf(file, " %s\n", value);
-		free(value);
-	} else
-		fprintf(file, "\n");
-	fprintf(file, "RECENT_POLICY_FILES");
-	value = apol_config_varlist_to_str((const char **)conf->recent_policy_files, conf->num_recent_policy_files);
-	if (value) {
-		fprintf(file, " %s\n", value);
-		free(value);
-	} else
-		fprintf(file, "\n");
-	fprintf(file, "LOG_COLUMNS_HIDDEN");
-	for (i = 0; i < NUM_FIELDS; i++)
-		if (conf->column_visibility[i] == FALSE) {
-			num_hiden++;
-			hiden_columns = (const char **)realloc(hiden_columns, sizeof(char *) * num_hiden);
-			if (!hiden_columns) {
-				fprintf(stderr, "out of memory");
-				return -1;
-			}
-			/* we can do a shallow copy from the static strings array */
-			hiden_columns[num_hiden - 1] = audit_log_field_strs[i];
-		}
-	if (hiden_columns) {
-		value = apol_config_varlist_to_str(hiden_columns, num_hiden);
-		free(hiden_columns);
-		if (value) {
-			fprintf(file, " %s\n", value);
-			free(value);
-		} else {
-			fprintf(file, "\n");
-		}
-	}
-
-	fprintf(file, "\nREAL_TIME_LOG_MONITORING %d", conf->real_time_log);
-	fprintf(file, "\nREAL_TIME_LOG_UPDATE_INTERVAL %d\n", conf->real_time_interval);
-	fclose(file);
-	return 0;
-}
-
-void free_seaudit_conf(seaudit_conf_t * conf_file)
-{
-	int i;
-	if (conf_file->recent_log_files) {
-		for (i = 0; i < conf_file->num_recent_log_files; i++)
-			if (conf_file->recent_log_files[i])
-				free(conf_file->recent_log_files[i]);
-		free(conf_file->recent_log_files);
-	}
-	if (conf_file->recent_policy_files) {
-		for (i = 0; i < conf_file->num_recent_policy_files; i++)
-			if (conf_file->recent_policy_files[i])
-				free(conf_file->recent_policy_files[i]);
-		free(conf_file->recent_policy_files);
-	}
-	if (conf_file->default_log_file)
-		free(conf_file->default_log_file);
-	if (conf_file->default_policy_file)
-		free(conf_file->default_policy_file);
-	return;
-}
 
 void update_column_visibility(seaudit_filtered_view_t * view, gpointer user_data)
 {
@@ -766,3 +758,5 @@ void on_preferences_activate(GtkWidget * widget, GdkEvent * event, gpointer call
 	gtk_toggle_button_set_active(toggle, seaudit_app->seaudit_conf.column_visibility[HOST_FIELD]);
 	return;
 }
+
+#endif

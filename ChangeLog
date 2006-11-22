@@ -1,3 +1,13 @@
+2006-11-21  J. Tang  <jtang@tresys.com>
+
+	* deprecated apol_config_get_varlist() and
+	apol_config_varlist_to_str(); added apol_file_find_path(),
+	apol_config_split_var(), and apol_config_join_var()
+
+2006-11-09  j. Mowery <jmowery@tresys.com>
+
+        * added __cplusplus guards to all external headers
+
 2006-11-08  J. Tang  <jtang@tresys.com>
 
 	* apol_permmap_t is now a hidden declaration.
