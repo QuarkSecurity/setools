@@ -1,11 +1,91 @@
-/* Copyright (C) 2004-2006 Tresys Technology, LLC
- * see file 'COPYING' for use and warranty information */
-
-/*
- * Author: Kevin Carr <kcarr@tresys.com>
- * Date : January 22, 2004
+/**
+ *  @file message_view.c
+ *  Implementation of the view for a libseaudit model.
  *
+ *  @author Jeremy A. Mowery jmowery@tresys.com
+ *  @author Jason Tang jtang@tresys.com
+ *
+ *  Copyright (C) 2003-2007 Tresys Technology, LLC
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
+
+#include "message_view.h"
+
+#include <errno.h>
+#include <string.h>
+
+struct message_view
+{
+	seaudit_model_t *model;
+	toplevel_t *top;
+	GtkWidget *w;
+};
+
+message_view_t *message_view_create(toplevel_t * top, seaudit_model_t * model)
+{
+	message_view_t *view;
+
+	GtkWidget *tree_view;
+	GtkTreeSelection *selection;
+
+	if ((view = calloc(1, sizeof(*view))) == NULL) {
+		int error = errno;
+		toplevel_ERR(top, "%s", strerror(error));
+		message_view_destroy(&view);
+		errno = error;
+		return NULL;
+	}
+	view->model = model;
+	view->top = top;
+
+	view->w = gtk_scrolled_window_new(NULL, NULL);
+	tree_view = gtk_tree_view_new();
+	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
+	gtk_tree_selection_set_mode(selection, GTK_SELECTION_MULTIPLE);
+	gtk_container_add(GTK_CONTAINER(view->w), tree_view);
+	gtk_widget_show(tree_view);
+	gtk_widget_show(view->w);
+
+	/*
+	 * g_signal_connect(G_OBJECT(tree_view), "row_activated", G_CALLBACK(message_view_on_select), view);
+	 * g_signal_connect(G_OBJECT(tree_view), "button-press-event", G_CALLBACK(message_view_on_button_press), view);
+	 * g_signal_connect(G_OBJECT(tree_view), "popup-menu", G_CALLBACK(message_view_on_popup_menu), view);
+	 */
+	/*
+	 * seaudit_window_create_list(GTK_TREE_VIEW(tree_view), column_visibility);
+	 * view = seaudit_filtered_view_create(log, GTK_TREE_VIEW(tree_view), view_name);
+	 */
+	return view;
+}
+
+void message_view_destroy(message_view_t ** view)
+{
+	if (view != NULL && *view != NULL) {
+		seaudit_model_destroy(&(*view)->model);
+		free(*view);
+		*view = NULL;
+	}
+}
+
+GtkWidget *message_view_get_view(message_view_t * view)
+{
+	return view->w;
+}
+
+#if 0
 
 #include "filtered_view.h"
 #include "filter_window.h"
@@ -95,3 +175,5 @@ void seaudit_filtered_view_do_filter(seaudit_filtered_view_t * view, gpointer us
 		return;
 	multifilter_window_apply_multifilter(view->multifilter_window);
 }
+
+#endif

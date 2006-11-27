@@ -26,6 +26,7 @@
 #include <config.h>
 
 #include "seaudit.h"
+#include "toplevel.h"
 
 #include <apol/util.h>
 #include <seaudit/util.h>
@@ -34,6 +35,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <string.h>
+#include <glade/glade.h>
 #include <gtk/gtk.h>
 
 struct seaudit
@@ -41,6 +43,7 @@ struct seaudit
 	seaudit_prefs_t *prefs;
 	apol_policy_t *policy;
 	seaudit_log_t *log;
+	toplevel_t *top;
 };
 
 static struct option const opts[] = {
@@ -81,6 +84,7 @@ static void seaudit_destroy(seaudit_t ** s)
 		apol_policy_destroy(&(*s)->policy);
 		seaudit_log_destroy(&(*s)->log);
 		seaudit_prefs_destroy(&(*s)->prefs);
+		toplevel_destroy(&(*s)->top);
 		free(*s);
 		*s = NULL;
 	}
@@ -161,6 +165,8 @@ int main(int argc, char **argv)
 	seaudit_t *app;
 	char *log, *policy;
 
+	gtk_init(&argc, &argv);
+	glade_init();
 	if ((prefs = seaudit_prefs_create()) == NULL) {
 		ERR(NULL, "%s", strerror(ENOMEM));
 		exit(EXIT_FAILURE);
@@ -170,6 +176,11 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 	seaudit_parse_command_line(app, argc, argv, &log, &policy);
+	if ((app->top = toplevel_create(app)) == NULL) {
+		ERR(NULL, "%s", strerror(ENOMEM));
+		seaudit_destroy(&app);
+		exit(EXIT_FAILURE);
+	}
 	/* FIX ME: if log != NULL, load a log */
 	/* FIX ME: if policy != NULL, load a policy */
 	gtk_main();
@@ -1330,12 +1341,6 @@ void seaudit_on_ExportLog_activate(GtkWidget * widget, GdkEvent * event, gpointe
 void seaudit_on_export_selection_activated(void)
 {
 	seaudit_save_log_file(TRUE);
-}
-
-void seaudit_on_FileQuit_activate(GtkWidget * widget, gpointer user_data)
-{
-	seaudit_exit_app();
-	return;
 }
 
 /*

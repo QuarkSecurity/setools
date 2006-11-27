@@ -1,14 +1,30 @@
-/* Copyright (C) 2004-2006 Tresys Technology, LLC
- * see file 'COPYING' for use and warranty information */
-
-/*
- * Author: Kevin Carr <kcarr@tresys.com>
- * Date: December 31, 2003
+/**
+ *  @file utilgui.c
+ *  Miscellaneous helper functions for GTK+ applications.
+ *
+ *  @author Jeremy A. Mowery jmowery@tresys.com
+ *  @author Jason Tang jtang@tresys.com
+ *
+ *  Copyright (C) 2003-2007 Tresys Technology, LLC
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include "utilgui.h"
 
-void message_display(GtkWindow * parent, GtkMessageType msg_type, const char *msg)
+void util_message(GtkWindow * parent, GtkMessageType msg_type, const char *msg)
 {
 	GtkWidget *dialog;
 	dialog = gtk_message_dialog_new(parent, GTK_DIALOG_DESTROY_WITH_PARENT, msg_type, GTK_BUTTONS_CLOSE, msg);
@@ -16,6 +32,7 @@ void message_display(GtkWindow * parent, GtkMessageType msg_type, const char *ms
 	gtk_widget_destroy(dialog);
 }
 
+#if 0
 void get_dialog_response(GtkDialog * dialog, gint id, gpointer response)
 {
 	*((gint *) response) = id;
@@ -109,3 +126,5 @@ gint get_user_response_to_message(GtkWindow * window, const char *message)
 	gtk_widget_destroy(dialog);
 	return response;
 }
+
+#endif

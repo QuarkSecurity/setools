@@ -48,7 +48,7 @@ extern "C"
  * filter (i.e., accept all of the messages from the log).
  *
  * @param Name for the model; the string will be duplicated.  If NULL
- * then the model will be assigned a default name.
+ * then the model will be assigned a non-unique default name.
  * @param log Log to model.  If NULL then do not watch any log files.
  *
  * @return An initialized model, or NULL upon error.  The caller must
@@ -102,6 +102,27 @@ extern "C"
  * @see seaudit_model_create_from_file()
  */
 	extern int seaudit_model_save_to_file(seaudit_model_t * model, const char *filename);
+
+/**
+ * Get the name of this model.
+ *
+ * @param model Model whose name to get.
+ *
+ * @return Name of the model, or NULL upon error.  Do not modify this
+ * string.
+ */
+	extern char *seaudit_model_get_name(seaudit_model_t * model);
+
+/**
+ * Set the name of this model, overwriting any previous name.
+ *
+ * @param model Model whose name to set.
+ * @param name New name for the model; the string will be duplicated.
+ * If NULL then the model will be assigned a non-unique default name.
+ *
+ * @return 0 on success, < 0 on error.
+ */
+	extern int seaudit_model_set_name(seaudit_model_t * model, const char *name);
 
 /**
  * Have the given model start watching the given log file, in addition

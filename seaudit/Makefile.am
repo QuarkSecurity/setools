@@ -12,12 +12,6 @@ AM_LDFLAGS = @DEBUGLDFLAGS@ @WARNLDFLAGS@ @PROFILELDFLAGS@ \
 LDADD = @SELINUX_LIB_FLAG@ @SEAUDIT_LIB_FLAG@ @APOL_LIB_FLAG@ @QPOL_LIB_FLAG@
 
 dist_setools_DATA = \
-	customize_filter_window.glade \
-	filter_window.glade \
-	multifilter_window.glade \
-	prefer_window.glade \
-	query_window.glade \
-	report_window.glade \
 	seaudit.glade \
 	seaudit_help.txt \
 	seaudit-report.conf \
@@ -30,18 +24,18 @@ nodist_setools_DATA = \
 
 #seaudit_SOURCES = \
 #	auditlogmodel.c auditlogmodel.h \
-#	filtered_view.c filtered_view.h \
 #	filter_window.c filter_window.h \
 #	multifilter_window.c multifilter_window.h \
 #	query_window.c query_window.h \
 #	report_window.c report_window.h \
 #	seaudit_callback.c seaudit_callback.h \
-#	seaudit_window.c seaudit_window.h \
-#	utilgui.c utilgui.h
+#	seaudit_window.c seaudit_window.h
 
 seaudit_SOURCES = \
+	message_view.c message_view.h \
 	preferences.c preferences.h \
-	seaudit.c seaudit.h
+	seaudit.c seaudit.h \
+	toplevel.c toplevel.h
 
 seaudit_DEPENDENCIES = $(top_builddir)/libseaudit/src/libseaudit.so \
                        $(top_builddir)/libapol/src/libapol.so \

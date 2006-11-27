@@ -29,6 +29,8 @@
 #include <string.h>
 #include <libxml/uri.h>
 
+#define DEFAULT_MODEL_NAME "Untitled"
+
 struct seaudit_model
 {
 	char *name;
@@ -330,7 +332,7 @@ seaudit_model_t *seaudit_model_create(const char *name, seaudit_log_t * log)
 		return NULL;
 	}
 	if (name == NULL) {
-		name = "Untitled";
+		name = DEFAULT_MODEL_NAME;
 	}
 	if ((m->name = strdup(name)) == NULL ||
 	    (m->logs = apol_vector_create_with_capacity(1)) == NULL ||
@@ -505,6 +507,33 @@ int seaudit_model_save_to_file(seaudit_model_t * model, const char *filename)
 	}
 	fprintf(file, "</view>\n");
 	fclose(file);
+	return 0;
+}
+
+char *seaudit_model_get_name(seaudit_model_t * model)
+{
+	if (model == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return model->name;
+}
+
+int seaudit_model_set_name(seaudit_model_t * model, const char *name)
+{
+	char *s;
+	if (model == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+	if (name == NULL) {
+		name = DEFAULT_MODEL_NAME;
+	}
+	if ((s = strdup(name)) == NULL) {
+		return -1;
+	}
+	free(model->name);
+	model->name = s;
 	return 0;
 }
 

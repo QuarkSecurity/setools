@@ -602,6 +602,8 @@ int sort_comp(seaudit_sort_t * sort, const seaudit_message_t * a, const seaudit_
  * SEAUDIT_MSG_WARN, or SEAUDIT_MSG_INFO.
  * @param fmt Format string to print, using syntax of printf(3).
  */
+extern void seaudit_handle_msg(seaudit_log_t * log, int level, const char *fmt, ...);
+
 __attribute__ ((format(printf, 3, 4)))
 extern void seaudit_handle_msg(seaudit_log_t * log, int level, const char *fmt, ...);
 
