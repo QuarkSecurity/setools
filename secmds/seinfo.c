@@ -143,17 +143,16 @@ The default source policy, or if that is unavailable the default binary\n\
  */
 static int print_stats(FILE * fp, apol_policy_t * policydb)
 {
-	int retval = -1, mls;
-	unsigned int ver = 0, n_perms = 0;
+	int retval = -1;
+	unsigned int n_perms = 0;
 	qpol_iterator_t *iter = NULL;
 	apol_type_query_t *type_query = NULL;
 	apol_attr_query_t *attr_query = NULL;
 	apol_perm_query_t *perm_query = NULL;
 	apol_vector_t *perms = NULL, *v = NULL;
 	qpol_policy_t *q = apol_policy_get_qpol(policydb);
-	char *str = NULL, *ver_str = NULL;
-	size_t str_sz = 0, ver_str_sz = 16, n_types = 0, n_attrs = 0;
-	bool_t binary = FALSE;
+	char *str = NULL;
+	size_t n_types = 0, n_attrs = 0;
 	size_t n_classes = 0, n_users = 0, n_roles = 0, n_bools = 0, n_conds = 0, n_levels = 0,
 		n_cats = 0, n_portcons = 0, n_netifcons = 0, n_nodecons = 0, n_fsuses = 0,
 		n_genfscons = 0, n_allows = 0, n_neverallows = 0, n_auditallows = 0, n_dontaudits = 0,
@@ -164,33 +163,11 @@ static int print_stats(FILE * fp, apol_policy_t * policydb)
 
 	fprintf(fp, "\nStatistics for policy file: %s\n", policy_file);
 
-	if (qpol_policy_get_policy_version(q, &ver))
+	if (!(str = apol_policy_get_version_type_mls_str(policydb)))
 		goto cleanup;
-
-	apol_str_append(&str, &str_sz, "");
-	mls = qpol_policy_is_mls_enabled(q);
-	if (mls < 0)
-		goto cleanup;
-
-	apol_str_append(&str, &str_sz, "v.");
-
-	ver_str = malloc(sizeof(unsigned char) * ver_str_sz);
-	memset(ver_str, 0x0, ver_str_sz);
-	snprintf(ver_str, ver_str_sz, "%u", ver);
-
-	/* we can only handle binary policies at this point */
-	if (apol_policy_is_binary(policydb))
-		binary = TRUE;
-
-	apol_str_append(&str, &str_sz, ver_str);
-	apol_str_append(&str, &str_sz, " (");
-	apol_str_append(&str, &str_sz, binary ? "binary, " : "source, ");
-	apol_str_append(&str, &str_sz, mls ? "MLS" : "non-MLS");
-	apol_str_append(&str, &str_sz, ")");
 
 	fprintf(fp, "Policy Version & Type: ");
 	fprintf(fp, "%s\n", str);
-	free(ver_str);
 	free(str);
 
 	if (qpol_policy_get_class_iter(q, &iter))

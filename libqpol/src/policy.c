@@ -1373,6 +1373,9 @@ int qpol_module_set_enabled(qpol_module_t * module, int enabled)
 		return STATUS_ERR;
 	}
 
+	if (enabled != module->enabled && module->parent) {
+		module->parent->modified = 1;
+	}
 	module->enabled = enabled;
 
 	return STATUS_SUCCESS;
@@ -1400,6 +1403,7 @@ int qpol_policy_append_module(qpol_policy_t * policy, qpol_module_t * module)
 	policy->modules[policy->num_modules] = module;
 	policy->num_modules++;
 	policy->modified = 1;
+	module->parent = policy;
 
 	return STATUS_SUCCESS;
 }

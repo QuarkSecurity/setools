@@ -44,6 +44,7 @@ extern "C"
 
 /* forward declaration, full declaration in policy_extend.c */
 	struct qpol_extended_image;
+	struct qpol_policy;
 
 	struct qpol_module
 	{
@@ -53,6 +54,7 @@ extern "C"
 		int type;
 		struct sepol_policydb *p;
 		int enabled;
+		struct qpol_policy *parent;
 	};
 
 	struct qpol_policy

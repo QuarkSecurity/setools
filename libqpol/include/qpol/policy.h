@@ -121,7 +121,7 @@ extern "C"
 	extern int qpol_policy_get_type(qpol_policy_t * policy, int *type);
 /**
  *  Find the default policy file given a policy type. 
- *  @param serach_opt Search options bitmask, defined in this file
+ *  @param search_opt Search options bitmask, defined in this file
  *  @param policy_file_path Character buffer to store policy path in  
  *  @return Returns one of the return codes defined in this file
  */
@@ -213,7 +213,8 @@ extern "C"
 	extern int qpol_module_get_enabled(qpol_module_t * module, int *enabled);
 
 /**
- *  Enable or disable a module.
+ *  Enable or disable a module. Note that the caller must still
+ *  invoke qpol_policy_rebuild() to update the policy.
  *  @param module The module to enable or disable.
  *  @param enabled Non-zero to enable the module, zero to disable.
  *  @return 0 on success and < 0 on failure; if the call fails,
@@ -223,6 +224,8 @@ extern "C"
 
 /**
  *  Append a module to a policy. The policy now owns the module.
+ *  Note that the caller must still invoke qpol_policy_rebuild()
+ *  to update the policy.
  *  @param policy The policy to which to add the module.
  *  @param module The module to append. <b>The caller should not
  *  destroy this module if this function succeeds.</b>
@@ -235,7 +238,7 @@ extern "C"
 
 /**
  *  Rebuild the policy. Re-link all enabled modules with the base
- *  and then call expand. <b>This function sould be called after
+ *  and then call expand. <b>This function should be called after
  *  appending new modules or changing which modules are enabled.</b>
  *  @param policy The policy to rebuild <b>(Must be a modular policy).</b>
  *  This policy will be altered by this function.

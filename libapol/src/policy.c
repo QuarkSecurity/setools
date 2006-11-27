@@ -192,6 +192,9 @@ char *apol_policy_get_version_type_mls_str(apol_policy_t * p)
 	case QPOL_POLICY_KERNEL_BINARY:
 		policy_type = "binary";
 		break;
+	case QPOL_POLICY_MODULE_BINARY:
+		policy_type = "modular";
+		break;
 	default:
 		policy_type = "unknown";
 		break;
