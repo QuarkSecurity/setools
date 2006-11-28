@@ -31,15 +31,52 @@ struct message_view
 {
 	seaudit_model_t *model;
 	toplevel_t *top;
+	/** toplevel of the view, currently a scrolled_window */
 	GtkWidget *w;
+	/** actual GTK+ widget that displays the rows and columns of
+         * message data */
+	GtkWidget *tree;
+	GtkListStore *store;
 };
+
+typedef seaudit_sort_t *(*sort_generator_fn_t) (int direction);
+
+struct view_column_record
+{
+	preference_field_e id;
+	const char *name;
+	const char *sample_text;
+	sort_generator_fn_t sort;
+};
+
+static const struct view_column_record column_data[] = {
+	{HOST_FIELD, "Hostname", "Hostname", seaudit_sort_by_host},
+	{MESSAGE_FIELD, "Message", "Message", seaudit_sort_by_message_type},
+	{DATE_FIELD, "Date", "Jan 01 00:00:00", seaudit_sort_by_date},
+	{SUSER_FIELD, "Source\nUser", "Source", seaudit_sort_by_source_user},
+	{SROLE_FIELD, "Source\nRole", "Source", seaudit_sort_by_source_role},
+	{STYPE_FIELD, "Source\nType", "unlabeled_t", seaudit_sort_by_source_type},
+	{TUSER_FIELD, "Target\nUser", "Target", seaudit_sort_by_target_user},
+	{TROLE_FIELD, "Target\nRole", "Target", seaudit_sort_by_target_role},
+	{TTYPE_FIELD, "Target\nType", "unlabeled_t", seaudit_sort_by_target_type},
+	{OBJCLASS_FIELD, "Object\nClass", "Object", seaudit_sort_by_object_class},
+	{PERM_FIELD, "Permission", "Permission", seaudit_sort_by_permission},
+	{EXECUTABLE_FIELD, "Executable", "/usr/bin/cat", seaudit_sort_by_executable},
+	{COMMAND_FIELD, "Command", "/usr/bin/cat", seaudit_sort_by_command},
+	{PID_FIELD, "PID", "12345", seaudit_sort_by_pid},
+	{INODE_FIELD, "Inode", "123456", seaudit_sort_by_inode},
+	{PATH_FIELD, "Path", "/home/gburdell/foo", seaudit_sort_by_path},
+	{OTHER_FIELD, "Other", "Lorem ipsum dolor sit amet", NULL}
+};
+
+static const size_t num_columns = sizeof(column_data) / sizeof(column_data[0]);
 
 message_view_t *message_view_create(toplevel_t * top, seaudit_model_t * model)
 {
 	message_view_t *view;
-
-	GtkWidget *tree_view;
 	GtkTreeSelection *selection;
+	GtkCellRenderer *renderer;
+	size_t i;
 
 	if ((view = calloc(1, sizeof(*view))) == NULL) {
 		int error = errno;
@@ -50,24 +87,78 @@ message_view_t *message_view_create(toplevel_t * top, seaudit_model_t * model)
 	}
 	view->model = model;
 	view->top = top;
-
+	view->store = gtk_list_store_new(OTHER_FIELD + 1,
+					 /* hostname */
+					 G_TYPE_STRING,
+					 /* message */
+					 G_TYPE_STRING,
+					 /* date */
+					 G_TYPE_STRING,
+					 /* source user */
+					 G_TYPE_STRING,
+					 /* source role */
+					 G_TYPE_STRING,
+					 /* source type */
+					 G_TYPE_STRING,
+					 /* target user */
+					 G_TYPE_STRING,
+					 /* target role */
+					 G_TYPE_STRING,
+					 /* target type */
+					 G_TYPE_STRING,
+					 /* object class */
+					 G_TYPE_STRING,
+					 /* permission */
+					 G_TYPE_STRING,
+					 /* executable */
+					 G_TYPE_STRING,
+					 /* command */
+					 G_TYPE_STRING,
+					 /* pid */
+					 G_TYPE_UINT,
+					 /* inode */
+					 G_TYPE_ULONG,
+					 /* path */
+					 G_TYPE_STRING,
+					 /* other */
+					 G_TYPE_STRING);
 	view->w = gtk_scrolled_window_new(NULL, NULL);
-	tree_view = gtk_tree_view_new();
-	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
+	view->tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(view->store));
+	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view->tree));
 	gtk_tree_selection_set_mode(selection, GTK_SELECTION_MULTIPLE);
-	gtk_container_add(GTK_CONTAINER(view->w), tree_view);
-	gtk_widget_show(tree_view);
+	gtk_container_add(GTK_CONTAINER(view->w), view->tree);
+	gtk_widget_show(view->tree);
 	gtk_widget_show(view->w);
+
+	renderer = gtk_cell_renderer_text_new();
+	for (i = 0; i < num_columns; i++) {
+		struct view_column_record r = column_data[i];
+		PangoLayout *layout = gtk_widget_create_pango_layout(GTK_WIDGET(view->tree), r.sample_text);
+		gint width;
+		GtkTreeViewColumn *column;
+		pango_layout_get_pixel_size(layout, &width, NULL);
+		g_object_unref(G_OBJECT(layout));
+		width += 12;
+		column = gtk_tree_view_column_new_with_attributes(r.name, renderer, "text", r.id, NULL);
+		gtk_tree_view_column_set_clickable(column, TRUE);
+		gtk_tree_view_column_set_resizable(column, TRUE);
+		if (r.sort != NULL) {
+			gtk_tree_view_column_set_sort_column_id(column, r.id);
+			/* FIX ME
+			 * g_signal_connect_after(G_OBJECT(column), "clicked", G_CALLBACK(message_view_on_column_clicked), view);
+			 */
+		}
+		gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
+		gtk_tree_view_column_set_fixed_width(column, width);
+		gtk_tree_view_append_column(GTK_TREE_VIEW(view->tree), column);
+	}
 
 	/*
 	 * g_signal_connect(G_OBJECT(tree_view), "row_activated", G_CALLBACK(message_view_on_select), view);
 	 * g_signal_connect(G_OBJECT(tree_view), "button-press-event", G_CALLBACK(message_view_on_button_press), view);
 	 * g_signal_connect(G_OBJECT(tree_view), "popup-menu", G_CALLBACK(message_view_on_popup_menu), view);
 	 */
-	/*
-	 * seaudit_window_create_list(GTK_TREE_VIEW(tree_view), column_visibility);
-	 * view = seaudit_filtered_view_create(log, GTK_TREE_VIEW(tree_view), view_name);
-	 */
+	message_view_update_visible_columns(view);
 	return view;
 }
 
@@ -85,52 +176,47 @@ GtkWidget *message_view_get_view(message_view_t * view)
 	return view->w;
 }
 
+/**
+ * Given the name of a column, return its column record data.
+ */
+static const struct view_column_record *get_record(const char *name)
+{
+	size_t i;
+	for (i = 0; i < num_columns; i++) {
+		const struct view_column_record *r = column_data + i;
+		if (strcmp(r->name, name) == 0) {
+			return r;
+		}
+	}
+	return NULL;
+}
+
+void message_view_update_visible_columns(message_view_t * view)
+{
+	GList *columns, *c;
+	preferences_t *prefs = toplevel_get_prefs(view->top);
+	columns = gtk_tree_view_get_columns(GTK_TREE_VIEW(view->tree));
+	c = columns;
+	while (c != NULL) {
+		GtkTreeViewColumn *vc = GTK_TREE_VIEW_COLUMN(c->data);
+		const gchar *title = gtk_tree_view_column_get_title(vc);
+		const struct view_column_record *r = get_record(title);
+		if (preferences_is_column_visible(prefs, r->id)) {
+			gtk_tree_view_column_set_visible(vc, TRUE);
+		} else {
+			gtk_tree_view_column_set_visible(vc, FALSE);
+		}
+		c = g_list_next(c);
+	}
+	g_list_free(columns);
+}
+
 #if 0
 
 #include "filtered_view.h"
 #include "filter_window.h"
 #include "utilgui.h"
 #include <string.h>
-
-seaudit_filtered_view_t *seaudit_filtered_view_create(audit_log_t * log, GtkTreeView * tree_view, const char *view_name)
-{
-	seaudit_filtered_view_t *filtered_view;
-
-	if (tree_view == NULL)
-		return NULL;
-
-	filtered_view = (seaudit_filtered_view_t *) malloc(sizeof(seaudit_filtered_view_t));
-	if (filtered_view == NULL) {
-		fprintf(stderr, "out of memory");
-		return NULL;
-	}
-	memset(filtered_view, 0, sizeof(seaudit_filtered_view_t));
-	if ((filtered_view->multifilter_window = multifilter_window_create(filtered_view, view_name)) == NULL) {
-		fprintf(stderr, "out of memory");
-		free(filtered_view);
-		return NULL;
-	}
-	if ((filtered_view->store = seaudit_log_view_store_create()) == NULL) {
-		fprintf(stderr, "out of memory");
-		free(filtered_view->multifilter_window);
-		free(filtered_view);
-		return NULL;
-	}
-	filtered_view->notebook_index = -1;
-	filtered_view->tree_view = tree_view;
-	filtered_view->name = g_string_new(view_name);
-	seaudit_log_view_store_open_log(filtered_view->store, log);
-	gtk_tree_view_set_model(tree_view, GTK_TREE_MODEL(filtered_view->store));
-
-	return filtered_view;
-}
-
-void seaudit_filtered_view_destroy(seaudit_filtered_view_t * view)
-{
-	multifilter_window_destroy(view->multifilter_window);
-	seaudit_log_view_store_close_log(view->store);
-	g_string_free(view->name, TRUE);
-}
 
 void seaudit_filtered_view_display(seaudit_filtered_view_t * filtered_view, GtkWindow * parent)
 {

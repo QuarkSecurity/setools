@@ -26,7 +26,17 @@
 #ifndef PREFERENCES_H
 #define PREFERENCES_H
 
-typedef struct seaudit_prefs seaudit_prefs_t;
+typedef struct preferences preferences_t;
+
+typedef enum preference_field
+{
+	HOST_FIELD, MESSAGE_FIELD, DATE_FIELD,
+	SUSER_FIELD, SROLE_FIELD, STYPE_FIELD,
+	TUSER_FIELD, TROLE_FIELD, TTYPE_FIELD,
+	OBJCLASS_FIELD, PERM_FIELD,
+	EXECUTABLE_FIELD, COMMAND_FIELD,
+	PID_FIELD, INODE_FIELD, PATH_FIELD, OTHER_FIELD
+} preference_field_e;
 
 /**
  * Allocate and return a preferences object.  This function will first
@@ -35,9 +45,9 @@ typedef struct seaudit_prefs seaudit_prefs_t;
  * It is not an error if both files are not available.
  *
  * @return An initialized preferences object, or NULL upon error.  The
- * caller must call seaudit_prefs_destroy() afterwards.
+ * caller must call preferences_destroy() afterwards.
  */
-seaudit_prefs_t *seaudit_prefs_create(void);
+preferences_t *preferences_create(void);
 
 /**
  * Destroy a preferences object, and all memory associated with it.
@@ -46,103 +56,126 @@ seaudit_prefs_t *seaudit_prefs_create(void);
  * @param prefs Reference to a preferences object to destroy.  This
  * will be set to NULL afterwards.
  */
-void seaudit_prefs_destroy(seaudit_prefs_t ** prefs);
+void preferences_destroy(preferences_t ** prefs);
 
 /**
  * Write the preferences object to the user's configuration file,
  * overwriting any existing file.
  *
- * @param prefs Preferences object to write.
+ * @param prefs Preference object to write.
  *
  * @return 0 if successfully written, < 0 upon error.
  */
-int seaudit_prefs_write_to_conf_file(seaudit_prefs_t * prefs);
+int preferences_write_to_conf_file(preferences_t * prefs);
+
+/**
+ * Return the visibility of the column with the given preference id.
+ *
+ * @param prefs Preference object to query.
+ * @param id Preferences column identifier.
+ *
+ * @return Non-zero if the column is set to be visible, zero if not.
+ */
+int preferences_is_column_visible(preferences_t * prefs, preference_field_e id);
+
+/**
+ * Set the visibility of a column with the given preference id.  Note
+ * that this will <b>not</b> update any message_view_t.
+ *
+ * @param prefs Preference object to query.
+ * @param id Preferences column identifier.
+ * @param visible If non-zero then set column visible, zero to hide.
+ *
+ * @see message_view_update_visible_columns needs to be called if
+ * column visibilities are changed.
+ */
+void preferences_set_column_visible(preferences_t * prefs, preference_field_e id, int visible);
 
 /**
  * Set the filename for the preferred audit log file.  Unless
  * overridden by the command line, this log file will be opened when
  * seaudit is launched.
  *
- * @param prefs Preferences object to modify.
+ * @param prefs Preference object to modify.
  * @param log Path to the log file.  The string will be duplicated.
  *
  * @return 0 on success, < 0 on error.
  */
-int seaudit_prefs_set_log(seaudit_prefs_t * prefs, const char *log);
+int preferences_set_log(preferences_t * prefs, const char *log);
 
 /**
  * Get the filename for the preferred log file from the preferences
  * object.
  *
- * @param prefs Preferences object to query.
+ * @param prefs Preference object to query.
  *
  * @return Filename for the log file, or NULL if none set.  Do not
  * modify this string.
  */
-char *seaudit_prefs_get_log(seaudit_prefs_t * prefs);
+char *preferences_get_log(preferences_t * prefs);
 
 /**
  * Set the filename for the preferred policy.  Unless overridden by the
  * command line, this policy will be opened when seaudit is launched.
  *
- * @param prefs Preferences object to modify.
+ * @param prefs Preference object to modify.
  * @param policy Path to the policy file.  The string will be
  * duplicated.
  *
  * @return 0 on success, < 0 on error.
  */
-int seaudit_prefs_set_policy(seaudit_prefs_t * prefs, const char *policy);
+int preferences_set_policy(preferences_t * prefs, const char *policy);
 
 /**
  * Get the filename for the preferred policy from the preferences object.
  *
- * @param prefs Preferences object to query.
+ * @param prefs Preference object to query.
  *
  * @return Filename for the policy, or NULL if none set.  Do not
  * modify this string.
  */
-char *seaudit_prefs_get_policy(seaudit_prefs_t * prefs);
+char *preferences_get_policy(preferences_t * prefs);
 
 /**
  * Set the default report filename.
  *
- * @param prefs Preferences object to modify.
+ * @param prefs Preference object to modify.
  * @param report Path to the report.  The string will be duplicated.
  *
  * @return 0 on success, < 0 on error.
  */
-int seaudit_prefs_set_report(seaudit_prefs_t * prefs, const char *report);
+int preferences_set_report(preferences_t * prefs, const char *report);
 
 /**
  * Get the default report filename.
  *
- * @param prefs Preferences object to query.
+ * @param prefs Preference object to query.
  *
  * @return Filename for the report, or NULL if none set.  Do not
  * modify this string.
  */
-char *seaudit_prefs_get_report(seaudit_prefs_t * prefs);
+char *preferences_get_report(preferences_t * prefs);
 
 /**
  * Set the default stylesheet filename.
  *
- * @param prefs Preferences object to modify.
+ * @param prefs Preference object to modify.
  * @param stylesheet Path to the stylesheet.  The string will be
  * duplicated.
  *
  * @return 0 on success, < 0 on error.
  */
-int seaudit_prefs_set_stylesheet(seaudit_prefs_t * prefs, const char *stylesheet);
+int preferences_set_stylesheet(preferences_t * prefs, const char *stylesheet);
 
 /**
  * Get the default stylesheet filename.
  *
- * @param prefs Preferences object to query.
+ * @param prefs Preference object to query.
  *
  * @return Filename for the stylesheet, or NULL if none set.  Do not
  * modify this string.
  */
-char *seaudit_prefs_get_stylesheet(seaudit_prefs_t * prefs);
+char *preferences_get_stylesheet(preferences_t * prefs);
 
 /**
  * Add a filename to the recently opened log files list.  If the name
@@ -150,13 +183,13 @@ char *seaudit_prefs_get_stylesheet(seaudit_prefs_t * prefs);
  * to the end of the list.  If the list grows too large then remove
  * the oldest entry.
  *
- * @param prefs Preferences object to modify.
+ * @param prefs Preference object to modify.
  * @param log Path to the most recently opened log.  The string will
  * be duplicated.
  *
  * @return 0 on success, < 0 on error.
  */
-int seaudit_prefs_add_recent_log(seaudit_prefs_t * prefs, const char *log);
+int preferences_add_recent_log(preferences_t * prefs, const char *log);
 
 /**
  * Add a filename to the recently opened policy files list.  If the
@@ -164,21 +197,12 @@ int seaudit_prefs_add_recent_log(seaudit_prefs_t * prefs, const char *log);
  * name to the end of the list.  If the list grows too large then
  * remove the oldest entry.
  *
- * @param prefs Preferences object to modify.
+ * @param prefs Preference object to modify.
  * @param policy Path to the most recently opened policy.  The string
  * will be duplicated.
  *
  * @return 0 on success, < 0 on error.
  */
-int seaudit_prefs_add_recent_policy(seaudit_prefs_t * prefs, const char *policy);
-
-#if 0
-
-int save_seaudit_conf_file(seaudit_conf_t * conf_file);
-
-/* load the preferences window */
-void on_preferences_activate(GtkWidget * widget, GdkEvent * event, gpointer callback_data);
-
-#endif
+int preferences_add_recent_policy(preferences_t * prefs, const char *policy);
 
 #endif

@@ -38,7 +38,7 @@ typedef struct seaudit seaudit_t;
  *
  * @return Pointer to a preferences object.  Do not free() this pointer.
  */
-seaudit_prefs_t *seaudit_get_prefs(seaudit_t * s);
+preferences_t *seaudit_get_prefs(seaudit_t * s);
 
 /**
  * Retrieve the currently loaded policy.

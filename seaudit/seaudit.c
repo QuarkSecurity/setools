@@ -40,7 +40,7 @@
 
 struct seaudit
 {
-	seaudit_prefs_t *prefs;
+	preferences_t *prefs;
 	apol_policy_t *policy;
 	seaudit_log_t *log;
 	toplevel_t *top;
@@ -54,7 +54,7 @@ static struct option const opts[] = {
 	{NULL, 0, NULL, 0}
 };
 
-seaudit_prefs_t *seaudit_get_prefs(seaudit_t * s)
+preferences_t *seaudit_get_prefs(seaudit_t * s)
 {
 	return s->prefs;
 }
@@ -69,7 +69,7 @@ seaudit_log_t *seaudit_get_log(seaudit_t * s)
 	return s->log;
 }
 
-static seaudit_t *seaudit_create(seaudit_prefs_t * prefs)
+static seaudit_t *seaudit_create(preferences_t * prefs)
 {
 	seaudit_t *s = calloc(1, sizeof(*s));
 	if (s != NULL) {
@@ -83,7 +83,7 @@ static void seaudit_destroy(seaudit_t ** s)
 	if (s != NULL && *s != NULL) {
 		apol_policy_destroy(&(*s)->policy);
 		seaudit_log_destroy(&(*s)->log);
-		seaudit_prefs_destroy(&(*s)->prefs);
+		preferences_destroy(&(*s)->prefs);
 		toplevel_destroy(&(*s)->top);
 		free(*s);
 		*s = NULL;
@@ -152,22 +152,22 @@ static void seaudit_parse_command_line(seaudit_t * seaudit, int argc, char **arg
 		exit(EXIT_FAILURE);
 	}
 	if (*log == NULL) {
-		*log = seaudit_prefs_get_log(seaudit->prefs);
+		*log = preferences_get_log(seaudit->prefs);
 	}
 	if (*policy == NULL) {
-		*policy = seaudit_prefs_get_policy(seaudit->prefs);
+		*policy = preferences_get_policy(seaudit->prefs);
 	}
 }
 
 int main(int argc, char **argv)
 {
-	seaudit_prefs_t *prefs;
+	preferences_t *prefs;
 	seaudit_t *app;
 	char *log, *policy;
 
 	gtk_init(&argc, &argv);
 	glade_init();
-	if ((prefs = seaudit_prefs_create()) == NULL) {
+	if ((prefs = preferences_create()) == NULL) {
 		ERR(NULL, "%s", strerror(ENOMEM));
 		exit(EXIT_FAILURE);
 	}
@@ -184,7 +184,7 @@ int main(int argc, char **argv)
 	/* FIX ME: if log != NULL, load a log */
 	/* FIX ME: if policy != NULL, load a policy */
 	gtk_main();
-	if (seaudit_prefs_write_to_conf_file(app->prefs) < 0) {
+	if (preferences_write_to_conf_file(app->prefs) < 0) {
 		ERR(NULL, "%s", strerror(ENOMEM));
 	}
 	seaudit_destroy(&app);
@@ -222,47 +222,6 @@ static void seaudit_policy_file_open_from_recent_menu(GtkWidget * widget, gpoint
 static void seaudit_log_file_open_from_recent_menu(GtkWidget * widget, gpointer user_data);
 static gboolean seaudit_real_time_update_log(gpointer callback_data);
 static void seaudit_exit_app(void);
-
-static void init_icons(GtkWindow * main_window)
-{
-	const char *icon_names[] = { "seaudit-small.png", "seaudit.png" };
-	GdkPixbuf *icon;
-	char *dir, *path;
-	GList *icon_list = NULL;
-	size_t i;
-	int rt;
-	for (i = 0; i < sizeof(icon_names) / sizeof(icon_names[0]); i++) {
-		if ((dir = apol_file_find(icon_names[i])) == NULL) {
-			continue;
-		}
-		rt = asprintf(&path, "%s/%s", dir, icon_names[i]);
-		free(dir);
-		if (rt < 0) {
-			continue;
-		}
-		icon = gdk_pixbuf_new_from_file(path, NULL);
-		free(path);
-		if (icon == NULL) {
-			continue;
-		}
-		icon_list = g_list_append(icon_list, icon);
-	}
-	gtk_window_set_default_icon_list(icon_list);
-	gtk_window_set_icon_list(main_window, icon_list);
-}
-
-/* seaudit object */
-seaudit_t *seaudit_init(void)
-{
-	seaudit->window = seaudit_window_create(NULL, seaudit->seaudit_conf.column_visibility);
-	if (seaudit->window == NULL) {
-		free(seaudit);
-		return NULL;
-	}
-	init_icons(seaudit->window->window);
-
-	return seaudit;
-}
 
 void seaudit_destroy(seaudit_t * seaudit_ap)
 {
@@ -720,152 +679,6 @@ int seaudit_write_log_file(const audit_log_view_t * log_view, const char *filena
 	return 0;
 }
 
-void generate_message_header(char *message_header, audit_log_t * audit_log, struct tm *date_stamp, char *host)
-{
-	assert(message_header != NULL && audit_log != NULL && date_stamp != NULL);
-
-	strftime(message_header, TIME_SIZE, "%b %d %T", date_stamp);
-	strcat(message_header, " ");
-	strcat(message_header, host);
-	strcat(message_header, " kernel: ");
-
-	return;
-}
-
-void write_avc_message_to_file(FILE * log_file, const avc_msg_t * message, const char *message_header, audit_log_t * audit_log)
-{
-	int i;
-
-	assert(log_file != NULL && message != NULL && message_header != NULL && audit_log != NULL);
-
-	fprintf(log_file, "%s", message_header);
-	if (!(message->tm_stmp_sec == 0 && message->tm_stmp_nano == 0 && message->serial == 0))
-		fprintf(log_file, "audit(%lu.%03lu:%u): ", message->tm_stmp_sec, message->tm_stmp_nano, message->serial);
-
-	fprintf(log_file, "avc:  %s  {", ((message->msg == AVC_GRANTED) ? "granted" : "denied"));
-
-	for (i = 0; i < apol_vector_get_size(message->perms); i++)
-		fprintf(log_file, " %s", (char *)apol_vector_get_element(message->perms, i));
-
-	fprintf(log_file, " } for ");
-
-	if (message->is_pid)
-		fprintf(log_file, " pid=%i", message->pid);
-
-	if (message->exe)
-		fprintf(log_file, " exe=%s", message->exe);
-
-	if (message->comm)
-		fprintf(log_file, " comm=%s", message->comm);
-
-	if (message->path)
-		fprintf(log_file, " path=%s", message->path);
-
-	if (message->name)
-		fprintf(log_file, " name=%s", message->name);
-
-	if (message->dev)
-		fprintf(log_file, " dev=%s", message->dev);
-
-	if (message->is_inode)
-		fprintf(log_file, " ino=%li", message->inode);
-
-	if (message->ipaddr)
-		fprintf(log_file, " ipaddr=%s", message->ipaddr);
-
-	if (message->saddr)
-		fprintf(log_file, " saddr=%s", message->saddr);
-
-	if (message->source != 0)
-		fprintf(log_file, " src=%i", message->source);
-
-	if (message->daddr)
-		fprintf(log_file, " daddr=%s", message->daddr);
-
-	if (message->dest != 0)
-		fprintf(log_file, " dest=%i", message->dest);
-
-	if (message->netif)
-		fprintf(log_file, " netif=%s", message->netif);
-
-	if (message->laddr)
-		fprintf(log_file, " laddr=%s", message->laddr);
-
-	if (message->lport != 0)
-		fprintf(log_file, " lport=%i", message->lport);
-
-	if (message->faddr)
-		fprintf(log_file, " faddr=%s", message->faddr);
-
-	if (message->fport != 0)
-		fprintf(log_file, " fport=%i", message->fport);
-
-	if (message->port != 0)
-		fprintf(log_file, " port=%i", message->port);
-
-	if (message->is_src_sid)
-		fprintf(log_file, " ssid=%i", message->src_sid);
-
-	if (message->is_tgt_sid)
-		fprintf(log_file, " tsid=%i", message->tgt_sid);
-
-	if (message->is_capability)
-		fprintf(log_file, " capability=%i", message->capability);
-
-	if (message->is_key)
-		fprintf(log_file, " key=%i", message->key);
-
-	if (message->is_src_con)
-		fprintf(log_file, " scontext=%s:%s:%s",
-			audit_log_get_user(audit_log, message->src_user),
-			audit_log_get_role(audit_log, message->src_role), audit_log_get_type(audit_log, message->src_type));
-
-	if (message->is_tgt_con)
-		fprintf(log_file, " tcontext=%s:%s:%s",
-			audit_log_get_user(audit_log, message->tgt_user),
-			audit_log_get_role(audit_log, message->tgt_role), audit_log_get_type(audit_log, message->tgt_type));
-
-	if (message->is_obj_class)
-		fprintf(log_file, " tclass=%s", audit_log_get_obj(audit_log, message->obj_class));
-
-	fprintf(log_file, "\n");
-
-	return;
-}
-
-void write_load_policy_message_to_file(FILE * log_file, const load_policy_msg_t * message, const char *message_header)
-{
-
-	assert(log_file != NULL && message != NULL && message_header != NULL);
-
-	fprintf(log_file, "%ssecurity:  %i users, %i roles, %i types, %i bools\n", message_header, message->users, message->roles,
-		message->types, message->bools);
-	fprintf(log_file, "%ssecurity:  %i classes, %i rules\n", message_header, message->classes, message->rules);
-
-	return;
-}
-
-void write_boolean_message_to_file(FILE * log_file, const boolean_msg_t * message, const char *message_header,
-				   audit_log_t * audit_log)
-{
-	int i;
-
-	assert(log_file != NULL && message != NULL && message_header != NULL && audit_log != NULL);
-
-	fprintf(log_file, "%ssecurity: committed booleans { ", message_header);
-
-	for (i = 0; i < message->num_bools; i++) {
-		fprintf(log_file, "%s:%i", audit_log_get_bool(audit_log, message->booleans[i]), message->values[i]);
-
-		if ((i + 1) < message->num_bools)
-			fprintf(log_file, ", ");
-	}
-
-	fprintf(log_file, " }\n");
-
-	return;
-}
-
 static void
 write_avc_message_to_gtk_text_buf(GtkTextBuffer * buffer, const avc_msg_t * message, const char *message_header,
 				  audit_log_t * audit_log)
@@ -1135,15 +948,6 @@ int main(int argc, char **argv)
 }
 
 /*
- * glade autoconnected callbacks for main window
- *
- */
-void seaudit_on_TopWindow_destroy(GtkWidget * widget)
-{
-	gtk_main_quit();
-}
-
-/*
  * glade autoconnected callbacks for menus
  *
  */
@@ -1341,63 +1145,6 @@ void seaudit_on_ExportLog_activate(GtkWidget * widget, GdkEvent * event, gpointe
 void seaudit_on_export_selection_activated(void)
 {
 	seaudit_save_log_file(TRUE);
-}
-
-/*
- * glade autoconnected callbacks for Help menu
- */
-void seaudit_on_about_seaudit_activate(GtkWidget * widget, GdkEvent * event, gpointer callback_data)
-{
-	gtk_show_about_dialog(seaudit_app->window->window,
-			      "comments", "Audit Log Analysis Tool for Security Enhanced Linux",
-			      "copyright", COPYRIGHT_INFO,
-			      "name", "seaudit", "version", VERSION, "website", "http://oss.tresys.com/projects/setools", NULL);
-}
-
-void seaudit_on_help_activate(GtkWidget * widget, GdkEvent * event, gpointer callback_data)
-{
-	GtkWidget *window;
-	GtkWidget *scroll;
-	GtkWidget *text_view;
-	GtkTextBuffer *buffer;
-	GString *string;
-	char *help_text = NULL;
-	size_t len;
-	int rt;
-	char *dir;
-
-	window = gtk_dialog_new_with_buttons("seaudit Help",
-					     GTK_WINDOW(seaudit_app->window->window),
-					     GTK_DIALOG_DESTROY_WITH_PARENT, GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE, NULL);
-	gtk_dialog_set_default_response(GTK_DIALOG(window), GTK_RESPONSE_CLOSE);
-	g_signal_connect_swapped(window, "response", G_CALLBACK(gtk_widget_destroy), window);
-	scroll = gtk_scrolled_window_new(NULL, NULL);
-	text_view = gtk_text_view_new();
-	gtk_window_set_default_size(GTK_WINDOW(window), 520, 300);
-	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(window)->vbox), scroll);
-	gtk_container_add(GTK_CONTAINER(scroll), text_view);
-	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text_view), GTK_WRAP_NONE);
-	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
-	dir = apol_file_find("seaudit_help.txt");
-	if (!dir) {
-		message_display(seaudit_app->window->window, GTK_MESSAGE_ERROR, "Cannot find help file.");
-		return;
-	}
-	string = g_string_new(dir);
-	free(dir);
-	g_string_append(string, "/seaudit_help.txt");
-	rt = apol_file_read_to_buffer(string->str, &help_text, &len);
-	g_string_free(string, TRUE);
-	if (rt != 0) {
-		free(help_text);
-		return;
-	}
-	gtk_text_buffer_set_text(buffer, help_text, len);
-	gtk_text_view_set_editable(GTK_TEXT_VIEW(text_view), FALSE);
-	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER_ON_PARENT);
-	gtk_widget_show(text_view);
-	gtk_widget_show(scroll);
-	gtk_dialog_run(GTK_DIALOG(window));
 }
 
 /*

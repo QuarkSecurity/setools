@@ -34,6 +34,7 @@ nodist_setools_DATA = \
 seaudit_SOURCES = \
 	message_view.c message_view.h \
 	preferences.c preferences.h \
+	preferences_view.c preferences_view.h \
 	seaudit.c seaudit.h \
 	toplevel.c toplevel.h
 
