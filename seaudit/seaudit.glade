@@ -2,7 +2,6 @@
 <!DOCTYPE glade-interface SYSTEM "http://glade.gnome.org/glade-2.0.dtd">
 
 <glade-interface>
-<requires lib="gnome"/>
 
 <widget class="GtkWindow" id="CreateFilterWindow">
   <property name="can_default">True</property>
@@ -4120,7 +4119,7 @@ Dec</property>
 		  </child>
 
 		  <child>
-		    <widget class="GtkEntry" id="DefaultPolicyEntry">
+		    <widget class="GtkEntry" id="PrefsViewPolicyEntry">
 		      <property name="visible">True</property>
 		      <property name="can_focus">True</property>
 		      <property name="editable">True</property>
@@ -4305,7 +4304,7 @@ Dec</property>
 		  </child>
 
 		  <child>
-		    <widget class="GtkEntry" id="DefaultLogEntry">
+		    <widget class="GtkEntry" id="PrefsViewLogEntry">
 		      <property name="visible">True</property>
 		      <property name="can_focus">True</property>
 		      <property name="editable">True</property>
@@ -4384,7 +4383,7 @@ Style Sheet</property>
 		  </child>
 
 		  <child>
-		    <widget class="GtkEntry" id="ReportConfigEntry">
+		    <widget class="GtkEntry" id="PrefsViewConfigEntry">
 		      <property name="visible">True</property>
 		      <property name="can_focus">True</property>
 		      <property name="editable">True</property>
@@ -4405,7 +4404,7 @@ Style Sheet</property>
 		  </child>
 
 		  <child>
-		    <widget class="GtkEntry" id="ReportStylesheetEntry">
+		    <widget class="GtkEntry" id="PrefsViewStylesheetEntry">
 		      <property name="visible">True</property>
 		      <property name="can_focus">True</property>
 		      <property name="editable">True</property>
@@ -4426,7 +4425,7 @@ Style Sheet</property>
 		  </child>
 
 		  <child>
-		    <widget class="GtkButton" id="PrefsViewReportConfBrowseButton">
+		    <widget class="GtkButton" id="PrefsViewConfigBrowseButton">
 		      <property name="visible">True</property>
 		      <property name="can_focus">True</property>
 		      <property name="relief">GTK_RELIEF_NORMAL</property>
@@ -5110,7 +5109,7 @@ Style Sheet</property>
 		      </child>
 
 		      <child>
-			<widget class="GtkEntry" id="interval_lbl">
+			<widget class="GtkEntry" id="PrefsViewIntervalEntry">
 			  <property name="width_request">53</property>
 			  <property name="visible">True</property>
 			  <property name="tooltip" translatable="yes">Time interval for updating the log in real-time mode</property>

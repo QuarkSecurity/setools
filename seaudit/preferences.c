@@ -104,6 +104,10 @@ preferences_t *preferences_create(void)
 	int error = 0;
 
 	if ((prefs = calloc(1, sizeof(*prefs))) == NULL ||
+	    (prefs->log = strdup("")) == NULL ||
+	    (prefs->policy = strdup("")) == NULL ||
+	    (prefs->report = strdup("")) == NULL ||
+	    (prefs->stylesheet = strdup("")) == NULL ||
 	    (prefs->recent_log_files = apol_vector_create()) == NULL ||
 	    (prefs->recent_policy_files = apol_vector_create()) == NULL ||
 	    (prefs->fields = calloc(num_visible_fields, sizeof(struct visible_field))) == NULL) {
@@ -122,10 +126,18 @@ preferences_t *preferences_create(void)
 		error = errno;
 		goto cleanup;
 	}
-	prefs->log = apol_config_get_var("DEFAULT_LOG_FILE", file);
-	prefs->policy = apol_config_get_var("DEFAULT_POLICY_FILE", file);
-	prefs->report = apol_config_get_var("DEFAULT_REPORT_CONFIG_FILE", file);
-	prefs->stylesheet = apol_config_get_var("DEFAULT_REPORT_CSS_FILE", file);
+	if ((value = apol_config_get_var("DEFAULT_LOG_FILE", file)) != NULL) {
+		prefs->log = value;
+	}
+	if ((value = apol_config_get_var("DEFAULT_POLICY_FILE", file)) != NULL) {
+		prefs->policy = value;
+	}
+	if ((value = apol_config_get_var("DEFAULT_REPORT_CONFIG_FILE", file)) != NULL) {
+		prefs->report = value;
+	}
+	if ((value = apol_config_get_var("DEFAULT_REPORT_CSS_FILE", file)) != NULL) {
+		prefs->stylesheet = value;
+	}
 	if ((v = apol_config_split_var("RECENT_LOG_FILES", file)) == NULL) {
 		error = errno;
 		goto cleanup;
@@ -221,16 +233,16 @@ int preferences_write_to_conf_file(preferences_t * prefs)
 	fprintf(file, "# configuration file for seaudit - an audit log tool for Security Enhanced Linux.\n");
 	fprintf(file, "# this file is auto-generated\n\n");
 
-	if (prefs->log != NULL) {
+	if (strcmp(prefs->log, "") != 0) {
 		fprintf(file, "DEFAULT_LOG_FILE %s\n", prefs->log);
 	}
-	if (prefs->policy != NULL) {
+	if (strcmp(prefs->policy, "") != 0) {
 		fprintf(file, "DEFAULT_POLICY_FILE %s\n", prefs->policy);
 	}
-	if (prefs->report != NULL) {
+	if (strcmp(prefs->report, "") != 0) {
 		fprintf(file, "DEFAULT_REPORT_CONFIG_FILE %s\n", prefs->report);
 	}
-	if (prefs->stylesheet != NULL) {
+	if (strcmp(prefs->stylesheet, "") != 0) {
 		fprintf(file, "DEFAULT_REPORT_CSS_FILE %s\n", prefs->stylesheet);
 	}
 	if ((value = apol_config_join_var(prefs->recent_log_files)) == NULL) {
@@ -300,10 +312,12 @@ void preferences_set_column_visible(preferences_t * prefs, preference_field_e id
 
 int preferences_set_log(preferences_t * prefs, const char *log)
 {
-	free(prefs->log);
-	if ((prefs->log = strdup(log)) == NULL) {
+	char *s;
+	if ((s = strdup(log)) == NULL) {
 		return -1;
 	}
+	free(prefs->log);
+	prefs->log = s;
 	return 0;
 }
 
@@ -314,10 +328,12 @@ char *preferences_get_log(preferences_t * prefs)
 
 int preferences_set_policy(preferences_t * prefs, const char *policy)
 {
-	free(prefs->policy);
-	if ((prefs->policy = strdup(policy)) == NULL) {
+	char *s;
+	if ((s = strdup(policy)) == NULL) {
 		return -1;
 	}
+	free(prefs->policy);
+	prefs->policy = s;
 	return 0;
 }
 
@@ -328,10 +344,12 @@ char *preferences_get_policy(preferences_t * prefs)
 
 int preferences_set_report(preferences_t * prefs, const char *report)
 {
-	free(prefs->report);
-	if ((prefs->report = strdup(report)) == NULL) {
+	char *s;
+	if ((s = strdup(report)) == NULL) {
 		return -1;
 	}
+	free(prefs->report);
+	prefs->report = s;
 	return 0;
 }
 
@@ -342,16 +360,42 @@ char *preferences_get_report(preferences_t * prefs)
 
 int preferences_set_stylesheet(preferences_t * prefs, const char *stylesheet)
 {
-	free(prefs->stylesheet);
-	if ((prefs->stylesheet = strdup(stylesheet)) == NULL) {
+	char *s;
+	if ((s = strdup(stylesheet)) == NULL) {
 		return -1;
 	}
+	free(prefs->stylesheet);
+	prefs->stylesheet = s;
 	return 0;
 }
 
 char *preferences_get_stylesheet(preferences_t * prefs)
 {
 	return prefs->stylesheet;
+}
+
+void preferences_set_real_time_at_startup(preferences_t * prefs, int startup)
+{
+	prefs->real_time_log = startup;
+}
+
+int preferences_get_real_time_at_startup(preferences_t * prefs)
+{
+	return prefs->real_time_log;
+}
+
+void preferences_set_real_time_interval(preferences_t * prefs, int interval)
+{
+	if (interval <= 0) {
+		prefs->real_time_interval = 0;
+	} else {
+		prefs->real_time_interval = interval;
+	}
+}
+
+int preferences_get_real_time_interval(preferences_t * prefs)
+{
+	return prefs->real_time_interval;
 }
 
 /**

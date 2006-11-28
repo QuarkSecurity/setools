@@ -28,6 +28,8 @@
 
 typedef struct preferences preferences_t;
 
+/* n.b.: OTHER_FIELD must be the last entry in this enumeration, for
+   message_view stops processing after that token */
 typedef enum preference_field
 {
 	HOST_FIELD, MESSAGE_FIELD, DATE_FIELD,
@@ -109,8 +111,7 @@ int preferences_set_log(preferences_t * prefs, const char *log);
  *
  * @param prefs Preference object to query.
  *
- * @return Filename for the log file, or NULL if none set.  Do not
- * modify this string.
+ * @return Filename for the log file.  Do not modify this string.
  */
 char *preferences_get_log(preferences_t * prefs);
 
@@ -131,8 +132,7 @@ int preferences_set_policy(preferences_t * prefs, const char *policy);
  *
  * @param prefs Preference object to query.
  *
- * @return Filename for the policy, or NULL if none set.  Do not
- * modify this string.
+ * @return Filename for the policy.  Do not modify this string.
  */
 char *preferences_get_policy(preferences_t * prefs);
 
@@ -151,8 +151,7 @@ int preferences_set_report(preferences_t * prefs, const char *report);
  *
  * @param prefs Preference object to query.
  *
- * @return Filename for the report, or NULL if none set.  Do not
- * modify this string.
+ * @return Filename for the report.  Do not modify this string.
  */
 char *preferences_get_report(preferences_t * prefs);
 
@@ -172,10 +171,47 @@ int preferences_set_stylesheet(preferences_t * prefs, const char *stylesheet);
  *
  * @param prefs Preference object to query.
  *
- * @return Filename for the stylesheet, or NULL if none set.  Do not
- * modify this string.
+ * @return Filename for the stylesheet.  Do not modify this string.
  */
 char *preferences_get_stylesheet(preferences_t * prefs);
+
+/**
+ * Set the default real-time setting for opened log files.  If startup
+ * is non-zero, then the real-time monitor will be enabled for new log
+ * files.
+ *
+ * @param prefs Preferences object to modify.
+ * @param startup If non-zero, then enable real-time by default.
+ */
+void preferences_set_real_time_at_startup(preferences_t * prefs, int startup);
+
+/**
+ * Get the default value for real-time monitoring.
+ *
+ * @param prefs Preference object to query.
+ *
+ * @return Non-zero if opened logs should be monitored.
+ */
+int preferences_get_real_time_at_startup(preferences_t * prefs);
+
+/**
+ * Set the time interval (in milliseconds) for polling the log file
+ * during real-time monitoring.
+ *
+ * @param prefs Preferences object to modify.
+ * @param interval Polling interval in milliseconds.
+ */
+void preferences_set_real_time_interval(preferences_t * prefs, int interval);
+
+/**
+ * Get the time interval (in milliseconds) when performing real-time
+ * monitoring.
+ *
+ * @param prefs Preference object to query.
+ *
+ * @return Time interval in milliseconds.
+ */
+int preferences_get_real_time_interval(preferences_t * prefs);
 
 /**
  * Add a filename to the recently opened log files list.  If the name
