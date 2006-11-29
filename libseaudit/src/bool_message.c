@@ -140,5 +140,8 @@ char *bool_message_to_misc_string(seaudit_bool_message_t * bool)
 			return NULL;
 		}
 	}
+	if (s == NULL) {
+		return strdup("");
+	}
 	return s;
 }

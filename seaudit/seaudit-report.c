@@ -166,6 +166,7 @@ static void parse_command_line_args(int argc, char **argv)
 		exit(-1);
 	}
 	if ((first_log = seaudit_log_create(NULL, NULL)) == NULL || seaudit_model_append_log(model, first_log) < 0) {
+		fprintf(stderr, "ERROR: %s\n", strerror(errno));
 		exit(-1);
 	}
 	if ((logs = apol_vector_create()) == NULL || apol_vector_append(logs, first_log) < 0) {

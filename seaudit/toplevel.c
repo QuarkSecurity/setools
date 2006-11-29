@@ -26,7 +26,9 @@
 
 #include "message_view.h"
 #include "preferences_view.h"
+#include "progress.h"
 #include "toplevel.h"
+#include "utilgui.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -34,10 +36,12 @@
 #include <apol/util.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
+#include <seaudit/parse.h>
 
 struct toplevel
 {
 	seaudit_t *s;
+	progress_t *progress;
 	/** vector of message_view_t that are in the toplevel's notebook */
 	apol_vector_t *views;
 	GladeXML *xml;
@@ -56,8 +60,8 @@ struct toplevel
 static gint toplevel_notebook_find_view(toplevel_t * top, message_view_t * view)
 {
 	gint num_pages = gtk_notebook_get_n_pages(top->notebook);
-	while (num_pages >= 0) {
-		GtkWidget *child = gtk_notebook_get_nth_page(top->notebook, num_pages);
+	while (num_pages >= 1) {
+		GtkWidget *child = gtk_notebook_get_nth_page(top->notebook, num_pages - 1);
 		GtkWidget *tab = gtk_notebook_get_tab_label(top->notebook, child);
 		message_view_t *v = g_object_get_data(G_OBJECT(tab), "view");
 		if (v == view) {
@@ -128,6 +132,123 @@ static void toplevel_add_new_view(toplevel_t * top, seaudit_model_t * model)
 }
 
 /**
+ * Callback whenever an item from the recent logs submenu is activated.
+ */
+static void toplevel_on_open_recent_log_activate(GtkWidget * widget, gpointer user_data)
+{
+	GtkWidget *label = gtk_bin_get_child(GTK_BIN(widget));
+	const char *path = gtk_label_get_text(GTK_LABEL(label));
+	toplevel_t *top = (toplevel_t *) user_data;
+	toplevel_open_log(top, path);
+}
+
+/**
+ * Update the entries within recent logs submenu to match those in the
+ * preferences object.
+ */
+static void toplevel_set_recent_logs_submenu(toplevel_t * top)
+{
+	GtkMenuItem *recent = GTK_MENU_ITEM(glade_xml_get_widget(top->xml, "OpenRecentLog"));
+	apol_vector_t *paths = preferences_get_recent_logs(toplevel_get_prefs(top));
+	GtkWidget *submenu, *submenu_item;
+	size_t i;
+
+	gtk_menu_item_remove_submenu(recent);
+	submenu = gtk_menu_new();
+	for (i = 0; i < apol_vector_get_size(paths); i++) {
+		char *path = (char *)apol_vector_get_element(paths, i);
+		submenu_item = gtk_menu_item_new_with_label(path);
+		gtk_menu_shell_prepend(GTK_MENU_SHELL(submenu), submenu_item);
+		gtk_widget_show(submenu_item);
+		g_signal_connect(G_OBJECT(submenu_item), "activate", G_CALLBACK(toplevel_on_open_recent_log_activate), top);
+	}
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(recent), submenu);
+}
+
+/**
+ * Callback whenever an item from the recent policies submenu is
+ * activated.
+ */
+static void toplevel_on_open_recent_policy_activate(GtkWidget * widget, gpointer user_data)
+{
+	GtkWidget *label = gtk_bin_get_child(GTK_BIN(widget));
+	const char *path = gtk_label_get_text(GTK_LABEL(label));
+	toplevel_t *top = (toplevel_t *) user_data;
+	/* FIX ME!
+	 * toplevel_open_policy(top, path);
+	 */
+}
+
+/**
+ * Update the entries within recent policies submenu to match those in
+ * the preferences object.
+ */
+static void toplevel_set_recent_policies_submenu(toplevel_t * top)
+{
+	GtkMenuItem *recent = GTK_MENU_ITEM(glade_xml_get_widget(top->xml, "OpenRecentPolicy"));
+	apol_vector_t *paths = preferences_get_recent_policies(toplevel_get_prefs(top));
+	GtkWidget *submenu, *submenu_item;
+	size_t i;
+
+	gtk_menu_item_remove_submenu(recent);
+	submenu = gtk_menu_new();
+	for (i = 0; i < apol_vector_get_size(paths); i++) {
+		char *path = (char *)apol_vector_get_element(paths, i);
+		submenu_item = gtk_menu_item_new_with_label(path);
+		gtk_menu_shell_prepend(GTK_MENU_SHELL(submenu), submenu_item);
+		gtk_widget_show(submenu_item);
+		g_signal_connect(G_OBJECT(submenu_item), "activate", G_CALLBACK(toplevel_on_open_recent_policy_activate), top);
+	}
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(recent), submenu);
+}
+
+/**
+ * Enable/disable all items (menus and buttons) that depend upon if a
+ * log is loaded.
+ *
+ * @param top Toplevel object containing menu items.
+ * @param TRUE to enable items, FALSE to disable.
+ */
+static void toplevel_enable_log_items(toplevel_t * top, gboolean sens)
+{
+	static const char *items[] = {
+		"NewView", "OpenView", "SaveView", "SaveViewAs", "ModifyView",
+		"ExportAll", "ExportSelected", "ViewMessage",
+		"CreateReport", "MonitorLog", "ModifyViewButton", "MonitorLogButton",
+		NULL
+	};
+	size_t i;
+	const char *s;
+	for (i = 0, s = items[0]; s != NULL; s = items[++i]) {
+		GtkWidget *w = glade_xml_get_widget(top->xml, s);
+		assert(w != NULL);
+		gtk_widget_set_sensitive(w, sens);
+	}
+}
+
+/**
+ * Enable/disable all items (menus and buttons) that depend upon if a
+ * policy is loaded.
+ *
+ * @param top Toplevel object containing menu items.
+ * @param TRUE to enable items, FALSE to disable.
+ */
+static void toplevel_enable_policy_items(toplevel_t * top, gboolean sens)
+{
+	static const char *items[] = {
+		"FindTERules", "FindTERulesButton",
+		NULL
+	};
+	size_t i;
+	const char *s;
+	for (i = 0, s = items[0]; s != NULL; s = items[++i]) {
+		GtkWidget *w = glade_xml_get_widget(top->xml, s);
+		assert(w != NULL);
+		gtk_widget_set_sensitive(w, sens);
+	}
+}
+
+/**
  * Create a view that watches an empty model.
  */
 static void toplevel_add_blank_view(toplevel_t * top)
@@ -189,13 +310,18 @@ toplevel_t *toplevel_create(seaudit_t * s)
 	gtk_container_add(GTK_CONTAINER(vbox), GTK_WIDGET(top->notebook));
 	gtk_widget_show(GTK_WIDGET(top->notebook));
 	gtk_widget_show(GTK_WIDGET(top->w));
+	toplevel_set_recent_logs_submenu(top);
+	toplevel_set_recent_policies_submenu(top);
 
-	/* connect signal handlers */
 	glade_xml_signal_autoconnect(top->xml);
 
 	/* create initial blank tab for the notebook */
 	toplevel_add_blank_view(top);
 
+	if ((top->progress = progress_create(top, top->w)) == NULL) {
+		error = errno;
+		goto cleanup;
+	}
       cleanup:
 	if (error != 0) {
 		toplevel_destroy(&top);
@@ -215,12 +341,95 @@ void toplevel_destroy(toplevel_t ** top)
 {
 	if (top != NULL && *top != NULL) {
 		apol_vector_destroy(&(*top)->views, message_view_free);
+		progress_destroy(&(*top)->progress);
 		if ((*top)->w != NULL) {
 			gtk_widget_destroy(GTK_WIDGET((*top)->w));
 		}
 		free(*top);
 		*top = NULL;
 	}
+}
+
+struct log_run_datum
+{
+	toplevel_t *top;
+	const char *filename;
+	seaudit_log_t *log;
+	int result;
+};
+
+/**
+ * Thread that loads and parses a log file.  It will write to
+ * progress_seaudit_handle_func() its status during the load.
+ *
+ * @param data Pointer to a struct log_run_datum, for control
+ * information.
+ */
+static gpointer toplevel_open_log_runner(gpointer data)
+{
+	struct log_run_datum *run = (struct log_run_datum *)data;
+	FILE *f;
+	progress_update(run->top->progress, "Parsing %s", run->filename);
+	if ((f = fopen(run->filename, "r")) == NULL) {
+		progress_abort(run->top->progress, "Could not open %s for reading.", run->filename);
+		run->result = -1;
+		goto cleanup;
+	}
+	if ((run->log = seaudit_log_create(progress_seaudit_handle_func, run->top->progress)) == NULL) {
+		progress_update(run->top->progress, "%s", strerror(errno));
+		run->result = -1;
+		goto cleanup;
+	}
+	run->result = seaudit_log_parse(run->log, f);
+      cleanup:
+	if (f != NULL) {
+		fclose(f);
+	}
+	if (run->result < 0) {
+		seaudit_log_destroy(&run->log);
+		progress_abort(run->top->progress, NULL);
+	} else if (run->result > 0) {
+		progress_warn(run->top->progress, NULL);
+	} else {
+		progress_done(run->top->progress);
+	}
+	return NULL;
+}
+
+/**
+ * Destroy all views and their notebook tabs.
+ */
+static void toplevel_destroy_views(toplevel_t * top)
+{
+	gint num_pages = gtk_notebook_get_n_pages(top->notebook);
+	while (num_pages >= 1) {
+		message_view_t *view = apol_vector_get_element(top->views, num_pages - 1);
+		gtk_notebook_remove_page(top->notebook, num_pages - 1);
+		message_view_destroy(&view);
+		apol_vector_remove(top->views, num_pages - 1);
+		num_pages--;
+	}
+}
+
+void toplevel_open_log(toplevel_t * top, const char *filename)
+{
+	struct log_run_datum run = { top, filename, NULL, 0 };
+
+	util_cursor_wait(GTK_WIDGET(top->w));
+	progress_show(top->progress, "Opening Log");
+	g_thread_create(toplevel_open_log_runner, &run, FALSE, NULL);
+	progress_wait(top->progress);
+	progress_hide(top->progress);
+	util_cursor_clear(GTK_WIDGET(top->w));
+
+	if (run.result < 0) {
+		return;
+	}
+	toplevel_destroy_views(top);
+	seaudit_set_log(top->s, run.log, filename);
+	toplevel_set_recent_logs_submenu(top);
+	toplevel_enable_log_items(top, TRUE);
+	/* create a new view for the log */
 }
 
 preferences_t *toplevel_get_prefs(toplevel_t * top)
@@ -264,6 +473,14 @@ void toplevel_ERR(toplevel_t * top, const char *format, ...)
 	va_end(ap);
 }
 
+void toplevel_WARN(toplevel_t * top, const char *format, ...)
+{
+	va_list(ap);
+	va_start(ap, format);
+	toplevel_message(top, GTK_MESSAGE_WARNING, format, ap);
+	va_end(ap);
+}
+
 /************* below are callbacks for the toplevel menu items *************/
 
 void toplevel_on_destroy(gpointer user_data, GtkObject * object __attribute__ ((unused)))
@@ -271,6 +488,47 @@ void toplevel_on_destroy(gpointer user_data, GtkObject * object __attribute__ ((
 	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
 	top->w = NULL;
 	gtk_main_quit();
+}
+
+void toplevel_on_open_log_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
+{
+	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	char *path;
+	GtkWidget *dialog =
+		gtk_file_chooser_dialog_new("Open Log", top->w, GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					    GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
+	path = seaudit_get_log_path(top->s);
+	if (path != NULL) {
+		gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(dialog), path);
+	}
+	if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_ACCEPT) {
+		gtk_widget_destroy(dialog);
+		return;
+	}
+	path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+	gtk_widget_destroy(dialog);
+	toplevel_open_log(top, path);
+	g_free(path);
+}
+
+void toplevel_on_open_policy_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
+{
+	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	char *path;
+	GtkWidget *dialog = gtk_file_chooser_dialog_new("Open Policy", top->w, GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL,
+							GTK_RESPONSE_CANCEL,
+							GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
+	path = seaudit_get_policy_path(top->s);
+	if (path != NULL) {
+		gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(dialog), path);
+	}
+	if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_ACCEPT) {
+		gtk_widget_destroy(dialog);
+		return;
+	}
+	path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+	gtk_widget_destroy(dialog);
+	printf("loading policy at %s\n", path);
 }
 
 void toplevel_on_preferences_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
@@ -374,61 +632,10 @@ static void seaudit_log_file_open_from_recent_menu(GtkWidget * widget, gpointer 
 static gboolean seaudit_real_time_update_log(gpointer callback_data);
 static void seaudit_exit_app(void);
 
-void seaudit_destroy(seaudit_t * seaudit_ap)
-{
-	apol_policy_destroy(&seaudit_ap->cur_policy);
-	seaudit_log_destroy(&seaudit_ap->cur_log);
-	seaudit_callbacks_free();
-	if (seaudit_ap->log_file_ptr)
-		fclose(seaudit_ap->log_file_ptr);
-	free_seaudit_conf(&(seaudit_ap->seaudit_conf));
-	g_string_free(seaudit_ap->policy_file, TRUE);
-	g_string_free(seaudit_ap->audit_log_file, TRUE);
-	report_window_destroy(seaudit_ap->report_window);
-	free(seaudit_ap);
-}
-
-/* change the sensitive state of widget by name */
-static void seaudit_widget_update_sensitive(const char *name, bool_t disable)
-{
-	GtkWidget *widget;
-
-	if (!seaudit_app || !seaudit_app->window || !seaudit_app->window->xml)
-		return;
-	widget = glade_xml_get_widget(seaudit_app->window->xml, name);
-	g_assert(widget);
-	if (disable)
-		gtk_widget_set_sensitive(widget, 0);
-	else
-		gtk_widget_set_sensitive(widget, 1);
-}
-
 /* this is just a public method to set this button */
 void seaudit_view_entire_selection_update_sensitive(bool_t disable)
 {
 	seaudit_widget_update_sensitive("view_entire_message1", disable);
-}
-
-/* change the state of all widgets that depend on the log being open */
-static void seaudit_log_menu_items_update(bool_t disable)
-{
-	seaudit_widget_update_sensitive("SaveView", disable);
-	seaudit_widget_update_sensitive("SaveAsView", disable);
-	seaudit_widget_update_sensitive("ExportLog", disable);
-	seaudit_widget_update_sensitive("export_selection1", disable);
-	seaudit_widget_update_sensitive("create_standard_report", disable);
-	seaudit_widget_update_sensitive("RealTimeButton", disable);
-	seaudit_widget_update_sensitive("ModifyView", disable);
-	seaudit_widget_update_sensitive("ModifyViewButton", disable);
-	seaudit_widget_update_sensitive("NewTab", disable);
-	seaudit_widget_update_sensitive("OpenView", disable);
-}
-
-/* change the state of all widgets that depend on the policy being open */
-static void seaudit_policy_menu_items_update(bool_t disable)
-{
-	seaudit_widget_update_sensitive("top_window_query_button", disable);
-	seaudit_widget_update_sensitive("QueryPolicy", disable);
 }
 
 void seaudit_update_status_bar(seaudit_t * seaudit)
@@ -490,161 +697,6 @@ void seaudit_update_status_bar(seaudit_t * seaudit)
 		seaudit_view_entire_selection_update_sensitive(TRUE);
 	}
 }
-
-int seaudit_open_policy(seaudit_t * seaudit, const char *filename)
-{
-	FILE *file;
-	apol_policy_t *tmp_policy = NULL;
-	int rt;
-	const int SEAUDIT_STR_SZ = 128;
-	GString *msg;
-	GtkWidget *dialog;
-	gint response;
-
-	if (filename == NULL)
-		return -1;
-
-	show_wait_cursor(GTK_WIDGET(seaudit->window->window));
-	if (seaudit->cur_policy != NULL) {
-		dialog = gtk_message_dialog_new(seaudit->window->window,
-						GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-						GTK_MESSAGE_WARNING,
-						GTK_BUTTONS_YES_NO,
-						"Opening a new policy will close all \"Query Policy\" windows\n"
-						"Do you wish to continue anyway?");
-		g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(get_dialog_response), &response);
-		gtk_dialog_run(GTK_DIALOG(dialog));
-		gtk_widget_destroy(dialog);
-		if (response != GTK_RESPONSE_YES) {
-			clear_wait_cursor(GTK_WIDGET(seaudit->window->window));
-			return 0;
-		}
-	}
-	if (g_file_test(filename, G_FILE_TEST_IS_DIR)) {
-		msg = g_string_new("Error opening file: File is a directory!\n");
-		message_display(seaudit->window->window, GTK_MESSAGE_ERROR, msg->str);
-		g_string_free(msg, TRUE);
-		clear_wait_cursor(GTK_WIDGET(seaudit->window->window));
-		return -1;
-	}
-
-	file = fopen(filename, "r");
-	if (!file) {
-		msg = g_string_new("Error opening file: ");
-		if (strlen(filename) > SEAUDIT_STR_SZ) {
-			char *tmp = NULL;
-			tmp = g_strndup(filename, SEAUDIT_STR_SZ);
-			g_string_append(msg, tmp);
-			g_string_append(msg, "...");
-			g_free(tmp);
-		} else {
-			g_string_append(msg, filename);
-		}
-		g_string_append(msg, "!\n");
-		g_string_append(msg, strerror(errno));
-		message_display(seaudit->window->window, GTK_MESSAGE_ERROR, msg->str);
-		g_string_free(msg, TRUE);
-		clear_wait_cursor(GTK_WIDGET(seaudit->window->window));
-		return -1;
-	} else
-		fclose(file);
-
-	rt = apol_policy_open(filename, &tmp_policy, NULL, NULL);
-	if (rt != 0) {
-		apol_policy_destroy(&tmp_policy);
-		msg = g_string_new("");
-		g_string_append(msg, "The specified file does not appear to be a valid\nSE Linux Policy\n\n");
-		message_display(seaudit->window->window, GTK_MESSAGE_ERROR, msg->str);
-		clear_wait_cursor(GTK_WIDGET(seaudit->window->window));
-		return -1;
-	}
-	apol_policy_destroy(&seaudit->cur_policy);
-	seaudit->cur_policy = tmp_policy;
-
-	g_string_assign(seaudit->policy_file, filename);
-	if (!apol_policy_is_binary(seaudit_app->cur_policy)) {
-		seaudit_read_policy_conf(filename);
-	}
-	policy_load_signal_emit();
-
-	add_path_to_recent_policy_files(filename, &(seaudit->seaudit_conf));
-	seaudit_set_recent_policys_submenu(&(seaudit->seaudit_conf));
-	save_seaudit_conf_file(&(seaudit->seaudit_conf));
-	clear_wait_cursor(GTK_WIDGET(seaudit->window->window));
-	return 0;
-}
-
-/**
- * Callback invoked by libseaudit whenever a message is generated.
- */
-static void seaudit_handle_callback(void *arg, seaudit_log_t * log, int level, const char *fmt, va_list va_args)
-{
-	seaudit_t *ap = arg;
-	gchar *s = NULL;
-	g_vasprintf(&s, fmt, va_args);
-	free(ap->last_log_message);
-	ap->last_log_message = s;
-	ap->last_log_level = level;
-}
-
-int seaudit_open_log_file(seaudit_t * seaudit, const char *filename)
-{
-	FILE *tmp_file;
-	unsigned int rt = 0;
-	int i;
-	GString *msg = NULL;
-	seaudit_log_t *new_log = NULL;
-
-	if (filename == NULL)
-		return -1;
-	show_wait_cursor(GTK_WIDGET(seaudit->window->window));
-	tmp_file = fopen(filename, "r");
-	if (!tmp_file) {
-		msg = g_string_new("Error opening file ");
-		g_string_append(msg, filename);
-		g_string_append(msg, "!\n");
-		g_string_append(msg, strerror(errno));
-		message_display(seaudit->window->window, GTK_MESSAGE_ERROR, msg->str);
-		goto dont_load_log;
-	}
-
-	new_log = seaudit_log_create(seaudle_handle_callback, seaudit);
-	rt = seaudit_log_parse(new_log, tmp_file);
-	if (rt < 0) {
-		message_display(seaudit->window->window, GTK_MESSAGE_ERROR, seaudit->last_log_message);
-		goto dont_load_log;
-	} else if (rt > 0) {
-		message_display(seaudit->window->window, GTK_MESSAGE_WARNING, seaudit->last_log_message);
-		goto load_log;
-	} else
-		goto load_log;
-
-      dont_load_log:
-	seaudit_log_destroy(&new_log);
-	if (tmp_file)
-		fclose(tmp_file);
-	if (msg)
-		g_string_free(msg, TRUE);
-	clear_wait_cursor(GTK_WIDGET(seaudit->window->window));
-	return -1;
-
-      load_log:
-	seaudit_log_destroy(&seaudit->cur_log);
-	seaudit->cur_log = new_log;
-	seaudit->log_file_ptr = tmp_file;
-
-	for (i = 0; i < g_list_length(seaudit->window->views); i++)
-		seaudit_filtered_view_set_log(g_list_nth_data(seaudit->window->views, i), new_log);
-
-	g_string_assign(seaudit->audit_log_file, filename);
-	add_path_to_recent_log_files(filename, &(seaudit->seaudit_conf));
-	seaudit_set_recent_logs_submenu(&(seaudit->seaudit_conf));
-	save_seaudit_conf_file(&(seaudit->seaudit_conf));
-	log_load_signal_emit();
-	clear_wait_cursor(GTK_WIDGET(seaudit->window->window));
-	return 0;
-}
-
 static int seaudit_export_selected_msgs_to_file(const audit_log_view_t * log_view, const char *filename)
 {
 	msg_t *message = NULL;
@@ -1131,119 +1183,6 @@ write_boolean_message_to_gtk_text_buf(GtkTextBuffer * buffer, const boolean_msg_
 	g_string_free(str, TRUE);
 }
 
-audit_log_view_t *seaudit_get_current_audit_log_view()
-{
-	seaudit_filtered_view_t *filtered_view;
-	SEAuditLogViewStore *log_view_store;
-
-	filtered_view = seaudit_window_get_current_view(seaudit_app->window);
-
-	if (filtered_view == NULL)
-		return NULL;
-
-	log_view_store = filtered_view->store;
-
-	if (log_view_store == NULL)
-		return NULL;
-
-	return log_view_store->log_view;
-}
-
-/*
- * We don't want to do the heavy work of loading and displaying the log
- * and policy before the main loop has started because it will freeze
- * the gui for too long. To solve this, the function is called from an
- * idle callback set-up in main.
- */
-typedef struct filename_data
-{
-	GString *log_filename;
-	GString *policy_filename;
-} filename_data_t;
-
-gboolean delayed_main(gpointer data)
-{
-	filename_data_t *filenames = (filename_data_t *) data;
-
-	if (filenames->log_filename) {
-		seaudit_open_log_file(seaudit_app, filenames->log_filename->str);
-		g_string_free(filenames->log_filename, TRUE);
-	}
-	if (filenames->policy_filename) {
-		seaudit_open_policy(seaudit_app, filenames->policy_filename->str);
-		g_string_free(filenames->policy_filename, TRUE);
-	}
-	return FALSE;
-}
-
-int main(int argc, char **argv)
-{
-	filename_data_t filenames;
-	char *policy_file = NULL;
-	GString *msg = NULL;
-	int rt;
-
-	filenames.policy_filename = filenames.log_filename = NULL;
-	seaudit_parse_command_line(argc, argv, &filenames.policy_filename, &filenames.log_filename);
-	gtk_init(&argc, &argv);
-	glade_init();
-
-	seaudit_app = seaudit_init();
-	if (!seaudit_app)
-		exit(1);
-
-	seaudit_set_recent_policys_submenu(&(seaudit_app->seaudit_conf));
-	seaudit_set_recent_logs_submenu(&(seaudit_app->seaudit_conf));
-	seaudit_set_real_time_log_button_state(seaudit_app->seaudit_conf.real_time_log);
-
-	/* if no files were given on the command line then use the
-	 * current user-saved default filenames */
-	if (filenames.log_filename == NULL)
-		if (seaudit_app->seaudit_conf.default_log_file)
-			filenames.log_filename = g_string_new(seaudit_app->seaudit_conf.default_log_file);
-	if (filenames.policy_filename == NULL) {
-		if (seaudit_app->seaudit_conf.default_policy_file) {
-			filenames.policy_filename = g_string_new(seaudit_app->seaudit_conf.default_policy_file);
-		} else {
-			/* There was no default policy file specified
-			 * at the command-line or in the users
-			 * .seaudit file, so use the policy default
-			 * logic from libapol. With seaudit we prefer
-			 * the source policy over binary. */
-			rt = qpol_find_default_policy_file((QPOL_TYPE_SOURCE | QPOL_TYPE_BINARY), &policy_file);
-			if (rt == QPOL_GENERAL_ERROR) {
-				message_display(seaudit_app->window->window, GTK_MESSAGE_WARNING, "Error loading default policy.");
-			} else if (rt != QPOL_FIND_DEFAULT_SUCCESS) {
-				printf("Default policy search failed: %s\n", qpol_find_default_policy_file_strerr(rt));
-				/* no policy to use, so warn the user
-				 * and then start up without a default
-				 * policy. */
-				msg = g_string_new
-					("Could not find system default policy to open. \nUse the File menu to open a policy");
-				message_display(seaudit_app->window->window, GTK_MESSAGE_WARNING, msg->str);
-			} else if (policy_file) {
-				filenames.policy_filename = g_string_new(policy_file);
-				free(policy_file);
-			}
-		}
-	}
-
-	seaudit_update_status_bar(seaudit_app);
-	seaudit_update_title_bar(NULL);
-
-	policy_load_callback_register((seaudit_callback_t) & seaudit_update_status_bar, seaudit_app);
-	log_load_callback_register((seaudit_callback_t) & seaudit_update_status_bar, seaudit_app);
-	policy_load_callback_register(&seaudit_update_title_bar, NULL);
-	log_load_callback_register(&seaudit_update_title_bar, NULL);
-	log_filtered_callback_register((seaudit_callback_t) & seaudit_update_status_bar, seaudit_app);
-	/* finish loading later */
-	g_idle_add(&delayed_main, &filenames);
-
-	gtk_main();
-
-	return 0;
-}
-
 /*
  * glade autoconnected callbacks for menus
  *
@@ -1298,37 +1237,6 @@ void seaudit_on_PolicyFileOpen_activate(GtkWidget * widget, GdkEvent * event, gp
 	}
 	seaudit_open_policy(seaudit_app, filename);
 	gtk_widget_destroy(file_selector);
-	return;
-}
-
-void seaudit_on_LogFileOpen_activate(GtkWidget * widget, GdkEvent * event, gpointer callback_data)
-{
-	GtkWidget *file_selector;
-	gint response;
-	const gchar *filename;
-
-	file_selector = gtk_file_selection_new("Open Log");
-	/* set this window to be transient window, so that when it pops up it gets centered on it */
-	gtk_window_set_transient_for(GTK_WINDOW(file_selector), seaudit_app->window->window);
-	gtk_file_selection_hide_fileop_buttons(GTK_FILE_SELECTION(file_selector));
-	if (seaudit_app->seaudit_conf.default_log_file != NULL)
-		gtk_file_selection_complete(GTK_FILE_SELECTION(file_selector), seaudit_app->seaudit_conf.default_log_file);
-
-	g_signal_connect(GTK_OBJECT(file_selector), "response", G_CALLBACK(get_dialog_response), &response);
-	while (1) {
-		gtk_dialog_run(GTK_DIALOG(file_selector));
-		if (response != GTK_RESPONSE_OK) {
-			gtk_widget_destroy(file_selector);
-			return;
-		}
-		filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selector));
-		if (g_file_test(filename, G_FILE_TEST_EXISTS) && !g_file_test(filename, G_FILE_TEST_IS_DIR))
-			break;
-		if (g_file_test(filename, G_FILE_TEST_IS_DIR))
-			gtk_file_selection_complete(GTK_FILE_SELECTION(file_selector), filename);
-	}
-	gtk_widget_destroy(file_selector);
-	seaudit_open_log_file(seaudit_app, filename);
 	return;
 }
 
@@ -1444,13 +1352,6 @@ void seaudit_on_export_selection_activated(void)
 	seaudit_save_log_file(TRUE);
 }
 
-/*
- * glade autoconnected callbacks for Help menu
- */
-
-/*
- * glade autoconnected callbacks for the main toolbar
- */
 void seaudit_on_filter_log_button_clicked(GtkWidget * widget, GdkEvent * event, gpointer callback_data)
 {
 	seaudit_filtered_view_t *view;
@@ -1489,64 +1390,7 @@ void seaudit_on_real_time_button_pressed(GtkButton * button, gpointer user_data)
 	seaudit_set_real_time_log_button_state(!state);
 }
 
-/*
- * Gtk callbacks registered by seaudit_t object
- */
-static void seaudit_set_recent_logs_submenu(seaudit_conf_t * conf_file)
-{
-	GtkWidget *submenu, *submenu_item;
-	GtkMenuItem *recent;
-	int i;
-
-	recent = GTK_MENU_ITEM(glade_xml_get_widget(seaudit_app->window->xml, "OpenRecentLog"));
-	g_assert(recent);
-	gtk_menu_item_remove_submenu(recent);
-	submenu = gtk_menu_new();
-	for (i = 0; i < conf_file->num_recent_log_files; i++) {
-		submenu_item = gtk_menu_item_new_with_label(conf_file->recent_log_files[i]);
-		gtk_menu_shell_prepend(GTK_MENU_SHELL(submenu), submenu_item);
-		gtk_widget_show(submenu_item);
-		g_signal_connect(G_OBJECT(submenu_item), "activate", G_CALLBACK(seaudit_log_file_open_from_recent_menu),
-				 conf_file->recent_log_files[i]);
-	}
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(recent), submenu);
-	return;
-}
-
-static void seaudit_set_recent_policys_submenu(seaudit_conf_t * conf_file)
-{
-	GtkWidget *submenu, *submenu_item;
-	GtkMenuItem *recent;
-	int i;
-
-	recent = GTK_MENU_ITEM(glade_xml_get_widget(seaudit_app->window->xml, "OpenRecentPolicy"));
-	g_assert(recent);
-	submenu = gtk_menu_new();
-	for (i = 0; i < conf_file->num_recent_policy_files; i++) {
-		submenu_item = gtk_menu_item_new_with_label(conf_file->recent_policy_files[i]);
-		gtk_menu_shell_prepend(GTK_MENU_SHELL(submenu), submenu_item);
-		gtk_widget_show(submenu_item);
-		g_signal_connect(G_OBJECT(submenu_item), "activate", G_CALLBACK(seaudit_policy_file_open_from_recent_menu),
-				 conf_file->recent_policy_files[i]);
-	}
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(recent), submenu);
-	return;
-}
-
-static void seaudit_policy_file_open_from_recent_menu(GtkWidget * widget, gpointer user_data)
-{
-	const char *filename = (const char *)user_data;
-	seaudit_open_policy(seaudit_app, filename);
-}
-
-static void seaudit_log_file_open_from_recent_menu(GtkWidget * widget, gpointer user_data)
-{
-	const char *filename = (const char *)user_data;
-	seaudit_open_log_file(seaudit_app, filename);
-}
-
-/*
- * Timeout function used to keep the log up to date, always
+/* Timeout function used to keep the log up to date, always
  * return TRUE so we get called repeatedly */
 static gboolean seaudit_real_time_update_log(gpointer callback_data)
 {
@@ -1619,13 +1463,6 @@ static int seaudit_read_policy_conf(const char *fname)
 	gtk_text_buffer_set_text(seaudit_app->policy_text, buf, len);
 	free(buf);
 	return 0;
-}
-
-static void seaudit_exit_app(void)
-{
-	save_seaudit_conf_file(&(seaudit_app->seaudit_conf));
-	seaudit_destroy(seaudit_app);
-	gtk_main_quit();
 }
 
 /*

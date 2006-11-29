@@ -1407,5 +1407,8 @@ int seaudit_log_parse(seaudit_log_t * log, FILE * syslog)
 		errno = error;
 		return -1;
 	}
+	if (has_warnings) {
+		WARN(log, "%s", "Audit log was parsed, but there were one or more invalid message found within it.");
+	}
 	return has_warnings;
 }

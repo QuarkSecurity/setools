@@ -37,11 +37,18 @@
  * @param msg Text of message to display.
  */
 void util_message(GtkWindow * parent, GtkMessageType msg_type, const char *msg);
+/**
+ * Set the cursor over a widget to the watch cursor.
+ *
+ * @param widget Widget whose cursor to set.
+ */
+void util_cursor_wait(GtkWidget * widget);
 
-void get_dialog_response(GtkDialog * dialog, gint id, gpointer response);
-void show_wait_cursor(GtkWidget * widget);
-void clear_wait_cursor(GtkWidget * widget);
-GString *get_filename_from_user(const char *title, const gchar * startfilename, GtkWindow * window, gboolean overwrite);
-gint get_user_response_to_message(GtkWindow * window, const char *message);
+/**
+ * Clear the cursor over a widget, setting it to the default arrow.
+ *
+ * @param widget Widget whose cursor to set.
+ */
+void util_cursor_clear(GtkWidget * widget);
 
 #endif

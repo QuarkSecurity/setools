@@ -3323,10 +3323,10 @@ Dec</property>
   </child>
 </widget>
 
-<widget class="GtkWindow" id="MultifilterWindow">
+<widget class="GtkWindow" id="ModifyViewWindow">
   <property name="width_request">327</property>
   <property name="height_request">377</property>
-  <property name="title" translatable="yes">window1</property>
+  <property name="title" translatable="yes">Modify View</property>
   <property name="type">GTK_WINDOW_TOPLEVEL</property>
   <property name="window_position">GTK_WIN_POS_NONE</property>
   <property name="modal">False</property>
@@ -3335,7 +3335,7 @@ Dec</property>
   <property name="decorated">True</property>
   <property name="skip_taskbar_hint">False</property>
   <property name="skip_pager_hint">False</property>
-  <property name="type_hint">GDK_WINDOW_TYPE_HINT_NORMAL</property>
+  <property name="type_hint">GDK_WINDOW_TYPE_HINT_DIALOG</property>
   <property name="gravity">GDK_GRAVITY_NORTH_WEST</property>
   <property name="focus_on_map">True</property>
   <property name="urgency_hint">False</property>
@@ -7239,7 +7239,7 @@ stylesheet:</property>
 		      <property name="tooltip" translatable="yes">Open a log file</property>
 		      <property name="label" translatable="yes">Open Log</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="toplevel_on_open_log_activate" last_modification_time="Wed, 22 Nov 2006 15:23:31 GMT"/>
+		      <signal name="activate" handler="toplevel_on_open_log_activate" object="TopLevel" last_modification_time="Wed, 22 Nov 2006 15:23:31 GMT"/>
 		      <accelerator key="O" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 
 		      <child internal-child="image">
@@ -7277,7 +7277,7 @@ stylesheet:</property>
 		      <property name="tooltip" translatable="yes">Open a policy</property>
 		      <property name="label" translatable="yes">Open Policy</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="toplevel_on_open_policy_activate" last_modification_time="Wed, 22 Nov 2006 15:23:18 GMT"/>
+		      <signal name="activate" handler="toplevel_on_open_policy_activate" object="TopLevel" last_modification_time="Wed, 22 Nov 2006 15:23:18 GMT"/>
 		      <accelerator key="P" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 
 		      <child internal-child="image">

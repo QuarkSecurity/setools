@@ -127,15 +127,19 @@ preferences_t *preferences_create(void)
 		goto cleanup;
 	}
 	if ((value = apol_config_get_var("DEFAULT_LOG_FILE", file)) != NULL) {
+		free(prefs->log);
 		prefs->log = value;
 	}
 	if ((value = apol_config_get_var("DEFAULT_POLICY_FILE", file)) != NULL) {
+		free(prefs->policy);
 		prefs->policy = value;
 	}
 	if ((value = apol_config_get_var("DEFAULT_REPORT_CONFIG_FILE", file)) != NULL) {
+		free(prefs->report);
 		prefs->report = value;
 	}
 	if ((value = apol_config_get_var("DEFAULT_REPORT_CSS_FILE", file)) != NULL) {
+		free(prefs->stylesheet);
 		prefs->stylesheet = value;
 	}
 	if ((v = apol_config_split_var("RECENT_LOG_FILES", file)) == NULL) {
@@ -428,7 +432,17 @@ int preferences_add_recent_log(preferences_t * prefs, const char *log)
 	return prefs_add_recent_vector(prefs->recent_log_files, log);
 }
 
+apol_vector_t *preferences_get_recent_logs(preferences_t * prefs)
+{
+	return prefs->recent_log_files;
+}
+
 int preferences_add_recent_policy(preferences_t * prefs, const char *policy)
 {
 	return prefs_add_recent_vector(prefs->recent_policy_files, policy);
+}
+
+apol_vector_t *preferences_get_recent_policies(preferences_t * prefs)
+{
+	return prefs->recent_policy_files;
 }

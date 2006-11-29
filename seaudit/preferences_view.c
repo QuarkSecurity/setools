@@ -90,7 +90,7 @@ static void display_browse_dialog_for_entry_box(GtkEntry * entry, GtkWindow * pa
 		gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(dialog), current_path);
 	}
 	response = gtk_dialog_run(GTK_DIALOG(dialog));
-	if (response != GTK_RESPONSE_OK) {
+	if (response != GTK_RESPONSE_ACCEPT) {
 		gtk_widget_destroy(dialog);
 		return;
 	}

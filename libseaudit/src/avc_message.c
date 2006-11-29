@@ -247,6 +247,9 @@ static char *avc_message_get_misc_string(seaudit_avc_message_t * avc)
 	if (avc->is_capability && apol_str_appendf(&s, &len, "capability=%d ", avc->capability) < 0) {
 		return NULL;
 	}
+	if (s == NULL) {
+		return strdup("");
+	}
 	return s;
 }
 

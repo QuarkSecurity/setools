@@ -37,8 +37,6 @@ seaudit_log_t *seaudit_log_create(seaudit_handle_fn_t fn, void *callback_arg)
 	seaudit_log_t *log = NULL;
 	int error;
 	if ((log = calloc(1, sizeof(*log))) == NULL) {
-		ERR(NULL, "%s", strerror(EINVAL));
-		errno = EINVAL;
 		return NULL;
 	}
 	log->fn = fn;
@@ -53,7 +51,6 @@ seaudit_log_t *seaudit_log_create(seaudit_handle_fn_t fn, void *callback_arg)
 	    (log->perms = apol_bst_create(apol_str_strcmp)) == NULL ||
 	    (log->hosts = apol_bst_create(apol_str_strcmp)) == NULL || (log->bools = apol_bst_create(apol_str_strcmp)) == NULL) {
 		error = errno;
-		ERR(log, "%s", strerror(error));
 		seaudit_log_destroy(&log);
 		errno = error;
 		return NULL;

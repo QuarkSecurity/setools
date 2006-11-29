@@ -51,6 +51,28 @@ preferences_t *seaudit_get_prefs(seaudit_t * s);
 apol_policy_t *seaudit_get_policy(seaudit_t * s);
 
 /**
+ * Return the path to the currently loaded policy.
+ *
+ * @param s seaudit object to query.
+ *
+ * @return Path of policy, or NULL if none loaded.  Treat this as a
+ * const pointer.
+ */
+char *seaudit_get_policy_path(seaudit_t * s);
+
+/**
+ * Set the currently loaded log for seaudit.  This will also update
+ * the preferences object's recently loaded files.
+ *
+ * @param s seaudit object to modify.
+ * @param log New log file for seaudit.  If NULL then seaudit has no
+ * log files opened.
+ * @param filename If log is not NULL, then add this filename to the
+ * most recently used files.
+ */
+void seaudit_set_log(seaudit_t * s, seaudit_log_t * log, const char *filename);
+
+/**
  * Retrieve the currently loaded log file.
  *
  * @param s seaudit object to query.
@@ -59,6 +81,16 @@ apol_policy_t *seaudit_get_policy(seaudit_t * s);
  * this as a const pointer.
  */
 seaudit_log_t *seaudit_get_log(seaudit_t * s);
+
+/**
+ * Return the path to the currently loaded log file.
+ *
+ * @param s seaudit object to query.
+ *
+ * @return Path of log file, or NULL if none loaded.  Treat this as a
+ * const pointer.
+ */
+char *seaudit_get_log_path(seaudit_t * s);
 
 #define COPYRIGHT_INFO "Copyright (c) 2003-2006 Tresys Technology, LLC"
 

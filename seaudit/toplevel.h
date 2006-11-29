@@ -53,6 +53,15 @@ toplevel_t *toplevel_create(seaudit_t * s);
 void toplevel_destroy(toplevel_t ** top);
 
 /**
+ * Open a log file, destroying any existing logs and views first.
+ * Afterwards, create a new view for the log.
+ *
+ * @param top Toplevel object, used for UI control.
+ * @param filename Name of the log to open.
+ */
+void toplevel_open_log(toplevel_t * top, const char *filename);
+
+/**
  * Return the current preferences object for the toplevel object.
  *
  * @param top Toplevel containing preferences.
@@ -79,8 +88,18 @@ void toplevel_update_status_bar(toplevel_t * top);
  *
  * @param top Toplevel window; this message dialog will be centered
  * upon it.
- * @param formate Format string to print, using syntax of printf(3).
+ * @param format Format string to print, using syntax of printf(3).
  */
 void toplevel_ERR(toplevel_t * top, const char *format, ...) __attribute__ ((format(printf, 2, 3)));
+
+/**
+ * Pop-up a warning dialog with a line of text and wait for the user
+ * to dismiss the dialog.
+ *
+ * @param top Toplevel window; this message dialog will be centered
+ * upon it.
+ * @param format Format string to print, using syntax of printf(3).
+ */
+void toplevel_WARN(toplevel_t * top, const char *format, ...) __attribute__ ((format(printf, 2, 3)));
 
 #endif
