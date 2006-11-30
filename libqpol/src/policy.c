@@ -1478,7 +1478,6 @@ int qpol_policy_rebuild(qpol_policy_t * policy)
 	}
 
 	sepol_policydb_free(old_p);
-	fprintf(stderr, "Success\n");
 
 	return STATUS_SUCCESS;
 
