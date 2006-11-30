@@ -34,10 +34,12 @@ void util_message(GtkWindow * parent, GtkMessageType msg_type, const char *msg)
 
 void util_cursor_wait(GtkWidget * widget)
 {
-	GdkCursor *cursor = gdk_cursor_new(GDK_WATCH);
-	gdk_window_set_cursor(widget->window, cursor);
-	gdk_cursor_unref(cursor);
-	gdk_flush();
+	GdkCursor *cursor;
+	if (widget->window != NULL) {
+		cursor = gdk_cursor_new(GDK_WATCH);
+		gdk_window_set_cursor(widget->window, cursor);
+		gdk_cursor_unref(cursor);
+	}
 }
 
 /**

@@ -7510,7 +7510,7 @@ stylesheet:</property>
 		      <property name="tooltip" translatable="yes">Export to a file all messages in the current view</property>
 		      <property name="label" translatable="yes">Export Messages...</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="toplevel_on_export_all_messages_activate" last_modification_time="Wed, 22 Nov 2006 15:37:54 GMT"/>
+		      <signal name="activate" handler="toplevel_on_export_all_messages_activate" object="TopLevel" last_modification_time="Wed, 22 Nov 2006 15:37:54 GMT"/>
 		    </widget>
 		  </child>
 
@@ -7521,7 +7521,7 @@ stylesheet:</property>
 		      <property name="tooltip" translatable="yes">Export to a file selected messages</property>
 		      <property name="label" translatable="yes">Export Selected Messages...</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="toplevel_on_export_selected_messages_activate" last_modification_time="Wed, 22 Nov 2006 15:37:16 GMT"/>
+		      <signal name="activate" handler="toplevel_on_export_selected_messages_activate" object="TopLevel" last_modification_time="Wed, 22 Nov 2006 15:37:16 GMT"/>
 		    </widget>
 		  </child>
 
@@ -7538,7 +7538,7 @@ stylesheet:</property>
 		      <property name="tooltip" translatable="yes">View all fields of the selected message</property>
 		      <property name="label" translatable="yes">View Entire Message</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="toplevel_on_view_entire_message_activate" last_modification_time="Wed, 22 Nov 2006 15:39:51 GMT"/>
+		      <signal name="activate" handler="toplevel_on_view_entire_message_activate" object="TopLevel" last_modification_time="Wed, 22 Nov 2006 15:39:51 GMT"/>
 		    </widget>
 		  </child>
 		</widget>
@@ -7706,7 +7706,7 @@ stylesheet:</property>
 	      <property name="tooltip" translatable="yes">Find TE Rules in the loaded policy</property>
 	      <property name="relief">GTK_RELIEF_NORMAL</property>
 	      <property name="focus_on_click">True</property>
-	      <signal name="clicked" handler="toplevel_on_find_terules_click" last_modification_time="Mon, 27 Nov 2006 15:48:56 GMT"/>
+	      <signal name="clicked" handler="toplevel_on_find_terules_click" object="TopLevel" last_modification_time="Mon, 27 Nov 2006 15:48:56 GMT"/>
 
 	      <child>
 		<widget class="GtkAlignment" id="alignment1">
@@ -7790,7 +7790,7 @@ stylesheet:</property>
 	      <property name="can_focus">True</property>
 	      <property name="relief">GTK_RELIEF_NORMAL</property>
 	      <property name="focus_on_click">True</property>
-	      <signal name="clicked" handler="toplevel_on_modify_view_click" last_modification_time="Mon, 27 Nov 2006 15:48:51 GMT"/>
+	      <signal name="clicked" handler="toplevel_on_modify_view_click" object="TopLevel" last_modification_time="Mon, 27 Nov 2006 15:48:51 GMT"/>
 
 	      <child>
 		<widget class="GtkAlignment" id="alignment5">

@@ -75,6 +75,38 @@ GtkWidget *message_view_get_view(message_view_t * view);
 size_t message_view_get_num_log_messages(message_view_t * view);
 
 /**
+ * Return TRUE if the message view has one or more messages selected,
+ * FALSE if not.
+ *
+ * @param view View object to query.
+ *
+ * @return TRUE if any messages are selected.
+ */
+gboolean message_view_is_message_selected(message_view_t * view);
+
+/**
+ * Export to file all messages in a particular view.
+ *
+ * @param view View whose messages to export.
+ */
+void message_view_export_all_messages(message_view_t * view);
+
+/**
+ * Export to file all messages selected in a particular view.
+ *
+ * @param view View whose messages to export.
+ */
+void message_view_export_selected_messages(message_view_t * view);
+
+/**
+ * Open a dialog that shows an approximation of the message(s)
+ * currently selected.
+ *
+ * @param view View whose messages to show.
+ */
+void message_view_entire_message(message_view_t * view);
+
+/**
  * Show/hide columns in a view based upon the user's current
  * preferences.
  *
@@ -91,32 +123,4 @@ void message_view_update_visible_columns(message_view_t * view);
  */
 void message_view_update_rows(message_view_t * view);
 
-#if 0
-
-#include <gtk/gtk.h>
-#include <glade/glade.h>
-#include "multifilter_window.h"
-#include "auditlogmodel.h"
-
-typedef struct seaudit_filtered_view
-{
-	multifilter_window_t *multifilter_window;
-	SEAuditLogViewStore *store;
-	GtkTreeView *tree_view;
-	gint notebook_index;
-	GString *name;
-} seaudit_filtered_view_t;
-
-/*
- * Public member functions
- */
-void seaudit_filtered_view_set_log(seaudit_filtered_view_t * view, audit_log_t * log);
-void seaudit_filtered_view_display(seaudit_filtered_view_t * filters_view, GtkWindow * parent);
-void seaudit_filtered_view_save_view(seaudit_filtered_view_t * filtered_view, gboolean saveas);
-void seaudit_filtered_view_set_notebook_index(seaudit_filtered_view_t * filtered_view, gint index);
-void seaudit_filtered_view_set_multifilter_window(seaudit_filtered_view_t * filtered_view, multifilter_window_t * window);
-void seaudit_filtered_view_do_filter(seaudit_filtered_view_t * view, gpointer user_data);	/* this can be used as a callback from g_list_foreach() */
-void seaudit_filtered_view_set_name(seaudit_filtered_view_t * filtered_view, const char *name);
-
-#endif
 #endif

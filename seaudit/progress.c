@@ -24,6 +24,7 @@
  */
 
 #include "progress.h"
+#include "utilgui.h"
 
 #include <gtk/gtk.h>
 #include <glib.h>
@@ -44,7 +45,6 @@ progress_t *progress_create(toplevel_t * top, GtkWindow * parent)
 {
 	progress_t *p;
 	GtkWidget *vbox;
-	GdkCursor *cursor;
 
 	if ((p = calloc(1, sizeof(*p))) == NULL) {
 		return NULL;
@@ -64,9 +64,7 @@ progress_t *progress_create(toplevel_t * top, GtkWindow * parent)
 	gtk_widget_show(p->label2);
 	gtk_widget_show(vbox);
 	gtk_widget_show(p->progress);
-	cursor = gdk_cursor_new(GDK_WATCH);
-	gdk_window_set_cursor(p->progress->window, cursor);
-	gdk_cursor_unref(cursor);
+	util_cursor_wait(p->progress);
 	p->cond = g_cond_new();
 	p->mutex = g_mutex_new();
 	return p;

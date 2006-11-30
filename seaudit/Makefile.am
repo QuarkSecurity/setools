@@ -25,12 +25,10 @@ nodist_setools_DATA = \
 	seaudit-report-service
 
 #seaudit_SOURCES = \
-#	auditlogmodel.c auditlogmodel.h \
 #	filter_window.c filter_window.h \
 #	multifilter_window.c multifilter_window.h \
 #	query_window.c query_window.h \
-#	report_window.c report_window.h \
-#	seaudit_callback.c seaudit_callback.h
+#	report_window.c report_window.h
 
 seaudit_SOURCES = \
 	message_view.c message_view.h \

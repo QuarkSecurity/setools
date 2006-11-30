@@ -27,6 +27,7 @@
 
 #include "seaudit.h"
 #include <glade/glade.h>
+#include <seaudit/message.h>
 
 typedef struct toplevel toplevel_t;
 
@@ -62,6 +63,24 @@ void toplevel_destroy(toplevel_t ** top);
 void toplevel_open_log(toplevel_t * top, const char *filename);
 
 /**
+ * Update the status bar to show the current policy, number of log
+ * messages in the current view, range of messages in current view,
+ * and monitor status.
+ *
+ * @param top Toplevel whose status bar to update.
+ */
+void toplevel_update_status_bar(toplevel_t * top);
+
+/**
+ * Update the menu items whenever a message is selected/deselected.
+ * Certain commands are legal only when one or more messages are
+ * selected.
+ *
+ * @param top Toplevel whose menu to update.
+ */
+void toplevel_update_selection_menu_item(toplevel_t * top);
+
+/**
  * Return the current preferences object for the toplevel object.
  *
  * @param top Toplevel containing preferences.
@@ -76,9 +95,20 @@ preferences_t *toplevel_get_prefs(toplevel_t * top);
  *
  * @param top Toplevel containing seaudit log object.
  *
- * @return libseaudit reporting object.  Treat this as a const pointer.
+ * @return libseaudit reporting object, or NULL if no log exists yet.
+ * Treat this as a const pointer.
  */
 seaudit_log_t *toplevel_get_log(toplevel_t * top);
+
+/**
+ * Return the currently loaded policy.
+ *
+ * @param top Toplevel containing policy.
+ *
+ * @return Current policy, or NULL if no policy is loaded yet.  Treat
+ * this as a const pointer.
+ */
+apol_policy_t *toplevel_get_policy(toplevel_t * top);
 
 /**
  * Return the glade XML object, so that other glade objects may be
@@ -89,6 +119,17 @@ seaudit_log_t *toplevel_get_log(toplevel_t * top);
  * @return Glade XML declarations.
  */
 GladeXML *toplevel_get_glade_xml(toplevel_t * top);
+
+/**
+ * (Re)open a dialog that allows the user to search for TE rules in
+ * the currently opened policy.  If message is not NULL then set the
+ * query's initial parameters to the message's source type, target
+ * type, and object class.
+ *
+ * @param top Toplevel containing policy.
+ * @param message If non-NULL, the initial parameters for query.
+ */
+void toplevel_find_terules(toplevel_t * top, seaudit_message_t * message);
 
 /**
  * Pop-up an error dialog with a line of text and wait for the user to

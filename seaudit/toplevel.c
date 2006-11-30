@@ -67,9 +67,9 @@ static gint toplevel_notebook_find_view(toplevel_t * top, message_view_t * view)
 	while (num_pages >= 1) {
 		GtkWidget *child = gtk_notebook_get_nth_page(top->notebook, num_pages - 1);
 		GtkWidget *tab = gtk_notebook_get_tab_label(top->notebook, child);
-		message_view_t *v = g_object_get_data(G_OBJECT(tab), "view");
+		message_view_t *v = g_object_get_data(G_OBJECT(tab), "view-object");
 		if (v == view) {
-			return num_pages;
+			return num_pages - 1;
 		}
 		num_pages--;
 	}
@@ -86,16 +86,15 @@ static message_view_t *toplevel_get_current_view(toplevel_t * top)
 	if (current >= 0) {
 		GtkWidget *child = gtk_notebook_get_nth_page(top->notebook, current);
 		GtkWidget *tab = gtk_notebook_get_tab_label(top->notebook, child);
-		return g_object_get_data(G_OBJECT(tab), "view");
+		return g_object_get_data(G_OBJECT(tab), "view-object");
 	}
 	return NULL;
 }
 
-static void toplevel_update_status_bar(toplevel_t * top);
-
-static void toplevel_on_notebook_switch_page(GtkNotebook * notebook, GtkNotebookPage * page, guint pagenum, toplevel_t * top)
+static void toplevel_on_notebook_switch_page(GtkNotebook * notebook __attribute__ ((unused)), GtkNotebookPage * page
+					     __attribute__ ((unused)), guint pagenum __attribute__ ((unused)), toplevel_t * top)
 {
-	/* FIX ME */
+	toplevel_update_selection_menu_item(top);
 	toplevel_update_status_bar(top);
 }
 
@@ -104,14 +103,19 @@ static void toplevel_on_notebook_switch_page(GtkNotebook * notebook, GtkNotebook
  */
 static void toplevel_on_tab_close(GtkButton * button, toplevel_t * top)
 {
-	message_view_t *view = g_object_get_data(G_OBJECT(button), "view");
-	gint index = toplevel_notebook_find_view(top, view);
-	size_t i;
-	assert(index >= 0);
-	gtk_notebook_remove_page(top->notebook, index);
-	apol_vector_get_index(top->views, view, NULL, NULL, &i);
-	apol_vector_remove(top->views, i);
-	message_view_destroy(&view);
+	/* disallow the close if this is the last tab */
+	if (top->views == NULL || apol_vector_get_size(top->views) <= 1) {
+		return;
+	} else {
+		message_view_t *view = g_object_get_data(G_OBJECT(button), "view-object");
+		gint index = toplevel_notebook_find_view(top, view);
+		size_t i;
+		assert(index >= 0);
+		gtk_notebook_remove_page(top->notebook, index);
+		apol_vector_get_index(top->views, view, NULL, NULL, &i);
+		message_view_destroy(&view);
+		apol_vector_remove(top->views, i);
+	}
 }
 
 /**
@@ -135,9 +139,9 @@ static void toplevel_add_new_view(toplevel_t * top, seaudit_model_t * model)
 		return;
 	}
 	tab = gtk_hbox_new(FALSE, 5);
-	g_object_set_data(G_OBJECT(tab), "view", view);
+	g_object_set_data(G_OBJECT(tab), "view-object", view);
 	button = gtk_button_new();
-	g_object_set_data(G_OBJECT(button), "view", view);
+	g_object_set_data(G_OBJECT(button), "view-object", view);
 	image = gtk_image_new_from_stock(GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU);
 	gtk_container_add(GTK_CONTAINER(button), image);
 	gtk_widget_set_size_request(image, 8, 8);
@@ -320,66 +324,6 @@ static void toplevel_update_title_bar(toplevel_t * top)
 	free(s);
 }
 
-/**
- * Update the status bar to show the current policy, number of log
- * messages in the current view, range of messages in current view,
- * and monitor status.
- */
-static void toplevel_update_status_bar(toplevel_t * top)
-{
-	apol_policy_t *policy = seaudit_get_policy(top->s);
-	GtkLabel *policy_version = (GtkLabel *) glade_xml_get_widget(top->xml, "PolicyVersionLabel");
-	GtkLabel *log_num = (GtkLabel *) glade_xml_get_widget(top->xml, "LogNumLabel");
-	GtkLabel *log_dates = (GtkLabel *) glade_xml_get_widget(top->xml, "LogDateLabel");
-	seaudit_log_t *log = toplevel_get_log(top);
-
-	if (policy == NULL) {
-		gtk_label_set_text(policy_version, "Policy Version: No policy");
-	} else {
-		char *policy_str = apol_policy_get_version_type_mls_str(policy);
-		char *s;
-		if (asprintf(&s, "Policy Version: %s", policy_str) < 0) {
-			toplevel_ERR(top, "%s", strerror(errno));
-			free(policy_str);
-		} else {
-			gtk_label_set_text(policy_version, s);
-			free(s);
-			free(policy_str);
-		}
-	}
-
-	if (log == NULL) {
-		gtk_label_set_text(log_num, "Log Messages: No log");
-		gtk_label_set_text(log_dates, "Dates: No log");
-	} else {
-		message_view_t *view = toplevel_get_current_view(top);
-		size_t num_messages = seaudit_get_num_log_messages(top->s);
-		size_t num_view_messages;
-		struct tm *first = seaudit_get_log_first(top->s);
-		struct tm *last = seaudit_get_log_last(top->s);
-		assert(view != NULL);
-		num_view_messages = message_view_get_num_log_messages(view);
-		char *s, t1[256], t2[256];
-		if (asprintf(&s, "Log Messages: %zd/%zd", num_view_messages, num_messages) < 0) {
-			toplevel_ERR(top, "%s", strerror(errno));
-		} else {
-			gtk_label_set_text(log_num, s);
-			free(s);
-		}
-		strftime(t1, 256, "%b %d %H:%M:%S", first);
-		strftime(t2, 256, "%b %d %H:%M:%S", last);
-		if (asprintf(&s, "Dates: %s - %s", t1, t2) < 0) {
-			toplevel_ERR(top, "%s", strerror(errno));
-		} else {
-			gtk_label_set_text(log_dates, s);
-			free(s);
-		}
-		/* FIX ME
-		 * seaudit_view_entire_selection_update_sensitive(TRUE);
-		 */
-	}
-}
-
 static void init_icons(toplevel_t * top)
 {
 	const char *icon_names[] = { "seaudit-small.png", "seaudit.png" };
@@ -553,6 +497,71 @@ void toplevel_open_log(toplevel_t * top, const char *filename)
 	toplevel_add_new_model(top);
 	toplevel_update_title_bar(top);
 	toplevel_update_status_bar(top);
+	toplevel_update_selection_menu_item(top);
+}
+
+void toplevel_update_status_bar(toplevel_t * top)
+{
+	apol_policy_t *policy = seaudit_get_policy(top->s);
+	GtkLabel *policy_version = (GtkLabel *) glade_xml_get_widget(top->xml, "PolicyVersionLabel");
+	GtkLabel *log_num = (GtkLabel *) glade_xml_get_widget(top->xml, "LogNumLabel");
+	GtkLabel *log_dates = (GtkLabel *) glade_xml_get_widget(top->xml, "LogDateLabel");
+	seaudit_log_t *log = toplevel_get_log(top);
+
+	if (policy == NULL) {
+		gtk_label_set_text(policy_version, "Policy Version: No policy");
+	} else {
+		char *policy_str = apol_policy_get_version_type_mls_str(policy);
+		char *s;
+		if (asprintf(&s, "Policy Version: %s", policy_str) < 0) {
+			toplevel_ERR(top, "%s", strerror(errno));
+			free(policy_str);
+		} else {
+			gtk_label_set_text(policy_version, s);
+			free(s);
+			free(policy_str);
+		}
+	}
+
+	if (log == NULL) {
+		gtk_label_set_text(log_num, "Log Messages: No log");
+		gtk_label_set_text(log_dates, "Dates: No log");
+	} else {
+		message_view_t *view = toplevel_get_current_view(top);
+		size_t num_messages = seaudit_get_num_log_messages(top->s);
+		size_t num_view_messages;
+		struct tm *first = seaudit_get_log_first(top->s);
+		struct tm *last = seaudit_get_log_last(top->s);
+		assert(view != NULL);
+		num_view_messages = message_view_get_num_log_messages(view);
+		char *s, t1[256], t2[256];
+		if (asprintf(&s, "Log Messages: %zd/%zd", num_view_messages, num_messages) < 0) {
+			toplevel_ERR(top, "%s", strerror(errno));
+		} else {
+			gtk_label_set_text(log_num, s);
+			free(s);
+		}
+		strftime(t1, 256, "%b %d %H:%M:%S", first);
+		strftime(t2, 256, "%b %d %H:%M:%S", last);
+		if (asprintf(&s, "Dates: %s - %s", t1, t2) < 0) {
+			toplevel_ERR(top, "%s", strerror(errno));
+		} else {
+			gtk_label_set_text(log_dates, s);
+			free(s);
+		}
+	}
+}
+
+void toplevel_update_selection_menu_item(toplevel_t * top)
+{
+	message_view_t *view = toplevel_get_current_view(top);
+	gboolean sensitive = FALSE;
+	GtkWidget *view_message = glade_xml_get_widget(top->xml, "ViewMessage");
+	assert(view_message != NULL);
+	if (view != NULL) {
+		sensitive = message_view_is_message_selected(view);
+	}
+	gtk_widget_set_sensitive(view_message, sensitive);
 }
 
 preferences_t *toplevel_get_prefs(toplevel_t * top)
@@ -565,9 +574,20 @@ seaudit_log_t *toplevel_get_log(toplevel_t * top)
 	return seaudit_get_log(top->s);
 }
 
+apol_policy_t *toplevel_get_policy(toplevel_t * top)
+{
+	return seaudit_get_policy(top->s);
+}
+
 GladeXML *toplevel_get_glade_xml(toplevel_t * top)
 {
 	return top->xml;
+}
+
+void toplevel_find_terules(toplevel_t * top, seaudit_message_t * message)
+{
+	printf("finding te rules, with message %p\n", message);
+	/* FIX ME */
 }
 
 /**
@@ -684,6 +704,30 @@ void toplevel_on_new_tab_activate(gpointer user_data, GtkWidget * widget __attri
 	toplevel_add_new_model(top);
 }
 
+void toplevel_on_export_all_messages_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
+{
+	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	message_view_t *view = toplevel_get_current_view(top);
+	assert(view != NULL);
+	message_view_export_all_messages(view);
+}
+
+void toplevel_on_export_selected_messagesactivate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
+{
+	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	message_view_t *view = toplevel_get_current_view(top);
+	assert(view != NULL);
+	message_view_export_selected_messages(view);
+}
+
+void toplevel_on_view_entire_message_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
+{
+	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	message_view_t *view = toplevel_get_current_view(top);
+	assert(view != NULL);
+	message_view_entire_message(view);
+}
+
 void toplevel_on_help_activate(gpointer user_data, GtkMenuItem * widget __attribute__ ((unused)))
 {
 	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
@@ -724,7 +768,7 @@ void toplevel_on_help_activate(gpointer user_data, GtkMenuItem * widget __attrib
 	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER_ON_PARENT);
 	gtk_widget_show(text_view);
 	gtk_widget_show(scroll);
-	gtk_dialog_run(GTK_DIALOG(window));
+	gtk_widget_show(GTK_DIALOG(window));
 }
 
 void toplevel_on_about_seaudit_activate(gpointer user_data, GtkMenuItem * widget __attribute__ ((unused)))
@@ -734,6 +778,12 @@ void toplevel_on_about_seaudit_activate(gpointer user_data, GtkMenuItem * widget
 			      "comments", "Audit Log Analysis Tool for Security Enhanced Linux",
 			      "copyright", COPYRIGHT_INFO,
 			      "name", "seaudit", "version", VERSION, "website", "http://oss.tresys.com/projects/setools", NULL);
+}
+
+void toplevel_on_find_terules_click(gpointer user_data, GtkWidget * widget, GdkEvent * event)
+{
+	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_find_terules(top, NULL);
 }
 
 #if 0
@@ -1400,11 +1450,6 @@ void seaudit_window_view_entire_message_in_textbox(int *tree_item_idx)
 	gtk_widget_show(window);
 }
 
-void seaudit_window_on_view_entire_msg_activated(GtkWidget * widget, GdkEvent * event, gpointer callback_data)
-{
-	seaudit_window_view_entire_message_in_textbox(NULL);
-}
-
 void seaudit_on_ExportLog_activate(GtkWidget * widget, GdkEvent * event, gpointer callback_data)
 {
 	seaudit_save_log_file(FALSE);
@@ -1429,11 +1474,6 @@ void seaudit_on_filter_log_button_clicked(GtkWidget * widget, GdkEvent * event, 
 	view = seaudit_window_get_current_view(seaudit_app->window);
 	seaudit_filtered_view_display(view, seaudit_app->window->window);
 	return;
-}
-
-void seaudit_on_top_window_query_button_clicked(GtkWidget * widget, GdkEvent * event, gpointer callback_data)
-{
-	query_window_create(NULL);
 }
 
 void seaudit_on_create_standard_report_activate()

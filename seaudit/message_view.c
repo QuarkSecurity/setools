@@ -25,6 +25,7 @@
 #include <config.h>
 
 #include "message_view.h"
+#include "utilgui.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -32,10 +33,6 @@
 #include <string.h>
 #include <time.h>
 #include <apol/util.h>
-
-/** The tree view will have another hidden column that contains a
-    pointer to the original libseaudit message. */
-#define ID_FIELD (OTHER_FIELD + 1)
 
 /**
  * A custom model that implements the interfaces GtkTreeModel and
@@ -50,7 +47,7 @@ typedef struct message_view_store
 	/** vector of seaudit_message_t, as returned by
          * seaudit_model_get_messages() */
 	apol_vector_t *messages;
-	/** column that is currently being sorted; use ID_FIELD to
+	/** column that is currently being sorted; use OTHER_FIELD to
          * indicate no sorting */
 	gint sort_field;
 	/* current sort direction, either 1 or ascending or -1 for
@@ -121,48 +118,42 @@ static const size_t num_columns = sizeof(column_data) / sizeof(column_data[0]);
  */
 static gboolean message_view_on_column_click(GtkTreeViewColumn * column, gpointer user_data)
 {
-	return FALSE;
-}
+	gint column_id = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(column), "column id"));
+	message_view_t *view = (message_view_t *) user_data;
+	int dir = 0;
+	seaudit_sort_t *sort;
+	GtkTreeViewColumn *prev_column;
+	if (column_id == view->store->sort_field) {
+		dir = view->store->sort_dir * -1;
+	} else {
+		dir = 1;
+	}
 
-#if 0
-gint column_id = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(column), "column id"));
-preference_field_e id = column_id;
-message_view_t *view = (message_view_t *) user_data;
-int dir = 0;
-seaudit_sort_t *sort;
-GtkTreeViewColumn *prev_column;
-if (id == view->current_sort) {
-	dir = view->current_sort_dir * -1;
-} else {
-	dir = 1;
-}
+	if ((sort = column_data[(preference_field_e) column_id].sort(dir)) == NULL) {
+		toplevel_ERR(view->top, "%s", strerror(errno));
+		return TRUE;
+	}
+	seaudit_model_remove_all_sort(view->model);
+	if (seaudit_model_append_sort(view->model, sort) < 0) {
+		seaudit_sort_destroy(&sort);
+		toplevel_ERR(view->top, "%s", strerror(errno));
+	}
+	prev_column = gtk_tree_view_get_column(GTK_TREE_VIEW(view->tree), view->store->sort_field);
+	if (prev_column != NULL) {
+		gtk_tree_view_column_set_sort_indicator(prev_column, FALSE);
+	}
+	gtk_tree_view_column_set_sort_indicator(column, TRUE);
+	if (dir > 0) {
+		gtk_tree_view_column_set_sort_order(column, GTK_SORT_ASCENDING);
+	} else {
+		gtk_tree_view_column_set_sort_order(column, GTK_SORT_DESCENDING);
+	}
 
-if ((sort = column_data[column_id].sort(dir)) == NULL) {
-	toplevel_ERR(view->top, "%s", strerror(errno));
+	view->store->sort_field = column_id;
+	view->store->sort_dir = dir;
+	message_view_update_rows(view);
 	return TRUE;
 }
-seaudit_model_remove_all_sort(view->model);
-if (seaudit_model_append_sort(view->model, sort) < 0) {
-	seaudit_sort_destroy(&sort);
-	toplevel_ERR(view->top, "%s", strerror(errno));
-}
-prev_column = gtk_tree_view_get_column(GTK_TREE_VIEW(view->tree), view->current_sort);
-if (prev_column != NULL) {
-	gtk_tree_view_column_set_sort_indicator(prev_column, FALSE);
-}
-gtk_tree_view_column_set_sort_indicator(column, TRUE);
-if (dir > 0) {
-	gtk_tree_view_column_set_sort_order(column, GTK_SORT_ASCENDING);
-} else {
-	gtk_tree_view_column_set_sort_order(column, GTK_SORT_DESCENDING);
-}
-
-view->current_sort = column_id;
-view->current_sort_dir = dir;
-message_view_update_rows(view);
-return TRUE;
-}
-#endif
 
 /*************** implementation of a custom GtkTreeModel ***************/
 
@@ -217,7 +208,7 @@ static void message_view_store_init(message_view_store_t * m)
 {
 	static int next_stamp = 0;
 	m->messages = NULL;
-	m->sort_field = ID_FIELD;
+	m->sort_field = OTHER_FIELD;
 	m->sort_dir = 1;
 	m->stamp = next_stamp++;
 }
@@ -259,7 +250,7 @@ static GtkTreeModelFlags message_view_store_get_flags(GtkTreeModel * tree_model)
 
 static gint message_view_store_get_n_columns(GtkTreeModel * tree_model)
 {
-	return ID_FIELD + 1;
+	return OTHER_FIELD + 1;
 }
 
 static GType message_view_store_get_column_type(GtkTreeModel * tree_model, gint index)
@@ -282,7 +273,7 @@ static gboolean message_view_store_get_iter(GtkTreeModel * tree_model, GtkTreeIt
 	iter->stamp = store->stamp;
 	iter->user_data = apol_vector_get_element(store->messages, i);
 	iter->user_data2 = GINT_TO_POINTER(i);
-	iter->user_data3 = NULL;
+	iter->user_data3 = store->view;
 	return TRUE;
 }
 
@@ -320,7 +311,7 @@ static void message_view_store_get_value(GtkTreeModel * tree_model, GtkTreeIter 
 	seaudit_avc_message_t *avc;
 	g_return_if_fail(SEAUDIT_IS_MESSAGE_VIEW_STORE(tree_model));
 	g_return_if_fail(iter != NULL);
-	g_return_if_fail(column < ID_FIELD);
+	g_return_if_fail(column <= OTHER_FIELD);
 	g_value_init(value, G_TYPE_STRING);
 	store = (message_view_store_t *) tree_model;
 	view = store->view;
@@ -509,7 +500,7 @@ static gboolean message_view_store_iter_next(GtkTreeModel * tree_model, GtkTreeI
 	}
 	iter->user_data = apol_vector_get_element(store->messages, i);
 	iter->user_data2 = GINT_TO_POINTER(i);
-	iter->user_data3 = NULL;
+	iter->user_data3 = store->view;
 	return TRUE;
 }
 
@@ -529,7 +520,7 @@ static gboolean message_view_store_iter_children(GtkTreeModel * tree_model, GtkT
 	iter->stamp = store->stamp;
 	iter->user_data = apol_vector_get_element(store->messages, 0);
 	iter->user_data2 = GINT_TO_POINTER(0);
-	iter->user_data3 = NULL;
+	iter->user_data3 = store->view;
 	return TRUE;
 }
 
@@ -566,7 +557,7 @@ static gboolean message_view_store_iter_nth_child(GtkTreeModel * tree_model, Gtk
 	iter->stamp = store->stamp;
 	iter->user_data = apol_vector_get_element(store->messages, n);
 	iter->user_data2 = GINT_TO_POINTER(n);
-	iter->user_data3 = NULL;
+	iter->user_data3 = store->view;
 	return TRUE;
 }
 
@@ -576,6 +567,175 @@ static gboolean message_view_store_iter_parent(GtkTreeModel * tree_model, GtkTre
 }
 
 /*************** end of custom GtkTreeModel implementation ***************/
+
+/**
+ * Show all messages within the messages vector (type seaudit_message_t *)
+ */
+static void message_view_messages_vector(message_view_t * view, apol_vector_t * messages)
+{
+	GtkWidget *window;
+	GtkWidget *scroll;
+	GtkWidget *text_view;
+	GtkTextBuffer *buffer;
+	GtkTextIter iter;
+	size_t i;
+	window = gtk_dialog_new_with_buttons("View Messages",
+					     NULL, GTK_DIALOG_DESTROY_WITH_PARENT, GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE, NULL);
+	gtk_dialog_set_default_response(GTK_DIALOG(window), GTK_RESPONSE_CLOSE);
+	gtk_window_set_modal(GTK_WINDOW(window), FALSE);
+	g_signal_connect_swapped(window, "response", G_CALLBACK(gtk_widget_destroy), window);
+	scroll = gtk_scrolled_window_new(NULL, NULL);
+	text_view = gtk_text_view_new();
+	gtk_window_set_default_size(GTK_WINDOW(window), 480, 300);
+	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(window)->vbox), scroll);
+	gtk_container_add(GTK_CONTAINER(scroll), text_view);
+	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text_view), GTK_WRAP_WORD);
+	gtk_widget_show(text_view);
+	gtk_widget_show(scroll);
+	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
+	gtk_text_buffer_get_start_iter(buffer, &iter);
+	for (i = 0; i < apol_vector_get_size(messages); i++) {
+		seaudit_message_t *m = apol_vector_get_element(messages, i);
+		char *s;
+		if ((s = seaudit_message_to_string(m)) == NULL) {
+			toplevel_ERR(view->top, "%s", strerror(errno));
+			continue;
+		}
+		gtk_text_buffer_insert(buffer, &iter, s, -1);
+		gtk_text_buffer_insert(buffer, &iter, "\n", -1);
+		free(s);
+	}
+	gtk_text_view_set_editable(GTK_TEXT_VIEW(text_view), FALSE);
+	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER_ON_PARENT);
+	gtk_widget_show(window);
+
+}
+
+/******************** handle right clicks on a message ********************/
+
+static void message_view_popup_on_view_message_activate(GtkMenuItem * menuitem, gpointer user_data)
+{
+	message_view_t *v = g_object_get_data(G_OBJECT(menuitem), "view-object");
+	apol_vector_t *messages = NULL;
+	if ((messages = apol_vector_create_with_capacity(1)) == NULL || apol_vector_append(messages, user_data) < 0) {
+		apol_vector_destroy(&messages, NULL);
+		toplevel_ERR(v->top, "%s", strerror(errno));
+	} else {
+		message_view_messages_vector(v, messages);
+		apol_vector_destroy(&messages, NULL);
+	}
+}
+
+static void message_view_popup_on_find_terules_activate(GtkMenuItem * menuitem, gpointer user_data)
+{
+	message_view_t *v = g_object_get_data(G_OBJECT(menuitem), "view-object");
+	toplevel_find_terules(v->top, (seaudit_message_t *) user_data);
+}
+
+static void message_view_popup_on_export_selected_messages_activate(GtkMenuItem * menuitem, gpointer user_data
+								    __attribute__ ((unused)))
+{
+	message_view_t *v = g_object_get_data(G_OBJECT(menuitem), "view-object");
+	message_view_export_selected_messages(v);
+}
+
+static void message_view_popup_menu(GtkWidget * treeview, GdkEventButton * event, message_view_t * view,
+				    seaudit_message_t * message)
+{
+	GtkWidget *menu, *menuitem, *menuitem2, *menuitem3;
+	int button, event_time;
+
+	menu = gtk_menu_new();
+	menuitem = gtk_menu_item_new_with_label("View Entire Message");
+	menuitem2 = gtk_menu_item_new_with_label("Find TERules using Message...");
+	menuitem3 = gtk_menu_item_new_with_label("Export Selected Messages...");
+	g_signal_connect(menuitem, "activate", (GCallback) message_view_popup_on_view_message_activate, message);
+	g_signal_connect(menuitem2, "activate", (GCallback) message_view_popup_on_find_terules_activate, message);
+	g_signal_connect(menuitem3, "activate", (GCallback) message_view_popup_on_export_selected_messages_activate, NULL);
+	g_object_set_data(G_OBJECT(menuitem), "view-object", view);
+	g_object_set_data(G_OBJECT(menuitem2), "view-object", view);
+	g_object_set_data(G_OBJECT(menuitem3), "view-object", view);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem2);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem3);
+	gtk_widget_show_all(menu);
+	if (toplevel_get_policy(view->top) == NULL) {
+		gtk_widget_set_sensitive(menuitem2, FALSE);
+	}
+
+	if (event) {
+		button = event->button;
+		event_time = event->time;
+	} else {
+		button = 0;
+		event_time = gtk_get_current_event_time();
+	}
+	gtk_menu_attach_to_widget(GTK_MENU(menu), treeview, NULL);
+	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, button, event_time);
+}
+
+static gboolean message_view_delayed_selection_menu_item(gpointer data)
+{
+	message_view_t *view = (message_view_t *) data;
+	toplevel_update_selection_menu_item(view->top);
+	return FALSE;
+}
+
+static gboolean message_view_on_button_press(GtkWidget * treeview, GdkEventButton * event, gpointer user_data)
+{
+	message_view_t *view = (message_view_t *) user_data;
+	if (event->type == GDK_BUTTON_PRESS && event->button == 3) {
+		GtkTreePath *path = NULL;
+		GtkTreeIter iter;
+		/* popup a menu for the row that was clicked */
+		if (!gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(treeview), event->x, event->y, &path, NULL, NULL, NULL)) {
+			return FALSE;
+		}
+		message_view_store_get_iter(GTK_TREE_MODEL(view->store), &iter, path);
+		message_view_popup_menu(treeview, event, view, (seaudit_message_t *) iter.user_data);
+		return TRUE;
+	} else if (event->type == GDK_BUTTON_PRESS && event->button == 1) {
+		/* n.b.: rows can be selected but never deselected.
+		 * delay updating the menu, for upon the first click
+		 * there is not a selection yet */
+		g_idle_add(&message_view_delayed_selection_menu_item, view);
+		return FALSE;
+	}
+	return FALSE;
+}
+
+static void message_view_gtk_tree_path_free(gpointer data, gpointer user_data __attribute__ ((unused)))
+{
+	gtk_tree_path_free((GtkTreePath *) data);
+}
+
+static gboolean message_view_on_popup_menu(GtkWidget * treeview, gpointer user_data)
+{
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(treeview));
+	GList *glist = gtk_tree_selection_get_selected_rows(selection, NULL);
+	message_view_t *view = (message_view_t *) user_data;
+	GtkTreePath *path;
+	GtkTreeIter iter;
+	if (glist == NULL) {
+		return FALSE;
+	}
+	path = g_list_nth_data(glist, 0);
+	message_view_store_get_iter(GTK_TREE_MODEL(view->store), &iter, path);
+	g_list_foreach(glist, message_view_gtk_tree_path_free, NULL);
+	g_list_free(glist);
+	message_view_popup_menu(treeview, NULL, view, (seaudit_message_t *) iter.user_data);
+	return TRUE;
+}
+
+static void message_view_on_row_activate(GtkTreeView * tree_view __attribute__ ((unused)), GtkTreePath * path
+					 __attribute__ ((unused)), GtkTreeViewColumn * column
+					 __attribute__ ((unused)), gpointer user_data)
+{
+	message_view_t *view = (message_view_t *) user_data;
+	toplevel_update_selection_menu_item(view->top);
+}
+
+/******************** other public functions below ********************/
 
 message_view_t *message_view_create(toplevel_t * top, seaudit_model_t * model)
 {
@@ -626,11 +786,9 @@ message_view_t *message_view_create(toplevel_t * top, seaudit_model_t * model)
 		gtk_tree_view_append_column(GTK_TREE_VIEW(view->tree), column);
 	}
 
-	/*
-	 * g_signal_connect(G_OBJECT(tree_view), "row_activated", G_CALLBACK(message_view_on_select), view);
-	 * g_signal_connect(G_OBJECT(tree_view), "button-press-event", G_CALLBACK(message_view_on_button_press), view);
-	 * g_signal_connect(G_OBJECT(tree_view), "popup-menu", G_CALLBACK(message_view_on_popup_menu), view);
-	 */
+	g_signal_connect(G_OBJECT(view->tree), "button-press-event", G_CALLBACK(message_view_on_button_press), view);
+	g_signal_connect(G_OBJECT(view->tree), "popup-menu", G_CALLBACK(message_view_on_popup_menu), view);
+	g_signal_connect(G_OBJECT(view->tree), "row-activated", G_CALLBACK(message_view_on_row_activate), view);
 	message_view_update_visible_columns(view);
 	message_view_update_rows(view);
 	return view;
@@ -659,6 +817,61 @@ size_t message_view_get_num_log_messages(message_view_t * view)
 		return 0;
 	}
 	return apol_vector_get_size(view->store->messages);
+}
+
+gboolean message_view_is_message_selected(message_view_t * view)
+{
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view->tree));
+	GList *glist = gtk_tree_selection_get_selected_rows(selection, NULL);
+	if (glist == NULL) {
+		return FALSE;
+	}
+	g_list_foreach(glist, message_view_gtk_tree_path_free, NULL);
+	g_list_free(glist);
+	return TRUE;
+}
+
+void message_view_entire_message(message_view_t * view)
+{
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view->tree));
+	GList *glist = gtk_tree_selection_get_selected_rows(selection, NULL);
+	GList *l;
+	apol_vector_t *messages;
+	if (glist == NULL) {
+		return;
+	}
+	if ((messages = apol_vector_create()) == NULL) {
+		toplevel_ERR(view->top, "%s", strerror(errno));
+		g_list_foreach(glist, message_view_gtk_tree_path_free, NULL);
+		g_list_free(glist);
+		return;
+	}
+	for (l = glist; l != NULL; l = l->next) {
+		GtkTreePath *path = (GtkTreePath *) l->data;
+		GtkTreeIter iter;
+		message_view_store_get_iter(GTK_TREE_MODEL(view->store), &iter, path);
+		if (apol_vector_append(messages, iter.user_data) < 0) {
+			toplevel_ERR(view->top, "%s", strerror(errno));
+			g_list_foreach(glist, message_view_gtk_tree_path_free, NULL);
+			g_list_free(glist);
+			apol_vector_destroy(&messages, NULL);
+			return;
+		}
+	}
+	message_view_messages_vector(view, messages);
+	g_list_foreach(glist, message_view_gtk_tree_path_free, NULL);
+	g_list_free(glist);
+	apol_vector_destroy(&messages, NULL);
+}
+
+void message_view_export_all_messages(message_view_t * view)
+{
+	/* FIX ME */
+}
+
+void message_view_export_selected_messages(message_view_t * view)
+{
+	/* FIX ME */
 }
 
 /**
@@ -702,31 +915,54 @@ void message_view_update_rows(message_view_t * view)
 	 * view according to the model. */
 	GtkTreePath *path;
 	GtkTreeIter iter;
-	size_t i;
+	size_t i, num_old_messages = 0, num_new_messages = 0, num_changed;
 	seaudit_log_t *log = toplevel_get_log(view->top);
 
+	util_cursor_wait(view->tree);
 	if (view->store->messages != NULL) {
-		for (i = apol_vector_get_size(view->store->messages); i >= 0; i--) {
-			path = gtk_tree_path_new();
-			gtk_tree_path_append_index(path, i);
-			gtk_tree_model_row_deleted(GTK_TREE_MODEL(view->store), path);
-			gtk_tree_path_free(path);
-		}
+		num_old_messages = apol_vector_get_size(view->store->messages);
 	}
 	apol_vector_destroy(&view->store->messages, NULL);
-	if (log == NULL) {
-		return;
+	if (log != NULL) {
+		view->store->messages = seaudit_model_get_messages(log, view->model);
+		num_new_messages = apol_vector_get_size(view->store->messages);
 	}
-	view->store->messages = seaudit_model_get_messages(log, view->model);
-	for (i = 0; i < apol_vector_get_size(view->store->messages); i++) {
+	/* mark which rows have been changed/removed/inserted.  do
+	 * this as a single pass, rather than a two pass
+	 * mark-and-sweep, for GTK+ tree views can be somewhat slow */
+	num_changed = num_old_messages;
+	if (num_new_messages < num_changed) {
+		num_changed = num_new_messages;
+	}
+	for (i = 0; i < num_changed; i++) {
 		path = gtk_tree_path_new();
 		gtk_tree_path_append_index(path, i);
 		iter.user_data = apol_vector_get_element(view->store->messages, i);
 		iter.user_data2 = GINT_TO_POINTER(i);
-		iter.user_data3 = NULL;
-		gtk_tree_model_row_inserted(GTK_TREE_MODEL(view->store), path, &iter);
+		iter.user_data3 = view;
+		gtk_tree_model_row_changed(GTK_TREE_MODEL(view->store), path, &iter);
 		gtk_tree_path_free(path);
 	}
+	if (num_old_messages > num_changed) {
+		/* delete in reverse order, else indices get renumbered */
+		for (i = num_old_messages; i > num_changed; i--) {
+			path = gtk_tree_path_new();
+			gtk_tree_path_append_index(path, i - 1);
+			gtk_tree_model_row_deleted(GTK_TREE_MODEL(view->store), path);
+			gtk_tree_path_free(path);
+		}
+	} else {
+		for (; i < num_new_messages; i++) {
+			path = gtk_tree_path_new();
+			gtk_tree_path_append_index(path, i);
+			iter.user_data = apol_vector_get_element(view->store->messages, i);
+			iter.user_data2 = GINT_TO_POINTER(i);
+			iter.user_data3 = view;
+			gtk_tree_model_row_inserted(GTK_TREE_MODEL(view->store), path, &iter);
+			gtk_tree_path_free(path);
+		}
+	}
+	util_cursor_clear(view->tree);
 }
 
 #if 0
