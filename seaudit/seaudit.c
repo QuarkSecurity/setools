@@ -29,6 +29,7 @@
 #include "toplevel.h"
 
 #include <apol/util.h>
+#include <seaudit/model.h>
 #include <seaudit/util.h>
 
 #include <errno.h>
@@ -46,6 +47,8 @@ struct seaudit
 	char *policy_path;
 	seaudit_log_t *log;
 	char *log_path;
+	size_t num_log_messages;
+	struct tm *first, *last;
 	toplevel_t *top;
 };
 
@@ -74,17 +77,37 @@ char *seaudit_get_policy_path(seaudit_t * s)
 
 void seaudit_set_log(seaudit_t * s, seaudit_log_t * log, const char *filename)
 {
-	char *t;
 	seaudit_log_destroy(&s->log);
 	if ((s->log = log) != NULL) {
-		if ((t = strdup(filename)) == NULL || preferences_add_recent_log(s->prefs, filename) < 0) {
+		seaudit_model_t *model = NULL;
+		apol_vector_t *messages = NULL;
+		char *t = NULL;
+		seaudit_message_t *message;
+		if ((model = seaudit_model_create(NULL, s->log)) == NULL ||
+		    (messages = seaudit_model_get_messages(s->log, model)) == NULL ||
+		    (t = strdup(filename)) == NULL || preferences_add_recent_log(s->prefs, filename) < 0) {
 			toplevel_ERR(s->top, "%s", strerror(errno));
+			seaudit_model_destroy(&model);
+			apol_vector_destroy(&messages, NULL);
+			free(t);
 			return;
 		}
 		/* do it in this order, for filename could be pointing to
 		 * s->log_path */
 		free(s->log_path);
 		s->log_path = t;
+		s->num_log_messages = apol_vector_get_size(messages);
+		message = apol_vector_get_element(messages, 0);
+		s->first = seaudit_message_get_time(message);
+		message = apol_vector_get_element(messages, s->num_log_messages - 1);
+		s->last = seaudit_message_get_time(message);
+		seaudit_model_destroy(&model);
+		apol_vector_destroy(&messages, NULL);
+	} else {
+		free(s->log_path);
+		s->log_path = NULL;
+		s->num_log_messages = 0;
+		s->first = s->last = NULL;
 	}
 }
 
@@ -96,6 +119,21 @@ seaudit_log_t *seaudit_get_log(seaudit_t * s)
 char *seaudit_get_log_path(seaudit_t * s)
 {
 	return s->log_path;
+}
+
+size_t seaudit_get_num_log_messages(seaudit_t * s)
+{
+	return s->num_log_messages;
+}
+
+struct tm *seaudit_get_log_first(seaudit_t * s)
+{
+	return s->first;
+}
+
+struct tm *seaudit_get_log_last(seaudit_t * s)
+{
+	return s->last;
 }
 
 static seaudit_t *seaudit_create(preferences_t * prefs)

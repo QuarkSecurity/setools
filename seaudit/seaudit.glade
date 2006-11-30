@@ -2,6 +2,7 @@
 <!DOCTYPE glade-interface SYSTEM "http://glade.gnome.org/glade-2.0.dtd">
 
 <glade-interface>
+<requires lib="gnome"/>
 
 <widget class="GtkWindow" id="CreateFilterWindow">
   <property name="can_default">True</property>
@@ -7380,7 +7381,7 @@ stylesheet:</property>
 		      <property name="tooltip" translatable="yes">Create in a new tab a default view</property>
 		      <property name="label" translatable="yes">New View</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="toplevel_on_new_tab_activate" last_modification_time="Wed, 22 Nov 2006 15:31:46 GMT"/>
+		      <signal name="activate" handler="toplevel_on_new_tab_activate" object="TopLevel" last_modification_time="Wed, 22 Nov 2006 15:31:46 GMT"/>
 		      <accelerator key="T" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 
 		      <child internal-child="image">
@@ -8056,7 +8057,7 @@ stylesheet:</property>
 	  </child>
 
 	  <child>
-	    <widget class="GtkLabel" id="monitor_lbl">
+	    <widget class="GtkLabel" id="MonitorLogLabel">
 	      <property name="visible">True</property>
 	      <property name="label" translatable="yes"></property>
 	      <property name="use_underline">False</property>

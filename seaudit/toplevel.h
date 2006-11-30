@@ -71,6 +71,16 @@ void toplevel_open_log(toplevel_t * top, const char *filename);
 preferences_t *toplevel_get_prefs(toplevel_t * top);
 
 /**
+ * Return a seaudit_log_t object used for error reporting by
+ * libseaudit.
+ *
+ * @param top Toplevel containing seaudit log object.
+ *
+ * @return libseaudit reporting object.  Treat this as a const pointer.
+ */
+seaudit_log_t *toplevel_get_log(toplevel_t * top);
+
+/**
  * Return the glade XML object, so that other glade objects may be
  * created/modified.
  *
@@ -79,8 +89,6 @@ preferences_t *toplevel_get_prefs(toplevel_t * top);
  * @return Glade XML declarations.
  */
 GladeXML *toplevel_get_glade_xml(toplevel_t * top);
-
-void toplevel_update_status_bar(toplevel_t * top);
 
 /**
  * Pop-up an error dialog with a line of text and wait for the user to

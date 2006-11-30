@@ -30,8 +30,7 @@ nodist_setools_DATA = \
 #	multifilter_window.c multifilter_window.h \
 #	query_window.c query_window.h \
 #	report_window.c report_window.h \
-#	seaudit_callback.c seaudit_callback.h \
-#	seaudit_window.c seaudit_window.h
+#	seaudit_callback.c seaudit_callback.h
 
 seaudit_SOURCES = \
 	message_view.c message_view.h \

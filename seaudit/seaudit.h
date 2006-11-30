@@ -28,6 +28,7 @@
 #include "preferences.h"
 #include <apol/policy.h>
 #include <seaudit/log.h>
+#include <time.h>
 
 typedef struct seaudit seaudit_t;
 
@@ -66,7 +67,7 @@ char *seaudit_get_policy_path(seaudit_t * s);
  *
  * @param s seaudit object to modify.
  * @param log New log file for seaudit.  If NULL then seaudit has no
- * log files opened.
+ * log files opened.  Afterwards seaudit takes ownership of the log.
  * @param filename If log is not NULL, then add this filename to the
  * most recently used files.
  */
@@ -91,6 +92,37 @@ seaudit_log_t *seaudit_get_log(seaudit_t * s);
  * const pointer.
  */
 char *seaudit_get_log_path(seaudit_t * s);
+
+/**
+ * Return the number of messages in the current log.
+ *
+ * @param s seaudit object to query.
+ *
+ * @return Number of log messages, or 0 if no log is opened.
+ */
+size_t seaudit_get_num_log_messages(seaudit_t * s);
+
+/**
+ * Return the time stamp for the first message in the currently opened
+ * log.
+ *
+ * @param s seaudit object to query.
+ *
+ * @return Time of the first log message, or NULL if no log is opened.
+ * Treat this as a const pointer.
+ */
+struct tm *seaudit_get_log_first(seaudit_t * s);
+
+/**
+ * Return the time stamp for the last message in the currently opened
+ * log.
+ *
+ * @param s seaudit object to query.
+ *
+ * @return Time of the last log message, or NULL if no log is opened.
+ * Treat this as a const pointer.
+ */
+struct tm *seaudit_get_log_last(seaudit_t * s);
 
 #define COPYRIGHT_INFO "Copyright (c) 2003-2006 Tresys Technology, LLC"
 

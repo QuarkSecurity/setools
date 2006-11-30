@@ -45,8 +45,12 @@ struct toplevel
 	/** vector of message_view_t that are in the toplevel's notebook */
 	apol_vector_t *views;
 	GladeXML *xml;
+	/** toplevel window widget */
 	GtkWindow *w;
 	GtkNotebook *notebook;
+	/** serial number for models created, such that new models
+	 * will be named Untitled <number> */
+	int next_model_number;
 };
 
 /**
@@ -72,9 +76,27 @@ static gint toplevel_notebook_find_view(toplevel_t * top, message_view_t * view)
 	return -1;
 }
 
+/**
+ * Return the view on the page that is currently raised, or NULL if
+ * there are no views.
+ */
+static message_view_t *toplevel_get_current_view(toplevel_t * top)
+{
+	gint current = gtk_notebook_get_current_page(top->notebook);
+	if (current >= 0) {
+		GtkWidget *child = gtk_notebook_get_nth_page(top->notebook, current);
+		GtkWidget *tab = gtk_notebook_get_tab_label(top->notebook, child);
+		return g_object_get_data(G_OBJECT(tab), "view");
+	}
+	return NULL;
+}
+
+static void toplevel_update_status_bar(toplevel_t * top);
+
 static void toplevel_on_notebook_switch_page(GtkNotebook * notebook, GtkNotebookPage * page, guint pagenum, toplevel_t * top)
 {
 	/* FIX ME */
+	toplevel_update_status_bar(top);
 }
 
 /**
@@ -129,6 +151,30 @@ static void toplevel_add_new_view(toplevel_t * top, seaudit_model_t * model)
 	gtk_widget_show(image);
 	index = gtk_notebook_append_page(top->notebook, message_view_get_view(view), tab);
 	gtk_notebook_set_current_page(top->notebook, index);
+}
+
+/**
+ * Create a new model for the currently loaded log file (which could
+ * be NULL), then create a view that watches that model.
+ */
+static void toplevel_add_new_model(toplevel_t * top)
+{
+	seaudit_log_t *log = seaudit_get_log(top->s);
+	char *model_name = NULL;
+	seaudit_model_t *model = NULL;
+	if (asprintf(&model_name, "Untitled %d", top->next_model_number) < 0) {
+		toplevel_ERR(top, "%s", strerror(errno));
+		return;
+	}
+	model = seaudit_model_create(model_name, log);
+	free(model_name);
+	if (model == NULL) {
+		toplevel_ERR(top, "%s", strerror(errno));
+		return;
+	} else {
+		top->next_model_number++;
+		toplevel_add_new_view(top, model);
+	}
 }
 
 /**
@@ -249,15 +295,88 @@ static void toplevel_enable_policy_items(toplevel_t * top, gboolean sens)
 }
 
 /**
- * Create a view that watches an empty model.
+ * Update the toplevel's title bar to list the log and policy files
+ * opened.
+ *
+ * @param top Toplevel to modify.
  */
-static void toplevel_add_blank_view(toplevel_t * top)
+static void toplevel_update_title_bar(toplevel_t * top)
 {
-	seaudit_model_t *model = seaudit_model_create(NULL, NULL);
-	if (model == NULL) {
+	char *log_path = seaudit_get_log_path(top->s);
+	char *policy_path = seaudit_get_policy_path(top->s);
+	char *s;
+
+	if (log_path == NULL) {
+		log_path = "No Log";
+	}
+	if (policy_path == NULL) {
+		policy_path = "No Policy";
+	}
+	if (asprintf(&s, "seaudit - [Log file: %s] [Policy file: %s]", log_path, policy_path) < 0) {
 		toplevel_ERR(top, "%s", strerror(errno));
+		return;
+	}
+	gtk_window_set_title(top->w, s);
+	free(s);
+}
+
+/**
+ * Update the status bar to show the current policy, number of log
+ * messages in the current view, range of messages in current view,
+ * and monitor status.
+ */
+static void toplevel_update_status_bar(toplevel_t * top)
+{
+	apol_policy_t *policy = seaudit_get_policy(top->s);
+	GtkLabel *policy_version = (GtkLabel *) glade_xml_get_widget(top->xml, "PolicyVersionLabel");
+	GtkLabel *log_num = (GtkLabel *) glade_xml_get_widget(top->xml, "LogNumLabel");
+	GtkLabel *log_dates = (GtkLabel *) glade_xml_get_widget(top->xml, "LogDateLabel");
+	seaudit_log_t *log = toplevel_get_log(top);
+
+	if (policy == NULL) {
+		gtk_label_set_text(policy_version, "Policy Version: No policy");
 	} else {
-		toplevel_add_new_view(top, model);
+		char *policy_str = apol_policy_get_version_type_mls_str(policy);
+		char *s;
+		if (asprintf(&s, "Policy Version: %s", policy_str) < 0) {
+			toplevel_ERR(top, "%s", strerror(errno));
+			free(policy_str);
+		} else {
+			gtk_label_set_text(policy_version, s);
+			free(s);
+			free(policy_str);
+		}
+	}
+
+	if (log == NULL) {
+		gtk_label_set_text(log_num, "Log Messages: No log");
+		gtk_label_set_text(log_dates, "Dates: No log");
+	} else {
+		message_view_t *view = toplevel_get_current_view(top);
+		size_t num_messages = seaudit_get_num_log_messages(top->s);
+		size_t num_view_messages;
+		struct tm *first = seaudit_get_log_first(top->s);
+		struct tm *last = seaudit_get_log_last(top->s);
+		assert(view != NULL);
+		num_view_messages = message_view_get_num_log_messages(view);
+		char *s, t1[256], t2[256];
+		if (asprintf(&s, "Log Messages: %zd/%zd", num_view_messages, num_messages) < 0) {
+			toplevel_ERR(top, "%s", strerror(errno));
+		} else {
+			gtk_label_set_text(log_num, s);
+			free(s);
+		}
+		strftime(t1, 256, "%b %d %H:%M:%S", first);
+		strftime(t2, 256, "%b %d %H:%M:%S", last);
+		if (asprintf(&s, "Dates: %s - %s", t1, t2) < 0) {
+			toplevel_ERR(top, "%s", strerror(errno));
+		} else {
+			gtk_label_set_text(log_dates, s);
+			free(s);
+		}
+		/* FIX ME
+		 * seaudit_view_entire_selection_update_sensitive(TRUE);
+		 */
 	}
 }
 
@@ -295,6 +414,7 @@ toplevel_t *toplevel_create(seaudit_t * s)
 		goto cleanup;
 	}
 	top->s = s;
+	top->next_model_number = 1;
 	if ((path = apol_file_find_path("seaudit.glade")) == NULL) {
 		error = EIO;
 		goto cleanup;
@@ -316,7 +436,7 @@ toplevel_t *toplevel_create(seaudit_t * s)
 	glade_xml_signal_autoconnect(top->xml);
 
 	/* create initial blank tab for the notebook */
-	toplevel_add_blank_view(top);
+	toplevel_add_new_model(top);
 
 	if ((top->progress = progress_create(top, top->w)) == NULL) {
 		error = errno;
@@ -426,15 +546,23 @@ void toplevel_open_log(toplevel_t * top, const char *filename)
 		return;
 	}
 	toplevel_destroy_views(top);
+	top->next_model_number = 1;
 	seaudit_set_log(top->s, run.log, filename);
 	toplevel_set_recent_logs_submenu(top);
 	toplevel_enable_log_items(top, TRUE);
-	/* create a new view for the log */
+	toplevel_add_new_model(top);
+	toplevel_update_title_bar(top);
+	toplevel_update_status_bar(top);
 }
 
 preferences_t *toplevel_get_prefs(toplevel_t * top)
 {
 	return seaudit_get_prefs(top->s);
+}
+
+seaudit_log_t *toplevel_get_log(toplevel_t * top)
+{
+	return seaudit_get_log(top->s);
 }
 
 GladeXML *toplevel_get_glade_xml(toplevel_t * top)
@@ -550,6 +678,12 @@ void toplevel_on_quit_activate(gpointer user_data, GtkWidget * widget __attribut
 	gtk_main_quit();
 }
 
+void toplevel_on_new_tab_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
+{
+	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_add_new_model(top);
+}
+
 void toplevel_on_help_activate(gpointer user_data, GtkMenuItem * widget __attribute__ ((unused)))
 {
 	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
@@ -638,65 +772,6 @@ void seaudit_view_entire_selection_update_sensitive(bool_t disable)
 	seaudit_widget_update_sensitive("view_entire_message1", disable);
 }
 
-void seaudit_update_status_bar(seaudit_t * seaudit)
-{
-	char str[STR_SIZE];
-	char *ver_str = NULL, *tmp = NULL;
-	int num_log_msgs, num_filtered_log_msgs;
-	char old_time[TIME_SIZE], recent_time[TIME_SIZE];
-	seaudit_filtered_view_t *view;
-
-	if (!seaudit || !seaudit->window || !seaudit->window->xml)
-		return;
-
-	GtkLabel *v_status_bar = (GtkLabel *) glade_xml_get_widget(seaudit->window->xml, "PolicyVersionLabel");
-	GtkLabel *l_status_bar = (GtkLabel *) glade_xml_get_widget(seaudit->window->xml, "LogNumLabel");
-	GtkLabel *d_status_bar = (GtkLabel *) glade_xml_get_widget(seaudit->window->xml, "LogDateLabel");
-
-	if (seaudit->cur_policy == NULL) {
-		ver_str = "Policy Version: No policy";
-		gtk_label_set_text(v_status_bar, ver_str);
-		seaudit_policy_menu_items_update(TRUE);
-	} else {
-		snprintf(str, STR_SIZE, "Policy Version: %s", apol_policy_get_version_type_mls_str(seaudit->cur_policy));
-		free(tmp);
-		gtk_label_set_text(v_status_bar, str);
-		seaudit_policy_menu_items_update(FALSE);
-	}
-
-	if (seaudit->cur_log == NULL) {
-		snprintf(str, STR_SIZE, "Log Messages: No log");
-		gtk_label_set_text(l_status_bar, str);
-		snprintf(str, STR_SIZE, "Dates: No log");
-		gtk_label_set_text(d_status_bar, str);
-		seaudit_log_menu_items_update(TRUE);
-		seaudit_view_entire_selection_update_sensitive(TRUE);
-	} else {
-		view = seaudit_window_get_current_view(seaudit->window);
-		if (view)
-			num_filtered_log_msgs = view->store->log_view->num_fltr_msgs;
-		else
-			num_filtered_log_msgs = 0;
-
-		num_log_msgs = apol_vector_get_size(seaudit->cur_log->msg_list);
-		snprintf(str, STR_SIZE, "Log Messages: %d/%d", num_filtered_log_msgs, num_log_msgs);
-		gtk_label_set_text(l_status_bar, str);
-		if (num_log_msgs > 0) {
-			msg_t *msg;
-			msg = apol_vector_get_element(seaudit->cur_log->msg_list, 0);
-			strftime(old_time, TIME_SIZE, "%b %d %H:%M:%S", msg->date_stamp);
-			msg = apol_vector_get_element(seaudit->cur_log->msg_list, num_log_msgs - 1);
-			strftime(recent_time, TIME_SIZE, "%b %d %H:%M:%S", msg->date_stamp);
-			snprintf(str, STR_SIZE, "Dates: %s - %s", old_time, recent_time);
-			gtk_label_set_text(d_status_bar, str);
-		} else {
-			snprintf(str, STR_SIZE, "Dates: No messages");
-			gtk_label_set_text(d_status_bar, str);
-		}
-		seaudit_log_menu_items_update(FALSE);
-		seaudit_view_entire_selection_update_sensitive(TRUE);
-	}
-}
 static int seaudit_export_selected_msgs_to_file(const audit_log_view_t * log_view, const char *filename)
 {
 	msg_t *message = NULL;
@@ -1183,16 +1258,6 @@ write_boolean_message_to_gtk_text_buf(GtkTextBuffer * buffer, const boolean_msg_
 	g_string_free(str, TRUE);
 }
 
-/*
- * glade autoconnected callbacks for menus
- *
- */
-void seaudit_on_new_tab_clicked(GtkMenuItem * menu_item, gpointer user_data)
-{
-	seaudit_window_add_new_view(seaudit_app->window, seaudit_app->cur_log, seaudit_app->seaudit_conf.column_visibility, NULL);
-
-}
-
 void seaudit_on_open_view_clicked(GtkMenuItem * menu_item, gpointer user_data)
 {
 	seaudit_window_open_view(seaudit_app->window, seaudit_app->cur_log, seaudit_app->seaudit_conf.column_visibility);
@@ -1468,26 +1533,5 @@ static int seaudit_read_policy_conf(const char *fname)
 /*
  * seaudit callbacks
  */
-static void seaudit_update_title_bar(void *user_data)
-{
-	char str[STR_SIZE];
-	char log_str[STR_SIZE];
-	char policy_str[STR_SIZE];
-
-	if (seaudit_app->cur_log != NULL) {
-		g_assert(seaudit_app->audit_log_file->str);
-		snprintf(log_str, STR_SIZE, "[Log file: %s]", (const char *)seaudit_app->audit_log_file->str);
-	} else {
-		snprintf(log_str, STR_SIZE, "[Log file: No Log]");
-	}
-
-	if (seaudit_app->cur_policy != NULL) {
-		snprintf(policy_str, STR_SIZE, "[Policy file: %s]", (const char *)seaudit_app->policy_file->str);
-	} else {
-		snprintf(policy_str, STR_SIZE, "[Policy file: No Policy]");
-	}
-	snprintf(str, STR_SIZE, "seaudit - %s %s", log_str, policy_str);
-	gtk_window_set_title(seaudit_app->window->window, (gchar *) str);
-}
 
 #endif

@@ -401,7 +401,8 @@ char *avc_message_to_misc_string(seaudit_avc_message_t * avc)
 	}
 	len = strlen(s) + 1;
 	if (!(avc->tm_stmp_sec == 0 && avc->tm_stmp_nano == 0 && avc->serial == 0)) {
-		if (apol_str_appendf(&s, &len, "audit(%lu.%03lu:%u): ", avc->tm_stmp_sec, avc->tm_stmp_nano, avc->serial) < 0) {
+		if (apol_str_appendf(&s, &len, "%stimestamp=%lu.%03lu serial=%u",
+				     (len > 1 ? " " : ""), avc->tm_stmp_sec, avc->tm_stmp_nano, avc->serial) < 0) {
 			return NULL;
 		}
 	}

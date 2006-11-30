@@ -65,12 +65,31 @@ void message_view_destroy(message_view_t ** view);
 GtkWidget *message_view_get_view(message_view_t * view);
 
 /**
+ * Return the number of messages currently in this view.
+ *
+ * @param view View object to query.
+ *
+ * @return Number of log messages, or 0 if no model is associated with
+ * the view.
+ */
+size_t message_view_get_num_log_messages(message_view_t * view);
+
+/**
  * Show/hide columns in a view based upon the user's current
  * preferences.
  *
  * @param view View's columns to update.
  */
 void message_view_update_visible_columns(message_view_t * view);
+
+/**
+ * (Re)synchronize the messages displayed in a view with its
+ * underlying model.  This needs to be called when a model's filter
+ * changes or if new messages are found within the model's log.
+ *
+ * @param view View's rows to update.
+ */
+void message_view_update_rows(message_view_t * view);
 
 #if 0
 
