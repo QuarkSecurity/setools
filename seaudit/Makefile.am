@@ -27,11 +27,11 @@ nodist_setools_DATA = \
 #seaudit_SOURCES = \
 #	filter_window.c filter_window.h \
 #	multifilter_window.c multifilter_window.h \
-#	query_window.c query_window.h \
 #	report_window.c report_window.h
 
 seaudit_SOURCES = \
 	message_view.c message_view.h \
+	policy_view.c policy_view.h \
 	preferences.c preferences.h \
 	preferences_view.c preferences_view.h \
 	progress.c progress.h \

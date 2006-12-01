@@ -25,6 +25,7 @@
 #include <config.h>
 
 #include "message_view.h"
+#include "policy_view.h"
 #include "preferences_view.h"
 #include "progress.h"
 #include "toplevel.h"
@@ -41,6 +42,7 @@
 struct toplevel
 {
 	seaudit_t *s;
+	policy_view_t *pv;
 	progress_t *progress;
 	/** vector of message_view_t that are in the toplevel's notebook */
 	apol_vector_t *views;
@@ -224,9 +226,7 @@ static void toplevel_on_open_recent_policy_activate(GtkWidget * widget, gpointer
 	GtkWidget *label = gtk_bin_get_child(GTK_BIN(widget));
 	const char *path = gtk_label_get_text(GTK_LABEL(label));
 	toplevel_t *top = (toplevel_t *) user_data;
-	/* FIX ME!
-	 * toplevel_open_policy(top, path);
-	 */
+	toplevel_open_policy(top, path);
 }
 
 /**
@@ -324,9 +324,18 @@ static void toplevel_update_title_bar(toplevel_t * top)
 	free(s);
 }
 
+/**
+ * Initialize the application icons for the program.  These icons are
+ * the ones shown by the window manager within title bars and pagers.
+ * The last icon listed in the array will be displayed in the About
+ * dialog.
+ *
+ * @param top Toplevel whose icon to set.  All child windows will
+ * inherit these icons.
+ */
 static void init_icons(toplevel_t * top)
 {
-	const char *icon_names[] = { "seaudit-small.png", "seaudit.png" };
+	static const char *icon_names[] = { "seaudit-small.png", "seaudit.png" };
 	GdkPixbuf *icon;
 	char *path;
 	GList *icon_list = NULL;
@@ -382,7 +391,9 @@ toplevel_t *toplevel_create(seaudit_t * s)
 	/* create initial blank tab for the notebook */
 	toplevel_add_new_model(top);
 
-	if ((top->progress = progress_create(top, top->w)) == NULL) {
+	/* initialize sub-windows, now that glade XML file has been
+	 * read */
+	if ((top->pv = policy_view_create(top)) == NULL || (top->progress = progress_create(top)) == NULL) {
 		error = errno;
 		goto cleanup;
 	}
@@ -404,6 +415,7 @@ static void message_view_free(void *elem)
 void toplevel_destroy(toplevel_t ** top)
 {
 	if (top != NULL && *top != NULL) {
+		policy_view_destroy(&(*top)->pv);
 		apol_vector_destroy(&(*top)->views, message_view_free);
 		progress_destroy(&(*top)->progress);
 		if ((*top)->w != NULL) {
@@ -435,7 +447,7 @@ static gpointer toplevel_open_log_runner(gpointer data)
 	FILE *f;
 	progress_update(run->top->progress, "Parsing %s", run->filename);
 	if ((f = fopen(run->filename, "r")) == NULL) {
-		progress_abort(run->top->progress, "Could not open %s for reading.", run->filename);
+		progress_update(run->top->progress, "Could not open %s for reading.", run->filename);
 		run->result = -1;
 		goto cleanup;
 	}
@@ -500,6 +512,59 @@ void toplevel_open_log(toplevel_t * top, const char *filename)
 	toplevel_update_selection_menu_item(top);
 }
 
+struct policy_run_datum
+{
+	toplevel_t *top;
+	const char *filename;
+	apol_policy_t *policy;
+	int result;
+};
+
+/**
+ * Thread that loads and parses a policy file.  It will write to
+ * progress_seaudit_handle_func() its status during the load.
+ *
+ * @param data Pointer to a struct policy_run_datum, for control
+ * information.
+ */
+static gpointer toplevel_open_policy_runner(gpointer data)
+{
+	struct policy_run_datum *run = (struct policy_run_datum *)data;
+	run->policy = NULL;
+	progress_update(run->top->progress, "Opening policy.");
+	run->result = apol_policy_open(run->filename, &run->policy, progress_apol_handle_func, run->top->progress);
+	if (run->result < 0) {
+		apol_policy_destroy(&run->policy);
+		progress_abort(run->top->progress, NULL);
+	} else if (run->result > 0) {
+		progress_warn(run->top->progress, NULL);
+	} else {
+		progress_done(run->top->progress);
+	}
+	return NULL;
+}
+
+void toplevel_open_policy(toplevel_t * top, const char *filename)
+{
+	struct policy_run_datum run = { top, filename, NULL, 0 };
+
+	util_cursor_wait(GTK_WIDGET(top->w));
+	progress_show(top->progress, filename);
+	g_thread_create(toplevel_open_policy_runner, &run, FALSE, NULL);
+	progress_wait(top->progress);
+	progress_hide(top->progress);
+	util_cursor_clear(GTK_WIDGET(top->w));
+	if (run.result < 0) {
+		return;
+	}
+	seaudit_set_policy(top->s, run.policy, filename);
+	toplevel_set_recent_policies_submenu(top);
+	toplevel_enable_policy_items(top, TRUE);
+	toplevel_update_title_bar(top);
+	toplevel_update_status_bar(top);
+	policy_view_update(top->pv, filename);
+}
+
 void toplevel_update_status_bar(toplevel_t * top)
 {
 	apol_policy_t *policy = seaudit_get_policy(top->s);
@@ -509,16 +574,19 @@ void toplevel_update_status_bar(toplevel_t * top)
 	seaudit_log_t *log = toplevel_get_log(top);
 
 	if (policy == NULL) {
-		gtk_label_set_text(policy_version, "Policy Version: No policy");
+		gtk_label_set_text(policy_version, "Policy: No policy");
 	} else {
 		char *policy_str = apol_policy_get_version_type_mls_str(policy);
-		char *s;
-		if (asprintf(&s, "Policy Version: %s", policy_str) < 0) {
+		if (policy_str == NULL) {
 			toplevel_ERR(top, "%s", strerror(errno));
-			free(policy_str);
 		} else {
-			gtk_label_set_text(policy_version, s);
-			free(s);
+			char *s;
+			if (asprintf(&s, "Policy: %s", policy_str) < 0) {
+				toplevel_ERR(top, "%s", strerror(errno));
+			} else {
+				gtk_label_set_text(policy_version, s);
+				free(s);
+			}
 			free(policy_str);
 		}
 	}
@@ -541,13 +609,17 @@ void toplevel_update_status_bar(toplevel_t * top)
 			gtk_label_set_text(log_num, s);
 			free(s);
 		}
-		strftime(t1, 256, "%b %d %H:%M:%S", first);
-		strftime(t2, 256, "%b %d %H:%M:%S", last);
-		if (asprintf(&s, "Dates: %s - %s", t1, t2) < 0) {
-			toplevel_ERR(top, "%s", strerror(errno));
+		if (first == NULL || last == NULL) {
+			gtk_label_set_text(log_dates, "Dates: No messages");
 		} else {
-			gtk_label_set_text(log_dates, s);
-			free(s);
+			strftime(t1, 256, "%b %d %H:%M:%S", first);
+			strftime(t2, 256, "%b %d %H:%M:%S", last);
+			if (asprintf(&s, "Dates: %s - %s", t1, t2) < 0) {
+				toplevel_ERR(top, "%s", strerror(errno));
+			} else {
+				gtk_label_set_text(log_dates, s);
+				free(s);
+			}
 		}
 	}
 }
@@ -584,10 +656,14 @@ GladeXML *toplevel_get_glade_xml(toplevel_t * top)
 	return top->xml;
 }
 
+GtkWindow *toplevel_get_window(toplevel_t * top)
+{
+	return top->w;
+}
+
 void toplevel_find_terules(toplevel_t * top, seaudit_message_t * message)
 {
-	printf("finding te rules, with message %p\n", message);
-	/* FIX ME */
+	policy_view_find_terules(top->pv, message);
 }
 
 /**
@@ -676,13 +752,14 @@ void toplevel_on_open_policy_activate(gpointer user_data, GtkWidget * widget __a
 	}
 	path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
 	gtk_widget_destroy(dialog);
-	printf("loading policy at %s\n", path);
+	toplevel_open_policy(top, path);
+	g_free(path);
 }
 
 void toplevel_on_preferences_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
 	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
-	if (preferences_view_run(top, top->w)) {
+	if (preferences_view_run(top)) {
 		size_t i;
 		for (i = 0; i < apol_vector_get_size(top->views); i++) {
 			message_view_t *v = apol_vector_get_element(top->views, i);
@@ -712,7 +789,7 @@ void toplevel_on_export_all_messages_activate(gpointer user_data, GtkWidget * wi
 	message_view_export_all_messages(view);
 }
 
-void toplevel_on_export_selected_messagesactivate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
+void toplevel_on_export_selected_messages_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
 	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
 	message_view_t *view = toplevel_get_current_view(top);
@@ -726,6 +803,12 @@ void toplevel_on_view_entire_message_activate(gpointer user_data, GtkWidget * wi
 	message_view_t *view = toplevel_get_current_view(top);
 	assert(view != NULL);
 	message_view_entire_message(view);
+}
+
+void toplevel_on_find_terules_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
+{
+	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_find_terules(top, NULL);
 }
 
 void toplevel_on_help_activate(gpointer user_data, GtkMenuItem * widget __attribute__ ((unused)))
@@ -768,7 +851,7 @@ void toplevel_on_help_activate(gpointer user_data, GtkMenuItem * widget __attrib
 	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER_ON_PARENT);
 	gtk_widget_show(text_view);
 	gtk_widget_show(scroll);
-	gtk_widget_show(GTK_DIALOG(window));
+	gtk_widget_show(window);
 }
 
 void toplevel_on_about_seaudit_activate(gpointer user_data, GtkMenuItem * widget __attribute__ ((unused)))
@@ -1120,194 +1203,6 @@ void write_avc_message_to_file(FILE * log_file, const avc_msg_t * message, const
 	return;
 }
 
-void write_load_policy_message_to_file(FILE * log_file, const load_policy_msg_t * message, const char *message_header)
-{
-
-	assert(log_file != NULL && message != NULL && message_header != NULL);
-
-	fprintf(log_file, "%ssecurity:  %i users, %i roles, %i types, %i bools\n", message_header, message->users, message->roles,
-		message->types, message->bools);
-	fprintf(log_file, "%ssecurity:  %i classes, %i rules\n", message_header, message->classes, message->rules);
-
-	return;
-}
-
-void write_boolean_message_to_file(FILE * log_file, const boolean_msg_t * message, const char *message_header,
-				   audit_log_t * audit_log)
-{
-	int i;
-
-	assert(log_file != NULL && message != NULL && message_header != NULL && audit_log != NULL);
-
-	fprintf(log_file, "%ssecurity: committed booleans { ", message_header);
-
-	for (i = 0; i < message->num_bools; i++) {
-		fprintf(log_file, "%s:%i", audit_log_get_bool(audit_log, message->booleans[i]), message->values[i]);
-
-		if ((i + 1) < message->num_bools)
-			fprintf(log_file, ", ");
-	}
-
-	fprintf(log_file, " }\n");
-
-	return;
-}
-
-static void
-write_avc_message_to_gtk_text_buf(GtkTextBuffer * buffer, const avc_msg_t * message, const char *message_header,
-				  audit_log_t * audit_log)
-{
-	int i;
-	GString *str;
-
-	assert(buffer != NULL && message != NULL && message_header != NULL && audit_log != NULL);
-	str = g_string_new("");
-	if (str == NULL) {
-		fprintf(stderr, "Unable to create string buffer.\n");
-		return;
-	}
-	g_string_append_printf(str, "%s", message_header);
-	if (!(message->tm_stmp_sec == 0 && message->tm_stmp_nano == 0 && message->serial == 0))
-		g_string_append_printf(str, "audit(%lu.%03lu:%u): ", message->tm_stmp_sec, message->tm_stmp_nano, message->serial);
-
-	g_string_append_printf(str, "avc:  %s  {", ((message->msg == AVC_GRANTED) ? "granted" : "denied"));
-
-	for (i = 0; i < apol_vector_get_size(message->perms); i++)
-		g_string_append_printf(str, " %s", (char *)apol_vector_get_element(message->perms, i));
-
-	g_string_append_printf(str, " } for ");
-
-	if (message->is_pid)
-		g_string_append_printf(str, " pid=%i", message->pid);
-
-	if (message->exe)
-		g_string_append_printf(str, " exe=%s", message->exe);
-
-	if (message->comm)
-		g_string_append_printf(str, " comm=%s", message->comm);
-
-	if (message->path)
-		g_string_append_printf(str, " path=%s", message->path);
-
-	if (message->name)
-		g_string_append_printf(str, " name=%s", message->name);
-
-	if (message->dev)
-		g_string_append_printf(str, " dev=%s", message->dev);
-
-	if (message->is_inode)
-		g_string_append_printf(str, " ino=%li", message->inode);
-
-	if (message->ipaddr)
-		g_string_append_printf(str, " ipaddr=%s", message->ipaddr);
-
-	if (message->saddr)
-		g_string_append_printf(str, " saddr=%s", message->saddr);
-
-	if (message->source != 0)
-		g_string_append_printf(str, " src=%i", message->source);
-
-	if (message->daddr)
-		g_string_append_printf(str, " daddr=%s", message->daddr);
-
-	if (message->dest != 0)
-		g_string_append_printf(str, " dest=%i", message->dest);
-
-	if (message->netif)
-		g_string_append_printf(str, " netif=%s", message->netif);
-
-	if (message->laddr)
-		g_string_append_printf(str, " laddr=%s", message->laddr);
-
-	if (message->lport != 0)
-		g_string_append_printf(str, " lport=%i", message->lport);
-
-	if (message->faddr)
-		g_string_append_printf(str, " faddr=%s", message->faddr);
-
-	if (message->fport != 0)
-		g_string_append_printf(str, " fport=%i", message->fport);
-
-	if (message->port != 0)
-		g_string_append_printf(str, " port=%i", message->port);
-
-	if (message->is_src_sid)
-		g_string_append_printf(str, " ssid=%i", message->src_sid);
-
-	if (message->is_tgt_sid)
-		g_string_append_printf(str, " tsid=%i", message->tgt_sid);
-
-	if (message->is_capability)
-		g_string_append_printf(str, " capability=%i", message->capability);
-
-	if (message->is_key)
-		g_string_append_printf(str, " key=%i", message->key);
-
-	if (message->is_src_con)
-		g_string_append_printf(str, " scontext=%s:%s:%s",
-				       audit_log_get_user(audit_log, message->src_user),
-				       audit_log_get_role(audit_log, message->src_role),
-				       audit_log_get_type(audit_log, message->src_type));
-
-	if (message->is_tgt_con)
-		g_string_append_printf(str, " tcontext=%s:%s:%s",
-				       audit_log_get_user(audit_log, message->tgt_user),
-				       audit_log_get_role(audit_log, message->tgt_role),
-				       audit_log_get_type(audit_log, message->tgt_type));
-
-	if (message->is_obj_class)
-		g_string_append_printf(str, " tclass=%s", audit_log_get_obj(audit_log, message->obj_class));
-
-	g_string_append_printf(str, "\n");
-	gtk_text_buffer_set_text(buffer, str->str, str->len);
-	g_string_free(str, TRUE);
-}
-
-static void
-write_load_policy_message_to_gtk_text_buf(GtkTextBuffer * buffer, const load_policy_msg_t * message, const char *message_header)
-{
-	GString *str;
-
-	assert(buffer != NULL && message != NULL && message_header != NULL);
-	str = g_string_new("");
-	if (str == NULL) {
-		fprintf(stderr, "Unable to create string buffer.\n");
-		return;
-	}
-
-	g_string_append_printf(str, "%ssecurity:  %i users, %i roles, %i types, %i bools\n", message_header, message->users,
-			       message->roles, message->types, message->bools);
-	g_string_append_printf(str, "%ssecurity:  %i classes, %i rules\n", message_header, message->classes, message->rules);
-	gtk_text_buffer_set_text(buffer, str->str, str->len);
-	g_string_free(str, TRUE);
-}
-
-static void
-write_boolean_message_to_gtk_text_buf(GtkTextBuffer * buffer, const boolean_msg_t * message, const char *message_header,
-				      audit_log_t * audit_log)
-{
-	int i;
-	GString *str;
-
-	assert(buffer != NULL && message != NULL && message_header != NULL && audit_log != NULL);
-	str = g_string_new("");
-	if (str == NULL) {
-		fprintf(stderr, "Unable to create string buffer.\n");
-		return;
-	}
-	g_string_append_printf(str, "%ssecurity: committed booleans { ", message_header);
-
-	for (i = 0; i < message->num_bools; i++) {
-		g_string_append_printf(str, "%s:%i", audit_log_get_bool(audit_log, message->booleans[i]), message->values[i]);
-
-		if ((i + 1) < message->num_bools)
-			g_string_append_printf(str, ", ");
-	}
-	g_string_append_printf(str, " }\n");
-	gtk_text_buffer_set_text(buffer, str->str, str->len);
-	g_string_free(str, TRUE);
-}
-
 void seaudit_on_open_view_clicked(GtkMenuItem * menu_item, gpointer user_data)
 {
 	seaudit_window_open_view(seaudit_app->window, seaudit_app->cur_log, seaudit_app->seaudit_conf.column_visibility);
@@ -1321,145 +1216,6 @@ void seaudit_on_save_view_clicked(GtkMenuItem * menu_item, gpointer user_data)
 void seaudit_on_saveas_view_clicked(GtkMenuItem * menu_item, gpointer user_data)
 {
 	seaudit_window_save_current_view(seaudit_app->window, TRUE);
-}
-
-void seaudit_on_PolicyFileOpen_activate(GtkWidget * widget, GdkEvent * event, gpointer callback_data)
-{
-	GtkWidget *file_selector;
-	gint response;
-	const gchar *filename;
-
-	file_selector = gtk_file_selection_new("Open Policy");
-	/* set this window to be transient window, so that when it pops up it gets centered on it */
-	gtk_window_set_transient_for(GTK_WINDOW(file_selector), seaudit_app->window->window);
-
-	gtk_file_selection_hide_fileop_buttons(GTK_FILE_SELECTION(file_selector));
-	if (seaudit_app->seaudit_conf.default_policy_file != NULL)
-		gtk_file_selection_complete(GTK_FILE_SELECTION(file_selector), seaudit_app->seaudit_conf.default_policy_file);
-
-	g_signal_connect(GTK_OBJECT(file_selector), "response", G_CALLBACK(get_dialog_response), &response);
-	while (1) {
-		gtk_dialog_run(GTK_DIALOG(file_selector));
-		if (response != GTK_RESPONSE_OK) {
-			gtk_widget_destroy(file_selector);
-			return;
-		}
-		filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selector));
-		if (g_file_test(filename, G_FILE_TEST_EXISTS) && !g_file_test(filename, G_FILE_TEST_IS_DIR))
-			break;
-		if (g_file_test(filename, G_FILE_TEST_IS_DIR))
-			gtk_file_selection_complete(GTK_FILE_SELECTION(file_selector), filename);
-	}
-	seaudit_open_policy(seaudit_app, filename);
-	gtk_widget_destroy(file_selector);
-	return;
-}
-
-void seaudit_window_view_entire_message_in_textbox(int *tree_item_idx)
-{
-	GtkWidget *view, *window, *scroll;
-	GtkTextBuffer *buffer;
-	GtkTreeSelection *sel;
-	GList *glist = NULL, *item = NULL;
-	GtkTreeModel *model;
-	GtkTreeIter iter;
-	GtkTreePath *path = NULL;
-	int fltr_msg_idx, msg_list_idx;
-	char *message_header = NULL;
-	msg_t *message = NULL;
-	audit_log_view_t *log_view;
-	audit_log_t *audit_log = NULL;
-	seaudit_filtered_view_t *seaudit_view;
-
-	seaudit_view = seaudit_window_get_current_view(seaudit_app->window);
-	assert(seaudit_view != NULL);
-	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	scroll = gtk_scrolled_window_new(NULL, NULL);
-	view = gtk_text_view_new();
-	gtk_window_set_title(GTK_WINDOW(window), "View Entire Message");
-	gtk_window_set_default_size(GTK_WINDOW(window), 480, 300);
-	gtk_container_add(GTK_CONTAINER(window), scroll);
-	gtk_container_add(GTK_CONTAINER(scroll), view);
-	gtk_text_view_set_wrap_mode((GtkTextView *) view, GTK_WRAP_WORD);
-
-	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
-
-	log_view = seaudit_get_current_audit_log_view();
-	if (log_view == NULL) {
-		fprintf(stderr, "Unable to obtain current audit log view.\n");
-		return;
-	}
-	audit_log = log_view->my_log;
-	assert(audit_log != NULL);
-
-	if (tree_item_idx == NULL) {
-		sel = gtk_tree_view_get_selection(seaudit_view->tree_view);
-		glist = gtk_tree_selection_get_selected_rows(sel, &model);
-		if (glist == NULL) {
-			return;
-		}
-		/* Only grab the top-most selected item */
-		item = glist;
-		path = item->data;
-		if (gtk_tree_model_get_iter(model, &iter, path) == 0) {
-			fprintf(stderr, "Could not get valid iterator for the selected path.\n");
-			if (glist) {
-				g_list_foreach(glist, (GFunc) gtk_tree_path_free, NULL);
-				g_list_free(glist);
-			}
-			return;
-		}
-		fltr_msg_idx = seaudit_log_view_store_iter_to_idx((SEAuditLogViewStore *) model, &iter);
-	} else {
-		fltr_msg_idx = *tree_item_idx;
-	}
-
-	msg_list_idx = fltr_msg_idx;
-	message = apol_vector_get_element(audit_log->msg_list, msg_list_idx);
-
-	message_header = (char *)malloc((TIME_SIZE + STR_SIZE) * sizeof(char));
-	if (message_header == NULL) {
-		fprintf(stderr, "memory error\n");
-		if (glist) {
-			g_list_foreach(glist, (GFunc) gtk_tree_path_free, NULL);
-			g_list_free(glist);
-		}
-		return;
-	}
-
-	generate_message_header(message_header, audit_log, message->date_stamp,
-				(char *)audit_log_get_host(audit_log, message->host));
-	if (message->msg_type == AVC_MSG)
-		write_avc_message_to_gtk_text_buf(buffer, message->msg_data.avc_msg, message_header, audit_log);
-	else if (message->msg_type == LOAD_POLICY_MSG)
-		write_load_policy_message_to_gtk_text_buf(buffer, message->msg_data.load_policy_msg, message_header);
-	else if (message->msg_type == BOOLEAN_MSG)
-		write_boolean_message_to_gtk_text_buf(buffer, message->msg_data.boolean_msg, message_header, audit_log);
-
-	if (message_header)
-		free(message_header);
-
-	if (glist) {
-		g_list_foreach(glist, (GFunc) gtk_tree_path_free, NULL);
-		g_list_free(glist);
-	}
-
-	gtk_text_view_set_editable(GTK_TEXT_VIEW(view), FALSE);
-	gtk_widget_show(view);
-	gtk_widget_show(scroll);
-	gtk_widget_show(window);
-}
-
-void seaudit_on_ExportLog_activate(GtkWidget * widget, GdkEvent * event, gpointer callback_data)
-{
-	seaudit_save_log_file(FALSE);
-
-	return;
-}
-
-void seaudit_on_export_selection_activated(void)
-{
-	seaudit_save_log_file(TRUE);
 }
 
 void seaudit_on_filter_log_button_clicked(GtkWidget * widget, GdkEvent * event, gpointer callback_data)
@@ -1550,28 +1306,5 @@ static void seaudit_set_real_time_log_button_state(bool_t state)
 		seaudit_app->real_time_state = state;
 	}
 }
-
-static int seaudit_read_policy_conf(const char *fname)
-{
-	char *buf = NULL;
-	size_t len;
-	int rt;
-
-	rt = apol_file_read_to_buffer(fname, &buf, &len);
-	if (rt != 0) {
-		if (buf)
-			free(buf);
-		return -1;
-	}
-
-	seaudit_app->policy_text = gtk_text_buffer_new(NULL);
-	gtk_text_buffer_set_text(seaudit_app->policy_text, buf, len);
-	free(buf);
-	return 0;
-}
-
-/*
- * seaudit callbacks
- */
 
 #endif

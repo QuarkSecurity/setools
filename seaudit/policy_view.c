@@ -1,22 +1,198 @@
-/* Copyright (C) 2003-2006 Tresys Technology, LLC
- * see file 'COPYING' for use and warranty information */
-
-/*
- * Author: Karl MacMillan <kmacmillan@tresys.com>
- *         Kevin Carr <kcarr@tresys.com>
+/**
+ *  @file policy_view.c
+ *  Implementation of policy viewer.
+ *
+ *  @author Jeremy A. Mowery jmowery@tresys.com
+ *  @author Jason Tang jtang@tresys.com
+ *
+ *  Copyright (C) 2003-2007 Tresys Technology, LLC
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "seaudit.h"
-#include "utilgui.h"
-#include "seaudit_callback.h"
-#include <apol/policy-query.h>
-#include <qpol/policy_extend.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <config.h>
+
+#include "policy_view.h"
+#include <assert.h>
 #include <string.h>
+#include <seaudit/avc_message.h>
 
-extern seaudit_t *seaudit_app;
+/* these are for mmaping the policy file */
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
+struct policy_view
+{
+	toplevel_t *top;
+	GtkWindow *window;
+	GtkNotebook *notebook;
+	GtkToggleButton *stype_check, *ttype_check, *class_check;
+	GtkEntry *stype_entry, *ttype_entry, *class_entry;
+	GtkTextBuffer *policy_text;
+	char *policy_text_mmap;
+	size_t policy_text_len;
+};
+
+static void policy_view_close(GtkButton * button __attribute__ ((unused)), gpointer user_data)
+{
+	policy_view_t *pv = (policy_view_t *) user_data;
+	gtk_widget_hide(GTK_WIDGET(pv->window));
+}
+
+static gboolean policy_view_on_delete_event(GtkWidget * widget, GdkEvent * event __attribute__ ((unused)), gpointer user_data
+					    __attribute__ ((unused)))
+{
+	gtk_widget_hide(widget);
+	return TRUE;
+}
+
+policy_view_t *policy_view_create(toplevel_t * top)
+{
+	GladeXML *xml;
+	GtkWidget *w;
+	GtkTextView *policy_textview;
+	policy_view_t *pv;
+	if ((pv = calloc(1, sizeof(*pv))) == NULL) {
+		return NULL;
+	}
+	pv->top = top;
+	xml = toplevel_get_glade_xml(top);
+	pv->window = GTK_WINDOW(glade_xml_get_widget(xml, "PolicyWindow"));
+	assert(pv->window != NULL);
+	gtk_window_set_transient_for(pv->window, toplevel_get_window(top));
+	pv->notebook = GTK_NOTEBOOK(glade_xml_get_widget(xml, "PolicyWindowNotebook"));
+	assert(pv->notebook != NULL);
+	pv->stype_check = GTK_TOGGLE_BUTTON(glade_xml_get_widget(xml, "PolicyWindowSTypeCheck"));
+	pv->ttype_check = GTK_TOGGLE_BUTTON(glade_xml_get_widget(xml, "PolicyWindowTTypeCheck"));
+	pv->class_check = GTK_TOGGLE_BUTTON(glade_xml_get_widget(xml, "PolicyWindowClassCheck"));
+	assert(pv->stype_check != NULL && pv->ttype_check != NULL && pv->class_check != NULL);
+	pv->stype_entry = GTK_ENTRY(glade_xml_get_widget(xml, "PolicyWindowSTypeEntry"));
+	pv->ttype_entry = GTK_ENTRY(glade_xml_get_widget(xml, "PolicyWindowTTypeEntry"));
+	pv->class_entry = GTK_ENTRY(glade_xml_get_widget(xml, "PolicyWindowClassEntry"));
+	assert(pv->stype_entry != NULL && pv->ttype_entry != NULL && pv->class_entry != NULL);
+
+	policy_textview = GTK_TEXT_VIEW(glade_xml_get_widget(xml, "PolicyWindowPolicyText"));
+	assert(policy_textview != NULL);
+	pv->policy_text = gtk_text_buffer_new(NULL);
+	gtk_text_view_set_buffer(policy_textview, pv->policy_text);
+
+	/* set up signal handlers for the widgets */
+
+	w = glade_xml_get_widget(xml, "PolicyWindowFindTERulesButton");
+	assert(w != NULL);
+	/* FIX ME to do search */
+
+	w = glade_xml_get_widget(xml, "PolicyWindowCloseButton");
+	assert(w != NULL);
+	g_signal_connect(w, "clicked", G_CALLBACK(policy_view_close), pv);
+	g_signal_connect(pv->window, "delete_event", G_CALLBACK(policy_view_on_delete_event), NULL);
+
+	policy_view_update(pv, NULL);
+	return pv;
+}
+
+void policy_view_destroy(policy_view_t ** pv)
+{
+	if (pv != NULL && *pv != NULL) {
+		free(*pv);
+		*pv = NULL;
+	}
+}
+
+static void policy_view_load_policy_source(policy_view_t * pv, const char *path)
+{
+	apol_policy_t *policy = toplevel_get_policy(pv->top);
+	if (path == NULL) {
+		gtk_text_buffer_set_text(pv->policy_text, "No policy has been loaded.", -1);
+	} else if (apol_policy_is_binary(policy)) {
+		GString *string = g_string_new("");
+		g_string_printf(string, "Policy file %s is a binary policy.", path);
+		gtk_text_buffer_set_text(pv->policy_text, string->str, -1);
+		g_string_free(string, TRUE);
+	} else {
+		struct stat statbuf;
+		int fd;
+		if (pv->policy_text_mmap != NULL) {
+			munmap(pv->policy_text_mmap, pv->policy_text_len);
+		}
+
+		pv->policy_text_mmap = NULL;
+		pv->policy_text_len = 0;
+
+		if ((fd = open(path, O_RDONLY)) < 0) {
+			toplevel_ERR(pv->top, "Could not open %s for reading.", path);
+			return;
+		}
+		if (fstat(fd, &statbuf) < 0) {
+			close(fd);
+			toplevel_ERR(pv->top, "Could not stat %s.", path);
+			return;
+		}
+
+		pv->policy_text_len = statbuf.st_size;
+		if ((pv->policy_text_mmap = mmap(0, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED) {
+			close(fd);
+			pv->policy_text_mmap = NULL;
+			toplevel_ERR(pv->top, "Could not mmap %s.", path);
+			return;
+		}
+		close(fd);
+		gtk_text_buffer_set_text(pv->policy_text, pv->policy_text_mmap, pv->policy_text_len);
+	}
+}
+
+void policy_view_update(policy_view_t * pv, const char *path)
+{
+	policy_view_load_policy_source(pv, path);
+	/* sync combo boxes */
+}
+
+void policy_view_find_terules(policy_view_t * pv, seaudit_message_t * message)
+{
+	seaudit_message_type_e type = SEAUDIT_MESSAGE_TYPE_INVALID;
+	void *data = NULL;
+	char *stype = "", *ttype = "", *obj_class = "";
+	if (message != NULL) {
+		data = seaudit_message_get_data(message, &type);
+	}
+	if (type == SEAUDIT_MESSAGE_TYPE_AVC) {
+		seaudit_avc_message_t *avc = data;
+		if ((stype = seaudit_avc_message_get_source_type(avc)) == NULL) {
+			stype = "";
+		}
+		if ((ttype = seaudit_avc_message_get_target_type(avc)) == NULL) {
+			ttype = "";
+		}
+		if ((obj_class = seaudit_avc_message_get_object_class(avc)) == NULL) {
+			obj_class = "";
+		}
+	}
+	gtk_entry_set_text(pv->stype_entry, stype);
+	gtk_entry_set_text(pv->ttype_entry, ttype);
+	gtk_entry_set_text(pv->class_entry, obj_class);
+	gtk_toggle_button_set_active(pv->stype_check, strcmp(stype, "") != 0);
+	gtk_toggle_button_set_active(pv->ttype_check, strcmp(ttype, "") != 0);
+	gtk_toggle_button_set_active(pv->class_check, strcmp(obj_class, "") != 0);
+	gtk_notebook_set_current_page(pv->notebook, 0);
+	gtk_widget_show(GTK_WIDGET(pv->window));
+}
+
+#if 0
 static gint query_window_str_compare(gconstpointer a, gconstpointer b)
 {
 	return strcmp((const char *)a, (const char *)b);
@@ -287,15 +463,6 @@ static int do_policy_query(GString * src_type, GString * tgt_type, GString * obj
 	return 0;
 }
 
-void on_close_button_clicked(GtkButton * button, gpointer user_data)
-{
-	GladeXML *xml = (GladeXML *) user_data;
-	GtkWidget *widget;
-
-	widget = glade_xml_get_widget(xml, "query_window");
-	gtk_widget_hide(widget);
-}
-
 void on_query_policy_button_clicked(GtkButton * button, GladeXML * xml)
 {
 	GtkEntry *src_entry, *tgt_entry, *obj_entry;
@@ -404,19 +571,6 @@ void on_src_type_check_button_toggled(GtkToggleButton * button, gpointer user_da
 		widget = glade_xml_get_widget(xml, "SrcTypeDirectCheck");
 		gtk_widget_set_sensitive(widget, FALSE);
 	}
-}
-
-void on_obj_check_button_toggled(GtkToggleButton * button, gpointer user_data)
-{
-	GladeXML *xml = (GladeXML *) user_data;
-	GtkWidget *combo;
-
-	combo = glade_xml_get_widget(xml, "obj_combo");
-
-	if (gtk_toggle_button_get_active(button))
-		gtk_widget_set_sensitive(combo, TRUE);
-	else
-		gtk_widget_set_sensitive(combo, FALSE);
 }
 
 static void query_window_populate_combo_boxes(GtkWidget * src_type_combo, GtkWidget * tgt_type_combo, GtkWidget * obj_class_combo)
@@ -550,99 +704,10 @@ static void populate_query_window_widgets(GladeXML * xml, int *tree_item_idx)
 	return;
 }
 
-static void on_new_policy_opened(void *user_data);
-
-void query_window_remove_callbacks(GtkWidget * widget)
-{
-	policy_load_callback_remove(&on_new_policy_opened, widget);
-
-	/* if there is an idle function for this window
-	 * then we must remove it to avoid that function
-	 * being executed after we delete the window.  This
-	 * may happen if the window is closed during a search. */
-	while (g_idle_remove_by_data(widget)) ;
-}
-
-gboolean on_query_window_delete_event(GtkWidget * widget, GdkEvent * event, gpointer user_data)
-{
-	query_window_remove_callbacks(widget);
-
-	return FALSE;
-}
-
-static void on_new_policy_opened(void *user_data)
-{
-	query_window_remove_callbacks((GtkWidget *) user_data);
-	gtk_widget_destroy((GtkWidget *) user_data);
-}
-
 void on_list_selection_changed(GtkList * list, GtkWidget * widget, gpointer data)
 {
 	printf("select-child *%s*\n", gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(data)->entry)));
 
 }
 
-int query_window_create(int *tree_item_idx)
-{
-	GladeXML *xml;
-	GtkWidget *text, *button;
-	GtkWindow *window;
-	GString *path;
-	GtkNotebook *notebook;
-	char *dir;
-
-	if (!seaudit_app->cur_policy) {
-		message_display(seaudit_app->window->window, GTK_MESSAGE_ERROR, "You must load a policy first.\n");
-		return -1;
-	}
-
-	dir = apol_file_find("query_window.glade");
-	if (!dir) {
-		fprintf(stderr, "could not find query_window.glade\n");
-		return -1;
-	}
-	path = g_string_new(dir);
-	free(dir);
-	g_string_append(path, "/query_window.glade");
-	xml = glade_xml_new(path->str, NULL, NULL);
-	g_string_free(path, TRUE);
-	window = GTK_WINDOW(glade_xml_get_widget(xml, "query_window"));
-	g_assert(window);
-	gtk_window_set_transient_for(window, seaudit_app->window->window);
-	gtk_window_set_position(window, GTK_WIN_POS_CENTER_ON_PARENT);
-
-	glade_xml_signal_connect_data(xml, "on_close_button_clicked", G_CALLBACK(on_close_button_clicked), xml);
-	glade_xml_signal_connect_data(xml, "on_query_policy_button_clicked", G_CALLBACK(on_query_policy_button_clicked), xml);
-	g_signal_connect(G_OBJECT(window), "delete_event", G_CALLBACK(on_query_window_delete_event), NULL);
-
-	policy_load_callback_register(&on_new_policy_opened, window);
-
-	populate_query_window_widgets(xml, tree_item_idx);
-
-	if (apol_policy_is_binary(seaudit_app->cur_policy)) {
-		/* Remove the policy.conf tab if this is a binary policy. */
-		notebook = GTK_NOTEBOOK(glade_xml_get_widget(xml, "query_policy_notebook"));
-		g_assert(notebook);
-		gtk_notebook_remove_page(notebook, 1);
-	} else {
-		text = glade_xml_get_widget(xml, "policy_text");
-		g_assert(text);
-
-		gtk_text_view_set_buffer(GTK_TEXT_VIEW(text), seaudit_app->policy_text);
-		gtk_text_view_set_editable(GTK_TEXT_VIEW(text), FALSE);
-	}
-
-	text = glade_xml_get_widget(xml, "query_results");
-	g_assert(text);
-
-	button = glade_xml_get_widget(xml, "src_type_check_button");
-	gtk_signal_connect(GTK_OBJECT(button), "toggled", GTK_SIGNAL_FUNC(on_src_type_check_button_toggled), xml);
-
-	button = glade_xml_get_widget(xml, "tgt_type_check_button");
-	gtk_signal_connect(GTK_OBJECT(button), "toggled", GTK_SIGNAL_FUNC(on_tgt_type_check_button_toggled), xml);
-
-	button = glade_xml_get_widget(xml, "obj_check_button");
-	gtk_signal_connect(GTK_OBJECT(button), "toggled", GTK_SIGNAL_FUNC(on_obj_check_button_toggled), xml);
-
-	return 0;
-}
+#endif

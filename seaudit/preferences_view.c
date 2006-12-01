@@ -186,7 +186,7 @@ static void preferences_view_get_from_dialog(GladeXML * xml, preferences_t * pre
 	}
 }
 
-int preferences_view_run(toplevel_t * top, GtkWindow * parent)
+int preferences_view_run(toplevel_t * top)
 {
 	GladeXML *xml = toplevel_get_glade_xml(top);
 	preferences_t *prefs = toplevel_get_prefs(top);
@@ -195,7 +195,7 @@ int preferences_view_run(toplevel_t * top, GtkWindow * parent)
 	size_t i;
 
 	dialog = glade_xml_get_widget(xml, "PreferencesWindow");
-	gtk_window_set_transient_for(GTK_WINDOW(dialog), parent);
+	gtk_window_set_transient_for(GTK_WINDOW(dialog), toplevel_get_window(top));
 
 	preferences_view_init_dialog(prefs, xml);
 	for (i = 0; i < num_entries; i++) {

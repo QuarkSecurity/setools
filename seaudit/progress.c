@@ -23,6 +23,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <config.h>
+
 #include "progress.h"
 #include "utilgui.h"
 
@@ -41,7 +43,7 @@ struct progress
 	GMutex *mutex;
 };
 
-progress_t *progress_create(toplevel_t * top, GtkWindow * parent)
+progress_t *progress_create(toplevel_t * top)
 {
 	progress_t *p;
 	GtkWidget *vbox;
@@ -52,7 +54,7 @@ progress_t *progress_create(toplevel_t * top, GtkWindow * parent)
 	p->top = top;
 	p->progress = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_modal(GTK_WINDOW(p->progress), TRUE);
-	gtk_window_set_transient_for(GTK_WINDOW(p->progress), parent);
+	gtk_window_set_transient_for(GTK_WINDOW(p->progress), toplevel_get_window(top));
 	gtk_window_set_default_size(GTK_WINDOW(p->progress), 300, 100);
 	vbox = gtk_vbox_new(FALSE, 2);
 	gtk_container_add(GTK_CONTAINER(p->progress), vbox);

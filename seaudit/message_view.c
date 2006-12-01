@@ -580,7 +580,8 @@ static void message_view_messages_vector(message_view_t * view, apol_vector_t * 
 	GtkTextIter iter;
 	size_t i;
 	window = gtk_dialog_new_with_buttons("View Messages",
-					     NULL, GTK_DIALOG_DESTROY_WITH_PARENT, GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE, NULL);
+					     toplevel_get_window(view->top),
+					     GTK_DIALOG_DESTROY_WITH_PARENT, GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE, NULL);
 	gtk_dialog_set_default_response(GTK_DIALOG(window), GTK_RESPONSE_CLOSE);
 	gtk_window_set_modal(GTK_WINDOW(window), FALSE);
 	g_signal_connect_swapped(window, "response", G_CALLBACK(gtk_widget_destroy), window);

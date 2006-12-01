@@ -4146,7 +4146,6 @@ Dec</property>
 		      <property name="can_focus">True</property>
 		      <property name="relief">GTK_RELIEF_NORMAL</property>
 		      <property name="focus_on_click">True</property>
-		      <signal name="clicked" handler="prefs_view_on_log_browse_click" last_modification_time="Mon, 27 Nov 2006 23:54:36 GMT"/>
 
 		      <child>
 			<widget class="GtkAlignment" id="alignment3">
@@ -4228,7 +4227,6 @@ Dec</property>
 		      <property name="can_focus">True</property>
 		      <property name="relief">GTK_RELIEF_NORMAL</property>
 		      <property name="focus_on_click">True</property>
-		      <signal name="clicked" handler="prefs_view_on_policy_browse_clicke" last_modification_time="Mon, 27 Nov 2006 23:54:55 GMT"/>
 
 		      <child>
 			<widget class="GtkAlignment" id="alignment4">
@@ -4648,7 +4646,6 @@ Style Sheet</property>
 		      <property name="active">False</property>
 		      <property name="inconsistent">False</property>
 		      <property name="draw_indicator">True</property>
-		      <signal name="toggled" handler="on_preference_toggled" last_modification_time="Tue, 23 Dec 2003 16:03:27 GMT"/>
 		    </widget>
 		    <packing>
 		      <property name="left_attach">1</property>
@@ -4671,7 +4668,6 @@ Style Sheet</property>
 		      <property name="active">False</property>
 		      <property name="inconsistent">False</property>
 		      <property name="draw_indicator">True</property>
-		      <signal name="toggled" handler="on_preference_toggled" last_modification_time="Tue, 23 Dec 2003 16:02:53 GMT"/>
 		    </widget>
 		    <packing>
 		      <property name="left_attach">1</property>
@@ -4694,7 +4690,6 @@ Style Sheet</property>
 		      <property name="active">False</property>
 		      <property name="inconsistent">False</property>
 		      <property name="draw_indicator">True</property>
-		      <signal name="toggled" handler="on_preference_toggled" last_modification_time="Tue, 23 Dec 2003 16:02:44 GMT"/>
 		    </widget>
 		    <packing>
 		      <property name="left_attach">1</property>
@@ -4717,7 +4712,6 @@ Style Sheet</property>
 		      <property name="active">False</property>
 		      <property name="inconsistent">False</property>
 		      <property name="draw_indicator">True</property>
-		      <signal name="toggled" handler="on_preference_toggled" last_modification_time="Tue, 23 Dec 2003 16:03:52 GMT"/>
 		    </widget>
 		    <packing>
 		      <property name="left_attach">2</property>
@@ -4740,7 +4734,6 @@ Style Sheet</property>
 		      <property name="active">False</property>
 		      <property name="inconsistent">False</property>
 		      <property name="draw_indicator">True</property>
-		      <signal name="toggled" handler="on_preference_toggled" last_modification_time="Tue, 23 Dec 2003 16:04:02 GMT"/>
 		    </widget>
 		    <packing>
 		      <property name="left_attach">2</property>
@@ -4763,7 +4756,6 @@ Style Sheet</property>
 		      <property name="active">False</property>
 		      <property name="inconsistent">False</property>
 		      <property name="draw_indicator">True</property>
-		      <signal name="toggled" handler="on_preference_toggled" last_modification_time="Tue, 23 Dec 2003 16:04:10 GMT"/>
 		    </widget>
 		    <packing>
 		      <property name="left_attach">2</property>
@@ -4786,7 +4778,6 @@ Style Sheet</property>
 		      <property name="active">False</property>
 		      <property name="inconsistent">False</property>
 		      <property name="draw_indicator">True</property>
-		      <signal name="toggled" handler="on_preference_toggled" last_modification_time="Tue, 23 Dec 2003 16:02:09 GMT"/>
 		    </widget>
 		    <packing>
 		      <property name="left_attach">0</property>
@@ -4809,7 +4800,6 @@ Style Sheet</property>
 		      <property name="active">False</property>
 		      <property name="inconsistent">False</property>
 		      <property name="draw_indicator">True</property>
-		      <signal name="toggled" handler="on_preference_toggled" last_modification_time="Tue, 23 Dec 2003 16:01:43 GMT"/>
 		    </widget>
 		    <packing>
 		      <property name="left_attach">0</property>
@@ -4832,7 +4822,6 @@ Style Sheet</property>
 		      <property name="active">False</property>
 		      <property name="inconsistent">False</property>
 		      <property name="draw_indicator">True</property>
-		      <signal name="toggled" handler="on_preference_toggled" last_modification_time="Tue, 23 Dec 2003 16:02:23 GMT"/>
 		    </widget>
 		    <packing>
 		      <property name="left_attach">0</property>
@@ -4855,7 +4844,6 @@ Style Sheet</property>
 		      <property name="active">False</property>
 		      <property name="inconsistent">False</property>
 		      <property name="draw_indicator">True</property>
-		      <signal name="toggled" handler="on_preference_toggled" last_modification_time="Tue, 23 Dec 2003 16:02:36 GMT"/>
 		    </widget>
 		    <packing>
 		      <property name="left_attach">4</property>
@@ -4878,7 +4866,6 @@ Style Sheet</property>
 		      <property name="active">False</property>
 		      <property name="inconsistent">False</property>
 		      <property name="draw_indicator">True</property>
-		      <signal name="toggled" handler="on_preference_toggled" last_modification_time="Tue, 23 Dec 2003 16:04:26 GMT"/>
 		    </widget>
 		    <packing>
 		      <property name="left_attach">3</property>
@@ -4901,7 +4888,6 @@ Style Sheet</property>
 		      <property name="active">False</property>
 		      <property name="inconsistent">False</property>
 		      <property name="draw_indicator">True</property>
-		      <signal name="toggled" handler="on_preference_toggled" last_modification_time="Tue, 23 Dec 2003 16:04:37 GMT"/>
 		    </widget>
 		    <packing>
 		      <property name="left_attach">3</property>
@@ -4924,7 +4910,6 @@ Style Sheet</property>
 		      <property name="active">False</property>
 		      <property name="inconsistent">False</property>
 		      <property name="draw_indicator">True</property>
-		      <signal name="toggled" handler="on_preference_toggled" last_modification_time="Tue, 23 Dec 2003 16:04:18 GMT"/>
 		    </widget>
 		    <packing>
 		      <property name="left_attach">4</property>
@@ -4947,7 +4932,6 @@ Style Sheet</property>
 		      <property name="active">False</property>
 		      <property name="inconsistent">False</property>
 		      <property name="draw_indicator">True</property>
-		      <signal name="toggled" handler="on_preference_toggled" last_modification_time="Tue, 23 Dec 2003 16:04:47 GMT"/>
 		    </widget>
 		    <packing>
 		      <property name="left_attach">3</property>
@@ -4970,7 +4954,6 @@ Style Sheet</property>
 		      <property name="active">False</property>
 		      <property name="inconsistent">False</property>
 		      <property name="draw_indicator">True</property>
-		      <signal name="toggled" handler="on_preference_toggled" last_modification_time="Tue, 23 Dec 2003 16:04:47 GMT"/>
 		    </widget>
 		    <packing>
 		      <property name="left_attach">3</property>
@@ -4993,7 +4976,6 @@ Style Sheet</property>
 		      <property name="active">False</property>
 		      <property name="inconsistent">False</property>
 		      <property name="draw_indicator">True</property>
-		      <signal name="toggled" handler="on_preference_toggled" last_modification_time="Tue, 23 Dec 2003 16:04:54 GMT"/>
 		    </widget>
 		    <packing>
 		      <property name="left_attach">4</property>
@@ -5016,7 +4998,6 @@ Style Sheet</property>
 		      <property name="active">False</property>
 		      <property name="inconsistent">False</property>
 		      <property name="draw_indicator">True</property>
-		      <signal name="toggled" handler="on_preference_toggled" last_modification_time="Tue, 23 Dec 2003 16:03:45 GMT"/>
 		    </widget>
 		    <packing>
 		      <property name="left_attach">4</property>
@@ -5150,7 +5131,6 @@ Style Sheet</property>
 		      <property name="active">False</property>
 		      <property name="inconsistent">False</property>
 		      <property name="draw_indicator">True</property>
-		      <signal name="toggled" handler="on_preference_toggled" last_modification_time="Tue, 23 Dec 2003 16:05:17 GMT"/>
 		    </widget>
 		    <packing>
 		      <property name="left_attach">0</property>
@@ -5204,21 +5184,21 @@ Style Sheet</property>
   </child>
 </widget>
 
-<widget class="GtkWindow" id="query_window">
+<widget class="GtkWindow" id="PolicyWindow">
   <property name="events">GDK_POINTER_MOTION_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK</property>
   <property name="extension_events">GDK_EXTENSION_EVENTS_ALL</property>
-  <property name="title" translatable="yes">Query Policy</property>
+  <property name="title" translatable="yes">Find TE Rules</property>
   <property name="type">GTK_WINDOW_TOPLEVEL</property>
-  <property name="window_position">GTK_WIN_POS_NONE</property>
+  <property name="window_position">GTK_WIN_POS_CENTER_ON_PARENT</property>
   <property name="modal">False</property>
   <property name="default_width">800</property>
   <property name="default_height">600</property>
   <property name="resizable">True</property>
-  <property name="destroy_with_parent">True</property>
+  <property name="destroy_with_parent">False</property>
   <property name="decorated">True</property>
   <property name="skip_taskbar_hint">False</property>
   <property name="skip_pager_hint">False</property>
-  <property name="type_hint">GDK_WINDOW_TYPE_HINT_NORMAL</property>
+  <property name="type_hint">GDK_WINDOW_TYPE_HINT_DIALOG</property>
   <property name="gravity">GDK_GRAVITY_NORTH_WEST</property>
   <property name="focus_on_map">True</property>
   <property name="urgency_hint">False</property>
@@ -5230,7 +5210,7 @@ Style Sheet</property>
       <property name="spacing">0</property>
 
       <child>
-	<widget class="GtkNotebook" id="query_policy_notebook">
+	<widget class="GtkNotebook" id="PolicyWindowNotebook">
 	  <property name="visible">True</property>
 	  <property name="can_focus">True</property>
 	  <property name="show_tabs">True</property>
@@ -5271,14 +5251,14 @@ Style Sheet</property>
 			  <property name="spacing">0</property>
 
 			  <child>
-			    <widget class="GtkCheckButton" id="src_type_check_button">
+			    <widget class="GtkCheckButton" id="PolicyWindowSTypeCheck">
 			      <property name="visible">True</property>
 			      <property name="can_focus">True</property>
 			      <property name="label" translatable="yes">Source type regular expression</property>
 			      <property name="use_underline">True</property>
 			      <property name="relief">GTK_RELIEF_NORMAL</property>
 			      <property name="focus_on_click">True</property>
-			      <property name="active">True</property>
+			      <property name="active">False</property>
 			      <property name="inconsistent">False</property>
 			      <property name="draw_indicator">True</property>
 			    </widget>
@@ -5290,7 +5270,7 @@ Style Sheet</property>
 			  </child>
 
 			  <child>
-			    <widget class="GtkCombo" id="src_combo">
+			    <widget class="GtkCombo" id="PolicyWindowSTypeCombo">
 			      <property name="visible">True</property>
 			      <property name="value_in_list">False</property>
 			      <property name="allow_empty">True</property>
@@ -5299,7 +5279,7 @@ Style Sheet</property>
 			      <property name="enable_arrows_always">False</property>
 
 			      <child internal-child="entry">
-				<widget class="GtkEntry" id="src_combo_entry">
+				<widget class="GtkEntry" id="PolicyWindowSTypeEntry">
 				  <property name="visible">True</property>
 				  <property name="can_focus">True</property>
 				  <property name="editable">True</property>
@@ -5313,7 +5293,7 @@ Style Sheet</property>
 			      </child>
 
 			      <child internal-child="list">
-				<widget class="GtkList" id="src_combo_list">
+				<widget class="GtkList" id="PolicyWindowSTypeList">
 				  <property name="visible">True</property>
 				  <property name="selection_mode">GTK_SELECTION_BROWSE</property>
 				</widget>
@@ -5327,7 +5307,7 @@ Style Sheet</property>
 			  </child>
 
 			  <child>
-			    <widget class="GtkCheckButton" id="SrcTypeDirectCheck">
+			    <widget class="GtkCheckButton" id="PolicyWindowSTypeDirectCheck">
 			      <property name="visible">True</property>
 			      <property name="can_focus">True</property>
 			      <property name="label" translatable="yes">Only show direct matches</property>
@@ -5359,14 +5339,14 @@ Style Sheet</property>
 			  <property name="spacing">0</property>
 
 			  <child>
-			    <widget class="GtkCheckButton" id="tgt_type_check_button">
+			    <widget class="GtkCheckButton" id="PolicyWindowTTypeCheck">
 			      <property name="visible">True</property>
 			      <property name="can_focus">True</property>
 			      <property name="label" translatable="yes">Target type regular expression</property>
 			      <property name="use_underline">True</property>
 			      <property name="relief">GTK_RELIEF_NORMAL</property>
 			      <property name="focus_on_click">True</property>
-			      <property name="active">True</property>
+			      <property name="active">False</property>
 			      <property name="inconsistent">False</property>
 			      <property name="draw_indicator">True</property>
 			    </widget>
@@ -5378,7 +5358,7 @@ Style Sheet</property>
 			  </child>
 
 			  <child>
-			    <widget class="GtkCombo" id="tgt_combo">
+			    <widget class="GtkCombo" id="PolicyWindowTTypeCombo">
 			      <property name="visible">True</property>
 			      <property name="value_in_list">False</property>
 			      <property name="allow_empty">True</property>
@@ -5387,7 +5367,7 @@ Style Sheet</property>
 			      <property name="enable_arrows_always">False</property>
 
 			      <child internal-child="entry">
-				<widget class="GtkEntry" id="tgt_combo_entry">
+				<widget class="GtkEntry" id="PolicyWindowTTypeEntry">
 				  <property name="visible">True</property>
 				  <property name="can_focus">True</property>
 				  <property name="editable">True</property>
@@ -5401,7 +5381,7 @@ Style Sheet</property>
 			      </child>
 
 			      <child internal-child="list">
-				<widget class="GtkList" id="tgt_combo_list">
+				<widget class="GtkList" id="PolicyWindowTTypeList">
 				  <property name="visible">True</property>
 				  <property name="selection_mode">GTK_SELECTION_BROWSE</property>
 				</widget>
@@ -5415,7 +5395,7 @@ Style Sheet</property>
 			  </child>
 
 			  <child>
-			    <widget class="GtkCheckButton" id="TgtTypeDirectCheck">
+			    <widget class="GtkCheckButton" id="PolicyWindowTTypeDirectCheck">
 			      <property name="visible">True</property>
 			      <property name="can_focus">True</property>
 			      <property name="label" translatable="yes">Only show direct matches</property>
@@ -5447,14 +5427,14 @@ Style Sheet</property>
 			  <property name="spacing">0</property>
 
 			  <child>
-			    <widget class="GtkCheckButton" id="obj_check_button">
+			    <widget class="GtkCheckButton" id="PolicyWindowClassCheck">
 			      <property name="visible">True</property>
 			      <property name="can_focus">True</property>
 			      <property name="label" translatable="yes">Object class</property>
 			      <property name="use_underline">True</property>
 			      <property name="relief">GTK_RELIEF_NORMAL</property>
 			      <property name="focus_on_click">True</property>
-			      <property name="active">True</property>
+			      <property name="active">False</property>
 			      <property name="inconsistent">False</property>
 			      <property name="draw_indicator">True</property>
 			    </widget>
@@ -5466,7 +5446,7 @@ Style Sheet</property>
 			  </child>
 
 			  <child>
-			    <widget class="GtkCombo" id="obj_combo">
+			    <widget class="GtkCombo" id="PolicyWindowClassCombo">
 			      <property name="visible">True</property>
 			      <property name="value_in_list">False</property>
 			      <property name="allow_empty">True</property>
@@ -5475,7 +5455,7 @@ Style Sheet</property>
 			      <property name="enable_arrows_always">False</property>
 
 			      <child internal-child="entry">
-				<widget class="GtkEntry" id="obj_combo_entry">
+				<widget class="GtkEntry" id="PolicyWindowClassEntry">
 				  <property name="visible">True</property>
 				  <property name="can_focus">True</property>
 				  <property name="editable">True</property>
@@ -5489,7 +5469,7 @@ Style Sheet</property>
 			      </child>
 
 			      <child internal-child="list">
-				<widget class="GtkList" id="obj_combo_list">
+				<widget class="GtkList" id="PolicyWindowClassList">
 				  <property name="visible">True</property>
 				  <property name="selection_mode">GTK_SELECTION_BROWSE</property>
 				</widget>
@@ -5517,12 +5497,11 @@ Style Sheet</property>
 			  <property name="spacing">5</property>
 
 			  <child>
-			    <widget class="GtkButton" id="query_policy_button">
+			    <widget class="GtkButton" id="PolicyWindowFindTERulesButton">
 			      <property name="visible">True</property>
 			      <property name="can_focus">True</property>
 			      <property name="relief">GTK_RELIEF_NORMAL</property>
 			      <property name="focus_on_click">True</property>
-			      <signal name="clicked" handler="on_query_policy_button_clicked" last_modification_time="Tue, 21 Oct 2003 14:37:28 GMT"/>
 			      <accelerator key="Return" modifiers="0" signal="clicked"/>
 
 			      <child>
@@ -5563,7 +5542,7 @@ Style Sheet</property>
 				      <child>
 					<widget class="GtkLabel" id="label8">
 					  <property name="visible">True</property>
-					  <property name="label" translatable="yes">Query Policy</property>
+					  <property name="label" translatable="yes">Find TE Rules</property>
 					  <property name="use_underline">True</property>
 					  <property name="use_markup">False</property>
 					  <property name="justify">GTK_JUSTIFY_LEFT</property>
@@ -5597,91 +5576,13 @@ Style Sheet</property>
 			  </child>
 
 			  <child>
-			    <widget class="GtkAlignment" id="alignment3">
+			    <widget class="GtkButton" id="PolicyWindowCloseButton">
 			      <property name="visible">True</property>
-			      <property name="xalign">0.5</property>
-			      <property name="yalign">0.5</property>
-			      <property name="xscale">1</property>
-			      <property name="yscale">1</property>
-			      <property name="top_padding">0</property>
-			      <property name="bottom_padding">0</property>
-			      <property name="left_padding">0</property>
-			      <property name="right_padding">0</property>
-
-			      <child>
-				<widget class="GtkButton" id="close_query_policy_button">
-				  <property name="visible">True</property>
-				  <property name="can_focus">True</property>
-				  <property name="relief">GTK_RELIEF_NORMAL</property>
-				  <property name="focus_on_click">True</property>
-				  <signal name="clicked" handler="on_close_button_clicked"/>
-				  <accelerator key="Return" modifiers="0" signal="clicked"/>
-
-				  <child>
-				    <widget class="GtkAlignment" id="alignment1">
-				      <property name="visible">True</property>
-				      <property name="xalign">0.5</property>
-				      <property name="yalign">1</property>
-				      <property name="xscale">0</property>
-				      <property name="yscale">0</property>
-				      <property name="top_padding">0</property>
-				      <property name="bottom_padding">0</property>
-				      <property name="left_padding">0</property>
-				      <property name="right_padding">0</property>
-
-				      <child>
-					<widget class="GtkHBox" id="hbox3">
-					  <property name="visible">True</property>
-					  <property name="homogeneous">False</property>
-					  <property name="spacing">2</property>
-
-					  <child>
-					    <widget class="GtkImage" id="image5">
-					      <property name="visible">True</property>
-					      <property name="stock">gtk-cancel</property>
-					      <property name="icon_size">4</property>
-					      <property name="xalign">0.5</property>
-					      <property name="yalign">1</property>
-					      <property name="xpad">0</property>
-					      <property name="ypad">0</property>
-					    </widget>
-					    <packing>
-					      <property name="padding">0</property>
-					      <property name="expand">False</property>
-					      <property name="fill">False</property>
-					    </packing>
-					  </child>
-
-					  <child>
-					    <widget class="GtkLabel" id="label9">
-					      <property name="visible">True</property>
-					      <property name="label" translatable="yes">Close</property>
-					      <property name="use_underline">True</property>
-					      <property name="use_markup">False</property>
-					      <property name="justify">GTK_JUSTIFY_LEFT</property>
-					      <property name="wrap">False</property>
-					      <property name="selectable">False</property>
-					      <property name="xalign">0.5</property>
-					      <property name="yalign">1</property>
-					      <property name="xpad">0</property>
-					      <property name="ypad">0</property>
-					      <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
-					      <property name="width_chars">-1</property>
-					      <property name="single_line_mode">False</property>
-					      <property name="angle">0</property>
-					    </widget>
-					    <packing>
-					      <property name="padding">0</property>
-					      <property name="expand">False</property>
-					      <property name="fill">False</property>
-					    </packing>
-					  </child>
-					</widget>
-				      </child>
-				    </widget>
-				  </child>
-				</widget>
-			      </child>
+			      <property name="can_focus">True</property>
+			      <property name="label">gtk-close</property>
+			      <property name="use_stock">True</property>
+			      <property name="relief">GTK_RELIEF_NORMAL</property>
+			      <property name="focus_on_click">True</property>
 			    </widget>
 			    <packing>
 			      <property name="padding">0</property>
@@ -5714,7 +5615,7 @@ Style Sheet</property>
 		      <property name="window_placement">GTK_CORNER_TOP_LEFT</property>
 
 		      <child>
-			<widget class="GtkTextView" id="query_results">
+			<widget class="GtkTextView" id="PolicyWindowTERulesResults">
 			  <property name="visible">True</property>
 			  <property name="can_focus">True</property>
 			  <property name="events">GDK_POINTER_MOTION_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK</property>
@@ -5732,7 +5633,7 @@ Style Sheet</property>
 			  <property name="right_margin">0</property>
 			  <property name="indent">0</property>
 			  <property name="text" translatable="yes"></property>
-			  <signal name="motion_notify_event" handler="on_text_view_motion" last_modification_time="Wed, 26 Nov 2003 20:20:28 GMT"/>
+			  <signal name="motion_notify_event" handler="policy_window_on_text_view_motion" last_modification_time="Fri, 01 Dec 2006 17:30:40 GMT"/>
 			</widget>
 		      </child>
 		    </widget>
@@ -5752,9 +5653,9 @@ Style Sheet</property>
 	  </child>
 
 	  <child>
-	    <widget class="GtkLabel" id="query_tab">
+	    <widget class="GtkLabel" id="PolicyWindowFindTERulesTab">
 	      <property name="visible">True</property>
-	      <property name="label" translatable="yes">Query Policy</property>
+	      <property name="label" translatable="yes">Find TE Rules</property>
 	      <property name="use_underline">False</property>
 	      <property name="use_markup">False</property>
 	      <property name="justify">GTK_JUSTIFY_LEFT</property>
@@ -5784,10 +5685,10 @@ Style Sheet</property>
 	      <property name="window_placement">GTK_CORNER_TOP_LEFT</property>
 
 	      <child>
-		<widget class="GtkTextView" id="policy_text">
+		<widget class="GtkTextView" id="PolicyWindowPolicyText">
 		  <property name="visible">True</property>
 		  <property name="can_focus">True</property>
-		  <property name="editable">True</property>
+		  <property name="editable">False</property>
 		  <property name="overwrite">False</property>
 		  <property name="accepts_tab">True</property>
 		  <property name="justification">GTK_JUSTIFY_LEFT</property>
@@ -5810,7 +5711,7 @@ Style Sheet</property>
 	  </child>
 
 	  <child>
-	    <widget class="GtkLabel" id="policy_tab">
+	    <widget class="GtkLabel" id="PolicyWindowPolicyTextTab">
 	      <property name="visible">True</property>
 	      <property name="label" translatable="yes">policy.conf</property>
 	      <property name="use_underline">False</property>
@@ -7562,7 +7463,7 @@ stylesheet:</property>
 		      <property name="tooltip" translatable="yes">Find TE rules in the loaded policy</property>
 		      <property name="label" translatable="yes">Find TE Rules...</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="toplevel_on_find_terules_activate" last_modification_time="Wed, 22 Nov 2006 16:30:21 GMT"/>
+		      <signal name="activate" handler="toplevel_on_find_terules_activate" object="TopLevel" last_modification_time="Wed, 22 Nov 2006 16:30:21 GMT"/>
 		      <accelerator key="F" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 
 		      <child internal-child="image">
@@ -7700,7 +7601,7 @@ stylesheet:</property>
 	  <property name="spacing">5</property>
 
 	  <child>
-	    <widget class="GtkButton" id="FindTERuleButton">
+	    <widget class="GtkButton" id="FindTERulesButton">
 	      <property name="visible">True</property>
 	      <property name="sensitive">False</property>
 	      <property name="tooltip" translatable="yes">Find TE Rules in the loaded policy</property>
@@ -8001,7 +7902,7 @@ stylesheet:</property>
 	    </widget>
 	    <packing>
 	      <property name="padding">4</property>
-	      <property name="expand">False</property>
+	      <property name="expand">True</property>
 	      <property name="fill">True</property>
 	    </packing>
 	  </child>
@@ -8016,7 +7917,7 @@ stylesheet:</property>
 	      <property name="wrap">False</property>
 	      <property name="selectable">False</property>
 	      <property name="xalign">0.5</property>
-	      <property name="yalign">0.5</property>
+	      <property name="yalign">0.519999980927</property>
 	      <property name="xpad">0</property>
 	      <property name="ypad">0</property>
 	      <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>

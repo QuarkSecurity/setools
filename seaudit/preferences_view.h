@@ -32,11 +32,9 @@
  * Display a dialog from which the user may edit his preferences.
  *
  * @param top Toplevel object containing preferences to modify
- * @param parent Parent window on which to centerthe preferences
- * dialog.
  *
  * @return Non-zero if preferences changed, zero if not.
  */
-int preferences_view_run(toplevel_t * top, GtkWindow * parent);
+int preferences_view_run(toplevel_t * top);
 
 #endif

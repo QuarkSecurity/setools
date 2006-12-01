@@ -27,6 +27,7 @@
 
 #include "seaudit.h"
 #include <glade/glade.h>
+#include <gtk/gtk.h>
 #include <seaudit/message.h>
 
 typedef struct toplevel toplevel_t;
@@ -61,6 +62,14 @@ void toplevel_destroy(toplevel_t ** top);
  * @param filename Name of the log to open.
  */
 void toplevel_open_log(toplevel_t * top, const char *filename);
+
+/**
+ * Open a policy file, destroying any existing policies first.
+ *
+ * @param top Toplevel object, used for UI control.
+ * @param filename Name of the policy to open.
+ */
+void toplevel_open_policy(toplevel_t * top, const char *filename);
 
 /**
  * Update the status bar to show the current policy, number of log
@@ -119,6 +128,16 @@ apol_policy_t *toplevel_get_policy(toplevel_t * top);
  * @return Glade XML declarations.
  */
 GladeXML *toplevel_get_glade_xml(toplevel_t * top);
+
+/**
+ * Return the main application window.  Sub-windows should be set
+ * transient to this window.
+ *
+ * @param top Toplevel containing main window.
+ *
+ * @return Main window.
+ */
+GtkWindow *toplevel_get_window(toplevel_t * top);
 
 /**
  * (Re)open a dialog that allows the user to search for TE rules in

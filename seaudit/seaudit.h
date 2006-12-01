@@ -42,6 +42,19 @@ typedef struct seaudit seaudit_t;
 preferences_t *seaudit_get_prefs(seaudit_t * s);
 
 /**
+ * Set the currently loaded policy for seaudit.  This will also update
+ * the preferences object's recently loaded policies.
+ *
+ * @param s seaudit object to modify.
+ * @param policy New policy file for seaudit.  If NULL then seaudit
+ * has no policy opened.  Afterwards seaudit takes ownership of the
+ * policy.
+ * @param filename If policy is not NULL, then add this filename to
+ * the most recently used files.
+ */
+void seaudit_set_policy(seaudit_t * s, apol_policy_t * policy, const char *filename);
+
+/**
  * Retrieve the currently loaded policy.
  *
  * @param s seaudit object to query.
