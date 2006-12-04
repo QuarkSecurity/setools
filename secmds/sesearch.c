@@ -196,7 +196,7 @@ static int perform_av_query(apol_policy_t * policy, options_t * opt, apol_vector
 		free(tmp);
 	}
 
-	if (opt->lineno && !apol_policy_is_binary(policy)) {
+	if (opt->lineno && qpol_policy_has_capability(apol_policy_get_qpol(policy), QPOL_CAP_LINE_NOS)) {
 		if (apol_syn_avrule_get_by_query(policy, avq, v)) {
 			error = errno;
 			goto err;
@@ -376,7 +376,7 @@ static int perform_te_query(apol_policy_t * policy, options_t * opt, apol_vector
 		}
 	}
 
-	if (opt->lineno && !apol_policy_is_binary(policy)) {
+	if (opt->lineno && qpol_policy_has_capability(apol_policy_get_qpol(policy), QPOL_CAP_LINE_NOS)) {
 		if (apol_syn_terule_get_by_query(policy, teq, v)) {
 			error = errno;
 			goto err;
@@ -914,17 +914,16 @@ int main(int argc, char **argv)
 	if (!search_opts)
 		search_opts = (QPOL_TYPE_SOURCE | QPOL_TYPE_BINARY);
 
-	if (argc - optind > 1) {
-		usage(argv[0], 1);
-		exit(1);
-	} else if (argc - optind < 1) {
+	if (argc - optind < 1) {
 		rt = qpol_find_default_policy_file(search_opts, &policy_file);
 		if (rt != QPOL_FIND_DEFAULT_SUCCESS) {
 			printf("Default policy search failed: %s\n", qpol_find_default_policy_file_strerr(rt));
 			exit(1);
 		}
-	} else
+	} else {
 		policy_file = argv[optind];
+		optind++;
+	}
 
 	/* attempt to open the policy */
 	rt = apol_policy_open(policy_file, &policy, NULL, NULL);
@@ -933,7 +932,32 @@ int main(int argc, char **argv)
 		apol_policy_destroy(&policy);
 		exit(1);
 	}
-	if (cmd_opts.lineno && !apol_policy_is_binary(policy)) {
+	if (argc - optind > 0) {
+		if (!qpol_policy_has_capability(apol_policy_get_qpol(policy), QPOL_CAP_MODULES)) {
+			ERR(policy, "%s", "Module linking only supported for modular policies.");
+			apol_policy_destroy(&policy);
+			exit(1);
+		}
+		for (; argc - optind; optind++) {
+			qpol_module_t *mod = NULL;
+			if (qpol_module_create_from_file(argv[optind], &mod)) {
+				ERR(policy, "Error loading module %s", argv[optind]);
+				apol_policy_destroy(&policy);
+				exit(1);
+			}
+			if (qpol_policy_append_module(apol_policy_get_qpol(policy), mod)) {
+				apol_policy_destroy(&policy);
+				qpol_module_destroy(&mod);
+				exit(1);
+			}
+		}
+		if (qpol_policy_rebuild(apol_policy_get_qpol(policy))) {
+			apol_policy_destroy(&policy);
+			exit(1);
+		}
+	}
+
+	if (cmd_opts.lineno && qpol_policy_has_capability(apol_policy_get_qpol(policy), QPOL_CAP_LINE_NOS)) {
 		if (qpol_policy_build_syn_rule_table(apol_policy_get_qpol(policy))) {
 			apol_policy_destroy(&policy);
 			exit(1);
@@ -945,7 +969,7 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 	if (v) {
-		if (cmd_opts.lineno && !apol_policy_is_binary(policy))
+		if (cmd_opts.lineno && qpol_policy_has_capability(apol_policy_get_qpol(policy), QPOL_CAP_LINE_NOS))
 			print_syn_av_results(policy, &cmd_opts, v);
 		else
 			print_av_results(policy, &cmd_opts, v);
@@ -958,7 +982,7 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 	if (v) {
-		if (cmd_opts.lineno && !apol_policy_is_binary(policy))
+		if (cmd_opts.lineno && qpol_policy_has_capability(apol_policy_get_qpol(policy), QPOL_CAP_LINE_NOS))
 			print_syn_te_results(policy, &cmd_opts, v);
 		else
 			print_te_results(policy, &cmd_opts, v);

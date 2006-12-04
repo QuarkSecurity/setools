@@ -34,6 +34,7 @@
 #include <apol/vector.h>
 
 /* libqpol */
+#include <qpol/policy.h>
 #include <qpol/policy_query.h>
 
 /* other */
@@ -1335,10 +1336,10 @@ int main(int argc, char **argv)
 	if (!search_opts)
 		search_opts = (QPOL_TYPE_SOURCE | QPOL_TYPE_BINARY);
 
-	if (argc - optind > 1) {
-		usage(argv[0], 1);
-		exit(1);
-	} else if (argc - optind < 1) {
+	/*if (argc - optind > 1) {
+	 * usage(argv[0], 1);
+	 * exit(1);
+	 * } else */ if (argc - optind < 1) {
 		rt = qpol_find_default_policy_file(search_opts, &policy_file);
 		if (rt != QPOL_FIND_DEFAULT_SUCCESS) {
 			fprintf(stderr, "Default policy search failed: %s\n", qpol_find_default_policy_file_strerr(rt));
@@ -1350,6 +1351,7 @@ int main(int argc, char **argv)
 			fprintf(stderr, "Out of memory\n");
 			exit(1);
 		}
+		optind++;
 	}
 
 	/* attempt to open the policy */
@@ -1362,6 +1364,35 @@ int main(int argc, char **argv)
 	} else {
 		if (apol_policy_open_no_rules(policy_file, &policydb, NULL, NULL)) {
 			perror("Error opening policy");
+			free(policy_file);
+			exit(1);
+		}
+	}
+
+	if (argc - optind > 0) {
+		if (!qpol_policy_has_capability(apol_policy_get_qpol(policydb), QPOL_CAP_MODULES)) {
+			ERR(policydb, "%s", "Module linking only supported for modular policies.");
+			apol_policy_destroy(&policydb);
+			free(policy_file);
+			exit(1);
+		}
+		for (; argc - optind; optind++) {
+			qpol_module_t *mod = NULL;
+			if (qpol_module_create_from_file(argv[optind], &mod)) {
+				ERR(policydb, "Error loading module %s", argv[optind]);
+				apol_policy_destroy(&policydb);
+				free(policy_file);
+				exit(1);
+			}
+			if (qpol_policy_append_module(apol_policy_get_qpol(policydb), mod)) {
+				apol_policy_destroy(&policydb);
+				qpol_module_destroy(&mod);
+				free(policy_file);
+				exit(1);
+			}
+		}
+		if (qpol_policy_rebuild(apol_policy_get_qpol(policydb))) {
+			apol_policy_destroy(&policydb);
 			free(policy_file);
 			exit(1);
 		}

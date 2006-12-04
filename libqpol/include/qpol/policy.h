@@ -111,15 +111,6 @@ extern "C"
 	extern void qpol_policy_destroy(qpol_policy_t ** policy);
 
 /**
- *  Get the type of policy (source, binary, or module).
- *  @param policy The policy from which to get the type.
- *  @param type Pointer to the integer in which to store the type.
- *  Value will be one of QPOL_POLICY_* from above.
- *  @return 0 on success and < 0 on failure; if the call fails,
- *  errno will be set and *type will be QPOL_POLICY_UNKNOWN.
- */
-	extern int qpol_policy_get_type(qpol_policy_t * policy, int *type);
-/**
  *  Find the default policy file given a policy type. 
  *  @param search_opt Search options bitmask, defined in this file
  *  @param policy_file_path Character buffer to store policy path in  

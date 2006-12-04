@@ -832,7 +832,7 @@ int qpol_open_policy_from_file(const char *path, qpol_policy_t ** policy, qpol_c
 			ERR(*policy, "%s", strerror(error));
 			goto err;
 		}
-		if (qpol_policy_append_module(*policy, mod)){
+		if (qpol_policy_append_module(*policy, mod)) {
 			error = errno;
 			goto err;
 		}
@@ -936,8 +936,8 @@ int qpol_open_policy_from_file_no_rules(const char *path, qpol_policy_t ** polic
 		error = errno;
 		goto err;
 	}
-	INFO(*policy, "%s", "Rule loading disabled");
-	(*policy)->rules_loaded = 0;
+	/* rule loading only can be diabled for source policies, so will set to zero if souce */
+	(*policy)->rules_loaded = 1;
 
 	(*policy)->sh = sepol_handle_create();
 	if ((*policy)->sh == NULL) {
@@ -991,7 +991,7 @@ int qpol_open_policy_from_file_no_rules(const char *path, qpol_policy_t ** polic
 			ERR(*policy, "%s", strerror(error));
 			goto err;
 		}
-		if (qpol_policy_append_module(*policy, mod)){
+		if (qpol_policy_append_module(*policy, mod)) {
 			error = errno;
 			goto err;
 		}
@@ -1003,6 +1003,8 @@ int qpol_open_policy_from_file_no_rules(const char *path, qpol_policy_t ** polic
 		}
 	} else {
 		(*policy)->type = retv = QPOL_POLICY_KERNEL_SOURCE;
+		INFO(*policy, "%s", "Rule loading disabled");
+		(*policy)->rules_loaded = 0;
 		fd = fileno(infile);
 		if (fd < 0) {
 			error = errno;
@@ -1142,6 +1144,10 @@ int qpol_open_policy_from_memory(qpol_policy_t ** policy, const char *filedata, 
 
 }
 
+/* forward declarations see policy_extend.c */
+struct qpol_extended_image;
+extern void qpol_extended_image_destroy(struct qpol_extended_image **ext);
+
 void qpol_policy_destroy(qpol_policy_t ** policy)
 {
 	if (policy == NULL) {
@@ -1250,7 +1256,7 @@ int qpol_module_create_from_file(const char *path, qpol_module_t ** module)
 	}
 	sepol_policy_file_set_fp(spf, infile);
 
-	if (sepol_module_package_create(&smp)){
+	if (sepol_module_package_create(&smp)) {
 		error = EIO;
 		goto err;
 	}
@@ -1280,10 +1286,10 @@ int qpol_module_create_from_file(const char *path, qpol_module_t ** module)
 	sepol_module_package_free(smp);
 	fclose(infile);
 	sepol_policy_file_free(spf);
-	
+
 	return STATUS_SUCCESS;
 
-err:
+      err:
 	qpol_module_destroy(module);
 	sepol_policy_file_free(spf);
 	sepol_module_package_free(smp);
@@ -1392,7 +1398,7 @@ int qpol_policy_append_module(qpol_policy_t * policy, qpol_module_t * module)
 		return STATUS_ERR;
 	}
 
-	if (!(tmp = realloc(policy->modules, (1 + policy->num_modules)*sizeof(qpol_module_t*)))) {
+	if (!(tmp = realloc(policy->modules, (1 + policy->num_modules) * sizeof(qpol_module_t *)))) {
 		error = errno;
 		ERR(policy, "%s", strerror(error));
 		errno = error;
@@ -1410,9 +1416,9 @@ int qpol_policy_append_module(qpol_policy_t * policy, qpol_module_t * module)
 
 int qpol_policy_rebuild(qpol_policy_t * policy)
 {
-	sepol_policydb_t * old_p = NULL;
-	sepol_policydb_t ** modules = NULL;
-	qpol_module_t * base = NULL;
+	sepol_policydb_t *old_p = NULL;
+	sepol_policydb_t **modules = NULL;
+	qpol_module_t *base = NULL;
 	size_t num_modules = 0;
 	int error = 0, i;
 
@@ -1429,12 +1435,15 @@ int qpol_policy_rebuild(qpol_policy_t * policy)
 		return STATUS_ERR;
 	}
 
+	if (!policy->modified)
+		return STATUS_SUCCESS;
+
 	/* cache old policy in case of failure */
 	old_p = policy->p;
 	policy->p = NULL;
 
 	/* allocate enough space for all modules then fill with list of enabled ones only */
-	if (!(modules = calloc(policy->num_modules, sizeof(sepol_policydb_t*)))) {
+	if (!(modules = calloc(policy->num_modules, sizeof(sepol_policydb_t *)))) {
 		error = errno;
 		ERR(policy, "%s", strerror(error));
 		goto err;
@@ -1481,9 +1490,9 @@ int qpol_policy_rebuild(qpol_policy_t * policy)
 
 	return STATUS_SUCCESS;
 
-err:
+      err:
 	free(modules);
-	
+
 	policy->p = old_p;
 	errno = error;
 	return STATUS_ERR;
@@ -1578,19 +1587,6 @@ int qpol_policy_get_module_iter(qpol_policy_t * policy, qpol_iterator_t ** iter)
 
 	ms->end = policy->num_modules;
 	ms->list = policy->modules;
-
-	return STATUS_SUCCESS;
-}
-
-int qpol_policy_get_type(qpol_policy_t * policy, int *type)
-{
-	if (!policy || !type) {
-		ERR(policy, "%s", strerror(EINVAL));
-		errno = EINVAL;
-		return STATUS_ERR;
-	}
-
-	*type = policy->type;
 
 	return STATUS_SUCCESS;
 }
