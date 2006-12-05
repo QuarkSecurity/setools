@@ -27,7 +27,6 @@
 #include "message_view.h"
 #include "policy_view.h"
 #include "preferences_view.h"
-#include "progress.h"
 #include "toplevel.h"
 #include "utilgui.h"
 
@@ -654,6 +653,11 @@ apol_policy_t *toplevel_get_policy(toplevel_t * top)
 GladeXML *toplevel_get_glade_xml(toplevel_t * top)
 {
 	return top->xml;
+}
+
+progress_t *toplevel_get_progress(toplevel_t * top)
+{
+	return top->progress;
 }
 
 GtkWindow *toplevel_get_window(toplevel_t * top)

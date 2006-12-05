@@ -1,5 +1,5 @@
 /**
- *  @file utilgui.h
+ *  @file
  *  Miscellaneous helper functions for GTK+ applications.
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com

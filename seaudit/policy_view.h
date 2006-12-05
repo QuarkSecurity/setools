@@ -68,7 +68,8 @@ void policy_view_update(policy_view_t * pv, const char *path);
  * set the query's initial parameters to the message's source type,
  * target type, and object class.
  *
- * @param pv Policy view object.
+ * @param pv Policy view object.  Note that a policy must already
+ * exist and policy_view_update() must be first called.
  * @param message If non-NULL, the initial parameters for query.
  */
 void policy_view_find_terules(policy_view_t * pv, seaudit_message_t * message);

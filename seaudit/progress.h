@@ -24,12 +24,12 @@
 #ifndef PROGRESS_H
 #define PROGRESS_H
 
+typedef struct progress progress_t;
+
 #include "toplevel.h"
 
 #include <apol/policy.h>
 #include <seaudit/log.h>
-
-typedef struct progress progress_t;
 
 /**
  * Allocate and return a new progress dialog object.
@@ -116,9 +116,10 @@ void progress_abort(progress_t * progress, char *reason, ...) __attribute__ ((fo
  * Have the progress dialog show a message upon its next refresh.
  *
  * @param progress Progress object to update.
- * @param message String to show.  This string will be duplicated.
+ * @param fmt Format for string to display.
  */
-void progress_update(progress_t * progress, char *fmt, ...);
+void progress_update(progress_t * progress, char *fmt, ...) __attribute__ ((format(printf, 2, 3)));
+;
 
 /**
  * Implementation of libseaudit's message callback function.  This

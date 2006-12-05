@@ -25,12 +25,13 @@
 #ifndef TOPLEVEL_H
 #define TOPLEVEL_H
 
+typedef struct toplevel toplevel_t;
+
+#include "progress.h"
 #include "seaudit.h"
 #include <glade/glade.h>
 #include <gtk/gtk.h>
 #include <seaudit/message.h>
-
-typedef struct toplevel toplevel_t;
 
 /**
  * Allocate and return an instance of the toplevel window object.
@@ -128,6 +129,16 @@ apol_policy_t *toplevel_get_policy(toplevel_t * top);
  * @return Glade XML declarations.
  */
 GladeXML *toplevel_get_glade_xml(toplevel_t * top);
+
+/**
+ * Return the progress object, so that sub-windows may also show the
+ * threaded progress object.
+ *
+ * @param top Toplevel containing progress object.
+ *
+ * @return Progress object.  Do not free() this pointer.
+ */
+progress_t *toplevel_get_progress(toplevel_t * top);
 
 /**
  * Return the main application window.  Sub-windows should be set
