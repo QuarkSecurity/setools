@@ -1,5 +1,5 @@
 /**
- *  @file util.h
+ *  @file
  *  Miscellaneous, uncategorized functions for libseaudit.
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com
