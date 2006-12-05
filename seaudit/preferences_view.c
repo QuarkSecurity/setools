@@ -25,6 +25,7 @@
 #include <config.h>
 
 #include "preferences_view.h"
+#include "utilgui.h"
 #include <assert.h>
 #include <string.h>
 
@@ -79,24 +80,12 @@ static const size_t num_toggles = sizeof(pref_toggle_map) / sizeof(pref_toggle_m
 
 static void display_browse_dialog_for_entry_box(GtkEntry * entry, GtkWindow * parent, const char *title)
 {
-	GtkWidget *dialog;
-	const char *current_path;
-	gint response;
-	char *new_path;
-	dialog = gtk_file_chooser_dialog_new(title, parent, GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					     GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
-	current_path = gtk_entry_get_text(entry);
-	if (strcmp(current_path, "") != 0) {
-		gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(dialog), current_path);
+	const char *current_path = gtk_entry_get_text(entry);
+	char *new_path = util_open_file(parent, title, current_path);
+	if (new_path != NULL) {
+		gtk_entry_set_text(entry, new_path);
+		g_free(new_path);
 	}
-	response = gtk_dialog_run(GTK_DIALOG(dialog));
-	if (response != GTK_RESPONSE_ACCEPT) {
-		gtk_widget_destroy(dialog);
-		return;
-	}
-	new_path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-	gtk_entry_set_text(entry, new_path);
-	gtk_widget_destroy(dialog);
 }
 
 static void preferences_view_on_browse_click(GtkWidget * widget, gpointer user_data)

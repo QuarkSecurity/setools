@@ -625,14 +625,22 @@ void toplevel_update_status_bar(toplevel_t * top)
 
 void toplevel_update_selection_menu_item(toplevel_t * top)
 {
+	static const char *items[] = {
+		"ExportSelected", "ViewMessage",
+		NULL
+	};
 	message_view_t *view = toplevel_get_current_view(top);
-	gboolean sensitive = FALSE;
-	GtkWidget *view_message = glade_xml_get_widget(top->xml, "ViewMessage");
-	assert(view_message != NULL);
+	gboolean sens = FALSE;
+	size_t i;
+	const char *s;
 	if (view != NULL) {
-		sensitive = message_view_is_message_selected(view);
+		sens = message_view_is_message_selected(view);
 	}
-	gtk_widget_set_sensitive(view_message, sensitive);
+	for (i = 0, s = items[0]; s != NULL; s = items[++i]) {
+		GtkWidget *w = glade_xml_get_widget(top->xml, s);
+		assert(s != NULL);
+		gtk_widget_set_sensitive(w, sens);
+	}
 }
 
 preferences_t *toplevel_get_prefs(toplevel_t * top)
@@ -721,43 +729,21 @@ void toplevel_on_destroy(gpointer user_data, GtkObject * object __attribute__ ((
 void toplevel_on_open_log_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
 	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
-	char *path;
-	GtkWidget *dialog =
-		gtk_file_chooser_dialog_new("Open Log", top->w, GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					    GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
-	path = seaudit_get_log_path(top->s);
+	char *path = util_open_file(top->w, "Open Log", seaudit_get_log_path(top->s));
 	if (path != NULL) {
-		gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(dialog), path);
+		toplevel_open_log(top, path);
+		g_free(path);
 	}
-	if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_ACCEPT) {
-		gtk_widget_destroy(dialog);
-		return;
-	}
-	path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-	gtk_widget_destroy(dialog);
-	toplevel_open_log(top, path);
-	g_free(path);
 }
 
 void toplevel_on_open_policy_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
 	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
-	char *path;
-	GtkWidget *dialog = gtk_file_chooser_dialog_new("Open Policy", top->w, GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL,
-							GTK_RESPONSE_CANCEL,
-							GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
-	path = seaudit_get_policy_path(top->s);
+	char *path = util_open_file(top->w, "Open Policy", seaudit_get_policy_path(top->s));
 	if (path != NULL) {
-		gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(dialog), path);
+		toplevel_open_policy(top, path);
+		g_free(path);
 	}
-	if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_ACCEPT) {
-		gtk_widget_destroy(dialog);
-		return;
-	}
-	path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-	gtk_widget_destroy(dialog);
-	toplevel_open_policy(top, path);
-	g_free(path);
 }
 
 void toplevel_on_preferences_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
@@ -902,310 +888,6 @@ static void seaudit_policy_file_open_from_recent_menu(GtkWidget * widget, gpoint
 static void seaudit_log_file_open_from_recent_menu(GtkWidget * widget, gpointer user_data);
 static gboolean seaudit_real_time_update_log(gpointer callback_data);
 static void seaudit_exit_app(void);
-
-/* this is just a public method to set this button */
-void seaudit_view_entire_selection_update_sensitive(bool_t disable)
-{
-	seaudit_widget_update_sensitive("view_entire_message1", disable);
-}
-
-static int seaudit_export_selected_msgs_to_file(const audit_log_view_t * log_view, const char *filename)
-{
-	msg_t *message = NULL;
-	audit_log_t *audit_log = NULL;
-	char *message_header = NULL;
-	GtkTreeSelection *sel = NULL;
-	GtkTreeModel *model = NULL;
-	GtkTreeIter iter;
-	int fltr_msg_idx, msg_list_idx;
-	GList *glist, *item = NULL;
-	GtkTreePath *path = NULL;
-	seaudit_filtered_view_t *view = NULL;
-	FILE *log_file = NULL;
-
-	assert(log_view != NULL && filename != NULL && (strlen(filename) < PATH_MAX));
-
-	view = seaudit_window_get_current_view(seaudit_app->window);
-	audit_log = log_view->my_log;
-	sel = gtk_tree_view_get_selection(view->tree_view);
-	glist = gtk_tree_selection_get_selected_rows(sel, &model);
-	if (!glist) {
-		message_display(seaudit_app->window->window, GTK_MESSAGE_ERROR, "You must select messages to export.");
-		return -1;
-	} else {
-		log_file = fopen(filename, "w+");
-		if (log_file == NULL) {
-			message_display(seaudit_app->window->window,
-					GTK_MESSAGE_WARNING, "Error: Could not open file for writing!");
-			return -1;
-		}
-
-		for (item = glist; item != NULL; item = g_list_next(item)) {
-			path = item->data;
-			assert(path != NULL);
-			if (gtk_tree_model_get_iter(model, &iter, path) == 0) {
-				fprintf(stderr, "Could not get valid iterator for the selected path.\n");
-				g_list_foreach(glist, (GFunc) gtk_tree_path_free, NULL);
-				g_list_free(glist);
-				fclose(log_file);
-				return -1;
-			}
-			fltr_msg_idx = seaudit_log_view_store_iter_to_idx((SEAuditLogViewStore *) model, &iter);
-			msg_list_idx = fltr_msg_idx;
-			message = apol_vector_get_element(audit_log->msg_list, msg_list_idx);
-
-			message_header = (char *)malloc((TIME_SIZE + STR_SIZE) * sizeof(char));
-			if (message_header == NULL) {
-				fprintf(stderr, "memory error\n");
-				fclose(log_file);
-				g_list_foreach(glist, (GFunc) gtk_tree_path_free, NULL);
-				g_list_free(glist);
-				return -1;
-			}
-
-			generate_message_header(message_header, audit_log, message->date_stamp,
-						(char *)audit_log_get_host(audit_log, message->host));
-			if (message->msg_type == AVC_MSG)
-				write_avc_message_to_file(log_file, message->msg_data.avc_msg, message_header, audit_log);
-			else if (message->msg_type == LOAD_POLICY_MSG)
-				write_load_policy_message_to_file(log_file, message->msg_data.load_policy_msg, message_header);
-			else if (message->msg_type == BOOLEAN_MSG)
-				write_boolean_message_to_file(log_file, message->msg_data.boolean_msg, message_header, audit_log);
-		}
-		fclose(log_file);
-		if (message_header)
-			free(message_header);
-	}
-
-	g_list_foreach(glist, (GFunc) gtk_tree_path_free, NULL);
-	g_list_free(glist);
-
-	return 0;
-}
-
-void seaudit_save_log_file(bool_t selected_only)
-{
-	GtkWidget *file_selector, *confirmation;
-	gint response, confirm;
-	const gchar *filename;
-
-	if (selected_only) {
-		file_selector = gtk_file_selection_new("Export Selected Messages");
-	} else {
-		file_selector = gtk_file_selection_new("Export View");
-	}
-	/* set up transient so that it will center on the main window */
-	gtk_window_set_transient_for(GTK_WINDOW(file_selector), seaudit_app->window->window);
-	gtk_file_selection_complete(GTK_FILE_SELECTION(file_selector), (*(seaudit_app->audit_log_file)).str);
-
-	g_signal_connect(GTK_OBJECT(file_selector), "response", G_CALLBACK(get_dialog_response), &response);
-
-	while (1) {
-		gtk_dialog_run(GTK_DIALOG(file_selector));
-
-		if (response != GTK_RESPONSE_OK) {
-			gtk_widget_destroy(file_selector);
-			return;
-		}
-
-		filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selector));
-
-		if (!g_file_test(filename, G_FILE_TEST_IS_DIR) && strcmp(filename, DEFAULT_LOG) != 0) {
-			if (g_file_test(filename, G_FILE_TEST_EXISTS)) {
-				confirmation = gtk_message_dialog_new(seaudit_app->window->window,
-								      GTK_DIALOG_DESTROY_WITH_PARENT,
-								      GTK_MESSAGE_QUESTION,
-								      GTK_BUTTONS_YES_NO,
-								      "Overwrite existing file: %s ?", filename);
-
-				confirm = gtk_dialog_run(GTK_DIALOG(confirmation));
-				gtk_widget_destroy(confirmation);
-
-				if (confirm == GTK_RESPONSE_YES)
-					break;
-			} else
-				break;
-		} else if (strcmp(filename, DEFAULT_LOG) == 0)
-			message_display(seaudit_app->window->window,
-					GTK_MESSAGE_WARNING, "Cannot overwrite the system default log file!");
-
-		if (g_file_test(filename, G_FILE_TEST_IS_DIR))
-			gtk_file_selection_complete(GTK_FILE_SELECTION(file_selector), filename);
-	}
-
-	gtk_widget_destroy(file_selector);
-
-	if (selected_only) {
-		seaudit_export_selected_msgs_to_file(seaudit_get_current_audit_log_view(), filename);
-	} else {
-		seaudit_write_log_file(seaudit_get_current_audit_log_view(), filename);
-	}
-
-	return;
-}
-
-int seaudit_write_log_file(const audit_log_view_t * log_view, const char *filename)
-{
-	int i;
-	FILE *log_file;
-	msg_t *message;
-	audit_log_t *audit_log;
-	char *message_header;
-
-	assert(log_view != NULL && filename != NULL && (strlen(filename) < PATH_MAX));
-
-	audit_log = log_view->my_log;
-	log_file = fopen(filename, "w+");
-	if (log_file == NULL) {
-		message_display(seaudit_app->window->window, GTK_MESSAGE_WARNING, "Error: Could not open file for writing!");
-		return -1;
-	}
-
-	message_header = (char *)malloc((TIME_SIZE + STR_SIZE) * sizeof(char));
-	if (message_header == NULL) {
-		fclose(log_file);
-		fprintf(stderr, "memory error\n");
-		return -1;
-	}
-
-	for (i = 0; i < apol_vector_get_size(audit_log->msg_list); i++) {
-		message = apol_vector_get_element(audit_log->msg_list, i);
-		/* If the multifilter member is NULL, then there are no
-		 * filters for this view, so all messages are ok for writing to file. */
-		if (log_view->multifilter == NULL ||
-		    seaudit_multifilter_should_message_show(log_view->multifilter, message, audit_log)) {
-			generate_message_header(message_header, audit_log, message->date_stamp,
-						(char *)audit_log_get_host(audit_log, message->host));
-
-			if (message->msg_type == AVC_MSG)
-				write_avc_message_to_file(log_file, message->msg_data.avc_msg, message_header, audit_log);
-			else if (message->msg_type == LOAD_POLICY_MSG)
-				write_load_policy_message_to_file(log_file, message->msg_data.load_policy_msg, message_header);
-			else if (message->msg_type == BOOLEAN_MSG)
-				write_boolean_message_to_file(log_file, message->msg_data.boolean_msg, message_header, audit_log);
-		}
-	}
-
-	fclose(log_file);
-
-	if (message_header)
-		free(message_header);
-
-	return 0;
-}
-
-void generate_message_header(char *message_header, audit_log_t * audit_log, struct tm *date_stamp, char *host)
-{
-	assert(message_header != NULL && audit_log != NULL && date_stamp != NULL);
-
-	strftime(message_header, TIME_SIZE, "%b %d %T", date_stamp);
-	strcat(message_header, " ");
-	strcat(message_header, host);
-	strcat(message_header, " kernel: ");
-
-	return;
-}
-
-void write_avc_message_to_file(FILE * log_file, const avc_msg_t * message, const char *message_header, audit_log_t * audit_log)
-{
-	int i;
-
-	assert(log_file != NULL && message != NULL && message_header != NULL && audit_log != NULL);
-
-	fprintf(log_file, "%s", message_header);
-	if (!(message->tm_stmp_sec == 0 && message->tm_stmp_nano == 0 && message->serial == 0))
-		fprintf(log_file, "audit(%lu.%03lu:%u): ", message->tm_stmp_sec, message->tm_stmp_nano, message->serial);
-
-	fprintf(log_file, "avc:  %s  {", ((message->msg == AVC_GRANTED) ? "granted" : "denied"));
-
-	for (i = 0; i < apol_vector_get_size(message->perms); i++)
-		fprintf(log_file, " %s", (char *)apol_vector_get_element(message->perms, i));
-
-	fprintf(log_file, " } for ");
-
-	if (message->is_pid)
-		fprintf(log_file, " pid=%i", message->pid);
-
-	if (message->exe)
-		fprintf(log_file, " exe=%s", message->exe);
-
-	if (message->comm)
-		fprintf(log_file, " comm=%s", message->comm);
-
-	if (message->path)
-		fprintf(log_file, " path=%s", message->path);
-
-	if (message->name)
-		fprintf(log_file, " name=%s", message->name);
-
-	if (message->dev)
-		fprintf(log_file, " dev=%s", message->dev);
-
-	if (message->is_inode)
-		fprintf(log_file, " ino=%li", message->inode);
-
-	if (message->ipaddr)
-		fprintf(log_file, " ipaddr=%s", message->ipaddr);
-
-	if (message->saddr)
-		fprintf(log_file, " saddr=%s", message->saddr);
-
-	if (message->source != 0)
-		fprintf(log_file, " src=%i", message->source);
-
-	if (message->daddr)
-		fprintf(log_file, " daddr=%s", message->daddr);
-
-	if (message->dest != 0)
-		fprintf(log_file, " dest=%i", message->dest);
-
-	if (message->netif)
-		fprintf(log_file, " netif=%s", message->netif);
-
-	if (message->laddr)
-		fprintf(log_file, " laddr=%s", message->laddr);
-
-	if (message->lport != 0)
-		fprintf(log_file, " lport=%i", message->lport);
-
-	if (message->faddr)
-		fprintf(log_file, " faddr=%s", message->faddr);
-
-	if (message->fport != 0)
-		fprintf(log_file, " fport=%i", message->fport);
-
-	if (message->port != 0)
-		fprintf(log_file, " port=%i", message->port);
-
-	if (message->is_src_sid)
-		fprintf(log_file, " ssid=%i", message->src_sid);
-
-	if (message->is_tgt_sid)
-		fprintf(log_file, " tsid=%i", message->tgt_sid);
-
-	if (message->is_capability)
-		fprintf(log_file, " capability=%i", message->capability);
-
-	if (message->is_key)
-		fprintf(log_file, " key=%i", message->key);
-
-	if (message->is_src_con)
-		fprintf(log_file, " scontext=%s:%s:%s",
-			audit_log_get_user(audit_log, message->src_user),
-			audit_log_get_role(audit_log, message->src_role), audit_log_get_type(audit_log, message->src_type));
-
-	if (message->is_tgt_con)
-		fprintf(log_file, " tcontext=%s:%s:%s",
-			audit_log_get_user(audit_log, message->tgt_user),
-			audit_log_get_role(audit_log, message->tgt_role), audit_log_get_type(audit_log, message->tgt_type));
-
-	if (message->is_obj_class)
-		fprintf(log_file, " tclass=%s", audit_log_get_obj(audit_log, message->obj_class));
-
-	fprintf(log_file, "\n");
-
-	return;
-}
 
 void seaudit_on_open_view_clicked(GtkMenuItem * menu_item, gpointer user_data)
 {

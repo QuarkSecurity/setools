@@ -62,3 +62,38 @@ void util_cursor_clear(GtkWidget * widget)
 {
 	g_idle_add(&pointer_reset, widget);
 }
+
+char *util_open_file(GtkWindow * parent, const char *title, const char *init_path)
+{
+	GtkWidget *dialog = gtk_file_chooser_dialog_new(title, parent, GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL,
+							GTK_RESPONSE_CANCEL,
+							GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
+	char *path = NULL;
+	if (init_path != NULL) {
+		gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(dialog), init_path);
+	}
+	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+		path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+	}
+	gtk_widget_destroy(dialog);
+	return path;
+}
+
+char *util_save_file(GtkWindow * parent, const char *title, const char *init_path)
+{
+	GtkWidget *dialog = gtk_file_chooser_dialog_new(title, parent, GTK_FILE_CHOOSER_ACTION_SAVE, GTK_STOCK_CANCEL,
+							GTK_RESPONSE_CANCEL,
+							GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT, NULL);
+	char *path = NULL;
+	gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
+	if (init_path != NULL) {
+		gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(dialog), init_path);
+	} else {
+		gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), "Untitled");
+	}
+	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+		path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+	}
+	gtk_widget_destroy(dialog);
+	return path;
+}

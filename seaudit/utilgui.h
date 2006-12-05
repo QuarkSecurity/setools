@@ -51,4 +51,31 @@ void util_cursor_wait(GtkWidget * widget);
  */
 void util_cursor_clear(GtkWidget * widget);
 
+/**
+ * Allow the user select an existing file.  Run the dialog and return
+ * the selected filename.
+ *
+ * @param parent Parent window; this dialog will be centered upon the
+ * parent.
+ * @param title Name of the dialog.
+ * @param init_path If not NULL, the default filename.
+ *
+ * @return Name of the file selected, or NULL if no file was selected.
+ * The caller must free the returned value with g_free().
+ */
+char *util_open_file(GtkWindow * parent, const char *title, const char *init_path);
+
+/**
+ * Allow the user select an existing file or enter a new file for
+ * writing.  Run the dialog and return the selected filename.
+ *
+ * @param parent Parent window; this dialog will be centered upon the
+ * parent.
+ * @param title Name of the dialog.
+ * @param init_path If not NULL, the default filename.
+ *
+ * @return Name of the file selected, or NULL if no file was selected.
+ * The caller must free the returned value with g_free().
+ */
+char *util_save_file(GtkWindow * parent, const char *title, const char *init_path);
 #endif

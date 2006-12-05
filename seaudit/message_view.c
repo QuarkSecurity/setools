@@ -42,7 +42,7 @@ typedef struct message_view_store
 {
 	/** this must be the first field, to satisfy glib */
 	GObject parent;
-	/* pointer to the store's controller */
+	/** pointer to the store's controller */
 	message_view_t *view;
 	/** vector of seaudit_message_t, as returned by
          * seaudit_model_get_messages() */
@@ -50,7 +50,7 @@ typedef struct message_view_store
 	/** column that is currently being sorted; use OTHER_FIELD to
          * indicate no sorting */
 	gint sort_field;
-	/* current sort direction, either 1 or ascending or -1 for
+	/** current sort direction, either 1 or ascending or -1 for
 	 * descending */
 	int sort_dir;
 	/** unique integer for each instance of a model */
@@ -76,7 +76,10 @@ struct message_view
 	/** actual GTK+ tree view widget that displays the rows and
          * columns of message data */
 	GtkWidget *tree;
+	/** GTK+ store that models messages within the tree */
 	message_view_store_t *store;
+	/** most recent filename for exported messages (could be NULL) */
+	char *export_filename;
 };
 
 typedef seaudit_sort_t *(*sort_generator_fn_t) (int direction);
@@ -647,7 +650,7 @@ static void message_view_popup_menu(GtkWidget * treeview, GdkEventButton * event
 	int button, event_time;
 
 	menu = gtk_menu_new();
-	menuitem = gtk_menu_item_new_with_label("View Entire Message");
+	menuitem = gtk_menu_item_new_with_label("View Message");
 	menuitem2 = gtk_menu_item_new_with_label("Find TERules using Message...");
 	menuitem3 = gtk_menu_item_new_with_label("Export Selected Messages...");
 	g_signal_connect(menuitem, "activate", (GCallback) message_view_popup_on_view_message_activate, message);
@@ -800,6 +803,7 @@ void message_view_destroy(message_view_t ** view)
 	if (view != NULL && *view != NULL) {
 		seaudit_model_destroy(&(*view)->model);
 		apol_vector_destroy(&((*view)->store->messages), NULL);
+		g_free((*view)->export_filename);
 		/* let glib handle destruction of object */
 		g_object_unref((*view)->store);
 		free(*view);
@@ -865,14 +869,88 @@ void message_view_entire_message(message_view_t * view)
 	apol_vector_destroy(&messages, NULL);
 }
 
+/**
+ * Write to a file all messages in the given vector.  Upon success,
+ * update the view object's export filename.
+ *
+ * @param view View containing messages to write.
+ * @param path Destination to write file, overwriting existing files
+ * as necessary.
+ * @param messages Vector of seaudit_message_t.
+ */
+static void message_view_export_messages_vector(message_view_t * view, char *path, apol_vector_t * messages)
+{
+	FILE *f = NULL;
+	size_t i;
+	if ((f = fopen(path, "w")) == NULL) {
+		toplevel_ERR(view->top, "Could not open %s for writing.", path);
+		goto cleanup;
+	}
+	for (i = 0; i < apol_vector_get_size(messages); i++) {
+		seaudit_message_t *m = apol_vector_get_element(messages, i);
+		char *s = seaudit_message_to_string(m);
+		if (s == NULL || fprintf(f, "%s\n", s) < 0) {
+			toplevel_ERR(view->top, "Error writing string: %s", strerror(errno));
+			goto cleanup;
+		}
+		free(s);
+	}
+	g_free(view->export_filename);
+	view->export_filename = path;
+      cleanup:
+	if (f != NULL) {
+		fclose(f);
+	}
+}
+
 void message_view_export_all_messages(message_view_t * view)
 {
-	/* FIX ME */
+	GtkWindow *parent = toplevel_get_window(view->top);
+	char *path = util_save_file(parent, "Export Messages", view->export_filename);
+	apol_vector_t *messages = view->store->messages;
+	if (path == NULL) {
+		return;
+	}
+	message_view_export_messages_vector(view, path, messages);
 }
 
 void message_view_export_selected_messages(message_view_t * view)
 {
-	/* FIX ME */
+	GtkWindow *parent = toplevel_get_window(view->top);
+	char *path;
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view->tree));
+	GList *glist = gtk_tree_selection_get_selected_rows(selection, NULL);
+	GList *l;
+	apol_vector_t *messages;
+	if (glist == NULL) {
+		return;
+	}
+	path = util_save_file(parent, "Export Selected Messages", view->export_filename);
+	if (path == NULL) {
+		return;
+	}
+	if ((messages = apol_vector_create()) == NULL) {
+		toplevel_ERR(view->top, "%s", strerror(errno));
+		g_list_foreach(glist, message_view_gtk_tree_path_free, NULL);
+		g_list_free(glist);
+		return;
+	}
+	for (l = glist; l != NULL; l = l->next) {
+		GtkTreePath *path = (GtkTreePath *) l->data;
+		GtkTreeIter iter;
+		message_view_store_get_iter(GTK_TREE_MODEL(view->store), &iter, path);
+		if (apol_vector_append(messages, iter.user_data) < 0) {
+			toplevel_ERR(view->top, "%s", strerror(errno));
+			g_list_foreach(glist, message_view_gtk_tree_path_free, NULL);
+			g_list_free(glist);
+			apol_vector_destroy(&messages, NULL);
+			return;
+		}
+	}
+	message_view_export_messages_vector(view, path, messages);
+	g_list_foreach(glist, message_view_gtk_tree_path_free, NULL);
+	g_list_free(glist);
+	apol_vector_destroy(&messages, NULL);
 }
 
 /**
