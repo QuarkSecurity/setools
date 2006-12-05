@@ -1336,10 +1336,7 @@ int main(int argc, char **argv)
 	if (!search_opts)
 		search_opts = (QPOL_TYPE_SOURCE | QPOL_TYPE_BINARY);
 
-	/*if (argc - optind > 1) {
-	 * usage(argv[0], 1);
-	 * exit(1);
-	 * } else */ if (argc - optind < 1) {
+	if (argc - optind < 1) {
 		rt = qpol_find_default_policy_file(search_opts, &policy_file);
 		if (rt != QPOL_FIND_DEFAULT_SUCCESS) {
 			fprintf(stderr, "Default policy search failed: %s\n", qpol_find_default_policy_file_strerr(rt));
