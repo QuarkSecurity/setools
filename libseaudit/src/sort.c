@@ -42,6 +42,7 @@ typedef int (sort_supported_func) (seaudit_sort_t * sort, const seaudit_message_
 
 struct seaudit_sort
 {
+	const char *name;
 	sort_comp_func *comp;
 	sort_supported_func *support;
 	int direction;
@@ -55,12 +56,13 @@ void seaudit_sort_destroy(seaudit_sort_t ** sort)
 	}
 }
 
-static seaudit_sort_t *sort_create(sort_comp_func * comp, sort_supported_func support, int direction)
+static seaudit_sort_t *sort_create(const char *name, sort_comp_func * comp, sort_supported_func support, int direction)
 {
 	seaudit_sort_t *s = calloc(1, sizeof(*s));
 	if (s == NULL) {
 		return NULL;
 	}
+	s->name = name;
 	s->comp = comp;
 	s->support = support;
 	s->direction = direction;
@@ -73,7 +75,7 @@ seaudit_sort_t *sort_create_from_sort(const seaudit_sort_t * sort)
 		errno = EINVAL;
 		return NULL;
 	}
-	return sort_create(sort->comp, sort->support, sort->direction);
+	return sort_create(sort->name, sort->comp, sort->support, sort->direction);
 }
 
 static int sort_message_type_comp(seaudit_sort_t * sort
@@ -95,7 +97,7 @@ static int sort_message_type_support(seaudit_sort_t * sort __attribute__ ((unuse
 
 seaudit_sort_t *seaudit_sort_by_message_type(int direction)
 {
-	return sort_create(sort_message_type_comp, sort_message_type_support, direction);
+	return sort_create("message_type", sort_message_type_comp, sort_message_type_support, direction);
 }
 
 /**
@@ -137,7 +139,7 @@ static int sort_date_support(seaudit_sort_t * sort __attribute__ ((unused)), con
 
 seaudit_sort_t *seaudit_sort_by_date(int direction)
 {
-	return sort_create(sort_date_comp, sort_date_support, direction);
+	return sort_create("date", sort_date_comp, sort_date_support, direction);
 }
 
 static int sort_host_comp(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
@@ -152,7 +154,7 @@ static int sort_host_support(seaudit_sort_t * sort __attribute__ ((unused)), con
 
 seaudit_sort_t *seaudit_sort_by_host(int direction)
 {
-	return sort_create(sort_host_comp, sort_host_support, direction);
+	return sort_create("host", sort_host_comp, sort_host_support, direction);
 }
 
 static int sort_perm_comp(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
@@ -169,7 +171,7 @@ static int sort_perm_support(seaudit_sort_t * sort __attribute__ ((unused)), con
 
 seaudit_sort_t *seaudit_sort_by_permission(int direction)
 {
-	return sort_create(sort_perm_comp, sort_perm_support, direction);
+	return sort_create("permission", sort_perm_comp, sort_perm_support, direction);
 }
 
 static int sort_source_user_comp(seaudit_sort_t * sort
@@ -185,7 +187,7 @@ static int sort_source_user_support(seaudit_sort_t * sort __attribute__ ((unused
 
 seaudit_sort_t *seaudit_sort_by_source_user(int direction)
 {
-	return sort_create(sort_source_user_comp, sort_source_user_support, direction);
+	return sort_create("source_user", sort_source_user_comp, sort_source_user_support, direction);
 }
 
 static int sort_source_role_comp(seaudit_sort_t * sort __attribute((unused)), const seaudit_message_t * a,
@@ -201,7 +203,7 @@ static int sort_source_role_support(seaudit_sort_t * sort __attribute__ ((unused
 
 seaudit_sort_t *seaudit_sort_by_source_role(int direction)
 {
-	return sort_create(sort_source_role_comp, sort_source_role_support, direction);
+	return sort_create("source_role", sort_source_role_comp, sort_source_role_support, direction);
 }
 
 static int sort_source_type_comp(seaudit_sort_t * sort
@@ -217,7 +219,7 @@ static int sort_source_type_support(seaudit_sort_t * sort __attribute__ ((unused
 
 seaudit_sort_t *seaudit_sort_by_source_type(int direction)
 {
-	return sort_create(sort_source_type_comp, sort_source_type_support, direction);
+	return sort_create("source_type", sort_source_type_comp, sort_source_type_support, direction);
 }
 
 static int sort_target_user_comp(seaudit_sort_t * sort
@@ -233,7 +235,7 @@ static int sort_target_user_support(seaudit_sort_t * sort __attribute__ ((unused
 
 seaudit_sort_t *seaudit_sort_by_target_user(int direction)
 {
-	return sort_create(sort_target_user_comp, sort_target_user_support, direction);
+	return sort_create("target_user", sort_target_user_comp, sort_target_user_support, direction);
 }
 
 static int sort_target_role_comp(seaudit_sort_t * sort
@@ -249,7 +251,7 @@ static int sort_target_role_support(seaudit_sort_t * sort __attribute__ ((unused
 
 seaudit_sort_t *seaudit_sort_by_target_role(int direction)
 {
-	return sort_create(sort_target_role_comp, sort_target_role_support, direction);
+	return sort_create("target_role", sort_target_role_comp, sort_target_role_support, direction);
 }
 
 static int sort_target_type_comp(seaudit_sort_t * sort
@@ -265,7 +267,7 @@ static int sort_target_type_support(seaudit_sort_t * sort __attribute__ ((unused
 
 seaudit_sort_t *seaudit_sort_by_target_type(int direction)
 {
-	return sort_create(sort_target_type_comp, sort_target_type_support, direction);
+	return sort_create("target_type", sort_target_type_comp, sort_target_type_support, direction);
 }
 
 static int sort_object_class_comp(seaudit_sort_t * sort
@@ -281,7 +283,7 @@ static int sort_object_class_support(seaudit_sort_t * sort __attribute__ ((unuse
 
 seaudit_sort_t *seaudit_sort_by_object_class(int direction)
 {
-	return sort_create(sort_object_class_comp, sort_object_class_support, direction);
+	return sort_create("object_class", sort_object_class_comp, sort_object_class_support, direction);
 }
 
 static int sort_executable_comp(seaudit_sort_t * sort
@@ -297,7 +299,7 @@ static int sort_executable_support(seaudit_sort_t * sort __attribute__ ((unused)
 
 seaudit_sort_t *seaudit_sort_by_executable(int direction)
 {
-	return sort_create(sort_executable_comp, sort_executable_support, direction);
+	return sort_create("executable", sort_executable_comp, sort_executable_support, direction);
 }
 
 static int sort_command_comp(seaudit_sort_t * sort
@@ -313,7 +315,7 @@ static int sort_command_support(seaudit_sort_t * sort __attribute__ ((unused)), 
 
 seaudit_sort_t *seaudit_sort_by_command(int direction)
 {
-	return sort_create(sort_command_comp, sort_command_support, direction);
+	return sort_create("command", sort_command_comp, sort_command_support, direction);
 }
 
 static int sort_path_comp(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
@@ -328,7 +330,7 @@ static int sort_path_support(seaudit_sort_t * sort __attribute__ ((unused)), con
 
 seaudit_sort_t *seaudit_sort_by_path(int direction)
 {
-	return sort_create(sort_path_comp, sort_path_support, direction);
+	return sort_create("path", sort_path_comp, sort_path_support, direction);
 }
 
 static int sort_device_comp(seaudit_sort_t * sort
@@ -344,7 +346,7 @@ static int sort_device_support(seaudit_sort_t * sort __attribute__ ((unused)), c
 
 seaudit_sort_t *seaudit_sort_by_device(int direction)
 {
-	return sort_create(sort_device_comp, sort_device_support, direction);
+	return sort_create("device", sort_device_comp, sort_device_support, direction);
 }
 
 static int sort_inode_comp(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
@@ -364,7 +366,7 @@ static int sort_inode_support(seaudit_sort_t * sort __attribute__ ((unused)), co
 
 seaudit_sort_t *seaudit_sort_by_inode(int direction)
 {
-	return sort_create(sort_inode_comp, sort_inode_support, direction);
+	return sort_create("inode", sort_inode_comp, sort_inode_support, direction);
 }
 
 static int sort_pid_comp(seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
@@ -384,10 +386,49 @@ static int sort_pid_support(seaudit_sort_t * sort __attribute__ ((unused)), cons
 
 seaudit_sort_t *seaudit_sort_by_pid(int direction)
 {
-	return sort_create(sort_pid_comp, sort_pid_support, direction);
+	return sort_create("pid", sort_pid_comp, sort_pid_support, direction);
 }
 
 /******************** protected functions below ********************/
+
+struct sort_name_map
+{
+	const char *name;
+	seaudit_sort_t *(*create_fn) (int);
+};
+
+static const struct sort_name_map create_map[] = {
+	{"message_type", seaudit_sort_by_message_type},
+	{"date", seaudit_sort_by_date},
+	{"host", seaudit_sort_by_host},
+	{"permission", seaudit_sort_by_permission},
+	{"source_user", seaudit_sort_by_source_user},
+	{"source_role", seaudit_sort_by_source_role},
+	{"source_type", seaudit_sort_by_source_type},
+	{"target_user", seaudit_sort_by_target_user},
+	{"target_role", seaudit_sort_by_target_role},
+	{"target_type", seaudit_sort_by_target_type},
+	{"object_class", seaudit_sort_by_object_class},
+	{"executable", seaudit_sort_by_executable},
+	{"command", seaudit_sort_by_command},
+	{"path", seaudit_sort_by_path},
+	{"device", seaudit_sort_by_device},
+	{"inode", seaudit_sort_by_inode},
+	{"pid", seaudit_sort_by_pid},
+	{NULL, NULL}
+};
+
+seaudit_sort_t *sort_create_from_name(const char *name, int direction)
+{
+	size_t i;
+	for (i = 0; create_map[i].name != NULL; i++) {
+		if (strcmp(create_map[i].name, name) == 0) {
+			return create_map[i].create_fn(direction);
+		}
+	}
+	errno = EINVAL;
+	return NULL;
+}
 
 int sort_is_supported(seaudit_sort_t * sort, const seaudit_message_t * msg)
 {
@@ -398,4 +439,14 @@ int sort_comp(seaudit_sort_t * sort, const seaudit_message_t * a, const seaudit_
 {
 	int retval = sort->comp(sort, a, b);
 	return (sort->direction >= 0 ? retval : -1 * retval);
+}
+
+const char *sort_get_name(seaudit_sort_t * sort)
+{
+	return sort->name;
+}
+
+int sort_get_direction(seaudit_sort_t * sort)
+{
+	return sort->direction;
 }

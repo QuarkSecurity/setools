@@ -91,6 +91,13 @@ void toplevel_update_status_bar(toplevel_t * top);
 void toplevel_update_selection_menu_item(toplevel_t * top);
 
 /**
+ * Update the tab names for all views.
+ *
+ * @param top Toplevel whose notebook tabs to update.
+ */
+void toplevel_update_tabs(toplevel_t * top);
+
+/**
  * Return the current preferences object for the toplevel object.
  *
  * @param top Toplevel containing preferences.

@@ -39,11 +39,13 @@ typedef struct message_view message_view_t;
  * @param top Handle to the controlling toplevel widget.
  * @param model libseaudit model to display.  The view takes ownership
  * of the model afterwards.
+ * @param filename Initial filename for the view, or NULL if none.
+ * This function will duplicate the string.
  *
  * @return A newly allocated view, or NULL upon error.  The caller is
  * responsible for calling message_view_destroy() afterwards.
  */
-message_view_t *message_view_create(toplevel_t * top, seaudit_model_t * model);
+message_view_t *message_view_create(toplevel_t * top, seaudit_model_t * model, const char *filename);
 
 /**
  * Destroy a view and free its memory.  This does nothing if the
@@ -94,6 +96,27 @@ size_t message_view_get_num_log_messages(message_view_t * view);
  * @return TRUE if any messages are selected.
  */
 gboolean message_view_is_message_selected(message_view_t * view);
+
+/**
+ * Save the current view to disk.
+ *
+ * @param view View to save.
+ */
+void message_view_save(message_view_t * view);
+
+/**
+ * Save the current view to disk under a new filename.
+ *
+ * @param view View to save.
+ */
+void message_view_saveas(message_view_t * view);
+
+/**
+ * Modify the settings for this view.
+ *
+ * @param view View to modify.
+ */
+void message_view_modify(message_view_t * view);
 
 /**
  * Export to file all messages in a particular view.

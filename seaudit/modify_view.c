@@ -1,11 +1,103 @@
-/* Copyright (C) 2004-2006 Tresys Technology, LLC
- * see file 'COPYING' for use and warranty information */
-
-/*
- * Author: Kevin Carr <kcarr@tresys.com>
- * Date: February 11, 2004
+/**
+ *  @file modify_view.c
+ *  Run the dialog to modify a view.
  *
+ *  @author Jeremy A. Mowery jmowery@tresys.com
+ *  @author Jason Tang jtang@tresys.com
+ *
+ *  Copyright (C) 2004-2007 Tresys Technology, LLC
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
+
+#include "modify_view.h"
+
+#include <assert.h>
+#include <errno.h>
+#include <string.h>
+
+struct modify_view
+{
+	toplevel_t *top;
+	message_view_t *view;
+	GtkDialog *dialog;
+
+	GtkEntry *name_entry;
+	GtkComboBox *visible_combo, *match_combo;
+};
+
+/**
+ * Set up the window to reflect the current view's values.
+ */
+static void modify_view_init_dialog(struct modify_view *mv)
+{
+	GladeXML *xml = toplevel_get_glade_xml(mv->top);
+	seaudit_model_t *model = message_view_get_model(mv->view);
+
+	mv->dialog = GTK_DIALOG(glade_xml_get_widget(xml, "ModifyViewWindow"));
+	assert(mv->dialog != NULL);
+	gtk_window_set_transient_for(GTK_WINDOW(mv->dialog), toplevel_get_window(mv->top));
+
+	mv->name_entry = GTK_ENTRY(glade_xml_get_widget(xml, "ModifyViewNameEntry"));
+	assert(mv->name_entry != NULL);
+	gtk_entry_set_text(mv->name_entry, seaudit_model_get_name(model));
+
+	mv->visible_combo = GTK_COMBO_BOX(glade_xml_get_widget(xml, "ModifyViewVisibleCombo"));
+	mv->match_combo = GTK_COMBO_BOX(glade_xml_get_widget(xml, "ModifyViewMatchCombo"));
+	assert(mv->visible_combo != NULL && mv->match_combo != NULL);
+	gtk_combo_box_set_active(mv->visible_combo, seaudit_model_get_filter_visible(model));
+	gtk_combo_box_set_active(mv->match_combo, seaudit_model_get_filter_match(model));
+}
+
+/**
+ * Because the dialog is hidden rather than being destroyed,
+ * initialize its signal handlers exactly once ever.
+ */
+static void modify_view_init_signals(struct modify_view *mv)
+{
+	static int modify_view_signals_initialized = 0;
+	if (!modify_view_signals_initialized) {
+	}
+	modify_view_signals_initialized = 1;
+}
+
+void modify_view_run(toplevel_t * top, message_view_t * view)
+{
+	struct modify_view mv;
+
+	mv.top = top;
+	mv.view = view;
+	modify_view_init_dialog(&mv);
+	modify_view_init_signals(&mv);
+
+	do {
+		gint response = gtk_dialog_run(mv.dialog);
+		const gchar *text = gtk_entry_get_text(mv.name_entry);
+		seaudit_model_t *model = message_view_get_model(mv.view);
+		if (seaudit_model_set_name(model, text) < 0) {
+			toplevel_ERR(mv.top, "Could not set name: %s", strerror(errno));
+		}
+		toplevel_update_tabs(mv.top);
+		if (response == GTK_RESPONSE_CLOSE) {
+			break;
+		}
+	} while (1);
+	gtk_widget_hide(GTK_WIDGET(mv.dialog));
+}
+
+#if 0
 
 #include "multifilter_window.h"
 #include "filtered_view.h"
@@ -40,53 +132,6 @@ static void multifilter_window_get_selected_filters_on_ok_clicked(GtkButton * bu
 static gboolean multifilter_window_get_selected_on_delete_event(GtkWidget * widget, GdkEvent * event,
 								seaudit_multifilter_t * user_data);
 static void multifilter_window_on_save_button_pressed(GtkButton * button, multifilter_window_t * user_data);
-
-multifilter_window_t *multifilter_window_create(seaudit_filtered_view_t * parent, const gchar * view_name)
-{
-	multifilter_window_t *rt;
-
-	rt = (multifilter_window_t *) malloc(sizeof(multifilter_window_t));
-	if (!rt) {
-		fprintf(stderr, "out of memory");
-		return NULL;
-	}
-	multifilter_window_init(rt, parent, view_name);
-	return rt;
-}
-
-void multifilter_window_init(multifilter_window_t * window, seaudit_filtered_view_t * parent, const gchar * view_name)
-{
-	memset(window, 0, sizeof(multifilter_window_t));
-	window->parent = parent;
-	window->name = g_string_new(view_name);
-	window->match = g_string_new("All");
-	window->show = g_string_new("Show");
-	window->filename = g_string_new("");
-	window->liststore = gtk_list_store_new(1, G_TYPE_STRING);
-}
-
-void multifilter_window_destroy(multifilter_window_t * window)
-{
-	GList *item;
-
-	if (!window)
-		return;
-
-	for (item = window->filter_windows; item != NULL; item = g_list_next(item))
-		filter_window_destroy((filter_window_t *) item->data);
-	g_list_free(window->filter_windows);
-	if (window->window) {
-		/* if there is an idle function for this window
-		 * then we must remove it to avoid that function
-		 * being executed after we delete the window. */
-		while (g_idle_remove_by_data(window->window)) ;
-		gtk_widget_destroy(GTK_WIDGET(window->window));
-	}
-	g_string_free(window->name, TRUE);
-	g_string_free(window->match, TRUE);
-	g_string_free(window->show, TRUE);
-	g_string_free(window->filename, TRUE);
-}
 
 void multifilter_window_display(multifilter_window_t * window, GtkWindow * parent)
 {
@@ -168,155 +213,6 @@ void multifilter_window_display(multifilter_window_t * window, GtkWindow * paren
 	g_signal_connect(G_OBJECT(window->window), "delete_event", G_CALLBACK(multifilter_window_on_delete_event), window);
 	g_string_free(path, TRUE);
 	multifilter_window_update_buttons_sensitivity(window);
-}
-
-void multifilter_window_save_multifilter(multifilter_window_t * window, gboolean saveas, gboolean multifilter_is_parent_window)
-{
-	seaudit_multifilter_t *multifilter;
-	filter_window_t *filter_window;
-	seaudit_filter_t *filter;
-	GList *item;
-	GString *filename, *message;
-	GtkWidget *widget;
-	gint response, err;
-
-	if (!window)
-		return;
-
-	/* If this is not a 'Save As' request and the multifilter is a loaded saved multifilter,
-	 * then just save using it's original filename. Otherwise, it has no filename and so get 
-	 * the filename from the user, while appending the default seaudit view extension. */
-	if (!saveas && strcmp(window->filename->str, "") != 0)
-		filename = g_string_new(window->filename->str);
-	else {
-		if (multifilter_is_parent_window)
-			filename = get_filename_from_user("Save View", window->name->str, window->window, TRUE);
-		else
-			filename = get_filename_from_user("Save View", window->name->str, seaudit_app->window->window, TRUE);
-		if (filename == NULL)
-			return;
-		/* Append the default seaudit view extension (defined in seaudit.h). */
-		g_string_append(filename, SEAUDIT_VIEW_EXT);
-
-		if (g_file_test(filename->str, G_FILE_TEST_EXISTS)) {
-			message = g_string_new("");
-			g_string_printf(message, "The file %s\nalready exists.  Are you sure you wish to continue?", filename->str);
-			response = get_user_response_to_message(window->window, message->str);
-			g_string_free(message, TRUE);
-			if (response != GTK_RESPONSE_YES)
-				return;
-		}
-	}
-	g_assert(filename);
-	multifilter = seaudit_multifilter_create();
-	seaudit_multifilter_set_name(multifilter, window->name->str);
-	if (window->xml) {
-		widget = glade_xml_get_widget(window->xml, "MatchEntry");
-		g_assert(widget);
-		if (strcmp("All", gtk_entry_get_text(GTK_ENTRY(widget))) == 0)
-			seaudit_multifilter_set_match(multifilter, SEAUDIT_FILTER_MATCH_ALL);
-		else
-			seaudit_multifilter_set_match(multifilter, SEAUDIT_FILTER_MATCH_ANY);
-		widget = glade_xml_get_widget(window->xml, "ShowEntry");
-		g_assert(widget);
-		if (strcmp("Show", gtk_entry_get_text(GTK_ENTRY(widget))) == 0)
-			seaudit_multifilter_set_show_matches(multifilter, TRUE);
-		else
-			seaudit_multifilter_set_show_matches(multifilter, FALSE);
-	} else {
-		seaudit_multifilter_set_match(multifilter, SEAUDIT_FILTER_MATCH_ALL);
-		seaudit_multifilter_set_show_matches(multifilter, TRUE);
-	}
-	for (item = window->filter_windows; item != NULL; item = g_list_next(item)) {
-		filter_window = (filter_window_t *) item->data;
-		filter = filter_window_get_filter(filter_window);
-		seaudit_multifilter_add_filter(multifilter, filter);
-	}
-	err = seaudit_multifilter_save_to_file(multifilter, filename->str);
-	if (err) {
-		message = g_string_new("");
-		g_string_printf(message, "Unable to save view to %s\n%s", filename->str, strerror(errno));
-		message_display(window->window, GTK_MESSAGE_ERROR, message->str);
-		g_string_free(message, TRUE);
-	} else {
-		window->filename = g_string_assign(window->filename, filename->str);
-		multifilter_window_set_title(window);
-	}
-
-	seaudit_multifilter_destroy(multifilter);
-	g_string_free(filename, TRUE);
-}
-
-int multifilter_window_load_multifilter(multifilter_window_t * window)
-{
-	seaudit_multifilter_t *multifilter;
-	filter_window_t *filter_window;
-	seaudit_filter_t *filter;
-	GString *filename, *message;
-	bool_t is_multi;
-	gint response, err;
-	int i;
-
-	if (!window)
-		return -1;
-
-	filename = get_filename_from_user("Open View", NULL, seaudit_app->window->window, FALSE);
-	if (filename == NULL)
-		return -1;
-	err = seaudit_multifilter_load_from_file(&multifilter, &is_multi, filename->str);
-	if (err < 0) {
-		message = g_string_new("");
-		g_string_printf(message, "Unable to import from %s\n%s", filename->str, strerror(errno));
-		message_display(window->window, GTK_MESSAGE_ERROR, message->str);
-		g_string_free(message, TRUE);
-		return err;
-	} else if (err > 0) {
-		message = g_string_new("");
-		g_string_printf(message, "Unable to import from %s\ninvalid file.", filename->str);
-		message_display(window->window, GTK_MESSAGE_ERROR, message->str);
-		g_string_free(message, TRUE);
-		return err;
-	}
-	g_assert(multifilter);
-	if (!is_multi) {
-		message = g_string_new("");
-		g_string_printf(message,
-				"The file %s\ndoes not contain all the information required for a view.\nWould you like to load the available information as a new view anyway?",
-				filename->str);
-		response = get_user_response_to_message(window->window, message->str);
-		g_string_free(message, TRUE);
-		if (response != GTK_RESPONSE_YES)
-			return -1;
-	}
-	for (i = 0; i < apol_vector_get_size(multifilter->filters); i++) {
-		filter = apol_vector_get_element(multifilter->filters, i);
-		filter_window = filter_window_create(window, window->num_filter_windows, filter->name);
-		filter_window_set_values_from_filter(filter_window, filter);
-		multifilter_window_add_filter_window(window, filter_window);
-	}
-	if (multifilter->name)
-		window->name = g_string_assign(window->name, multifilter->name);
-	if (multifilter->match == SEAUDIT_FILTER_MATCH_ALL)
-		window->match = g_string_assign(window->match, "All");
-	else
-		window->match = g_string_assign(window->match, "Any");
-
-	if (multifilter->show == TRUE)
-		window->show = g_string_assign(window->show, "Show");
-	else
-		window->show = g_string_assign(window->show, "Hide");
-	seaudit_multifilter_destroy(multifilter);
-	window->filename = g_string_assign(window->filename, filename->str);
-
-	return 0;
-
-}
-
-void multifilter_window_hide(multifilter_window_t * window)
-{
-	if (!window || !window->window)
-		return;
-	gtk_widget_hide(GTK_WIDGET(window->window));
 }
 
 void multifilter_window_set_filter_name_in_list(multifilter_window_t * window, filter_window_t * filter_window)
@@ -605,25 +501,6 @@ static gboolean seaudit_window_on_name_entry_text_changed(GtkWidget * widget, Gd
 	return FALSE;
 }
 
-static void multifilter_window_set_title(multifilter_window_t * window)
-{
-	GString *title;
-
-	if (!window || !window->window)
-		return;
-
-	if (strcmp(window->filename->str, "") == 0) {
-		title = g_string_new("View - ");
-		title = g_string_append(title, window->name->str);
-	} else {
-		title = g_string_new("Save to - ");
-		title = g_string_append(title, window->filename->str);
-	}
-	gtk_window_set_title(window->window, title->str);
-	g_string_free(title, TRUE);
-
-}
-
 static void multifilter_window_update_buttons_sensitivity(multifilter_window_t * window)
 {
 	GtkWidget *widget;
@@ -802,3 +679,5 @@ static void multifilter_window_on_save_button_pressed(GtkButton * button, multif
 	multifilter_window_save_multifilter(user_data, FALSE, TRUE);
 
 }
+
+#endif

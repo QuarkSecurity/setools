@@ -562,6 +562,20 @@ void filter_append_to_file(seaudit_filter_t * filter, FILE * file, int tabs);
 seaudit_sort_t *sort_create_from_sort(const seaudit_sort_t * sort);
 
 /**
+ * Create and return a new sort object based upon the name of the sort
+ * (as returned by sort_get_name()).  The new sort object will not be
+ * attached to any models.
+ *
+ * @param name Name of the type of sort to create.
+ * @param direction Direction to sort, non-negative for ascending,
+ * negative for descending.
+ *
+ * @return A new sort object, or NULL upon error.  The caller is
+ * responsible for calling seaudit_sort_destroy() afterwards.
+ */
+seaudit_sort_t *sort_create_from_name(const char *name, int direction);
+
+/**
  * Given a sort object and a message, return non-zero if this sort
  * object could operate on the message, 0 if not.  (Messages may have
  * incomplete information due to parser warnings.)
@@ -584,6 +598,25 @@ int sort_is_supported(seaudit_sort_t * sort, const seaudit_message_t * msg);
  * b is first.
  */
 int sort_comp(seaudit_sort_t * sort, const seaudit_message_t * a, const seaudit_message_t * b);
+
+/**
+ * Return the type of sort this sort object is.  The name is valid for
+ * sort_create_from_name()'s first parameter.
+ *
+ * @param sort Sort object to query.
+ *
+ * @return Type of sort this object is.
+ */
+const char *sort_get_name(seaudit_sort_t * sort);
+
+/**
+ * Return the sort direction for a sort object.
+ *
+ * @param sort Sort object to query.
+ *
+ * @return Non-negative for ascending, negative for descending.
+ */
+int sort_get_direction(seaudit_sort_t * sort);
 
 /*************** error handling code (defined in log.c) ***************/
 

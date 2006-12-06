@@ -53,6 +53,8 @@ struct toplevel
 	/** serial number for models created, such that new models
 	 * will be named Untitled <number> */
 	int next_model_number;
+	/** filename for most recently opened view */
+	char *view_filename;
 };
 
 /**
@@ -126,13 +128,14 @@ static void toplevel_on_tab_close(GtkButton * button, toplevel_t * top)
  *
  * @param top Toplevel containing notebook to which add the view and tab.
  * @param model Model from which to create a view.
+ * @param filename Initial filename for the view.
  */
-static void toplevel_add_new_view(toplevel_t * top, seaudit_model_t * model)
+static void toplevel_add_new_view(toplevel_t * top, seaudit_model_t * model, const char *filename)
 {
 	message_view_t *view;
 	GtkWidget *tab, *button, *label, *image;
 	gint index;
-	if ((view = message_view_create(top, model)) == NULL) {
+	if ((view = message_view_create(top, model, filename)) == NULL) {
 		return;
 	}
 	if (apol_vector_append(top->views, view) < 0) {
@@ -179,7 +182,7 @@ static void toplevel_add_new_model(toplevel_t * top)
 		return;
 	} else {
 		top->next_model_number++;
-		toplevel_add_new_view(top, model);
+		toplevel_add_new_view(top, model, NULL);
 	}
 }
 
@@ -417,6 +420,7 @@ void toplevel_destroy(toplevel_t ** top)
 	if (top != NULL && *top != NULL) {
 		policy_view_destroy(&(*top)->pv);
 		apol_vector_destroy(&(*top)->views, message_view_free);
+		g_free((*top)->view_filename);
 		progress_destroy(&(*top)->progress);
 		if ((*top)->w != NULL) {
 			gtk_widget_destroy(GTK_WIDGET((*top)->w));
@@ -624,6 +628,21 @@ void toplevel_update_status_bar(toplevel_t * top)
 	}
 }
 
+void toplevel_update_tabs(toplevel_t * top)
+{
+	gint i = gtk_notebook_get_n_pages(top->notebook) - 1;
+	while (i >= 0) {
+		GtkWidget *child = gtk_notebook_get_nth_page(top->notebook, i);
+		GtkWidget *tab = gtk_notebook_get_tab_label(top->notebook, child);
+		GtkWidget *label = g_object_get_data(G_OBJECT(tab), "label");
+		message_view_t *v = g_object_get_data(G_OBJECT(tab), "view-object");
+		seaudit_model_t *model = message_view_get_model(v);
+		char *name = seaudit_model_get_name(model);
+		gtk_label_set_text(GTK_LABEL(label), name);
+		i--;
+	}
+}
+
 void toplevel_update_selection_menu_item(toplevel_t * top)
 {
 	static const char *items[] = {
@@ -775,25 +794,44 @@ void toplevel_on_new_view_activate(gpointer user_data, GtkWidget * widget __attr
 void toplevel_on_open_view_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
 	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
-	/* FIX ME */
+	char *path = util_open_file(top->w, "Open View", top->view_filename);
+	seaudit_model_t *model = NULL;
+	if (path == NULL) {
+		return;
+	}
+	g_free(top->view_filename);
+	top->view_filename = path;
+	if ((model = seaudit_model_create_from_file(top->view_filename)) == NULL ||
+	    seaudit_model_append_log(model, seaudit_get_log(top->s)) < 0) {
+		toplevel_ERR(top, "Error opening view: %s", strerror(errno));
+		seaudit_model_destroy(&model);
+	} else {
+		toplevel_add_new_view(top, model, top->view_filename);
+	}
 }
 
 void toplevel_on_save_view_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
 	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
-	/* FIX ME */
+	message_view_t *view = toplevel_get_current_view(top);
+	assert(view != NULL);
+	message_view_save(view);
 }
 
 void toplevel_on_save_viewas_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
 	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
-	/* FIX ME */
+	message_view_t *view = toplevel_get_current_view(top);
+	assert(view != NULL);
+	message_view_saveas(view);
 }
 
 void toplevel_on_modify_view_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
 	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
-	/* FIX ME */
+	message_view_t *view = toplevel_get_current_view(top);
+	assert(view != NULL);
+	message_view_modify(view);
 }
 
 void toplevel_on_export_all_messages_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
@@ -892,16 +930,20 @@ void toplevel_on_about_seaudit_activate(gpointer user_data, GtkMenuItem * widget
 			      "name", "seaudit", "version", VERSION, "website", "http://oss.tresys.com/projects/setools", NULL);
 }
 
-void toplevel_on_find_terules_click(gpointer user_data, GtkWidget * widget, GdkEvent * event)
+void toplevel_on_find_terules_click(gpointer user_data, GtkWidget * widget __attribute__ ((unused)), GdkEvent * event
+				    __attribute__ ((unused)))
 {
 	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
 	toplevel_find_terules(top, NULL);
 }
 
-void toplevel_on_modify_view_click(gpointer user_data, GtkWidget * widget, GdkEvent * event)
+void toplevel_on_modify_view_click(gpointer user_data, GtkWidget * widget __attribute__ ((unused)), GdkEvent * event
+				   __attribute__ ((unused)))
 {
 	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
-	/* FIX ME */
+	message_view_t *view = toplevel_get_current_view(top);
+	assert(view != NULL);
+	message_view_modify(view);
 }
 
 void toplevel_on_monitor_log_click(gpointer user_data, GtkWidget * widget, GdkEvent * event)
@@ -911,49 +953,6 @@ void toplevel_on_monitor_log_click(gpointer user_data, GtkWidget * widget, GdkEv
 }
 
 #if 0
-
-#include "auditlogmodel.h"
-#include "filter_window.h"
-#include "preferences.h"
-#include "query_window.h"
-#include "report_window.h"
-#include "seaudit.h"
-#include "seaudit_callback.h"
-#include "utilgui.h"
-
-#include <seaudit/log.h>
-#include <seaudit/parse.h>
-
-#include <stdio.h>
-#include <string.h>
-
-static void seaudit_set_real_time_log_button_state(bool_t state);
-static int seaudit_read_policy_conf(const char *fname);
-static void seaudit_print_version_info(void);
-static void seaudit_print_usage_info(const char *program_name, bool_t brief);
-static void seaudit_parse_command_line(int argc, char **argv, GString ** policy_filename, GString ** log_filename);
-static void seaudit_update_title_bar(void *user_data);
-static void seaudit_set_recent_logs_submenu(seaudit_conf_t * conf_file);
-static void seaudit_set_recent_policys_submenu(seaudit_conf_t * conf_file);
-static void seaudit_policy_file_open_from_recent_menu(GtkWidget * widget, gpointer user_data);
-static void seaudit_log_file_open_from_recent_menu(GtkWidget * widget, gpointer user_data);
-static gboolean seaudit_real_time_update_log(gpointer callback_data);
-static void seaudit_exit_app(void);
-
-void seaudit_on_open_view_clicked(GtkMenuItem * menu_item, gpointer user_data)
-{
-	seaudit_window_open_view(seaudit_app->window, seaudit_app->cur_log, seaudit_app->seaudit_conf.column_visibility);
-}
-
-void seaudit_on_save_view_clicked(GtkMenuItem * menu_item, gpointer user_data)
-{
-	seaudit_window_save_current_view(seaudit_app->window, FALSE);
-}
-
-void seaudit_on_saveas_view_clicked(GtkMenuItem * menu_item, gpointer user_data)
-{
-	seaudit_window_save_current_view(seaudit_app->window, TRUE);
-}
 
 void seaudit_on_filter_log_button_clicked(GtkWidget * widget, GdkEvent * event, gpointer callback_data)
 {

@@ -25,6 +25,7 @@
 #include <config.h>
 
 #include "message_view.h"
+#include "modify_view.h"
 #include "utilgui.h"
 
 #include <assert.h>
@@ -78,6 +79,8 @@ struct message_view
 	GtkWidget *tree;
 	/** GTK+ store that models messages within the tree */
 	message_view_store_t *store;
+	/** filename for when this view was saved (could be NULL) */
+	char *filename;
 	/** most recent filename for exported messages (could be NULL) */
 	char *export_filename;
 };
@@ -741,22 +744,22 @@ static void message_view_on_row_activate(GtkTreeView * tree_view __attribute__ (
 
 /******************** other public functions below ********************/
 
-message_view_t *message_view_create(toplevel_t * top, seaudit_model_t * model)
+message_view_t *message_view_create(toplevel_t * top, seaudit_model_t * model, const char *filename)
 {
 	message_view_t *view;
 	GtkTreeSelection *selection;
 	GtkCellRenderer *renderer;
 	size_t i;
 
-	if ((view = calloc(1, sizeof(*view))) == NULL) {
+	if ((view = calloc(1, sizeof(*view))) == NULL || (filename != NULL && (view->filename = strdup(filename)) == NULL)) {
 		int error = errno;
 		toplevel_ERR(top, "%s", strerror(error));
 		message_view_destroy(&view);
 		errno = error;
 		return NULL;
 	}
-	view->model = model;
 	view->top = top;
+	view->model = model;
 	view->store = (message_view_store_t *) g_object_new(SEAUDIT_TYPE_MESSAGE_VIEW_STORE, NULL);
 	view->store->view = view;
 	view->store->sort_field = OTHER_FIELD;
@@ -803,6 +806,7 @@ void message_view_destroy(message_view_t ** view)
 	if (view != NULL && *view != NULL) {
 		seaudit_model_destroy(&(*view)->model);
 		apol_vector_destroy(&((*view)->store->messages), NULL);
+		g_free((*view)->filename);
 		g_free((*view)->export_filename);
 		/* let glib handle destruction of object */
 		g_object_unref((*view)->store);
@@ -874,6 +878,40 @@ void message_view_entire_message(message_view_t * view)
 	apol_vector_destroy(&messages, NULL);
 }
 
+void message_view_save(message_view_t * view)
+{
+	if (view->filename == NULL) {
+		GtkWindow *parent = toplevel_get_window(view->top);
+		char *path = util_save_file(parent, "Save View", NULL);
+		if (path == NULL) {
+			return;
+		}
+		view->filename = path;
+	}
+	if (seaudit_model_save_to_file(view->model, view->filename) < 0) {
+		toplevel_ERR(view->top, "Error saving view: %s", strerror(errno));
+	}
+}
+
+void message_view_saveas(message_view_t * view)
+{
+	GtkWindow *parent = toplevel_get_window(view->top);
+	char *path = util_save_file(parent, "Save View As", view->filename);
+	if (path == NULL) {
+		return;
+	}
+	g_free(view->filename);
+	view->filename = path;
+	if (seaudit_model_save_to_file(view->model, view->filename) < 0) {
+		toplevel_ERR(view->top, "Error saving view: %s", strerror(errno));
+	}
+}
+
+void message_view_modify(message_view_t * view)
+{
+	modify_view_run(view->top, view);
+}
+
 /**
  * Write to a file all messages in the given vector.  Upon success,
  * update the view object's export filename.
@@ -887,6 +925,8 @@ static void message_view_export_messages_vector(message_view_t * view, char *pat
 {
 	FILE *f = NULL;
 	size_t i;
+	g_free(view->export_filename);
+	view->export_filename = path;
 	if ((f = fopen(path, "w")) == NULL) {
 		toplevel_ERR(view->top, "Could not open %s for writing.", path);
 		goto cleanup;
@@ -900,8 +940,6 @@ static void message_view_export_messages_vector(message_view_t * view, char *pat
 		}
 		free(s);
 	}
-	g_free(view->export_filename);
-	view->export_filename = path;
       cleanup:
 	if (f != NULL) {
 		fclose(f);
@@ -1061,13 +1099,6 @@ void seaudit_filtered_view_display(seaudit_filtered_view_t * filtered_view, GtkW
 	if (!filtered_view)
 		return;
 	multifilter_window_display(filtered_view->multifilter_window, parent);
-}
-
-void seaudit_filtered_view_save_view(seaudit_filtered_view_t * filtered_view, gboolean saveas)
-{
-	if (!filtered_view)
-		return;
-	multifilter_window_save_multifilter(filtered_view->multifilter_window, saveas, FALSE);
 }
 
 void seaudit_filtered_view_set_multifilter_window(seaudit_filtered_view_t * filtered_view, multifilter_window_t * window)

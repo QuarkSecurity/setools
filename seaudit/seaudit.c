@@ -321,51 +321,6 @@ int main(int argc, char **argv)
 
 #if 0
 
-#include "auditlogmodel.h"
-#include "filter_window.h"
-#include "preferences.h"
-#include "query_window.h"
-#include "report_window.h"
-#include "seaudit.h"
-#include "seaudit_callback.h"
-#include "utilgui.h"
-
-#include <seaudit/log.h>
-#include <seaudit/parse.h>
-
-#include <stdio.h>
-#include <string.h>
-
-#include <gdk-pixbuf/gdk-pixbuf.h>
-
-static void seaudit_set_real_time_log_button_state(bool_t state);
-static int seaudit_read_policy_conf(const char *fname);
-static void seaudit_print_version_info(void);
-static void seaudit_print_usage_info(const char *program_name, bool_t brief);
-static void seaudit_parse_command_line(int argc, char **argv, GString ** policy_filename, GString ** log_filename);
-static void seaudit_update_title_bar(void *user_data);
-static void seaudit_set_recent_logs_submenu(seaudit_conf_t * conf_file);
-static void seaudit_set_recent_policys_submenu(seaudit_conf_t * conf_file);
-static void seaudit_policy_file_open_from_recent_menu(GtkWidget * widget, gpointer user_data);
-static void seaudit_log_file_open_from_recent_menu(GtkWidget * widget, gpointer user_data);
-static gboolean seaudit_real_time_update_log(gpointer callback_data);
-static void seaudit_exit_app(void);
-
-void seaudit_on_open_view_clicked(GtkMenuItem * menu_item, gpointer user_data)
-{
-	seaudit_window_open_view(seaudit_app->window, seaudit_app->cur_log, seaudit_app->seaudit_conf.column_visibility);
-}
-
-void seaudit_on_save_view_clicked(GtkMenuItem * menu_item, gpointer user_data)
-{
-	seaudit_window_save_current_view(seaudit_app->window, FALSE);
-}
-
-void seaudit_on_saveas_view_clicked(GtkMenuItem * menu_item, gpointer user_data)
-{
-	seaudit_window_save_current_view(seaudit_app->window, TRUE);
-}
-
 /*
  * glade autoconnected callbacks for the main toolbar
  */
@@ -381,19 +336,6 @@ void seaudit_on_filter_log_button_clicked(GtkWidget * widget, GdkEvent * event, 
 	view = seaudit_window_get_current_view(seaudit_app->window);
 	seaudit_filtered_view_display(view, seaudit_app->window->window);
 	return;
-}
-
-void seaudit_on_create_standard_report_activate()
-{
-	if (!seaudit_app->report_window) {
-		seaudit_app->report_window = report_window_create(seaudit_app->window, &seaudit_app->seaudit_conf, "Create Report");
-		if (!seaudit_app->report_window) {
-			fprintf(stderr, "Error: Out of memory!");
-			return;
-		}
-	}
-
-	report_window_display(seaudit_app->report_window);
 }
 
 void seaudit_on_real_time_button_pressed(GtkButton * button, gpointer user_data)

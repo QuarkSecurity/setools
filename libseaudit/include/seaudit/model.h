@@ -75,12 +75,14 @@ extern "C"
  * The model will not be associated with any logs; for that call
  * seaudit_model_append_log().
  *
- * @param filename File containing one or more filter data.
+ * @param filename File containing model data.
  *
  * @return An initialized model, or NULL upon error.  The caller must
  * call seaudit_model_destroy() afterwards.
+ *
+ * @see seaudit_model_save_to_file()
  */
-	extern apol_vector_t *seaudit_filter_create_from_file(const char *filename);
+	extern seaudit_model_t *seaudit_model_create_from_file(const char *filename);
 
 /**
  * Destroy the referenced seadit_model_t object.

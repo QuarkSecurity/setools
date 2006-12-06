@@ -5,7 +5,7 @@
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
  *
- *  Copyright (C) 2003-2007 Tresys Technology, LLC
+ *  Copyright (C) 2004-2007 Tresys Technology, LLC
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -100,7 +100,7 @@ static void report_window_on_config_browse_click(GtkWidget * widget, gpointer us
 /**
  * Set up report window struct's widget pointers.
  */
-static void report_window_init_dialog(toplevel_t * top, struct report_window *rw)
+static void report_window_init_dialog(struct report_window *rw, toplevel_t * top)
 {
 	GladeXML *xml = toplevel_get_glade_xml(top);
 
@@ -131,7 +131,7 @@ static void report_window_init_dialog(toplevel_t * top, struct report_window *rw
  * with values from the user's preferences and set up signal handlers.
  * On subsequent times remember the user's entries.
  */
-static void report_window_copy_prefs(toplevel_t * top, struct report_window *rw)
+static void report_window_copy_prefs(struct report_window *rw, toplevel_t * top)
 {
 	static int report_window_initialized = 0;
 	if (!report_window_initialized) {
@@ -214,17 +214,18 @@ static gpointer report_window_create_report_runner(gpointer data)
 void report_window_run(toplevel_t * top, message_view_t * view)
 {
 	struct report_window rw;
+	/** keey track of most recently used report filename */
+	static char *filename = NULL;
 
-	report_window_init_dialog(top, &rw);
-	report_window_copy_prefs(top, &rw);
+	report_window_init_dialog(&rw, top);
+	report_window_copy_prefs(&rw, top);
 
 	rw.current_view = view;
 	rw.log = toplevel_get_log(top);
 	rw.progress = toplevel_get_progress(top);
-	rw.filename = NULL;
+	rw.filename = filename;
 	do {
 		gint response = gtk_dialog_run(rw.dialog);
-		char *filename;
 		if (response != GTK_RESPONSE_OK) {
 			break;
 		}
@@ -243,6 +244,5 @@ void report_window_run(toplevel_t * top, message_view_t * view)
 			break;
 		}
 	} while (1);
-	g_free(rw.filename);
 	gtk_widget_hide(GTK_WIDGET(rw.dialog));
 }
