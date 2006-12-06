@@ -55,6 +55,17 @@ message_view_t *message_view_create(toplevel_t * top, seaudit_model_t * model);
 void message_view_destroy(message_view_t ** view);
 
 /**
+ * Get the message view's model.  If the caller changes the model then
+ * he is responsible for calling message_view_update_rows() to update
+ * the view.
+ *
+ * @param view View whose model to obtain.
+ *
+ * @return View's model.
+ */
+seaudit_model_t *message_view_get_model(message_view_t * view);
+
+/**
  * Get the message view's widget display.  This widget will be placed
  * in a container for the user to see.
  *

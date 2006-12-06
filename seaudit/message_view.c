@@ -811,6 +811,11 @@ void message_view_destroy(message_view_t ** view)
 	}
 }
 
+seaudit_model_t *message_view_get_model(message_view_t * view)
+{
+	return view->model;
+}
+
 GtkWidget *message_view_get_view(message_view_t * view)
 {
 	return view->w;

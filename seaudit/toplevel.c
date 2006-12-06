@@ -27,6 +27,7 @@
 #include "message_view.h"
 #include "policy_view.h"
 #include "preferences_view.h"
+#include "report_window.h"
 #include "toplevel.h"
 #include "utilgui.h"
 
@@ -765,10 +766,34 @@ void toplevel_on_quit_activate(gpointer user_data, GtkWidget * widget __attribut
 	gtk_main_quit();
 }
 
-void toplevel_on_new_tab_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
+void toplevel_on_new_view_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
 	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
 	toplevel_add_new_model(top);
+}
+
+void toplevel_on_open_view_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
+{
+	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	/* FIX ME */
+}
+
+void toplevel_on_save_view_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
+{
+	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	/* FIX ME */
+}
+
+void toplevel_on_save_viewas_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
+{
+	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	/* FIX ME */
+}
+
+void toplevel_on_modify_view_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
+{
+	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	/* FIX ME */
 }
 
 void toplevel_on_export_all_messages_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
@@ -799,6 +824,20 @@ void toplevel_on_find_terules_activate(gpointer user_data, GtkWidget * widget __
 {
 	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
 	toplevel_find_terules(top, NULL);
+}
+
+void toplevel_on_create_report_activate(gpointer user_data, GtkMenuItem * widget __attribute__ ((unused)))
+{
+	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	message_view_t *view = toplevel_get_current_view(top);
+	assert(view != NULL);
+	report_window_run(top, view);
+}
+
+void toplevel_on_monitor_log_activate(gpointer user_data, GtkMenuItem * widget __attribute__ ((unused)))
+{
+	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	/* FIX ME */
 }
 
 void toplevel_on_help_activate(gpointer user_data, GtkMenuItem * widget __attribute__ ((unused)))
@@ -859,6 +898,18 @@ void toplevel_on_find_terules_click(gpointer user_data, GtkWidget * widget, GdkE
 	toplevel_find_terules(top, NULL);
 }
 
+void toplevel_on_modify_view_click(gpointer user_data, GtkWidget * widget, GdkEvent * event)
+{
+	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	/* FIX ME */
+}
+
+void toplevel_on_monitor_log_click(gpointer user_data, GtkWidget * widget, GdkEvent * event)
+{
+	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	/* FIX ME */
+}
+
 #if 0
 
 #include "auditlogmodel.h"
@@ -916,19 +967,6 @@ void seaudit_on_filter_log_button_clicked(GtkWidget * widget, GdkEvent * event, 
 	view = seaudit_window_get_current_view(seaudit_app->window);
 	seaudit_filtered_view_display(view, seaudit_app->window->window);
 	return;
-}
-
-void seaudit_on_create_standard_report_activate()
-{
-	if (!seaudit_app->report_window) {
-		seaudit_app->report_window = report_window_create(seaudit_app->window, &seaudit_app->seaudit_conf, "Create Report");
-		if (!seaudit_app->report_window) {
-			fprintf(stderr, "Error: Out of memory!");
-			return;
-		}
-	}
-
-	report_window_display(seaudit_app->report_window);
 }
 
 void seaudit_on_real_time_button_pressed(GtkButton * button, gpointer user_data)

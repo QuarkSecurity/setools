@@ -107,6 +107,7 @@ static void preferences_view_init_dialog(preferences_t * prefs, GladeXML * xml)
 	for (i = 0; i < num_entries; i++) {
 		const struct pref_entry *pe = pref_entry_data + i;
 		w = glade_xml_get_widget(xml, pe->entry_name);
+		assert(w != NULL);
 		s = pe->accessor(prefs);
 		gtk_entry_set_text(GTK_ENTRY(w), s);
 	}
@@ -184,6 +185,7 @@ int preferences_view_run(toplevel_t * top)
 	size_t i;
 
 	dialog = glade_xml_get_widget(xml, "PreferencesWindow");
+	assert(dialog != NULL);
 	gtk_window_set_transient_for(GTK_WINDOW(dialog), toplevel_get_window(top));
 
 	preferences_view_init_dialog(prefs, xml);
