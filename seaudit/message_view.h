@@ -68,6 +68,17 @@ void message_view_destroy(message_view_t ** view);
 seaudit_model_t *message_view_get_model(message_view_t * view);
 
 /**
+ * Replace a message view's model with a different model.  The
+ * previous model will be destroyed.  Afterwards the view will update
+ * its rows.
+ *
+ * @param view View to modify.
+ * @param libseaudit model to display.  The view takes ownership
+ * of the model afterwards.
+ */
+void message_view_set_model(message_view_t * view, seaudit_model_t * model);
+
+/**
  * Get the message view's widget display.  This widget will be placed
  * in a container for the user to see.
  *

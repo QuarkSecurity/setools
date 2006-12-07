@@ -820,6 +820,14 @@ seaudit_model_t *message_view_get_model(message_view_t * view)
 	return view->model;
 }
 
+void message_view_set_model(message_view_t * view, seaudit_model_t * model)
+{
+	seaudit_model_destroy(&view->model);
+	view->model = model;
+	toplevel_update_tabs(view->top);
+	message_view_update_rows(view);
+}
+
 GtkWidget *message_view_get_view(message_view_t * view)
 {
 	return view->w;

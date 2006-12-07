@@ -87,7 +87,7 @@ extern "C"
 /**
  * Create a new filter object, initialized with the data from an
  * existing filter.  This will do a deep copy of the original filter.
- * The new filter will not be attached to any models.
+ * The new filter will not be attached to any model.
  *
  * @param filter Filter to clone.
  *

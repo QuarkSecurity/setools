@@ -23,6 +23,7 @@
  */
 
 #include "modify_view.h"
+#include "utilgui.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -32,19 +33,140 @@ struct modify_view
 {
 	toplevel_t *top;
 	message_view_t *view;
-	GtkDialog *dialog;
+	/** the model currently being modified -- note that this is a
+         * deep copy of the message_view's model */
+	seaudit_model_t *model;
 
+	/** model containing a list of filter names, needs to be
+         * destroyed afterwords */
+	GtkListStore *filter_store;
+	GtkDialog *dialog;
 	GtkEntry *name_entry;
 	GtkComboBox *visible_combo, *match_combo;
+	GtkTreeView *filter_view;
+	GtkButton *add_button, *edit_button, *remove_button, *import_button, *export_button;
+
+	/** keep track of most recent filter filename */
+	char *filter_filename;
 };
 
 /**
- * Set up the window to reflect the current view's values.
+ * Return the currently selected filter, or NULL if no filter is
+ * selected.
  */
-static void modify_view_init_dialog(struct modify_view *mv)
+static seaudit_filter_t *modify_view_get_current_filter(struct modify_view *mv)
+{
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(mv->filter_view);
+	GtkTreeIter iter;
+	seaudit_filter_t *filter;
+	if (!gtk_tree_selection_get_selected(selection, NULL, &iter)) {
+		return FALSE;
+	}
+	gtk_tree_model_get(GTK_TREE_MODEL(mv->filter_store), &iter, 0, &filter, -1);
+	return filter;
+}
+
+/**
+ * Rebuild the filter store, preserving the current selection if
+ * possible.
+ */
+static void modify_view_update_filter_store(struct modify_view *mv)
+{
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(mv->filter_view);
+	GtkTreeIter old_iter, iter;
+	gboolean selection_existed = gtk_tree_selection_get_selected(selection, NULL, &old_iter);
+	apol_vector_t *filters = seaudit_model_get_filters(mv->model);
+	size_t i;
+	gtk_list_store_clear(mv->filter_store);
+	for (i = 0; i < apol_vector_get_size(filters); i++) {
+		seaudit_filter_t *filter = apol_vector_get_element(filters, i);
+		gtk_list_store_append(mv->filter_store, &iter);
+		gtk_list_store_set(mv->filter_store, &iter, 0, filter, 1, seaudit_filter_get_name(filter), -1);
+	}
+	/* initially select the last thing, then reset selection */
+	if (i > 0) {
+		gtk_tree_selection_select_iter(selection, &iter);
+	}
+	if (selection_existed && gtk_list_store_iter_is_valid(mv->filter_store, &old_iter)) {
+		gtk_tree_selection_select_iter(selection, &old_iter);
+	}
+}
+
+static void modify_view_on_selection_change(GtkTreeSelection * selection, gpointer user_data)
+{
+	struct modify_view *mv = (struct modify_view *)user_data;
+	gboolean sens = gtk_tree_selection_get_selected(selection, NULL, NULL);
+	gtk_widget_set_sensitive(GTK_WIDGET(mv->edit_button), sens);
+	gtk_widget_set_sensitive(GTK_WIDGET(mv->remove_button), sens);
+	gtk_widget_set_sensitive(GTK_WIDGET(mv->export_button), sens);
+}
+
+static void modify_view_on_remove_click(GtkButton * button, gpointer user_data)
+{
+	struct modify_view *mv = (struct modify_view *)user_data;
+	seaudit_filter_t *filter = modify_view_get_current_filter(mv);
+	size_t i;
+	assert(filter != NULL);
+	apol_vector_t *filters = seaudit_model_get_filters(mv->model);
+	apol_vector_get_index(filters, filter, NULL, NULL, &i);
+	apol_vector_remove(filters, i);
+	modify_view_update_filter_store(mv);
+}
+
+static void modify_view_on_import_click(GtkButton * button, gpointer user_data)
+{
+	struct modify_view *mv = (struct modify_view *)user_data;
+	char *path = util_open_file(GTK_WINDOW(mv->dialog), "Import Filter", mv->filter_filename);
+	apol_vector_t *filters;
+	size_t i;
+	if (path == NULL) {
+		return;
+	}
+	g_free(mv->filter_filename);
+	mv->filter_filename = path;
+	if ((filters = seaudit_filter_create_from_file(mv->filter_filename)) == NULL) {
+		toplevel_ERR(mv->top, "Error importing filter: %s", strerror(errno));
+		return;
+	}
+	for (i = 0; i < apol_vector_get_size(filters); i++) {
+		seaudit_filter_t *filter = apol_vector_get_element(filters, i);
+		if (seaudit_model_append_filter(mv->model, filter) < 0) {
+			toplevel_ERR(mv->top, "Error importing filter: %s", strerror(errno));
+			for (; i < apol_vector_get_size(filters); i++) {
+				filter = apol_vector_get_element(filters, i);
+				seaudit_filter_destroy(&filter);
+			}
+			apol_vector_destroy(&filters, NULL);
+			return;
+		}
+		modify_view_update_filter_store(mv);
+	}
+	apol_vector_destroy(&filters, NULL);
+}
+
+static void modify_view_on_export_click(GtkButton * button, gpointer user_data)
+{
+	struct modify_view *mv = (struct modify_view *)user_data;
+	char *path = util_save_file(GTK_WINDOW(mv->dialog), "Export Filter", mv->filter_filename);
+	seaudit_filter_t *filter = modify_view_get_current_filter(mv);
+	assert(filter != NULL);
+	if (path == NULL) {
+		return;
+	}
+	g_free(mv->filter_filename);
+	mv->filter_filename = path;
+	if (seaudit_filter_save_to_file(filter, mv->filter_filename) < 0) {
+		toplevel_ERR(mv->top, "Error exporting filter: %s", strerror(errno));
+	}
+}
+
+/**
+ * Make libglade calls to fill in struct modify_view widget
+ * references.
+ */
+static void modify_view_init_widgets(struct modify_view *mv)
 {
 	GladeXML *xml = toplevel_get_glade_xml(mv->top);
-	seaudit_model_t *model = message_view_get_model(mv->view);
 
 	mv->dialog = GTK_DIALOG(glade_xml_get_widget(xml, "ModifyViewWindow"));
 	assert(mv->dialog != NULL);
@@ -52,13 +174,23 @@ static void modify_view_init_dialog(struct modify_view *mv)
 
 	mv->name_entry = GTK_ENTRY(glade_xml_get_widget(xml, "ModifyViewNameEntry"));
 	assert(mv->name_entry != NULL);
-	gtk_entry_set_text(mv->name_entry, seaudit_model_get_name(model));
 
 	mv->visible_combo = GTK_COMBO_BOX(glade_xml_get_widget(xml, "ModifyViewVisibleCombo"));
 	mv->match_combo = GTK_COMBO_BOX(glade_xml_get_widget(xml, "ModifyViewMatchCombo"));
 	assert(mv->visible_combo != NULL && mv->match_combo != NULL);
-	gtk_combo_box_set_active(mv->visible_combo, seaudit_model_get_filter_visible(model));
-	gtk_combo_box_set_active(mv->match_combo, seaudit_model_get_filter_match(model));
+
+	mv->filter_view = GTK_TREE_VIEW(glade_xml_get_widget(xml, "ModifyViewFilterView"));
+	assert(mv->filter_view != NULL);
+	mv->filter_store = gtk_list_store_new(2, G_TYPE_POINTER, G_TYPE_STRING);
+	gtk_tree_view_set_model(mv->filter_view, GTK_TREE_MODEL(mv->filter_store));
+
+	mv->add_button = GTK_BUTTON(glade_xml_get_widget(xml, "ModifyViewAddButton"));
+	mv->edit_button = GTK_BUTTON(glade_xml_get_widget(xml, "ModifyViewEditButton"));
+	mv->remove_button = GTK_BUTTON(glade_xml_get_widget(xml, "ModifyViewRemoveButton"));
+	mv->import_button = GTK_BUTTON(glade_xml_get_widget(xml, "ModifyViewImportButton"));
+	mv->export_button = GTK_BUTTON(glade_xml_get_widget(xml, "ModifyViewExportButton"));
+	assert(mv->add_button != NULL && mv->edit_button != NULL && mv->remove_button != NULL &&
+	       mv->import_button != NULL && mv->export_button != NULL);
 }
 
 /**
@@ -67,207 +199,110 @@ static void modify_view_init_dialog(struct modify_view *mv)
  */
 static void modify_view_init_signals(struct modify_view *mv)
 {
+	GtkCellRenderer *renderer;
+	GtkTreeViewColumn *column;
 	static int modify_view_signals_initialized = 0;
-	if (!modify_view_signals_initialized) {
+	if (modify_view_signals_initialized) {
+		return;
 	}
+
+	renderer = gtk_cell_renderer_text_new();
+	column = gtk_tree_view_column_new_with_attributes("Filter names", renderer, "text", 1, NULL);
+	gtk_tree_view_column_set_clickable(column, FALSE);
+	gtk_tree_view_column_set_resizable(column, FALSE);
+	gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_AUTOSIZE);
+	gtk_tree_view_column_set_visible(column, TRUE);
+	gtk_tree_view_append_column(mv->filter_view, column);
+
+	g_signal_connect(mv->remove_button, "clicked", G_CALLBACK(modify_view_on_remove_click), mv);
+	g_signal_connect(mv->import_button, "clicked", G_CALLBACK(modify_view_on_import_click), mv);
+	g_signal_connect(mv->export_button, "clicked", G_CALLBACK(modify_view_on_export_click), mv);
+
 	modify_view_signals_initialized = 1;
+}
+
+/**
+ * Set up the window to reflect the current view's values.
+ */
+static void modify_view_init_dialog(struct modify_view *mv)
+{
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(mv->filter_view);
+	GtkTreeIter iter;
+
+	gtk_entry_set_text(mv->name_entry, seaudit_model_get_name(mv->model));
+
+	gtk_combo_box_set_active(mv->visible_combo, seaudit_model_get_filter_visible(mv->model));
+	gtk_combo_box_set_active(mv->match_combo, seaudit_model_get_filter_match(mv->model));
+
+	gtk_tree_selection_unselect_all(selection);
+	modify_view_update_filter_store(mv);
+	/* automatically select the first filter upon dialog
+	 * startup */
+
+	if (gtk_tree_model_get_iter_first(GTK_TREE_MODEL(mv->filter_store), &iter)) {
+		gtk_tree_selection_select_iter(selection, &iter);
+	}
 }
 
 void modify_view_run(toplevel_t * top, message_view_t * view)
 {
 	struct modify_view mv;
+	seaudit_model_t *orig_model = message_view_get_model(view);
+	GtkTreeSelection *selection;
+	gulong handler_id;
+	gint response;
 
+	memset(&mv, 0, sizeof(mv));
 	mv.top = top;
 	mv.view = view;
-	modify_view_init_dialog(&mv);
+	mv.filter_filename = NULL;
+	if ((mv.model = seaudit_model_create_from_model(orig_model)) == NULL) {
+		toplevel_ERR(mv.top, "Error duplicating model: %s", strerror(errno));
+		return;
+	}
+	modify_view_init_widgets(&mv);
 	modify_view_init_signals(&mv);
+	modify_view_init_dialog(&mv);
+
+	/* add a callback to watch for selection changes.  note that
+	 * this handler needs to be removed upon exiting this
+	 * function, for the handler will execute the next time the
+	 * dialog is created -- but its user_data will be pointing to
+	 * a *previous* instance of struct modify_view on the stack */
+	selection = gtk_tree_view_get_selection(mv.filter_view);
+	gtk_tree_selection_set_mode(selection, GTK_SELECTION_BROWSE);
+	handler_id = g_signal_connect(selection, "changed", G_CALLBACK(modify_view_on_selection_change), &mv);
 
 	do {
-		gint response = gtk_dialog_run(mv.dialog);
+		response = gtk_dialog_run(mv.dialog);
 		const gchar *text = gtk_entry_get_text(mv.name_entry);
-		seaudit_model_t *model = message_view_get_model(mv.view);
-		if (seaudit_model_set_name(model, text) < 0) {
+
+		if (seaudit_model_set_name(mv.model, text) < 0) {
 			toplevel_ERR(mv.top, "Could not set name: %s", strerror(errno));
 		}
-		toplevel_update_tabs(mv.top);
-		if (response == GTK_RESPONSE_CLOSE) {
-			break;
+		seaudit_model_set_filter_visible(mv.model, gtk_combo_box_get_active(mv.visible_combo));
+		seaudit_model_set_filter_match(mv.model, gtk_combo_box_get_active(mv.match_combo));
+		if (response == GTK_RESPONSE_APPLY) {
+			seaudit_model_t *new_model;
+			if ((new_model = seaudit_model_create_from_model(mv.model)) == NULL) {
+				toplevel_ERR(mv.top, "Error applying model: %s", strerror(errno));
+				break;
+			}
+			message_view_set_model(mv.view, new_model);
 		}
-	} while (1);
+	} while (response == GTK_RESPONSE_APPLY);
+
+	g_signal_handler_disconnect(selection, handler_id);
 	gtk_widget_hide(GTK_WIDGET(mv.dialog));
+	if (response == GTK_RESPONSE_OK) {
+		message_view_set_model(mv.view, mv.model);
+	} else {
+		seaudit_model_destroy(&mv.model);
+	}
+	g_object_unref(mv.filter_store);
 }
 
 #if 0
-
-#include "multifilter_window.h"
-#include "filtered_view.h"
-#include "filter_window.h"
-#include "seaudit.h"
-#include "utilgui.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-
-extern seaudit_t *seaudit_app;
-
-static void multifilter_window_on_add_button_pressed(GtkButton * button, multifilter_window_t * window);
-static void multifilter_window_on_edit_button_pressed(GtkButton * button, multifilter_window_t * window);
-static void multifilter_window_on_remove_button_pressed(GtkButton * button, multifilter_window_t * window);
-static void multifilter_window_on_apply_button_pressed(GtkButton * button, multifilter_window_t * window);
-static void multifilter_window_on_close_button_pressed(GtkButton * button, multifilter_window_t * window);
-static void multifilter_window_on_import_button_pressed(GtkButton * button, multifilter_window_t * window);
-static void multifilter_window_on_export_button_pressed(GtkButton * button, multifilter_window_t * window);
-static gboolean multifilter_window_on_delete_event(GtkWidget * widget, GdkEvent * event, multifilter_window_t * window);
-static void multifilter_window_add_filter_window(multifilter_window_t * window, filter_window_t * filter_window);
-static void multifilter_window_on_row_activated(GtkTreeView * treeview, GtkTreePath * path, GtkTreeViewColumn * column,
-						multifilter_window_t * window);
-static gboolean seaudit_window_on_name_entry_text_changed(GtkWidget * widget, GdkEventKey * event, multifilter_window_t * window);
-static void multifilter_window_set_title(multifilter_window_t * window);
-static void multifilter_window_update_buttons_sensitivity(multifilter_window_t * window);
-static void multifilter_window_get_selected_filters(multifilter_window_t * window, seaudit_multifilter_t * multifilter,
-						    GString * filename);
-static void multifilter_window_get_selected_filters_on_cancel_clicked(GtkButton * button, multifilter_window_t * window);
-static void multifilter_window_get_selected_filters_on_ok_clicked(GtkButton * button, multifilter_window_t * window);
-static gboolean multifilter_window_get_selected_on_delete_event(GtkWidget * widget, GdkEvent * event,
-								seaudit_multifilter_t * user_data);
-static void multifilter_window_on_save_button_pressed(GtkButton * button, multifilter_window_t * user_data);
-
-void multifilter_window_display(multifilter_window_t * window, GtkWindow * parent)
-{
-	char *dir;
-	GString *path;
-	GtkWidget *widget;
-	GtkCellRenderer *renderer;
-	GtkTreeViewColumn *column;
-
-	if (!window || !parent)
-		return;
-
-	if (window->window) {
-		gtk_window_present(window->window);
-		return;
-	}
-
-	dir = apol_file_find("multifilter_window.glade");
-	if (!dir) {
-		fprintf(stderr, "could not find multifilter_window.glade\n");
-		return;
-	}
-	path = g_string_new(dir);
-	free(dir);
-	g_string_append(path, "/multifilter_window.glade");
-	window->xml = glade_xml_new(path->str, NULL, NULL);
-	g_assert(window->xml);
-	window->window = GTK_WINDOW(glade_xml_get_widget(window->xml, "MultifilterWindow"));
-	g_assert(window->window);
-
-	/* set this window to be transient on the parent window, so that when it pops up it gets centered on it */
-	/* however to have it "appear" to be centered we have to hide and then show */
-	gtk_window_set_transient_for(window->window, parent);
-	gtk_window_set_position(window->window, GTK_WIN_POS_CENTER_ON_PARENT);
-
-	widget = glade_xml_get_widget(window->xml, "NameEntry");
-	g_assert(widget);
-	gtk_entry_set_text(GTK_ENTRY(widget), window->name->str);
-	multifilter_window_set_title(window);
-	widget = glade_xml_get_widget(window->xml, "MatchEntry");
-	g_assert(widget);
-	gtk_entry_set_text(GTK_ENTRY(widget), window->match->str);
-	widget = glade_xml_get_widget(window->xml, "ShowEntry");
-	g_assert(widget);
-	gtk_entry_set_text(GTK_ENTRY(widget), window->show->str);
-	widget = glade_xml_get_widget(window->xml, "NamesTreeView");
-	g_assert(widget);
-	window->treeview = GTK_TREE_VIEW(widget);
-	renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes("Filter names", renderer, "text", 0, NULL);
-	gtk_tree_view_append_column(window->treeview, column);
-	gtk_tree_view_column_set_clickable(column, FALSE);
-	gtk_tree_view_column_set_resizable(column, FALSE);
-	gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_GROW_ONLY);
-	gtk_tree_view_column_set_visible(column, TRUE);
-	gtk_tree_view_set_model(window->treeview, GTK_TREE_MODEL(window->liststore));
-
-	g_signal_connect(G_OBJECT(window->treeview), "row-activated", G_CALLBACK(multifilter_window_on_row_activated), window);
-
-	widget = glade_xml_get_widget(window->xml, "NameEntry");
-	g_signal_connect(G_OBJECT(widget), "key-release-event", G_CALLBACK(seaudit_window_on_name_entry_text_changed), window);
-	widget = glade_xml_get_widget(window->xml, "CloseButton");
-	g_signal_connect(G_OBJECT(widget), "pressed", G_CALLBACK(multifilter_window_on_close_button_pressed), window);
-	widget = glade_xml_get_widget(window->xml, "RemoveButton");
-	g_signal_connect(G_OBJECT(widget), "pressed", G_CALLBACK(multifilter_window_on_remove_button_pressed), window);
-	widget = glade_xml_get_widget(window->xml, "EditButton");
-	g_signal_connect(G_OBJECT(widget), "pressed", G_CALLBACK(multifilter_window_on_edit_button_pressed), window);
-	widget = glade_xml_get_widget(window->xml, "ApplyButton");
-	g_signal_connect(G_OBJECT(widget), "pressed", G_CALLBACK(multifilter_window_on_apply_button_pressed), window);
-	widget = glade_xml_get_widget(window->xml, "AddButton");
-	g_signal_connect(G_OBJECT(widget), "pressed", G_CALLBACK(multifilter_window_on_add_button_pressed), window);
-	widget = glade_xml_get_widget(window->xml, "ImportButton");
-	g_signal_connect(G_OBJECT(widget), "pressed", G_CALLBACK(multifilter_window_on_import_button_pressed), window);
-	widget = glade_xml_get_widget(window->xml, "ExportButton");
-	g_signal_connect(G_OBJECT(widget), "pressed", G_CALLBACK(multifilter_window_on_export_button_pressed), window);
-	widget = glade_xml_get_widget(window->xml, "SaveButton");
-	g_signal_connect(G_OBJECT(widget), "pressed", G_CALLBACK(multifilter_window_on_save_button_pressed), window);
-
-	g_signal_connect(G_OBJECT(window->window), "delete_event", G_CALLBACK(multifilter_window_on_delete_event), window);
-	g_string_free(path, TRUE);
-	multifilter_window_update_buttons_sensitivity(window);
-}
-
-void multifilter_window_set_filter_name_in_list(multifilter_window_t * window, filter_window_t * filter_window)
-{
-	GtkTreePath *path;
-	GtkTreeIter iter;
-	gint index;
-	char *name;
-
-	name = filter_window->name->str;
-	index = filter_window->parent_index;
-	if (index < 0 || index >= window->num_filter_windows)
-		return;
-	path = gtk_tree_path_new_from_indices(index, -1);
-	if (!gtk_tree_model_get_iter(GTK_TREE_MODEL(window->liststore), &iter, path))
-		return;
-	gtk_list_store_set(window->liststore, &iter, 0, name, -1);
-}
-
-void multifilter_window_apply_multifilter(multifilter_window_t * window)
-{
-	GtkWidget *widget;
-	seaudit_filter_t *seaudit_filter;
-	seaudit_multifilter_t *multifilter;
-	GList *item;
-	SEAuditLogViewStore *store;
-
-	store = window->parent->store;
-	multifilter = seaudit_multifilter_create();
-	for (item = window->filter_windows; item != NULL; item = g_list_next(item)) {
-		seaudit_filter = filter_window_get_filter(item->data);
-		seaudit_multifilter_add_filter(multifilter, seaudit_filter);
-	}
-	if (window->xml) {
-		widget = glade_xml_get_widget(window->xml, "ShowEntry");
-		g_assert(widget);
-		if (strcmp("Show", gtk_entry_get_text(GTK_ENTRY(widget))) == 0)
-			seaudit_multifilter_set_show_matches(multifilter, TRUE);
-		else
-			seaudit_multifilter_set_show_matches(multifilter, FALSE);
-
-		widget = glade_xml_get_widget(window->xml, "MatchEntry");
-		g_assert(widget);
-		if (strcmp("All", gtk_entry_get_text(GTK_ENTRY(widget))) == 0)
-			seaudit_multifilter_set_match(multifilter, SEAUDIT_FILTER_MATCH_ALL);
-		else
-			seaudit_multifilter_set_match(multifilter, SEAUDIT_FILTER_MATCH_ANY);
-	} else {
-		seaudit_multifilter_set_match(multifilter, (strcmp(window->match->str, "All") == 0) ?
-					      SEAUDIT_FILTER_MATCH_ALL : SEAUDIT_FILTER_MATCH_ANY);
-		seaudit_multifilter_set_show_matches(multifilter, (strcmp(window->show->str, "Show") == 0) ? TRUE : FALSE);
-	}
-	audit_log_view_set_multifilter(store->log_view, multifilter);
-	seaudit_log_view_store_do_filter(store);
-}
 
 static void multifilter_window_add_filter_window(multifilter_window_t * window, filter_window_t * filter_window)
 {
@@ -314,370 +349,6 @@ static void multifilter_window_on_edit_button_pressed(GtkButton * button, multif
 
 	gtk_tree_path_free(path);
 	widget = glade_xml_get_widget(window->xml, "ApplyButton");
-}
-
-static void multifilter_window_on_remove_button_pressed(GtkButton * button, multifilter_window_t * window)
-{
-	GtkTreeSelection *selection;
-	GtkTreeModel *model;
-	GtkTreePath *path;
-	GtkTreeIter iter;
-	GList *item;
-	filter_window_t *filter_window;
-	gint *index;
-
-	selection = gtk_tree_view_get_selection(window->treeview);
-	model = GTK_TREE_MODEL(window->liststore);
-	if (!gtk_tree_selection_get_selected(selection, &model, &iter)) {
-		message_display(window->window, GTK_MESSAGE_ERROR, "You must select a filter to remove.");
-		return;
-	}
-	path = gtk_tree_path_new();
-	path = gtk_tree_model_get_path(model, &iter);
-	index = gtk_tree_path_get_indices(path);
-
-	for (item = window->filter_windows; item != NULL; item = g_list_next(item)) {
-		filter_window = (filter_window_t *) item->data;
-		if (filter_window->parent_index >= *index)
-			filter_window->parent_index--;
-	}
-	item = g_list_nth(window->filter_windows, index[0]);
-	gtk_list_store_remove(window->liststore, &iter);
-	window->filter_windows = g_list_remove_link(window->filter_windows, item);
-	filter_window_destroy(item->data);
-	window->num_filter_windows--;
-	multifilter_window_update_buttons_sensitivity(window);
-}
-
-static void multifilter_window_on_apply_button_pressed(GtkButton * button, multifilter_window_t * window)
-{
-	show_wait_cursor(GTK_WIDGET(window->window));
-	multifilter_window_apply_multifilter(window);
-	clear_wait_cursor(GTK_WIDGET(window->window));
-}
-
-static void multifilter_window_on_import_button_pressed(GtkButton * button, multifilter_window_t * window)
-{
-	seaudit_multifilter_t *multifilter;
-	filter_window_t *filter_window;
-	seaudit_filter_t *filter;
-	bool_t is_multi;
-	GString *filename, *message;
-	gint err;
-
-	filename = get_filename_from_user("Import Filter", NULL, window->window, FALSE);
-	if (!filename)
-		return;
-	err = seaudit_multifilter_load_from_file(&multifilter, &is_multi, filename->str);
-	if (err < 0) {
-		message = g_string_new("");
-		g_string_printf(message, "Unable to import from %s\n%s", filename->str, strerror(errno));
-		message_display(window->window, GTK_MESSAGE_ERROR, message->str);
-		g_string_free(message, TRUE);
-		goto exit;
-	} else if (err > 0) {
-		message = g_string_new("");
-		g_string_printf(message, "Unable to import from %s\ninvalid file.", filename->str);
-		message_display(window->window, GTK_MESSAGE_ERROR, message->str);
-		g_string_free(message, TRUE);
-		goto exit;
-	}
-	if (!multifilter)
-		goto exit;
-	g_assert(multifilter->filters);
-	if (apol_vector_get_size(multifilter->filters) == 0) {
-		seaudit_multifilter_destroy(multifilter);
-		goto exit;
-	}
-	if (apol_vector_get_size(multifilter->filters) == 1) {
-		filter = apol_vector_get_element(multifilter->filters, 0);
-		filter_window = filter_window_create(window, window->num_filter_windows, filter->name);
-		filter_window_set_values_from_filter(filter_window, filter);
-		multifilter_window_add_filter_window(window, filter_window);
-		seaudit_multifilter_destroy(multifilter);
-		multifilter_window_update_buttons_sensitivity(window);
-	} else
-		multifilter_window_get_selected_filters(window, multifilter, filename);
-      exit:
-	if (filename)
-		g_string_free(filename, TRUE);
-}
-
-static void multifilter_window_on_export_button_pressed(GtkButton * button, multifilter_window_t * window)
-{
-	GtkTreeSelection *selection;
-	GtkTreeModel *model;
-	GtkTreeIter iter;
-	GtkTreePath *path;
-	gint *index;
-	filter_window_t *filter_window;
-	seaudit_filter_t *filter;
-	GString *filename, *message;
-	gint response, err;
-
-	selection = gtk_tree_view_get_selection(window->treeview);
-	model = GTK_TREE_MODEL(window->liststore);
-	if (!gtk_tree_selection_get_selected(selection, &model, &iter)) {
-		message_display(window->window, GTK_MESSAGE_ERROR, "You must select a filter to export.");
-		return;
-	}
-	path = gtk_tree_path_new();
-	path = gtk_tree_model_get_path(model, &iter);
-	index = gtk_tree_path_get_indices(path);
-	filter_window = g_list_nth_data(window->filter_windows, index[0]);
-	filter = filter_window_get_filter(filter_window);
-	filename = get_filename_from_user("Export filter", filter->name, window->window, TRUE);
-	if (filename == NULL)
-		return;
-	/* Append the default seaudit filter extension (defined in seaudit.h). */
-	g_string_append(filename, SEAUDIT_FILTER_EXT);
-
-	if (g_file_test(filename->str, G_FILE_TEST_EXISTS)) {
-		message = g_string_new("");
-		g_string_printf(message, "The file %s\nalready exists.  Are you sure you wish to continue?", filename->str);
-		response = get_user_response_to_message(window->window, message->str);
-		g_string_free(message, TRUE);
-		if (response != GTK_RESPONSE_YES) {
-			g_string_free(filename, TRUE);
-			return;
-		}
-	}
-	err = seaudit_filter_save_to_file(filter, filename->str);
-	if (err) {
-		message = g_string_new("");
-		g_string_printf(message, "Unable to export to %s\n%s", filename->str, strerror(errno));
-		message_display(window->window, GTK_MESSAGE_ERROR, message->str);
-		g_string_free(message, TRUE);
-	}
-	seaudit_filter_destroy(filter);
-	g_string_free(filename, TRUE);
-}
-
-static void multifilter_window_on_close_button_pressed(GtkButton * button, multifilter_window_t * window)
-{
-	GList *item;
-
-	show_wait_cursor(GTK_WIDGET(window->window));
-	for (item = window->filter_windows; item != NULL; item = g_list_next(item))
-		filter_window_hide((filter_window_t *) item->data);
-	gtk_widget_hide(GTK_WIDGET(window->window));
-	clear_wait_cursor(GTK_WIDGET(window->window));
-}
-
-static gboolean multifilter_window_on_delete_event(GtkWidget * widget, GdkEvent * event, multifilter_window_t * window)
-{
-	GtkWidget *button;
-
-	button = glade_xml_get_widget(window->xml, "CloseButton");
-	multifilter_window_on_close_button_pressed(GTK_BUTTON(button), window);
-	return TRUE;
-}
-
-static void multifilter_window_on_row_activated(GtkTreeView * treeview, GtkTreePath * path, GtkTreeViewColumn * column,
-						multifilter_window_t * window)
-{
-	GtkWidget *button;
-
-	button = glade_xml_get_widget(window->xml, "EditButton");
-	multifilter_window_on_edit_button_pressed(GTK_BUTTON(button), window);
-}
-
-static gboolean seaudit_window_on_name_entry_text_changed(GtkWidget * widget, GdkEventKey * event, multifilter_window_t * window)
-{
-	const gchar *name;
-	seaudit_filtered_view_t *view;
-	GtkWidget *page, *tab_widget;
-	GtkLabel *label;
-
-	name = gtk_entry_get_text(GTK_ENTRY(widget));
-	g_string_assign(window->name, name);
-	multifilter_window_set_title(window);
-	view = window->parent;
-	page = gtk_notebook_get_nth_page(seaudit_app->window->notebook, view->notebook_index);
-	tab_widget = gtk_notebook_get_tab_label(seaudit_app->window->notebook, page);
-	label = g_object_get_data(G_OBJECT(tab_widget), "label");
-	g_assert(label);
-	gtk_label_set_text(label, name);
-	return FALSE;
-}
-
-static void multifilter_window_update_buttons_sensitivity(multifilter_window_t * window)
-{
-	GtkWidget *widget;
-	GtkTreeIter iter;
-	gboolean state;
-
-	if (!window || !window->xml)
-		return;
-
-	if (gtk_tree_model_get_iter_first(GTK_TREE_MODEL(window->liststore), &iter))
-		state = TRUE;
-	else
-		state = FALSE;
-
-	widget = glade_xml_get_widget(window->xml, "ExportButton");
-	g_assert(widget);
-	gtk_widget_set_sensitive(widget, state);
-	widget = glade_xml_get_widget(window->xml, "RemoveButton");
-	g_assert(widget);
-	gtk_widget_set_sensitive(widget, state);
-	widget = glade_xml_get_widget(window->xml, "EditButton");
-	g_assert(widget);
-	gtk_widget_set_sensitive(widget, state);
-}
-
-static void multifilter_window_get_selected_filters(multifilter_window_t * window, seaudit_multifilter_t * multifilter,
-						    GString * filename)
-{
-	GtkWidget *select_window, *vbox, *ok_button, *cancel_button, *button_box, *label, *treeview, *scrolled_window;
-	GtkTreeViewColumn *column;
-	GtkCellRenderer *renderer;
-	GtkListStore *store;
-	seaudit_filter_t *filter;
-	GtkTreeIter iter;
-	GString *title;
-	int i;
-
-	select_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	g_assert(filename);
-	title = g_string_new("");
-	g_string_printf(title, "File - %s", filename->str);
-	gtk_window_set_title(GTK_WINDOW(select_window), title->str);
-	g_string_free(title, TRUE);
-	gtk_widget_set_size_request(select_window, 280, 350);
-	label = gtk_label_new("The file contained multiple filters.  Select the\n"
-			      "filters you want to import and then click 'OK'.");
-	treeview = gtk_tree_view_new();
-	gtk_tree_selection_set_mode(gtk_tree_view_get_selection(GTK_TREE_VIEW(treeview)), GTK_SELECTION_MULTIPLE);
-	store = gtk_list_store_new(1, G_TYPE_STRING);
-	for (i = 0; i < apol_vector_get_size(multifilter->filters); i++) {
-		filter = apol_vector_get_element(multifilter->filters, i);
-		gtk_list_store_append(store, &iter);
-		gtk_list_store_set(store, &iter, 0, filter->name, -1);
-	}
-	renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes("Filter names", renderer, "text", 0, NULL);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(treeview), column);
-	gtk_tree_view_column_set_clickable(column, FALSE);
-	gtk_tree_view_column_set_resizable(column, FALSE);
-	gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_GROW_ONLY);
-	gtk_tree_view_column_set_visible(column, TRUE);
-	gtk_tree_view_set_model(GTK_TREE_VIEW(treeview), GTK_TREE_MODEL(store));
-
-	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-	gtk_container_add(GTK_CONTAINER(scrolled_window), treeview);
-	vbox = gtk_vbox_new(FALSE, 0);
-	button_box = gtk_hbutton_box_new();
-	gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box), GTK_BUTTONBOX_SPREAD);
-	ok_button = gtk_button_new_from_stock(GTK_STOCK_OK);
-	cancel_button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-
-	g_object_set_data(G_OBJECT(select_window), "multifilter", multifilter);
-	g_object_set_data(G_OBJECT(select_window), "treeview", treeview);
-	g_object_set_data(G_OBJECT(cancel_button), "window", select_window);
-	g_object_set_data(G_OBJECT(ok_button), "window", select_window);
-
-	g_signal_connect(G_OBJECT(ok_button), "pressed", G_CALLBACK(multifilter_window_get_selected_filters_on_ok_clicked), window);
-	g_signal_connect(G_OBJECT(cancel_button), "pressed",
-			 G_CALLBACK(multifilter_window_get_selected_filters_on_cancel_clicked), window);
-	g_signal_connect(G_OBJECT(select_window), "delete_event",
-			 G_CALLBACK(multifilter_window_get_selected_on_delete_event), multifilter);
-
-	gtk_container_add(GTK_CONTAINER(select_window), vbox);
-	gtk_box_pack_end(GTK_BOX(vbox), button_box, FALSE, TRUE, 5);
-	gtk_box_pack_end(GTK_BOX(vbox), scrolled_window, TRUE, TRUE, 5);
-	gtk_box_pack_end(GTK_BOX(vbox), label, FALSE, TRUE, 5);
-
-	gtk_box_pack_end(GTK_BOX(button_box), cancel_button, FALSE, FALSE, 5);
-	gtk_box_pack_end(GTK_BOX(button_box), ok_button, FALSE, FALSE, 5);
-	gtk_widget_show(label);
-	gtk_widget_show(scrolled_window);
-	gtk_widget_show(treeview);
-	gtk_widget_show(vbox);
-	gtk_widget_show(button_box);
-	gtk_widget_show(ok_button);
-	gtk_widget_show(cancel_button);
-	gtk_widget_show(select_window);
-}
-
-static void multifilter_window_get_selected_filters_on_cancel_clicked(GtkButton * button, multifilter_window_t * window)
-{
-	GtkWidget *select_window;
-	seaudit_multifilter_t *multifilter;
-
-	select_window = g_object_get_data(G_OBJECT(button), "window");
-	g_assert(window);
-	multifilter = g_object_get_data(G_OBJECT(select_window), "multifilter");
-	g_assert(multifilter);
-	seaudit_multifilter_destroy(multifilter);
-	gtk_widget_destroy(select_window);
-}
-
-static void multifilter_window_get_selected_filters_on_ok_clicked(GtkButton * button, multifilter_window_t * window)
-{
-	GtkTreeView *treeview;
-	GtkWindow *select_window;
-	GtkTreeSelection *selection;
-	GtkTreeModel *model;
-	GtkTreePath *path;
-	GList *glist, *item;
-	seaudit_multifilter_t *multifilter;
-	seaudit_filter_t *filter;
-	filter_window_t *filter_window;
-	int i, *index;
-	apol_vector_t *filters;
-
-	select_window = g_object_get_data(G_OBJECT(button), "window");
-	g_assert(select_window);
-	treeview = g_object_get_data(G_OBJECT(select_window), "treeview");
-	g_assert(treeview);
-	multifilter = g_object_get_data(G_OBJECT(select_window), "multifilter");
-	g_assert(multifilter);
-	g_assert(multifilter->filters);
-	if (!(filters = apol_vector_create())) {
-		message_display(select_window, GTK_MESSAGE_ERROR, "out of memory");
-		return;
-	}
-	for (i = 0; i < apol_vector_get_size(multifilter->filters); i++)
-		apol_vector_append(filters, apol_vector_get_element(multifilter->filters, i));
-	model = gtk_tree_view_get_model(treeview);
-	selection = gtk_tree_view_get_selection(treeview);
-	glist = gtk_tree_selection_get_selected_rows(selection, &model);
-	if (!glist) {
-		message_display(select_window, GTK_MESSAGE_ERROR, "You must select a filter to import.");
-		return;
-	} else {
-		for (item = glist; item != NULL; item = g_list_next(item)) {
-			path = item->data;
-			index = gtk_tree_path_get_indices(path);
-			assert(index[0] >= 0 && index[0] < apol_vector_get_size(multifilter->filters));
-			filter = apol_vector_get_element(filters, index[0]);
-			assert(filter);
-			filter_window = filter_window_create(window, window->num_filter_windows, filter->name);
-			filter_window_set_values_from_filter(filter_window, filter);
-			multifilter_window_add_filter_window(window, filter_window);
-		}
-	}
-	apol_vector_destroy(&filters, NULL);
-	seaudit_multifilter_destroy(multifilter);
-	g_list_foreach(glist, (GFunc) gtk_tree_path_free, NULL);
-	g_list_free(glist);
-	gtk_widget_destroy(GTK_WIDGET(select_window));
-	multifilter_window_update_buttons_sensitivity(window);
-}
-
-static gboolean multifilter_window_get_selected_on_delete_event(GtkWidget * widget, GdkEvent * event,
-								seaudit_multifilter_t * user_data)
-{
-	seaudit_multifilter_destroy(user_data);
-	gtk_widget_destroy(widget);
-	return TRUE;
-}
-
-static void multifilter_window_on_save_button_pressed(GtkButton * button, multifilter_window_t * user_data)
-{
-	multifilter_window_save_multifilter(user_data, FALSE, TRUE);
-
 }
 
 #endif

@@ -217,6 +217,7 @@ void report_window_run(toplevel_t * top, message_view_t * view)
 	/** keey track of most recently used report filename */
 	static char *filename = NULL;
 
+	memset(&rw, 0, sizeof(rw));
 	report_window_init_dialog(&rw, top);
 	report_window_copy_prefs(&rw, top);
 
