@@ -936,7 +936,7 @@ int qpol_open_policy_from_file_no_rules(const char *path, qpol_policy_t ** polic
 		error = errno;
 		goto err;
 	}
-	/* rule loading only can be diabled for source policies, so will set to zero if souce */
+	/* rule loading only can be diabled for source policies, so will set to zero if source */
 	(*policy)->rules_loaded = 1;
 
 	(*policy)->sh = sepol_handle_create();

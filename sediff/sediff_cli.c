@@ -1134,8 +1134,8 @@ int main(int argc, char **argv)
 		}
 	}
 
-	/* we disable attribute diffs if there is a binary policy
-	 * because attribute names won't make sense */
+	/* we disable attribute diffs if either policy does not support attribute
+	 * names because the fake attribute names won't make sense */
 	if ((flags & POLDIFF_DIFF_ATTRIBS)
 	    && (!(qpol_policy_has_capability(apol_policy_get_qpol(orig_policy), QPOL_CAP_ATTRIB_NAMES))
 		|| !(qpol_policy_has_capability(apol_policy_get_qpol(mod_policy), QPOL_CAP_ATTRIB_NAMES)))) {

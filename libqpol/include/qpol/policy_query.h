@@ -70,14 +70,16 @@ extern "C"
 		QPOL_CAP_ATTRIB_NAMES,
 		/** The policy format stores the syntactic rule type sets. */
 		QPOL_CAP_SYN_RULES,
-		/** The policy format stores rule line numvers (implies QPOL_CAP_SYN_RULES). */
+		/** The policy format stores rule line numbers (implies QPOL_CAP_SYN_RULES). */
 		QPOL_CAP_LINE_NOS,
-		/** The policy version supports conditional policy. */
+		/** The policy version supports booleans and conditional statements. */
 		QPOL_CAP_CONDITIONALS,
 		/** The policy version supports MLS components and statements. */
 		QPOL_CAP_MLS,
 		/** The policy format supports linking loadable modules. */
-		QPOL_CAP_MODULES
+		QPOL_CAP_MODULES,
+		/** The policy was loaded with av/te rules. */
+		QPOL_CAP_RULES_LOADED
 	} qpol_capability_e;
 
 /**
