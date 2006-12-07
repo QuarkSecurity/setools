@@ -32,6 +32,7 @@
 #include <string.h>
 #include <apol/policy-query.h>
 #include <apol/util.h>
+#include <glade/glade.h>
 #include <qpol/policy_query.h>
 #include <qpol/policy_extend.h>
 #include <seaudit/avc_message.h>
@@ -46,6 +47,7 @@
 struct policy_view
 {
 	toplevel_t *top;
+	GladeXML *xml;
 	GtkWindow *window;
 	GtkNotebook *notebook;
 	GtkToggleButton *stype_check, *ttype_check, *class_check;
@@ -249,7 +251,7 @@ static gboolean policy_view_on_line_event(GtkTextTag * tag
 		gtk_text_iter_forward_char(&end);
 	/* subtract 1 because text buffers are indexed from 0 */
 	line = atoi(gtk_text_iter_get_slice(&start, &end)) - 1;
-	view = GTK_TEXT_VIEW(glade_xml_get_widget(toplevel_get_glade_xml(pv->top), "PolicyWindowPolicyText"));
+	view = GTK_TEXT_VIEW(glade_xml_get_widget(pv->xml, "PolicyWindowPolicyText"));
 	assert(view != NULL);
 	gtk_notebook_set_current_page(pv->notebook, 1);
 	gtk_text_buffer_get_start_iter(pv->policy_text, &start);
@@ -305,8 +307,7 @@ static void policy_view_create_rules_buffer(policy_view_t * pv)
 	GtkTextView *rules_textview;
 	GtkTextTagTable *table;
 	GtkTextTag *tag;
-	GladeXML *xml = toplevel_get_glade_xml(pv->top);
-	rules_textview = GTK_TEXT_VIEW(glade_xml_get_widget(xml, "PolicyWindowTERulesResults"));
+	rules_textview = GTK_TEXT_VIEW(glade_xml_get_widget(pv->xml, "PolicyWindowTERulesResults"));
 	assert(rules_textview != NULL);
 	pv->rules_text = gtk_text_buffer_new(NULL);
 	gtk_text_view_set_buffer(rules_textview, pv->rules_text);
@@ -321,7 +322,6 @@ static void policy_view_create_rules_buffer(policy_view_t * pv)
 
 policy_view_t *policy_view_create(toplevel_t * top)
 {
-	GladeXML *xml;
 	GtkWidget *w;
 	GtkTextView *policy_textview;
 	policy_view_t *pv;
@@ -329,24 +329,24 @@ policy_view_t *policy_view_create(toplevel_t * top)
 		return NULL;
 	}
 	pv->top = top;
-	xml = toplevel_get_glade_xml(top);
-	pv->window = GTK_WINDOW(glade_xml_get_widget(xml, "PolicyWindow"));
+	pv->xml = glade_xml_new(toplevel_get_glade_xml(top), "PolicyWindow", NULL);
+	pv->window = GTK_WINDOW(glade_xml_get_widget(pv->xml, "PolicyWindow"));
 	assert(pv->window != NULL);
 	gtk_window_set_transient_for(pv->window, toplevel_get_window(top));
-	pv->notebook = GTK_NOTEBOOK(glade_xml_get_widget(xml, "PolicyWindowNotebook"));
+	pv->notebook = GTK_NOTEBOOK(glade_xml_get_widget(pv->xml, "PolicyWindowNotebook"));
 	assert(pv->notebook != NULL);
 
-	pv->stype_check = GTK_TOGGLE_BUTTON(glade_xml_get_widget(xml, "PolicyWindowSTypeCheck"));
-	pv->ttype_check = GTK_TOGGLE_BUTTON(glade_xml_get_widget(xml, "PolicyWindowTTypeCheck"));
-	pv->class_check = GTK_TOGGLE_BUTTON(glade_xml_get_widget(xml, "PolicyWindowClassCheck"));
+	pv->stype_check = GTK_TOGGLE_BUTTON(glade_xml_get_widget(pv->xml, "PolicyWindowSTypeCheck"));
+	pv->ttype_check = GTK_TOGGLE_BUTTON(glade_xml_get_widget(pv->xml, "PolicyWindowTTypeCheck"));
+	pv->class_check = GTK_TOGGLE_BUTTON(glade_xml_get_widget(pv->xml, "PolicyWindowClassCheck"));
 	assert(pv->stype_check != NULL && pv->ttype_check != NULL && pv->class_check != NULL);
 	g_signal_connect(pv->stype_check, "toggled", G_CALLBACK(policy_view_on_stype_toggle), pv);
 	g_signal_connect(pv->ttype_check, "toggled", G_CALLBACK(policy_view_on_ttype_toggle), pv);
 	g_signal_connect(pv->class_check, "toggled", G_CALLBACK(policy_view_on_class_toggle), pv);
 
-	pv->stype_combo = GTK_COMBO_BOX_ENTRY(glade_xml_get_widget(xml, "PolicyWindowSTypeCombo"));
-	pv->ttype_combo = GTK_COMBO_BOX_ENTRY(glade_xml_get_widget(xml, "PolicyWindowTTypeCombo"));
-	pv->class_combo = GTK_COMBO_BOX_ENTRY(glade_xml_get_widget(xml, "PolicyWindowClassCombo"));
+	pv->stype_combo = GTK_COMBO_BOX_ENTRY(glade_xml_get_widget(pv->xml, "PolicyWindowSTypeCombo"));
+	pv->ttype_combo = GTK_COMBO_BOX_ENTRY(glade_xml_get_widget(pv->xml, "PolicyWindowTTypeCombo"));
+	pv->class_combo = GTK_COMBO_BOX_ENTRY(glade_xml_get_widget(pv->xml, "PolicyWindowClassCombo"));
 	assert(pv->stype_combo != NULL && pv->ttype_combo != NULL && pv->class_combo != NULL);
 	pv->type_model = gtk_list_store_new(1, G_TYPE_STRING);
 	pv->class_model = gtk_list_store_new(1, G_TYPE_STRING);
@@ -357,24 +357,24 @@ policy_view_t *policy_view_create(toplevel_t * top)
 	gtk_combo_box_entry_set_text_column(pv->ttype_combo, 0);
 	gtk_combo_box_entry_set_text_column(pv->class_combo, 0);
 
-	pv->stype_direct = GTK_TOGGLE_BUTTON(glade_xml_get_widget(xml, "PolicyWindowSTypeDirectCheck"));
-	pv->ttype_direct = GTK_TOGGLE_BUTTON(glade_xml_get_widget(xml, "PolicyWindowTTypeDirectCheck"));
+	pv->stype_direct = GTK_TOGGLE_BUTTON(glade_xml_get_widget(pv->xml, "PolicyWindowSTypeDirectCheck"));
+	pv->ttype_direct = GTK_TOGGLE_BUTTON(glade_xml_get_widget(pv->xml, "PolicyWindowTTypeDirectCheck"));
 	assert(pv->stype_direct != NULL && pv->ttype_direct != NULL);
 
 	policy_view_create_rules_buffer(pv);
 
-	policy_textview = GTK_TEXT_VIEW(glade_xml_get_widget(xml, "PolicyWindowPolicyText"));
+	policy_textview = GTK_TEXT_VIEW(glade_xml_get_widget(pv->xml, "PolicyWindowPolicyText"));
 	assert(policy_textview != NULL);
 	pv->policy_text = gtk_text_buffer_new(NULL);
 	gtk_text_view_set_buffer(policy_textview, pv->policy_text);
 
 	/* set up signal handlers for the widgets */
 
-	w = glade_xml_get_widget(xml, "PolicyWindowFindTERulesButton");
+	w = glade_xml_get_widget(pv->xml, "PolicyWindowFindTERulesButton");
 	assert(w != NULL);
 	g_signal_connect(w, "clicked", G_CALLBACK(policy_view_on_find_terules_click), pv);
 
-	w = glade_xml_get_widget(xml, "PolicyWindowCloseButton");
+	w = glade_xml_get_widget(pv->xml, "PolicyWindowCloseButton");
 	assert(w != NULL);
 	g_signal_connect(w, "clicked", G_CALLBACK(policy_view_close), pv);
 	g_signal_connect(pv->window, "delete_event", G_CALLBACK(policy_view_on_delete_event), NULL);

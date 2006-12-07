@@ -28,6 +28,7 @@
 #include "utilgui.h"
 #include <assert.h>
 #include <string.h>
+#include <glade/glade.h>
 
 struct pref_entry
 {
@@ -178,12 +179,13 @@ static void preferences_view_get_from_dialog(GladeXML * xml, preferences_t * pre
 
 int preferences_view_run(toplevel_t * top)
 {
-	GladeXML *xml = toplevel_get_glade_xml(top);
+	GladeXML *xml;
 	preferences_t *prefs = toplevel_get_prefs(top);
 	GtkWidget *dialog, *browse;
 	gint response;
 	size_t i;
 
+	xml = glade_xml_new(toplevel_get_glade_xml(top), "PreferencesWindow", NULL);
 	dialog = glade_xml_get_widget(xml, "PreferencesWindow");
 	assert(dialog != NULL);
 	gtk_window_set_transient_for(GTK_WINDOW(dialog), toplevel_get_window(top));
@@ -194,13 +196,14 @@ int preferences_view_run(toplevel_t * top)
 		pe->xml = xml;
 		pe->parent = GTK_WINDOW(dialog);
 		browse = glade_xml_get_widget(xml, pe->browse_name);
-		g_signal_connect(GTK_OBJECT(browse), "clicked", G_CALLBACK(preferences_view_on_browse_click), (gpointer) pe);
+		g_signal_connect(browse, "clicked", G_CALLBACK(preferences_view_on_browse_click), pe);
 	}
 	response = gtk_dialog_run(GTK_DIALOG(dialog));
-	gtk_widget_hide(dialog);
 	if (response != GTK_RESPONSE_OK) {
+		gtk_widget_destroy(dialog);
 		return 0;
 	}
 	preferences_view_get_from_dialog(xml, prefs);
+	gtk_widget_destroy(dialog);
 	return 1;
 }

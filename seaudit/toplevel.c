@@ -37,6 +37,7 @@
 #include <apol/util.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
+#include <glade/glade.h>
 #include <seaudit/parse.h>
 
 struct toplevel
@@ -47,6 +48,8 @@ struct toplevel
 	/** vector of message_view_t that are in the toplevel's notebook */
 	apol_vector_t *views;
 	GladeXML *xml;
+	/** filename for glade file */
+	char *xml_filename;
 	/** toplevel window widget */
 	GtkWindow *w;
 	GtkNotebook *notebook;
@@ -361,7 +364,6 @@ static void init_icons(toplevel_t * top)
 toplevel_t *toplevel_create(seaudit_t * s)
 {
 	toplevel_t *top;
-	char *path;
 	GtkWidget *vbox;
 	int error = 0;
 
@@ -371,12 +373,12 @@ toplevel_t *toplevel_create(seaudit_t * s)
 	}
 	top->s = s;
 	top->next_model_number = 1;
-	if ((path = apol_file_find_path("seaudit.glade")) == NULL) {
+	if ((top->xml_filename = apol_file_find_path("seaudit.glade")) == NULL ||
+	    (top->xml = glade_xml_new(top->xml_filename, "TopLevel", NULL)) == NULL) {
+		fprintf(stderr, "Could not open seaudit.glade.\n");
 		error = EIO;
 		goto cleanup;
 	}
-	top->xml = glade_xml_new(path, NULL, NULL);
-	free(path);
 	top->w = GTK_WINDOW(glade_xml_get_widget(top->xml, "TopLevel"));
 	gtk_object_set_data(GTK_OBJECT(top->w), "toplevel", top);
 	init_icons(top);
@@ -420,6 +422,7 @@ void toplevel_destroy(toplevel_t ** top)
 	if (top != NULL && *top != NULL) {
 		policy_view_destroy(&(*top)->pv);
 		apol_vector_destroy(&(*top)->views, message_view_free);
+		free((*top)->xml_filename);
 		g_free((*top)->view_filename);
 		progress_destroy(&(*top)->progress);
 		if ((*top)->w != NULL) {
@@ -678,9 +681,9 @@ apol_policy_t *toplevel_get_policy(toplevel_t * top)
 	return seaudit_get_policy(top->s);
 }
 
-GladeXML *toplevel_get_glade_xml(toplevel_t * top)
+char *toplevel_get_glade_xml(toplevel_t * top)
 {
-	return top->xml;
+	return top->xml_filename;
 }
 
 progress_t *toplevel_get_progress(toplevel_t * top)

@@ -29,7 +29,6 @@ typedef struct toplevel toplevel_t;
 
 #include "progress.h"
 #include "seaudit.h"
-#include <glade/glade.h>
 #include <gtk/gtk.h>
 #include <seaudit/message.h>
 
@@ -128,14 +127,13 @@ seaudit_log_t *toplevel_get_log(toplevel_t * top);
 apol_policy_t *toplevel_get_policy(toplevel_t * top);
 
 /**
- * Return the glade XML object, so that other glade objects may be
- * created/modified.
+ * Return the filename containing seaudit's glade file.
  *
  * @param top Toplevel containing glade XML declarations.
  *
- * @return Glade XML declarations.
+ * @return Name of the glade file.  Do not modify this string.
  */
-GladeXML *toplevel_get_glade_xml(toplevel_t * top);
+char *toplevel_get_glade_xml(toplevel_t * top);
 
 /**
  * Return the progress object, so that sub-windows may also show the

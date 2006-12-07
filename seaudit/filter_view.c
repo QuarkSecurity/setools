@@ -29,6 +29,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
+#include <glade/glade.h>
 
 struct context_item
 {
@@ -40,6 +41,7 @@ struct filter_view
 {
 	toplevel_t *top;
 	seaudit_filter_t *filter;
+	GladeXML *xml;
 
 	GtkDialog *dialog;
 
@@ -51,6 +53,7 @@ struct filter_view
 
 	GtkEntry *ipaddr_entry, *port_entry, *netif_entry, *exe_entry, *path_entry, *host_entry, *comm_entry;
 	GtkComboBox *message_combo;
+	GtkButton *other_clear_button;
 
 	GtkTextBuffer *description_buffer;
 };
@@ -58,79 +61,81 @@ struct filter_view
 /**
  * Initialize pointers to widgets on the context tab.
  */
-static void filter_view_init_widgets_context(struct filter_view *fv, GladeXML * xml)
+static void filter_view_init_widgets_context(struct filter_view *fv)
 {
-	fv->suser.button = GTK_BUTTON(glade_xml_get_widget(xml, "FilterViewSUserButton"));
-	fv->srole.button = GTK_BUTTON(glade_xml_get_widget(xml, "FilterViewSRoleButton"));
-	fv->stype.button = GTK_BUTTON(glade_xml_get_widget(xml, "FilterViewSTypeButton"));
-	fv->tuser.button = GTK_BUTTON(glade_xml_get_widget(xml, "FilterViewTUserButton"));
-	fv->trole.button = GTK_BUTTON(glade_xml_get_widget(xml, "FilterViewTRoleButton"));
-	fv->ttype.button = GTK_BUTTON(glade_xml_get_widget(xml, "FilterViewTTypeButton"));
-	fv->obj_class.button = GTK_BUTTON(glade_xml_get_widget(xml, "FilterViewClassButton"));
+	fv->suser.button = GTK_BUTTON(glade_xml_get_widget(fv->xml, "FilterViewSUserButton"));
+	fv->srole.button = GTK_BUTTON(glade_xml_get_widget(fv->xml, "FilterViewSRoleButton"));
+	fv->stype.button = GTK_BUTTON(glade_xml_get_widget(fv->xml, "FilterViewSTypeButton"));
+	fv->tuser.button = GTK_BUTTON(glade_xml_get_widget(fv->xml, "FilterViewTUserButton"));
+	fv->trole.button = GTK_BUTTON(glade_xml_get_widget(fv->xml, "FilterViewTRoleButton"));
+	fv->ttype.button = GTK_BUTTON(glade_xml_get_widget(fv->xml, "FilterViewTTypeButton"));
+	fv->obj_class.button = GTK_BUTTON(glade_xml_get_widget(fv->xml, "FilterViewClassButton"));
 	assert(fv->suser.button != NULL && fv->srole.button != NULL && fv->stype.button != NULL &&
 	       fv->tuser.button != NULL && fv->trole.button != NULL && fv->ttype.button != NULL && fv->obj_class.button != NULL);
 
-	fv->suser.entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewSUserEntry"));
-	fv->srole.entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewSRoleEntry"));
-	fv->stype.entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewSTypeEntry"));
-	fv->tuser.entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewTUserEntry"));
-	fv->trole.entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewTRoleEntry"));
-	fv->ttype.entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewTTypeEntry"));
-	fv->obj_class.entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewClassEntry"));
+	fv->suser.entry = GTK_ENTRY(glade_xml_get_widget(fv->xml, "FilterViewSUserEntry"));
+	fv->srole.entry = GTK_ENTRY(glade_xml_get_widget(fv->xml, "FilterViewSRoleEntry"));
+	fv->stype.entry = GTK_ENTRY(glade_xml_get_widget(fv->xml, "FilterViewSTypeEntry"));
+	fv->tuser.entry = GTK_ENTRY(glade_xml_get_widget(fv->xml, "FilterViewTUserEntry"));
+	fv->trole.entry = GTK_ENTRY(glade_xml_get_widget(fv->xml, "FilterViewTRoleEntry"));
+	fv->ttype.entry = GTK_ENTRY(glade_xml_get_widget(fv->xml, "FilterViewTTypeEntry"));
+	fv->obj_class.entry = GTK_ENTRY(glade_xml_get_widget(fv->xml, "FilterViewClassEntry"));
 	assert(fv->suser.entry != NULL && fv->srole.entry != NULL && fv->stype.entry != NULL &&
 	       fv->tuser.entry != NULL && fv->trole.entry != NULL && fv->ttype.entry != NULL && fv->obj_class.entry != NULL);
 
-	fv->context_clear_button = GTK_BUTTON(glade_xml_get_widget(xml, "FilterViewContextClearButton"));
+	fv->context_clear_button = GTK_BUTTON(glade_xml_get_widget(fv->xml, "FilterViewContextClearButton"));
 	assert(fv->context_clear_button != NULL);
 }
 
 /**
  * Initialize pointers to widgets on the other tab.
  */
-static void filter_view_init_widgets_other(struct filter_view *fv, GladeXML * xml)
+static void filter_view_init_widgets_other(struct filter_view *fv)
 {
-	fv->ipaddr_entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewIPAddrEntry"));
-	fv->port_entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewPortEntry"));
-	fv->netif_entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewNetIfEntry"));
+	fv->ipaddr_entry = GTK_ENTRY(glade_xml_get_widget(fv->xml, "FilterViewIPAddrEntry"));
+	fv->port_entry = GTK_ENTRY(glade_xml_get_widget(fv->xml, "FilterViewPortEntry"));
+	fv->netif_entry = GTK_ENTRY(glade_xml_get_widget(fv->xml, "FilterViewNetIfEntry"));
 	assert(fv->ipaddr_entry != NULL && fv->port_entry != NULL && fv->netif_entry != NULL);
 
-	fv->exe_entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewExeEntry"));
-	fv->path_entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewPathEntry"));
-	fv->host_entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewHostEntry"));
-	fv->comm_entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewCommEntry"));
+	fv->exe_entry = GTK_ENTRY(glade_xml_get_widget(fv->xml, "FilterViewExeEntry"));
+	fv->path_entry = GTK_ENTRY(glade_xml_get_widget(fv->xml, "FilterViewPathEntry"));
+	fv->host_entry = GTK_ENTRY(glade_xml_get_widget(fv->xml, "FilterViewHostEntry"));
+	fv->comm_entry = GTK_ENTRY(glade_xml_get_widget(fv->xml, "FilterViewCommEntry"));
 	assert(fv->exe_entry != NULL && fv->path_entry != NULL && fv->host_entry != NULL && fv->comm_entry != NULL);
 
-	fv->message_combo = GTK_COMBO_BOX(glade_xml_get_widget(xml, "FilterViewMessageCombo"));
+	fv->message_combo = GTK_COMBO_BOX(glade_xml_get_widget(fv->xml, "FilterViewMessageCombo"));
 	assert(fv->message_combo != NULL);
+
+	fv->other_clear_button = GTK_BUTTON(glade_xml_get_widget(fv->xml, "FilterViewOtherClearButton"));
+	assert(fv->other_clear_button != NULL);
 }
 
 /**
  * Initialize pointers to widgets on the date tab.
  */
-static void filter_view_init_widgets_date(struct filter_view *fv, GladeXML * xml)
+static void filter_view_init_widgets_date(struct filter_view *fv)
 {
 }
 
 static void filter_view_init_widgets(struct filter_view *fv)
 {
-	GladeXML *xml = toplevel_get_glade_xml(fv->top);
 	GtkTextView *description_view;
 
-	fv->dialog = GTK_DIALOG(glade_xml_get_widget(xml, "FilterWindow"));
+	fv->dialog = GTK_DIALOG(glade_xml_get_widget(fv->xml, "FilterWindow"));
 	assert(fv->dialog != NULL);
 	gtk_window_set_transient_for(GTK_WINDOW(fv->dialog), toplevel_get_window(fv->top));
 
-	fv->name_entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewNameEntry"));
-	fv->match_combo = GTK_COMBO_BOX(glade_xml_get_widget(xml, "FilterViewMatchCombo"));
+	fv->name_entry = GTK_ENTRY(glade_xml_get_widget(fv->xml, "FilterViewNameEntry"));
+	fv->match_combo = GTK_COMBO_BOX(glade_xml_get_widget(fv->xml, "FilterViewMatchCombo"));
 	assert(fv->name_entry != NULL && fv->match_combo);
 
-	filter_view_init_widgets_context(fv, xml);
-	filter_view_init_widgets_other(fv, xml);
-	filter_view_init_widgets_date(fv, xml);
+	filter_view_init_widgets_context(fv);
+	filter_view_init_widgets_other(fv);
+	filter_view_init_widgets_date(fv);
 
 	fv->description_buffer = gtk_text_buffer_new(NULL);
 	g_object_ref_sink(fv->description_buffer);
-	description_view = GTK_TEXT_VIEW(glade_xml_get_widget(xml, "FilterViewDescView"));
+	description_view = GTK_TEXT_VIEW(glade_xml_get_widget(fv->xml, "FilterViewDescView"));
 	assert(description_view != NULL);
 	gtk_text_view_set_buffer(description_view, fv->description_buffer);
 }
@@ -288,8 +293,13 @@ static void filter_view_apply(struct filter_view *fv)
 
 /******************** signal handlers for dialog ********************/
 
+static void filter_view_on_other_clear_click(GtkButton * widget, gpointer user_data)
+{
+}
+
 static void filter_view_init_signals(struct filter_view *fv)
 {
+	g_signal_connect(fv->other_clear_button, "clicked", G_CALLBACK(filter_view_on_other_clear_click), fv);
 }
 
 /******************** public function below ********************/
@@ -302,6 +312,7 @@ void filter_view_run(seaudit_filter_t * filter, toplevel_t * top, GtkWindow * pa
 	memset(&fv, 0, sizeof(fv));
 	fv.top = top;
 	fv.filter = filter;
+	fv.xml = glade_xml_new(toplevel_get_glade_xml(top), "FilterWindow", NULL);
 	filter_view_init_widgets(&fv);
 	filter_view_init_signals(&fv);
 	filter_view_init_dialog(&fv);
@@ -311,7 +322,7 @@ void filter_view_run(seaudit_filter_t * filter, toplevel_t * top, GtkWindow * pa
 
 	filter_view_apply(&fv);
 	g_object_unref(fv.description_buffer);
-	gtk_widget_hide(GTK_WIDGET(fv.dialog));
+	gtk_widget_destroy(GTK_WIDGET(fv.dialog));
 }
 
 #if 0

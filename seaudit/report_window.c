@@ -29,10 +29,12 @@
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
+#include <glade/glade.h>
 #include <seaudit/report.h>
 
 struct report_window
 {
+	GladeXML *xml;
 	GtkDialog *dialog;
 	GtkRadioButton *all_messages_radio, *text_radio;
 	GtkToggleButton *malformed_toggle, *use_stylesheet_toggle;
@@ -102,27 +104,25 @@ static void report_window_on_config_browse_click(GtkWidget * widget, gpointer us
  */
 static void report_window_init_dialog(struct report_window *rw, toplevel_t * top)
 {
-	GladeXML *xml = toplevel_get_glade_xml(top);
-
-	rw->dialog = GTK_DIALOG(glade_xml_get_widget(xml, "ReportWindow"));
+	rw->dialog = GTK_DIALOG(glade_xml_get_widget(rw->xml, "ReportWindow"));
 	assert(rw->dialog != NULL);
 	gtk_window_set_transient_for(GTK_WINDOW(rw->dialog), toplevel_get_window(top));
 
-	rw->all_messages_radio = GTK_RADIO_BUTTON(glade_xml_get_widget(xml, "ReportWindowAllMessagesRadio"));
-	rw->malformed_toggle = GTK_TOGGLE_BUTTON(glade_xml_get_widget(xml, "ReportWindowMalformedCheck"));
+	rw->all_messages_radio = GTK_RADIO_BUTTON(glade_xml_get_widget(rw->xml, "ReportWindowAllMessagesRadio"));
+	rw->malformed_toggle = GTK_TOGGLE_BUTTON(glade_xml_get_widget(rw->xml, "ReportWindowMalformedCheck"));
 	assert(rw->all_messages_radio != NULL && rw->malformed_toggle != NULL);
 
-	rw->text_radio = GTK_RADIO_BUTTON(glade_xml_get_widget(xml, "ReportWindowTextRadio"));
-	rw->use_stylesheet_toggle = GTK_TOGGLE_BUTTON(glade_xml_get_widget(xml, "ReportWindowUseStylesheetCheck"));
+	rw->text_radio = GTK_RADIO_BUTTON(glade_xml_get_widget(rw->xml, "ReportWindowTextRadio"));
+	rw->use_stylesheet_toggle = GTK_TOGGLE_BUTTON(glade_xml_get_widget(rw->xml, "ReportWindowUseStylesheetCheck"));
 	assert(rw->text_radio != NULL && rw->use_stylesheet_toggle != NULL);
 
-	rw->stylesheet_label = glade_xml_get_widget(xml, "ReportWindowStylesheetLabel");
-	rw->stylesheet_entry = GTK_ENTRY(glade_xml_get_widget(xml, "ReportWindowStylesheetEntry"));
-	rw->stylesheet_browse = glade_xml_get_widget(xml, "ReportWindowStylesheetBrowse");
+	rw->stylesheet_label = glade_xml_get_widget(rw->xml, "ReportWindowStylesheetLabel");
+	rw->stylesheet_entry = GTK_ENTRY(glade_xml_get_widget(rw->xml, "ReportWindowStylesheetEntry"));
+	rw->stylesheet_browse = glade_xml_get_widget(rw->xml, "ReportWindowStylesheetBrowse");
 	assert(rw->stylesheet_label != NULL && rw->stylesheet_entry && rw->stylesheet_browse);
 
-	rw->config_entry = GTK_ENTRY(glade_xml_get_widget(xml, "ReportWindowConfigEntry"));
-	rw->config_browse = glade_xml_get_widget(xml, "ReportWindowConfigBrowse");
+	rw->config_entry = GTK_ENTRY(glade_xml_get_widget(rw->xml, "ReportWindowConfigEntry"));
+	rw->config_browse = glade_xml_get_widget(rw->xml, "ReportWindowConfigBrowse");
 	assert(rw->config_entry != NULL && rw->config_browse != NULL);
 }
 
@@ -218,6 +218,7 @@ void report_window_run(toplevel_t * top, message_view_t * view)
 	static char *filename = NULL;
 
 	memset(&rw, 0, sizeof(rw));
+	rw.xml = glade_xml_new(toplevel_get_glade_xml(top), "ReportWindow", NULL);
 	report_window_init_dialog(&rw, top);
 	report_window_copy_prefs(&rw, top);
 
@@ -245,5 +246,5 @@ void report_window_run(toplevel_t * top, message_view_t * view)
 			break;
 		}
 	} while (1);
-	gtk_widget_hide(GTK_WIDGET(rw.dialog));
+	gtk_widget_destroy(GTK_WIDGET(rw.dialog));
 }

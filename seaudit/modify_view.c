@@ -31,11 +31,13 @@
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
+#include <glade/glade.h>
 
 struct modify_view
 {
 	toplevel_t *top;
 	message_view_t *view;
+	GladeXML *xml;
 	/** the model currently being modified -- note that this is a
          * deep copy of the message_view's model */
 	seaudit_model_t *model;
@@ -197,29 +199,27 @@ static void modify_view_on_export_click(GtkButton * button __attribute__ ((unuse
  */
 static void modify_view_init_widgets(struct modify_view *mv)
 {
-	GladeXML *xml = toplevel_get_glade_xml(mv->top);
-
-	mv->dialog = GTK_DIALOG(glade_xml_get_widget(xml, "ModifyViewWindow"));
+	mv->dialog = GTK_DIALOG(glade_xml_get_widget(mv->xml, "ModifyViewWindow"));
 	assert(mv->dialog != NULL);
 	gtk_window_set_transient_for(GTK_WINDOW(mv->dialog), toplevel_get_window(mv->top));
 
-	mv->name_entry = GTK_ENTRY(glade_xml_get_widget(xml, "ModifyViewNameEntry"));
+	mv->name_entry = GTK_ENTRY(glade_xml_get_widget(mv->xml, "ModifyViewNameEntry"));
 	assert(mv->name_entry != NULL);
 
-	mv->visible_combo = GTK_COMBO_BOX(glade_xml_get_widget(xml, "ModifyViewVisibleCombo"));
-	mv->match_combo = GTK_COMBO_BOX(glade_xml_get_widget(xml, "ModifyViewMatchCombo"));
+	mv->visible_combo = GTK_COMBO_BOX(glade_xml_get_widget(mv->xml, "ModifyViewVisibleCombo"));
+	mv->match_combo = GTK_COMBO_BOX(glade_xml_get_widget(mv->xml, "ModifyViewMatchCombo"));
 	assert(mv->visible_combo != NULL && mv->match_combo != NULL);
 
-	mv->filter_view = GTK_TREE_VIEW(glade_xml_get_widget(xml, "ModifyViewFilterView"));
+	mv->filter_view = GTK_TREE_VIEW(glade_xml_get_widget(mv->xml, "ModifyViewFilterView"));
 	assert(mv->filter_view != NULL);
 	mv->filter_store = gtk_list_store_new(2, G_TYPE_POINTER, G_TYPE_STRING);
 	gtk_tree_view_set_model(mv->filter_view, GTK_TREE_MODEL(mv->filter_store));
 
-	mv->add_button = GTK_BUTTON(glade_xml_get_widget(xml, "ModifyViewAddButton"));
-	mv->edit_button = GTK_BUTTON(glade_xml_get_widget(xml, "ModifyViewEditButton"));
-	mv->remove_button = GTK_BUTTON(glade_xml_get_widget(xml, "ModifyViewRemoveButton"));
-	mv->import_button = GTK_BUTTON(glade_xml_get_widget(xml, "ModifyViewImportButton"));
-	mv->export_button = GTK_BUTTON(glade_xml_get_widget(xml, "ModifyViewExportButton"));
+	mv->add_button = GTK_BUTTON(glade_xml_get_widget(mv->xml, "ModifyViewAddButton"));
+	mv->edit_button = GTK_BUTTON(glade_xml_get_widget(mv->xml, "ModifyViewEditButton"));
+	mv->remove_button = GTK_BUTTON(glade_xml_get_widget(mv->xml, "ModifyViewRemoveButton"));
+	mv->import_button = GTK_BUTTON(glade_xml_get_widget(mv->xml, "ModifyViewImportButton"));
+	mv->export_button = GTK_BUTTON(glade_xml_get_widget(mv->xml, "ModifyViewExportButton"));
 	assert(mv->add_button != NULL && mv->edit_button != NULL && mv->remove_button != NULL &&
 	       mv->import_button != NULL && mv->export_button != NULL);
 }
@@ -232,10 +232,7 @@ static void modify_view_init_signals(struct modify_view *mv)
 {
 	GtkCellRenderer *renderer;
 	GtkTreeViewColumn *column;
-	static int modify_view_signals_initialized = 0;
-	if (modify_view_signals_initialized) {
-		return;
-	}
+	GtkTreeSelection *selection;
 
 	renderer = gtk_cell_renderer_text_new();
 	column = gtk_tree_view_column_new_with_attributes("Filter names", renderer, "text", 1, NULL);
@@ -245,13 +242,15 @@ static void modify_view_init_signals(struct modify_view *mv)
 	gtk_tree_view_column_set_visible(column, TRUE);
 	gtk_tree_view_append_column(mv->filter_view, column);
 
+	selection = gtk_tree_view_get_selection(mv->filter_view);
+	gtk_tree_selection_set_mode(selection, GTK_SELECTION_BROWSE);
+	g_signal_connect(selection, "changed", G_CALLBACK(modify_view_on_selection_change), mv);
+
 	g_signal_connect(mv->add_button, "clicked", G_CALLBACK(modify_view_on_add_click), mv);
 	g_signal_connect(mv->edit_button, "clicked", G_CALLBACK(modify_view_on_edit_click), mv);
 	g_signal_connect(mv->remove_button, "clicked", G_CALLBACK(modify_view_on_remove_click), mv);
 	g_signal_connect(mv->import_button, "clicked", G_CALLBACK(modify_view_on_import_click), mv);
 	g_signal_connect(mv->export_button, "clicked", G_CALLBACK(modify_view_on_export_click), mv);
-
-	modify_view_signals_initialized = 1;
 }
 
 /**
@@ -281,13 +280,12 @@ void modify_view_run(toplevel_t * top, message_view_t * view)
 {
 	struct modify_view mv;
 	seaudit_model_t *orig_model = message_view_get_model(view);
-	GtkTreeSelection *selection;
-	gulong handler_id;
 	gint response;
 
 	memset(&mv, 0, sizeof(mv));
 	mv.top = top;
 	mv.view = view;
+	mv.xml = glade_xml_new(toplevel_get_glade_xml(top), "ModifyViewWindow", NULL);
 	mv.filter_filename = NULL;
 	if ((mv.model = seaudit_model_create_from_model(orig_model)) == NULL) {
 		toplevel_ERR(mv.top, "Error duplicating model: %s", strerror(errno));
@@ -296,15 +294,6 @@ void modify_view_run(toplevel_t * top, message_view_t * view)
 	modify_view_init_widgets(&mv);
 	modify_view_init_signals(&mv);
 	modify_view_init_dialog(&mv);
-
-	/* add a callback to watch for selection changes.  note that
-	 * this handler needs to be removed upon exiting this
-	 * function, for the handler will execute the next time the
-	 * dialog is created -- but its user_data will be pointing to
-	 * a *previous* instance of struct modify_view on the stack */
-	selection = gtk_tree_view_get_selection(mv.filter_view);
-	gtk_tree_selection_set_mode(selection, GTK_SELECTION_BROWSE);
-	handler_id = g_signal_connect(selection, "changed", G_CALLBACK(modify_view_on_selection_change), &mv);
 
 	do {
 		response = gtk_dialog_run(mv.dialog);
@@ -325,12 +314,11 @@ void modify_view_run(toplevel_t * top, message_view_t * view)
 		}
 	} while (response == GTK_RESPONSE_APPLY);
 
-	g_signal_handler_disconnect(selection, handler_id);
-	gtk_widget_hide(GTK_WIDGET(mv.dialog));
 	if (response == GTK_RESPONSE_OK) {
 		message_view_set_model(mv.view, mv.model);
 	} else {
 		seaudit_model_destroy(&mv.model);
 	}
+	gtk_widget_destroy(GTK_WIDGET(mv.dialog));
 	g_object_unref(mv.filter_store);
 }
