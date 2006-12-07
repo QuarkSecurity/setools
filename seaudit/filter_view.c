@@ -1,3 +1,321 @@
+/**
+ *  @file modify_view.c
+ *  Run the dialog to modify a view.
+ *
+ *  @author Jeremy A. Mowery jmowery@tresys.com
+ *  @author Jason Tang jtang@tresys.com
+ *
+ *  Copyright (C) 2004-2007 Tresys Technology, LLC
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+#include <config.h>
+
+#include "filter_view.h"
+
+#include <assert.h>
+#include <errno.h>
+#include <string.h>
+
+struct context_item
+{
+	GtkButton *button;
+	GtkEntry *entry;
+};
+
+struct filter_view
+{
+	toplevel_t *top;
+	seaudit_filter_t *filter;
+
+	GtkDialog *dialog;
+
+	GtkEntry *name_entry;
+	GtkComboBox *match_combo;
+
+	struct context_item suser, srole, stype, tuser, trole, ttype, obj_class;
+	GtkButton *context_clear_button;
+
+	GtkEntry *ipaddr_entry, *port_entry, *netif_entry, *exe_entry, *path_entry, *host_entry, *comm_entry;
+	GtkComboBox *message_combo;
+
+	GtkTextBuffer *description_buffer;
+};
+
+/**
+ * Initialize pointers to widgets on the context tab.
+ */
+static void filter_view_init_widgets_context(struct filter_view *fv, GladeXML * xml)
+{
+	fv->suser.button = GTK_BUTTON(glade_xml_get_widget(xml, "FilterViewSUserButton"));
+	fv->srole.button = GTK_BUTTON(glade_xml_get_widget(xml, "FilterViewSRoleButton"));
+	fv->stype.button = GTK_BUTTON(glade_xml_get_widget(xml, "FilterViewSTypeButton"));
+	fv->tuser.button = GTK_BUTTON(glade_xml_get_widget(xml, "FilterViewTUserButton"));
+	fv->trole.button = GTK_BUTTON(glade_xml_get_widget(xml, "FilterViewTRoleButton"));
+	fv->ttype.button = GTK_BUTTON(glade_xml_get_widget(xml, "FilterViewTTypeButton"));
+	fv->obj_class.button = GTK_BUTTON(glade_xml_get_widget(xml, "FilterViewClassButton"));
+	assert(fv->suser.button != NULL && fv->srole.button != NULL && fv->stype.button != NULL &&
+	       fv->tuser.button != NULL && fv->trole.button != NULL && fv->ttype.button != NULL && fv->obj_class.button != NULL);
+
+	fv->suser.entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewSUserEntry"));
+	fv->srole.entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewSRoleEntry"));
+	fv->stype.entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewSTypeEntry"));
+	fv->tuser.entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewTUserEntry"));
+	fv->trole.entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewTRoleEntry"));
+	fv->ttype.entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewTTypeEntry"));
+	fv->obj_class.entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewClassEntry"));
+	assert(fv->suser.entry != NULL && fv->srole.entry != NULL && fv->stype.entry != NULL &&
+	       fv->tuser.entry != NULL && fv->trole.entry != NULL && fv->ttype.entry != NULL && fv->obj_class.entry != NULL);
+
+	fv->context_clear_button = GTK_BUTTON(glade_xml_get_widget(xml, "FilterViewContextClearButton"));
+	assert(fv->context_clear_button != NULL);
+}
+
+/**
+ * Initialize pointers to widgets on the other tab.
+ */
+static void filter_view_init_widgets_other(struct filter_view *fv, GladeXML * xml)
+{
+	fv->ipaddr_entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewIPAddrEntry"));
+	fv->port_entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewPortEntry"));
+	fv->netif_entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewNetIfEntry"));
+	assert(fv->ipaddr_entry != NULL && fv->port_entry != NULL && fv->netif_entry != NULL);
+
+	fv->exe_entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewExeEntry"));
+	fv->path_entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewPathEntry"));
+	fv->host_entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewHostEntry"));
+	fv->comm_entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewCommEntry"));
+	assert(fv->exe_entry != NULL && fv->path_entry != NULL && fv->host_entry != NULL && fv->comm_entry != NULL);
+
+	fv->message_combo = GTK_COMBO_BOX(glade_xml_get_widget(xml, "FilterViewMessageCombo"));
+	assert(fv->message_combo != NULL);
+}
+
+/**
+ * Initialize pointers to widgets on the date tab.
+ */
+static void filter_view_init_widgets_date(struct filter_view *fv, GladeXML * xml)
+{
+}
+
+static void filter_view_init_widgets(struct filter_view *fv)
+{
+	GladeXML *xml = toplevel_get_glade_xml(fv->top);
+	GtkTextView *description_view;
+
+	fv->dialog = GTK_DIALOG(glade_xml_get_widget(xml, "FilterWindow"));
+	assert(fv->dialog != NULL);
+	gtk_window_set_transient_for(GTK_WINDOW(fv->dialog), toplevel_get_window(fv->top));
+
+	fv->name_entry = GTK_ENTRY(glade_xml_get_widget(xml, "FilterViewNameEntry"));
+	fv->match_combo = GTK_COMBO_BOX(glade_xml_get_widget(xml, "FilterViewMatchCombo"));
+	assert(fv->name_entry != NULL && fv->match_combo);
+
+	filter_view_init_widgets_context(fv, xml);
+	filter_view_init_widgets_other(fv, xml);
+	filter_view_init_widgets_date(fv, xml);
+
+	fv->description_buffer = gtk_text_buffer_new(NULL);
+	g_object_ref_sink(fv->description_buffer);
+	description_view = GTK_TEXT_VIEW(glade_xml_get_widget(xml, "FilterViewDescView"));
+	assert(description_view != NULL);
+	gtk_text_view_set_buffer(description_view, fv->description_buffer);
+}
+
+/********** functions that copies filter object values to widget **********/
+
+/**
+ * If the entry is empty, then call the modifier function passing NULL
+ * as the second parameter.  Else call the function with the entry's
+ * contents.
+ */
+static void filter_view_init_entry(struct filter_view *fv, char *(*accessor) (seaudit_filter_t *), GtkEntry * entry)
+{
+	char *s = accessor(fv->filter);
+	if (s == NULL) {
+		s = "";
+	}
+	gtk_entry_set_text(entry, s);
+}
+
+static void filter_view_init_other(struct filter_view *fv)
+{
+	char s[32];
+	filter_view_init_entry(fv, seaudit_filter_get_ipaddress, fv->ipaddr_entry);
+	if (seaudit_filter_get_port(fv->filter) <= 0) {
+		s[0] = '\0';
+	} else {
+		snprintf(s, 32, "%d", seaudit_filter_get_port(fv->filter));
+	}
+	gtk_entry_set_text(fv->port_entry, s);
+	filter_view_init_entry(fv, seaudit_filter_get_netif, fv->netif_entry);
+	filter_view_init_entry(fv, seaudit_filter_get_executable, fv->exe_entry);
+	filter_view_init_entry(fv, seaudit_filter_get_path, fv->path_entry);
+	filter_view_init_entry(fv, seaudit_filter_get_host, fv->host_entry);
+	filter_view_init_entry(fv, seaudit_filter_get_command, fv->comm_entry);
+	switch (seaudit_filter_get_message_type(fv->filter)) {
+	case SEAUDIT_AVC_DENIED:
+		gtk_combo_box_set_active(fv->message_combo, 1);
+		break;
+	case SEAUDIT_AVC_GRANTED:
+		gtk_combo_box_set_active(fv->message_combo, 2);
+		break;
+	default:
+		gtk_combo_box_set_active(fv->message_combo, 0);
+	}
+}
+
+/**
+ * Copy values from seaudit filter object to GTK+ widgets.
+ */
+static void filter_view_init_dialog(struct filter_view *fv)
+{
+	char *name = seaudit_filter_get_name(fv->filter);
+	char *desc = seaudit_filter_get_description(fv->filter);;
+	if (name == NULL) {
+		name = "Untitled";
+	}
+	gtk_entry_set_text(fv->name_entry, name);
+	gtk_combo_box_set_active(fv->match_combo, seaudit_filter_get_match(fv->filter));
+
+	filter_view_init_other(fv);
+
+	if (desc == NULL) {
+		desc = "";
+	}
+	gtk_text_buffer_set_text(fv->description_buffer, desc, -1);
+}
+
+/********** functions that copies widget values to filter object **********/
+
+/**
+ * If the entry is empty, then call the modifier function passing NULL
+ * as the second parameter.  Else call the function with the entry's
+ * contents.
+ */
+static void filter_view_apply_entry(struct filter_view *fv, GtkEntry * entry, int (*modifier) (seaudit_filter_t *, const char *))
+{
+	const char *s = gtk_entry_get_text(entry);
+	if (strcmp(s, "") == 0) {
+		s = NULL;
+	}
+	if (modifier(fv->filter, s) < 0) {
+		toplevel_ERR(fv->top, "Error setting filter: %s", strerror(errno));
+	}
+}
+
+/**
+ * Copy values from the other tab to filter object.
+ */
+static void filter_view_apply_other(struct filter_view *fv)
+{
+	const char *s;
+	int port = 0;
+	seaudit_avc_message_type_e message_type;
+
+	filter_view_apply_entry(fv, fv->ipaddr_entry, seaudit_filter_set_ipaddress);
+	s = gtk_entry_get_text(fv->port_entry);
+	if (strcmp(s, "") != 0) {
+		port = atoi(s);
+	}
+	if (seaudit_filter_set_port(fv->filter, port) < 0) {
+		toplevel_ERR(fv->top, "Error setting filter: %s", strerror(errno));
+		return;
+	}
+	filter_view_apply_entry(fv, fv->netif_entry, seaudit_filter_set_netif);
+	filter_view_apply_entry(fv, fv->exe_entry, seaudit_filter_set_executable);
+	filter_view_apply_entry(fv, fv->path_entry, seaudit_filter_set_path);
+	filter_view_apply_entry(fv, fv->host_entry, seaudit_filter_set_host);
+	filter_view_apply_entry(fv, fv->comm_entry, seaudit_filter_set_command);
+	switch (gtk_combo_box_get_active(fv->message_combo)) {
+	case 1:
+		message_type = SEAUDIT_AVC_DENIED;
+		break;
+	case 2:
+		message_type = SEAUDIT_AVC_GRANTED;
+		break;
+	default:
+		message_type = SEAUDIT_AVC_UNKNOWN;
+	}
+	if (seaudit_filter_set_message_type(fv->filter, message_type) < 0) {
+		toplevel_ERR(fv->top, "Error setting filter: %s", strerror(errno));
+		return;
+	}
+}
+
+/**
+ * Copy values from GTK+ widgets to the seaudit filter object.
+ */
+static void filter_view_apply(struct filter_view *fv)
+{
+	GtkTextIter start, end;
+	char *s;
+	seaudit_filter_match_e match = SEAUDIT_FILTER_MATCH_ALL;
+
+	filter_view_apply_entry(fv, fv->name_entry, seaudit_filter_set_name);
+	if (gtk_combo_box_get_active(fv->match_combo) == 1) {
+		match = SEAUDIT_FILTER_MATCH_ANY;
+	}
+	if (seaudit_filter_set_match(fv->filter, match) < 0) {
+		toplevel_ERR(fv->top, "Error setting filter: %s", strerror(errno));
+	}
+
+	filter_view_apply_other(fv);
+	gtk_text_buffer_get_bounds(fv->description_buffer, &start, &end);
+	s = gtk_text_buffer_get_text(fv->description_buffer, &start, &end, FALSE);
+	if (strcmp(s, "") == 0) {
+		free(s);
+		s = NULL;
+	}
+	if (seaudit_filter_set_description(fv->filter, s) < 0) {
+		toplevel_ERR(fv->top, "Error setting filter: %s", strerror(errno));
+	}
+	free(s);
+}
+
+/******************** signal handlers for dialog ********************/
+
+static void filter_view_init_signals(struct filter_view *fv)
+{
+}
+
+/******************** public function below ********************/
+
+void filter_view_run(seaudit_filter_t * filter, toplevel_t * top, GtkWindow * parent)
+{
+	struct filter_view fv;
+	gint response;
+
+	memset(&fv, 0, sizeof(fv));
+	fv.top = top;
+	fv.filter = filter;
+	filter_view_init_widgets(&fv);
+	filter_view_init_signals(&fv);
+	filter_view_init_dialog(&fv);
+	do {
+		response = gtk_dialog_run(fv.dialog);
+	} while (response != GTK_RESPONSE_CLOSE);
+
+	filter_view_apply(&fv);
+	g_object_unref(fv.description_buffer);
+	gtk_widget_hide(GTK_WIDGET(fv.dialog));
+}
+
+#if 0
+
 /* Copyright (C) 2003-2006 Tresys Technology, LLC
  * see file 'COPYING' for use and warranty information */
 
@@ -1136,199 +1454,6 @@ static int filter_window_verify_filter_values(filter_window_t * filter_window)
 	return 0;
 }
 
-static void filter_window_set_title(filter_window_t * filter_window)
-{
-	GString *title;
-
-	if (!filter_window || !filter_window->window)
-		return;
-	title = g_string_new("Edit filter - ");
-	g_string_append(title, filter_window->name->str);
-	gtk_window_set_title(filter_window->window, title->str);
-	g_string_free(title, TRUE);
-}
-
-static void filter_window_set_values(filter_window_t * filter_window)
-{
-	GtkWidget *widget;
-	GtkTextBuffer *buffer;
-
-	filters_select_items_fill_entry(filter_window->src_types_items);
-	filters_select_items_fill_entry(filter_window->src_users_items);
-	filters_select_items_fill_entry(filter_window->src_roles_items);
-	filters_select_items_fill_entry(filter_window->tgt_types_items);
-	filters_select_items_fill_entry(filter_window->tgt_users_items);
-	filters_select_items_fill_entry(filter_window->tgt_roles_items);
-	filters_select_items_fill_entry(filter_window->obj_class_items);
-
-	/* set network address */
-	widget = glade_xml_get_widget(filter_window->xml, "IPAddressEntry");
-	gtk_entry_set_text(GTK_ENTRY(widget), filter_window->ip_address->str);
-
-	/* set network port */
-	widget = glade_xml_get_widget(filter_window->xml, "PortEntry");
-	gtk_entry_set_text(GTK_ENTRY(widget), filter_window->port->str);
-
-	/* set network interface */
-	widget = glade_xml_get_widget(filter_window->xml, "InterfaceEntry");
-	gtk_entry_set_text(GTK_ENTRY(widget), filter_window->interface->str);
-
-	/* set executable */
-	widget = glade_xml_get_widget(filter_window->xml, "ExeEntry");
-	gtk_entry_set_text(GTK_ENTRY(widget), filter_window->executable->str);
-
-	/* set command */
-	widget = glade_xml_get_widget(filter_window->xml, "CommEntry");
-	gtk_entry_set_text(GTK_ENTRY(widget), filter_window->comm->str);
-
-	/* set path */
-	widget = glade_xml_get_widget(filter_window->xml, "PathEntry");
-	gtk_entry_set_text(GTK_ENTRY(widget), filter_window->path->str);
-
-	widget = glade_xml_get_widget(filter_window->xml, "NameEntry");
-	gtk_entry_set_text(GTK_ENTRY(widget), filter_window->name->str);
-	filter_window_set_title(filter_window);
-
-	widget = glade_xml_get_widget(filter_window->xml, "MatchEntry");
-	gtk_entry_set_text(GTK_ENTRY(widget), filter_window->match->str);
-
-	widget = glade_xml_get_widget(filter_window->xml, "NotesTextView");
-	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
-	gtk_text_buffer_set_text(buffer, filter_window->notes->str, strlen(filter_window->notes->str));
-
-	widget = glade_xml_get_widget(filter_window->xml, "HostEntry");
-	gtk_entry_set_text(GTK_ENTRY(widget), filter_window->host->str);
-
-	/* next set the time */
-	if (filter_window->dates) {
-		widget = glade_xml_get_widget(filter_window->xml, "DateStartMonth");
-		gtk_combo_box_set_active(GTK_COMBO_BOX(widget), filter_window->dates->start->tm_mon);
-		widget = glade_xml_get_widget(filter_window->xml, "DateStartDay");
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), filter_window->dates->start->tm_mday);
-		widget = glade_xml_get_widget(filter_window->xml, "DateStartHour");
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), filter_window->dates->start->tm_hour);
-		widget = glade_xml_get_widget(filter_window->xml, "DateStartMinute");
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), filter_window->dates->start->tm_min);
-		widget = glade_xml_get_widget(filter_window->xml, "DateStartSecond");
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), filter_window->dates->start->tm_sec);
-
-		widget = glade_xml_get_widget(filter_window->xml, "DateEndMonth");
-		gtk_combo_box_set_active(GTK_COMBO_BOX(widget), filter_window->dates->end->tm_mon);
-		widget = glade_xml_get_widget(filter_window->xml, "DateEndDay");
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), filter_window->dates->end->tm_mday);
-		widget = glade_xml_get_widget(filter_window->xml, "DateEndHour");
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), filter_window->dates->end->tm_hour);
-		widget = glade_xml_get_widget(filter_window->xml, "DateEndMinute");
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), filter_window->dates->end->tm_min);
-		widget = glade_xml_get_widget(filter_window->xml, "DateEndSecond");
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), filter_window->dates->end->tm_sec);
-
-		switch (filter_window->dates->option) {
-		case SEAUDIT_DT_OPTION_NONE:
-			widget = glade_xml_get_widget(filter_window->xml, "MatchNoneRadio");
-			break;
-		case SEAUDIT_DT_OPTION_BEFORE:
-			widget = glade_xml_get_widget(filter_window->xml, "MatchBeforeRadio");
-			break;
-		case SEAUDIT_DT_OPTION_AFTER:
-			widget = glade_xml_get_widget(filter_window->xml, "MatchAfterRadio");
-			break;
-		default:
-			widget = glade_xml_get_widget(filter_window->xml, "MatchBetweenRadio");
-			break;
-		}
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), TRUE);
-	}
-	widget = glade_xml_get_widget(filter_window->xml, "MsgCombo");
-	gtk_combo_box_set_active(GTK_COMBO_BOX(widget), filter_window->msg);
-
-}
-
-static void filter_window_update_values(filter_window_t * filter_window)
-{
-	GtkWidget *widget;
-	GtkTextBuffer *buffer;
-	GtkTextIter start, end;
-	int rt;
-
-	/* First parse all selection enabled entry boxes, because the user may have typed in the value */
-	filters_select_items_parse_entry(filter_window->src_types_items);
-	filters_select_items_parse_entry(filter_window->src_users_items);
-	filters_select_items_parse_entry(filter_window->src_roles_items);
-	filters_select_items_parse_entry(filter_window->tgt_types_items);
-	filters_select_items_parse_entry(filter_window->tgt_users_items);
-	filters_select_items_parse_entry(filter_window->tgt_roles_items);
-	filters_select_items_parse_entry(filter_window->obj_class_items);
-
-	/* update network address value */
-	widget = glade_xml_get_widget(filter_window->xml, "IPAddressEntry");
-	filter_window->ip_address = g_string_assign(filter_window->ip_address, gtk_entry_get_text(GTK_ENTRY(widget)));
-
-	/* update network port value */
-	widget = glade_xml_get_widget(filter_window->xml, "PortEntry");
-	filter_window->port = g_string_assign(filter_window->port, gtk_entry_get_text(GTK_ENTRY(widget)));
-
-	/* update network interface value */
-	widget = glade_xml_get_widget(filter_window->xml, "InterfaceEntry");
-	filter_window->interface = g_string_assign(filter_window->interface, gtk_entry_get_text(GTK_ENTRY(widget)));
-
-	/* update executable value */
-	widget = glade_xml_get_widget(filter_window->xml, "ExeEntry");
-	filter_window->executable = g_string_assign(filter_window->executable, gtk_entry_get_text(GTK_ENTRY(widget)));
-
-	/* update command value */
-	widget = glade_xml_get_widget(filter_window->xml, "CommEntry");
-	filter_window->comm = g_string_assign(filter_window->comm, gtk_entry_get_text(GTK_ENTRY(widget)));
-
-	/* update path value */
-	widget = glade_xml_get_widget(filter_window->xml, "PathEntry");
-	filter_window->path = g_string_assign(filter_window->path, gtk_entry_get_text(GTK_ENTRY(widget)));
-
-	widget = glade_xml_get_widget(filter_window->xml, "NameEntry");
-	filter_window->name = g_string_assign(filter_window->name, gtk_entry_get_text(GTK_ENTRY(widget)));
-
-	widget = glade_xml_get_widget(filter_window->xml, "MatchEntry");
-	filter_window->match = g_string_assign(filter_window->match, gtk_entry_get_text(GTK_ENTRY(widget)));
-
-	widget = glade_xml_get_widget(filter_window->xml, "HostEntry");
-	filter_window->host = g_string_assign(filter_window->host, gtk_entry_get_text(GTK_ENTRY(widget)));
-
-	/* update message value */
-	widget = glade_xml_get_widget(filter_window->xml, "MsgCombo");
-	filter_window->msg = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-
-	widget = glade_xml_get_widget(filter_window->xml, "NotesTextView");
-	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
-	gtk_text_buffer_get_start_iter(buffer, &start);
-	gtk_text_buffer_get_end_iter(buffer, &end);
-	filter_window->notes = g_string_assign(filter_window->notes, gtk_text_buffer_get_text(buffer, &start, &end, FALSE));
-
-	if (filter_window->dates) {
-		rt = filters_window_update_tm(filter_window, TRUE, filter_window->dates->start);
-		if (rt < 0)
-			return;
-		rt = filters_window_update_tm(filter_window, FALSE, filter_window->dates->end);
-		if (rt < 0)
-			return;
-		filter_window->dates->option = filters_window_get_tm_option(filter_window->xml);
-	}
-
-}
-
-static void filter_window_seaudit_filter_list_free(seaudit_filter_list_t * list)
-{
-	int i;
-
-	if (!list->list)
-		return;
-	for (i = 0; i < list->size; i++)
-		if (list->list[i])
-			free(list->list[i]);
-	if (list->list)
-		free(list->list);
-	return;
-}
-
 /* Note: the caller must free the returned list */
 static seaudit_filter_list_t *filter_window_seaudit_filter_list_get(filters_select_items_t * filters_select_item)
 {
@@ -1383,104 +1508,6 @@ static seaudit_filter_list_t *filter_window_seaudit_filter_list_get(filters_sele
 	return flist;
 }
 
-static void filter_window_clear_other_tab_values(filter_window_t * filter_window)
-{
-	GtkWidget *widget;
-
-	widget = glade_xml_get_widget(filter_window->xml, "IPAddressEntry");
-	g_assert(widget);
-	gtk_entry_set_text(GTK_ENTRY(widget), "");
-
-	/* clear network port */
-	widget = glade_xml_get_widget(filter_window->xml, "PortEntry");
-	g_assert(widget);
-	gtk_entry_set_text(GTK_ENTRY(widget), "");
-
-	/* clear network interface */
-	widget = glade_xml_get_widget(filter_window->xml, "InterfaceEntry");
-	g_assert(widget);
-	gtk_entry_set_text(GTK_ENTRY(widget), "");
-
-	/* clear executable */
-	widget = glade_xml_get_widget(filter_window->xml, "ExeEntry");
-	g_assert(widget);
-	gtk_entry_set_text(GTK_ENTRY(widget), "");
-
-	/* clear command */
-	widget = glade_xml_get_widget(filter_window->xml, "CommEntry");
-	g_assert(widget);
-	gtk_entry_set_text(GTK_ENTRY(widget), "");
-
-	/* clear path */
-	widget = glade_xml_get_widget(filter_window->xml, "PathEntry");
-	g_assert(widget);
-	gtk_entry_set_text(GTK_ENTRY(widget), "");
-
-	/* clear message */
-	widget = glade_xml_get_widget(filter_window->xml, "MsgCombo");
-	g_assert(widget);
-	gtk_combo_box_set_active(GTK_COMBO_BOX(widget), SEAUDIT_MSG_NONE);
-
-}
-
-static void filter_window_clear_context_tab_values(filter_window_t * filter_window)
-{
-	GtkEntry *entry;
-
-	entry = filters_select_items_get_entry(filter_window->src_types_items);
-	g_assert(entry);
-	gtk_entry_set_text(entry, "");
-
-	entry = filters_select_items_get_entry(filter_window->src_users_items);
-	g_assert(entry);
-	gtk_entry_set_text(entry, "");
-
-	entry = filters_select_items_get_entry(filter_window->src_roles_items);
-	g_assert(entry);
-	gtk_entry_set_text(entry, "");
-
-	entry = filters_select_items_get_entry(filter_window->tgt_types_items);
-	g_assert(entry);
-	gtk_entry_set_text(entry, "");
-
-	entry = filters_select_items_get_entry(filter_window->tgt_users_items);
-	g_assert(entry);
-	gtk_entry_set_text(entry, "");
-
-	entry = filters_select_items_get_entry(filter_window->tgt_roles_items);
-	g_assert(entry);
-	gtk_entry_set_text(entry, "");
-
-	entry = filters_select_items_get_entry(filter_window->obj_class_items);
-	g_assert(entry);
-	gtk_entry_set_text(entry, "");
-}
-
-static void filter_window_on_custom_clicked(GtkButton * button, filters_select_items_t * filter_items_list)
-{
-	if (filter_items_list->window != NULL) {
-		/* add anything from the entry to the list stores */
-		filters_select_items_parse_entry(filter_items_list);
-		gtk_window_present(filter_items_list->window);
-		return;
-	}
-	/* add anything from the entry to the list stores */
-	filters_select_items_parse_entry(filter_items_list);
-	filters_select_items_display(filter_items_list, seaudit_app->window->window);
-}
-
-static void filter_window_on_close_button_pressed(GtkButton * button, filter_window_t * filter_window)
-{
-	if (filter_window_verify_filter_values(filter_window) == 0)
-		filter_window_hide(filter_window);
-}
-
-static gboolean filter_window_on_filter_window_destroy(GtkWidget * widget, GdkEvent * event, filter_window_t * filter_window)
-{
-	filter_window_hide(filter_window);
-	return TRUE;
-}
-
 static void filter_window_on_ContextClearButton_clicked(GtkButton * button, filter_window_t * filter_window)
 {
 	filter_window_clear_context_tab_values(filter_window);
@@ -1500,264 +1527,6 @@ static void filter_window_on_month_changed(GtkComboBox * cb, gpointer user_data)
 {
 	filter_window_t *fw = (filter_window_t *) user_data;
 	filter_window_date_update_days(fw->xml);
-}
-
-static gboolean filter_window_name_entry_text_changed(GtkWidget * widget, GdkEventKey * event, filter_window_t * filter_window)
-{
-	const gchar *name;
-
-	name = gtk_entry_get_text(GTK_ENTRY(widget));
-	g_string_assign(filter_window->name, name);
-	filter_window_set_title(filter_window);
-	multifilter_window_set_filter_name_in_list(filter_window->parent, filter_window);
-	return FALSE;
-}
-
-/***************************************************
- * Public member functions for the filter_window object  *
- ***************************************************/
-filter_window_t *filter_window_create(multifilter_window_t * parent, gint parent_index, const char *name)
-{
-	filter_window_t *filter_window;
-	time_t t;
-
-	if (!parent || !name)
-		return NULL;
-
-	filter_window = (filter_window_t *) malloc(sizeof(filter_window_t));
-	if (filter_window == NULL) {
-		fprintf(stderr, "Out of memory.");
-		return NULL;
-	}
-	memset(filter_window, 0, sizeof(filter_window_t));
-
-	filter_window->src_types_items = filters_select_items_create(filter_window, SEAUDIT_SRC_TYPES);
-	filter_window->src_users_items = filters_select_items_create(filter_window, SEAUDIT_SRC_USERS);
-	filter_window->src_roles_items = filters_select_items_create(filter_window, SEAUDIT_SRC_ROLES);
-	filter_window->tgt_types_items = filters_select_items_create(filter_window, SEAUDIT_TGT_TYPES);
-	filter_window->tgt_users_items = filters_select_items_create(filter_window, SEAUDIT_TGT_USERS);
-	filter_window->tgt_roles_items = filters_select_items_create(filter_window, SEAUDIT_TGT_ROLES);
-	filter_window->obj_class_items = filters_select_items_create(filter_window, SEAUDIT_OBJECTS);
-
-	filter_window->ip_address = g_string_new("");
-	filter_window->port = g_string_new("");
-	filter_window->interface = g_string_new("");
-	filter_window->executable = g_string_new("");
-	filter_window->comm = g_string_new("");
-	filter_window->path = g_string_new("");
-	filter_window->match = g_string_new("All");
-	filter_window->notes = g_string_new("");
-	filter_window->host = g_string_new("");
-
-	filter_window->msg = SEAUDIT_MSG_NONE;
-
-	filter_window->window = NULL;
-	filter_window->xml = NULL;
-	filter_window->name = g_string_new(name);
-	filter_window->parent = parent;
-	filter_window->parent_index = parent_index;
-
-	filter_window->dates = (filters_date_item_t *) calloc(1, sizeof(filters_date_item_t));
-	t = time(NULL);
-	filter_window->dates->start = (struct tm *)calloc(1, sizeof(struct tm));
-	filter_window->dates->start = localtime_r(&t, filter_window->dates->start);
-	filter_window->dates->end = (struct tm *)calloc(1, sizeof(struct tm));
-	filter_window->dates->end = localtime_r(&t, filter_window->dates->end);
-
-	/* set the hour/min/secs up so that we have one full day */
-	filter_window->dates->start->tm_hour = 0;
-	filter_window->dates->start->tm_min = 0;
-	filter_window->dates->start->tm_sec = 0;
-
-	filter_window->dates->end->tm_hour = 23;
-	filter_window->dates->end->tm_min = 59;
-	filter_window->dates->end->tm_sec = 59;
-
-	return filter_window;
-}
-
-void filter_window_destroy(filter_window_t * filter_window)
-{
-	if (filter_window == NULL)
-		return;
-
-	filters_select_items_destroy(filter_window->src_types_items);
-	filters_select_items_destroy(filter_window->src_users_items);
-	filters_select_items_destroy(filter_window->src_roles_items);
-
-	filters_select_items_destroy(filter_window->tgt_types_items);
-	filters_select_items_destroy(filter_window->tgt_users_items);
-	filters_select_items_destroy(filter_window->tgt_roles_items);
-
-	filters_select_items_destroy(filter_window->obj_class_items);
-
-	if (filter_window->ip_address)
-		g_string_free(filter_window->ip_address, TRUE);
-	if (filter_window->port)
-		g_string_free(filter_window->port, TRUE);
-	if (filter_window->interface)
-		g_string_free(filter_window->interface, TRUE);
-	if (filter_window->executable)
-		g_string_free(filter_window->executable, TRUE);
-	if (filter_window->comm)
-		g_string_free(filter_window->comm, TRUE);
-	if (filter_window->path)
-		g_string_free(filter_window->path, TRUE);
-	if (filter_window->name)
-		g_string_free(filter_window->name, TRUE);
-	if (filter_window->match)
-		g_string_free(filter_window->match, TRUE);
-	if (filter_window->notes)
-		g_string_free(filter_window->notes, TRUE);
-	if (filter_window->host)
-		g_string_free(filter_window->host, TRUE);
-
-	if (filter_window->window != NULL)
-		gtk_widget_destroy(GTK_WIDGET(filter_window->window));
-	if (filter_window->xml != NULL)
-		g_object_unref(G_OBJECT(filter_window->xml));
-
-	free(filter_window->dates);
-
-	free(filter_window);
-}
-
-void filter_window_hide(filter_window_t * filter_window)
-{
-	if (!filter_window->window)
-		return;
-
-	show_wait_cursor(GTK_WIDGET(filter_window->window));
-	if (filter_window->src_types_items->window) {
-		filters_select_items_on_close_button_clicked(NULL, filter_window->src_types_items);
-		filter_window->src_types_items->window = NULL;
-	}
-	if (filter_window->tgt_types_items->window) {
-		filters_select_items_on_close_button_clicked(NULL, filter_window->tgt_types_items);
-		filter_window->tgt_types_items->window = NULL;
-	}
-	if (filter_window->src_users_items->window) {
-		filters_select_items_on_close_button_clicked(NULL, filter_window->src_users_items);
-		filter_window->src_users_items->window = NULL;
-	}
-	if (filter_window->tgt_users_items->window) {
-		filters_select_items_on_close_button_clicked(NULL, filter_window->tgt_users_items);
-		filter_window->tgt_users_items->window = NULL;
-	}
-	if (filter_window->src_roles_items->window) {
-		filters_select_items_on_close_button_clicked(NULL, filter_window->src_roles_items);
-		filter_window->src_roles_items->window = NULL;
-	}
-	if (filter_window->tgt_roles_items->window) {
-		filters_select_items_on_close_button_clicked(NULL, filter_window->tgt_roles_items);
-		filter_window->tgt_roles_items->window = NULL;
-	}
-	if (filter_window->obj_class_items->window) {
-		filters_select_items_on_close_button_clicked(NULL, filter_window->obj_class_items);
-		filter_window->obj_class_items->window = NULL;
-	}
-	filter_window_update_values(filter_window);
-
-	/* if there is an idle function for this window
-	 * then we must remove it to avoid that function
-	 * being executed after we delete the window.  This
-	 * may happen if the window is closed during a search. */
-	while (g_idle_remove_by_data(filter_window->window)) ;
-
-	gtk_widget_destroy(GTK_WIDGET(filter_window->window));
-	filter_window->window = NULL;
-}
-
-void filter_window_display(filter_window_t * filter_window, GtkWindow * parent)
-{
-	GladeXML *xml;
-	GtkWindow *window;
-	GtkWidget *widget;
-	GString *path;
-	char *dir;
-
-	if (!filter_window || !parent)
-		return;
-
-	if (filter_window->window) {
-		gtk_window_present(filter_window->window);
-		return;
-	}
-	dir = apol_file_find("filter_window.glade");
-	if (!dir) {
-		fprintf(stderr, "could not find filter_window.glade\n");
-		return;
-	}
-	path = g_string_new(dir);
-	free(dir);
-	g_string_append(path, "/filter_window.glade");
-	xml = glade_xml_new(path->str, NULL, NULL);
-	g_string_free(path, TRUE);
-	g_assert(xml);
-
-	window = GTK_WINDOW(glade_xml_get_widget(xml, "FilterWindow"));
-	g_assert(window);
-	/* set this window to be transient on the parent window, so that when it pops up it gets centered on it */
-	/* however to have it "appear" to be centered we have to hide and then show */
-	gtk_window_set_transient_for(window, parent);
-	gtk_window_set_position(window, GTK_WIN_POS_CENTER_ON_PARENT);
-
-	filter_window->window = window;
-	filter_window->xml = xml;
-
-	g_signal_connect(G_OBJECT(window), "delete_event", G_CALLBACK(filter_window_on_filter_window_destroy), filter_window);
-
-	widget = glade_xml_get_widget(filter_window->xml, "CloseButton");
-	g_signal_connect(G_OBJECT(widget), "pressed", G_CALLBACK(filter_window_on_close_button_pressed), filter_window);
-	widget = glade_xml_get_widget(filter_window->xml, "NameEntry");
-	g_signal_connect(G_OBJECT(widget), "key-release-event", G_CALLBACK(filter_window_name_entry_text_changed), filter_window);
-
-	glade_xml_signal_connect_data(xml, "filters_on_src_type_custom_clicked",
-				      G_CALLBACK(filter_window_on_custom_clicked), filter_window->src_types_items);
-	glade_xml_signal_connect_data(xml, "filters_on_src_users_custom_clicked",
-				      G_CALLBACK(filter_window_on_custom_clicked), filter_window->src_users_items);
-	glade_xml_signal_connect_data(xml, "filters_on_src_roles_custom_clicked",
-				      G_CALLBACK(filter_window_on_custom_clicked), filter_window->src_roles_items);
-
-	glade_xml_signal_connect_data(xml, "filters_on_tgt_type_custom_clicked",
-				      G_CALLBACK(filter_window_on_custom_clicked), filter_window->tgt_types_items);
-	glade_xml_signal_connect_data(xml, "filters_on_tgt_users_custom_clicked",
-				      G_CALLBACK(filter_window_on_custom_clicked), filter_window->tgt_users_items);
-	glade_xml_signal_connect_data(xml, "filters_on_tgt_roles_custom_clicked",
-				      G_CALLBACK(filter_window_on_custom_clicked), filter_window->tgt_roles_items);
-
-	glade_xml_signal_connect_data(xml, "filters_on_objs_custom_clicked",
-				      G_CALLBACK(filter_window_on_custom_clicked), filter_window->obj_class_items);
-	glade_xml_signal_connect_data(xml, "filters_on_ContextClearButton_clicked",
-				      G_CALLBACK(filter_window_on_ContextClearButton_clicked), filter_window);
-	glade_xml_signal_connect_data(xml, "filters_on_OtherClearButton_clicked",
-				      G_CALLBACK(filter_window_on_OtherClearButton_clicked), filter_window);
-
-	/* rename vars, or comment to make clear for dates */
-	glade_xml_signal_connect_data(xml, "filters_on_MatchNoneRadio_toggled",
-				      G_CALLBACK(filter_window_on_radio_toggled), filter_window);
-	glade_xml_signal_connect_data(xml, "filters_on_MatchBeforeRadio_toggled",
-				      G_CALLBACK(filter_window_on_radio_toggled), filter_window);
-	glade_xml_signal_connect_data(xml, "filters_on_MatchAfterRadio_toggled",
-				      G_CALLBACK(filter_window_on_radio_toggled), filter_window);
-	glade_xml_signal_connect_data(xml, "filters_on_MatchBetweenRadio_toggled",
-				      G_CALLBACK(filter_window_on_radio_toggled), filter_window);
-
-	glade_xml_signal_connect_data(xml, "filters_on_DateEndMonth_changed",
-				      G_CALLBACK(filter_window_on_month_changed), filter_window);
-
-	glade_xml_signal_connect_data(xml, "filters_on_DateStartMonth_changed",
-				      G_CALLBACK(filter_window_on_month_changed), filter_window);
-
-	widget = glade_xml_get_widget(filter_window->xml, "MsgCombo");
-	g_assert(widget);
-	gtk_combo_box_append_text(GTK_COMBO_BOX(widget), msg_type_strs[SEAUDIT_MSG_NONE]);
-	gtk_combo_box_append_text(GTK_COMBO_BOX(widget), msg_type_strs[SEAUDIT_MSG_AVC_DENIED]);
-	gtk_combo_box_append_text(GTK_COMBO_BOX(widget), msg_type_strs[SEAUDIT_MSG_AVC_GRANTED]);
-	gtk_combo_box_set_active(GTK_COMBO_BOX(widget), filter_window->msg);
-
-	/* Restore previous values and selections for the filter dialog */
-	filter_window_set_values(filter_window);
 }
 
 seaudit_filter_t *filter_window_get_filter(filter_window_t * filter_window)
@@ -2101,3 +1870,5 @@ void filter_window_set_values_from_filter(filter_window_t * filter_window, seaud
 	}
 
 }
+
+#endif

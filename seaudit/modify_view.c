@@ -22,6 +22,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <config.h>
+
+#include "filter_view.h"
 #include "modify_view.h"
 #include "utilgui.h"
 
@@ -101,7 +104,35 @@ static void modify_view_on_selection_change(GtkTreeSelection * selection, gpoint
 	gtk_widget_set_sensitive(GTK_WIDGET(mv->export_button), sens);
 }
 
-static void modify_view_on_remove_click(GtkButton * button, gpointer user_data)
+static void modify_view_on_add_click(GtkButton * button __attribute__ ((unused)), gpointer user_data)
+{
+	struct modify_view *mv = (struct modify_view *)user_data;
+	seaudit_filter_t *filter = NULL;
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(mv->filter_view);
+
+	if ((filter = seaudit_filter_create("Untitled")) == NULL || (seaudit_model_append_filter(mv->model, filter) < 0)) {
+		toplevel_ERR(mv->top, "Error adding new filter: %s", strerror(errno));
+		seaudit_filter_destroy(&filter);
+		return;
+	}
+	/* select the filter that was just created, by removing the
+	 * selection and letting the following function select it */
+	gtk_tree_selection_unselect_all(selection);
+	modify_view_update_filter_store(mv);
+	filter_view_run(filter, mv->top, GTK_WINDOW(mv->dialog));
+	modify_view_update_filter_store(mv);
+}
+
+static void modify_view_on_edit_click(GtkButton * button __attribute__ ((unused)), gpointer user_data)
+{
+	struct modify_view *mv = (struct modify_view *)user_data;
+	seaudit_filter_t *filter = modify_view_get_current_filter(mv);
+	assert(filter != NULL);
+	filter_view_run(filter, mv->top, GTK_WINDOW(mv->dialog));
+	modify_view_update_filter_store(mv);
+}
+
+static void modify_view_on_remove_click(GtkButton * button __attribute__ ((unused)), gpointer user_data)
 {
 	struct modify_view *mv = (struct modify_view *)user_data;
 	seaudit_filter_t *filter = modify_view_get_current_filter(mv);
@@ -113,7 +144,7 @@ static void modify_view_on_remove_click(GtkButton * button, gpointer user_data)
 	modify_view_update_filter_store(mv);
 }
 
-static void modify_view_on_import_click(GtkButton * button, gpointer user_data)
+static void modify_view_on_import_click(GtkButton * button __attribute__ ((unused)), gpointer user_data)
 {
 	struct modify_view *mv = (struct modify_view *)user_data;
 	char *path = util_open_file(GTK_WINDOW(mv->dialog), "Import Filter", mv->filter_filename);
@@ -144,7 +175,7 @@ static void modify_view_on_import_click(GtkButton * button, gpointer user_data)
 	apol_vector_destroy(&filters, NULL);
 }
 
-static void modify_view_on_export_click(GtkButton * button, gpointer user_data)
+static void modify_view_on_export_click(GtkButton * button __attribute__ ((unused)), gpointer user_data)
 {
 	struct modify_view *mv = (struct modify_view *)user_data;
 	char *path = util_save_file(GTK_WINDOW(mv->dialog), "Export Filter", mv->filter_filename);
@@ -214,6 +245,8 @@ static void modify_view_init_signals(struct modify_view *mv)
 	gtk_tree_view_column_set_visible(column, TRUE);
 	gtk_tree_view_append_column(mv->filter_view, column);
 
+	g_signal_connect(mv->add_button, "clicked", G_CALLBACK(modify_view_on_add_click), mv);
+	g_signal_connect(mv->edit_button, "clicked", G_CALLBACK(modify_view_on_edit_click), mv);
 	g_signal_connect(mv->remove_button, "clicked", G_CALLBACK(modify_view_on_remove_click), mv);
 	g_signal_connect(mv->import_button, "clicked", G_CALLBACK(modify_view_on_import_click), mv);
 	g_signal_connect(mv->export_button, "clicked", G_CALLBACK(modify_view_on_export_click), mv);
@@ -301,54 +334,3 @@ void modify_view_run(toplevel_t * top, message_view_t * view)
 	}
 	g_object_unref(mv.filter_store);
 }
-
-#if 0
-
-static void multifilter_window_add_filter_window(multifilter_window_t * window, filter_window_t * filter_window)
-{
-	GtkTreeIter iter;
-
-	gtk_list_store_append(window->liststore, &iter);
-	window->filter_windows = g_list_append(window->filter_windows, filter_window);
-	window->num_filter_windows++;
-	multifilter_window_set_filter_name_in_list(window, filter_window);
-}
-
-static void multifilter_window_on_add_button_pressed(GtkButton * button, multifilter_window_t * window)
-{
-	filter_window_t *filter_window;
-
-	filter_window = filter_window_create(window, window->num_filter_windows, "Untitled");
-	multifilter_window_add_filter_window(window, filter_window);
-	filter_window_display(filter_window, window->window);
-	multifilter_window_update_buttons_sensitivity(window);
-}
-
-static void multifilter_window_on_edit_button_pressed(GtkButton * button, multifilter_window_t * window)
-{
-	GtkTreeSelection *selection;
-	GtkTreeModel *model;
-	GtkTreePath *path;
-	GtkTreeIter iter;
-	GtkWidget *widget;
-	filter_window_t *filter_window;
-	gint *index;
-
-	selection = gtk_tree_view_get_selection(window->treeview);
-	model = GTK_TREE_MODEL(window->liststore);
-	if (!gtk_tree_selection_get_selected(selection, &model, &iter)) {
-		message_display(window->window, GTK_MESSAGE_ERROR, "You must select a filter to edit.");
-		return;
-	}
-	path = gtk_tree_path_new();
-	path = gtk_tree_model_get_path(model, &iter);
-	index = gtk_tree_path_get_indices(path);
-	filter_window = (filter_window_t *) g_list_nth_data(window->filter_windows, index[0]);
-	if (filter_window)
-		filter_window_display(filter_window, window->window);
-
-	gtk_tree_path_free(path);
-	widget = glade_xml_get_widget(window->xml, "ApplyButton");
-}
-
-#endif

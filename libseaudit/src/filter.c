@@ -4,7 +4,7 @@
  *
  * If adding new filter criteria, make sure you do the following:
  *
- * 0. add a field(s) to seaudit_filter_t
+ * 0. add field(s) to seaudit_filter_t
  * 1. update filter constructor, seaudit_filter_create()
  * 2. update copy-constructor, seaudit_filter_create_from_filter()
  * 3. update destructor, seaudit_filter_destroy()
@@ -534,7 +534,11 @@ int seaudit_filter_set_port(seaudit_filter_t * filter, const int port)
 		errno = EINVAL;
 		return -1;
 	}
-	filter->port = port;
+	if (port <= 0) {
+		filter->port = 0;
+	} else {
+		filter->port = port;
+	}
 	if (filter->model != NULL) {
 		model_notify_filter_changed(filter->model, filter);
 	}
@@ -1053,13 +1057,12 @@ static void filter_netif_print(const seaudit_filter_t * filter, const char *name
 
 static int filter_avc_msg_type_support(const seaudit_filter_t * filter, const seaudit_message_t * msg)
 {
-	return filter->avc_msg_type != SEAUDIT_AVC_UNKNOWN && msg->type == SEAUDIT_MESSAGE_TYPE_AVC
-		&& msg->data.avc->msg != SEAUDIT_AVC_UNKNOWN;
+	return filter->avc_msg_type != SEAUDIT_AVC_UNKNOWN;
 }
 
 static int filter_avc_msg_type_accept(const seaudit_filter_t * filter, const seaudit_message_t * msg)
 {
-	return filter->avc_msg_type == msg->data.avc->msg;
+	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && filter->avc_msg_type == msg->data.avc->msg;
 }
 
 static int filter_avc_msg_type_read(seaudit_filter_t * filter, const xmlChar * ch)
@@ -1268,31 +1271,31 @@ void filter_set_model(seaudit_filter_t * filter, seaudit_model_t * model)
 
 int filter_is_accepted(seaudit_filter_t * filter, const seaudit_message_t * msg)
 {
-	int criteria_passed = 0, acceptval;
+	int tried_test = 0, acceptval;
 	size_t i;
 	for (i = 0; i < sizeof(filter_criteria) / sizeof(filter_criteria[0]); i++) {
 		if (filter_criteria[i].support(filter, msg)) {
+			tried_test = 1;
 			acceptval = filter_criteria[i].accept(filter, msg);
-			if (acceptval) {
-				criteria_passed++;
-				if (filter->match == SEAUDIT_FILTER_MATCH_ANY) {
-					return 1;
-				}
+			if (filter->match == SEAUDIT_FILTER_MATCH_ANY && acceptval) {
+				return 1;
 			}
 			if (filter->match == SEAUDIT_FILTER_MATCH_ALL && !acceptval) {
 				return 0;
 			}
 		}
 	}
+	if (!tried_test) {
+		/* if got here, then the filter had no criteria --
+		 * empty filters implicitly accept all */
+		return 1;
+	}
 	if (filter->match == SEAUDIT_FILTER_MATCH_ANY) {
 		/* if got here, then no criteria were met */
 		return 0;
 	}
-	/* if got here, then all criteria were met or none were attempted */
-	if (criteria_passed) {
-		return 1;
-	}
-	return 0;
+	/* if got here, then all criteria were met */
+	return 1;
 }
 
 static bool_t filter_parse_is_valid_tag(const xmlChar * tag)

@@ -24,10 +24,8 @@ nodist_setools_DATA = \
 	dot_seaudit \
 	seaudit-report-service
 
-#seaudit_SOURCES = \
-#	filter_window.c filter_window.h
-
 seaudit_SOURCES = \
+	filter_view.c filter_view.h \
 	message_view.c message_view.h \
 	modify_view.c modify_view.h \
 	policy_view.c policy_view.h \

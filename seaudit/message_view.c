@@ -1094,27 +1094,3 @@ void message_view_update_rows(message_view_t * view)
 	}
 	util_cursor_clear(view->tree);
 }
-
-#if 0
-
-#include "filtered_view.h"
-#include "filter_window.h"
-#include "utilgui.h"
-#include <string.h>
-
-void seaudit_filtered_view_display(seaudit_filtered_view_t * filtered_view, GtkWindow * parent)
-{
-	if (!filtered_view)
-		return;
-	multifilter_window_display(filtered_view->multifilter_window, parent);
-}
-
-void seaudit_filtered_view_set_multifilter_window(seaudit_filtered_view_t * filtered_view, multifilter_window_t * window)
-{
-	multifilter_window_destroy(filtered_view->multifilter_window);
-	filtered_view->multifilter_window = window;
-	g_string_assign(window->name, filtered_view->name->str);
-	window->parent = filtered_view;
-}
-
-#endif

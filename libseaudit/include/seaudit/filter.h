@@ -74,7 +74,7 @@ extern "C"
 
 /**
  * Create a new filter object.  The default matching behavior is to
- * reject all messages.
+ * accept all messages.
  *
  * @param name Name for the filter; the string will be duplicated.  If
  * NULL then the filter will be assigned a default name.
@@ -467,8 +467,8 @@ extern "C"
  * (port, source, dest, fport, or lport) matches this port.
  *
  * @param filter Filter to modify.
- * @param port Port criterion.  If this is zero then clear the
- * existing port.
+ * @param port Port criterion.  If this is zero or negative then clear
+ * the existing port.
  *
  * @return 0 on success, < 0 on error.
  */
@@ -508,7 +508,8 @@ extern "C"
 
 /**
  * Set the type of AVC criterion.  A message is accepted if it matches
- * this value exactly.
+ * this value exactly.  If the message type is not SEAUDIT_AVC_UNKNOWN
+ * and the message is not an AVC then it will be rejected.
  *
  * @param filter Filter to modify.
  * @param message_type One of SEAUDIT_AVC_DENIED, SEAUDIT_AVC_GRANTED,
@@ -550,13 +551,13 @@ extern "C"
 /**
  * Return the current date/time for a filter.  Note that if no
  * date/time has been set then both reference pointers will be set to
- * NULL (date_match will be set to an invalid value).
+ * NULL (match will be set to an invalid value).
  *
  * @param filter Filter to get value.
  * @param start Pointer to location to store starting time.  Do not
  * free() or otherwise modify this pointer.
  * @param end Pointer to location to store ending time.  Do not free()
- * or otherwise modify this pointer.  If date_match is not
+ * or otherwise modify this pointer.  If match is not
  * SEAUDIT_FILTER_DATE_MATCH_BETWEEN then the contents of this
  * structure are invalid.
  * @param date_match Pointer to location to set date matching option.
