@@ -53,6 +53,10 @@ struct toplevel
 	/** toplevel window widget */
 	GtkWindow *w;
 	GtkNotebook *notebook;
+	/** non-zero if the log file should be polled for changes */
+	int do_monitor_log;
+	/** event id for the monitor callback */
+	guint monitor_id;
 	/** serial number for models created, such that new models
 	 * will be named Untitled <number> */
 	int next_model_number;
@@ -373,6 +377,7 @@ toplevel_t *toplevel_create(seaudit_t * s)
 	}
 	top->s = s;
 	top->next_model_number = 1;
+
 	if ((top->xml_filename = apol_file_find_path("seaudit.glade")) == NULL ||
 	    (top->xml = glade_xml_new(top->xml_filename, "TopLevel", NULL)) == NULL) {
 		fprintf(stderr, "Could not open seaudit.glade.\n");
@@ -420,6 +425,9 @@ static void message_view_free(void *elem)
 void toplevel_destroy(toplevel_t ** top)
 {
 	if (top != NULL && *top != NULL) {
+		if ((*top)->monitor_id > 0) {
+			g_source_remove((*top)->monitor_id);
+		}
 		policy_view_destroy(&(*top)->pv);
 		apol_vector_destroy(&(*top)->views, message_view_free);
 		free((*top)->xml_filename);
@@ -436,14 +444,94 @@ void toplevel_destroy(toplevel_t ** top)
 struct log_run_datum
 {
 	toplevel_t *top;
+	FILE *file;
 	const char *filename;
 	seaudit_log_t *log;
 	int result;
 };
 
 /**
+ * Update the seaudit log, then refresh all views as necessary.  Note
+ * that this only works in a single-threaded environment; otherwise
+ * there are two possible race conditions:
+ *   - monitor is disabled while this function is being executed
+ *   - a new log file is loaded while the function is being executed
+ *
+ * But what happens if this function is scheduled and then a new log
+ * is opened?  In toplevel_open_log(), do_monitor_log is temporarily
+ * disabled because that function is threaded.  It is then re-enabled
+ * afterwards.
+ *
+ * To make this function fully thread-safe requires making this entire
+ * function synchronized, and then employ locking every time
+ * do_monitor_log and monitor_id are set.
+ */
+static gboolean toplevel_monitor_log_timer(gpointer data)
+{
+	toplevel_t *top = (toplevel_t *) data;
+	if (top->do_monitor_log) {
+		int retval;
+		gint i = gtk_notebook_get_n_pages(top->notebook) - 1;
+		uint delay;
+		retval = seaudit_parse_log(top->s);
+		if (retval < 0) {
+			GtkCheckMenuItem *w;
+			toplevel_ERR(top, "Error while monitoring log: %s", strerror(errno));
+			w = GTK_CHECK_MENU_ITEM(glade_xml_get_widget(top->xml, "MonitorLog"));
+			top->monitor_id = 0;
+			gtk_check_menu_item_set_active(w, 0);
+			return FALSE;
+		}
+		while (i >= 0) {
+			GtkWidget *child = gtk_notebook_get_nth_page(top->notebook, i);
+			GtkWidget *tab = gtk_notebook_get_tab_label(top->notebook, child);
+			message_view_t *v = g_object_get_data(G_OBJECT(tab), "view-object");
+			message_view_update_rows(v);
+			i--;
+		}
+
+		/* reschedule another timer callback */
+		delay = preferences_get_real_time_interval(toplevel_get_prefs(top));
+		top->monitor_id = g_timeout_add(delay, toplevel_monitor_log_timer, top);
+	} else {
+		top->monitor_id = 0;
+	}
+	return FALSE;
+}
+
+/**
+ * Enable or disable the log monitoring feature.  While enabled, the
+ * log file will be periodically polled; new lines will be parsed and
+ * inserted into the seaudit log object.  All models and their views
+ * will then be notified of the changes.
+ *
+ * @param top Toplevel object whose widgets to update.
+ */
+static void toplevel_monitor_log(toplevel_t * top)
+{
+	GtkLabel *label = GTK_LABEL(glade_xml_get_widget(top->xml, "MonitorLogLabel"));
+	assert(label != NULL);
+	if (top->do_monitor_log) {
+		gtk_label_set_markup(label, "Monitor Status: <span foreground=\"green\">ON</span>");
+		if (top->monitor_id == 0) {
+			uint delay = preferences_get_real_time_interval(toplevel_get_prefs(top));
+			top->monitor_id = g_timeout_add(delay, toplevel_monitor_log_timer, top);
+		}
+	} else {
+		if (top->monitor_id > 0) {
+			g_source_remove(top->monitor_id);
+			top->monitor_id = 0;
+		}
+		gtk_label_set_markup(label, "Monitor Status: <span foreground=\"red\">OFF</span>");
+	}
+}
+
+/**
  * Thread that loads and parses a log file.  It will write to
- * progress_seaudit_handle_func() its status during the load.
+ * progress_seaudit_handle_func() its status during the load.  Note
+ * that the file handle is not closed upon completion; it is left open
+ * so that subsequent calls to seaudit_log_parse(), such as
+ * forreal-time monitoring.
  *
  * @param data Pointer to a struct log_run_datum, for control
  * information.
@@ -451,9 +539,8 @@ struct log_run_datum
 static gpointer toplevel_open_log_runner(gpointer data)
 {
 	struct log_run_datum *run = (struct log_run_datum *)data;
-	FILE *f;
 	progress_update(run->top->progress, "Parsing %s", run->filename);
-	if ((f = fopen(run->filename, "r")) == NULL) {
+	if ((run->file = fopen(run->filename, "r")) == NULL) {
 		progress_update(run->top->progress, "Could not open %s for reading.", run->filename);
 		run->result = -1;
 		goto cleanup;
@@ -463,12 +550,13 @@ static gpointer toplevel_open_log_runner(gpointer data)
 		run->result = -1;
 		goto cleanup;
 	}
-	run->result = seaudit_log_parse(run->log, f);
+	run->result = seaudit_log_parse(run->log, run->file);
       cleanup:
-	if (f != NULL) {
-		fclose(f);
-	}
 	if (run->result < 0) {
+		if (run->file != NULL) {
+			fclose(run->file);
+		}
+		run->file = NULL;
 		seaudit_log_destroy(&run->log);
 		progress_abort(run->top->progress, NULL);
 	} else if (run->result > 0) {
@@ -496,7 +584,14 @@ static void toplevel_destroy_views(toplevel_t * top)
 
 void toplevel_open_log(toplevel_t * top, const char *filename)
 {
-	struct log_run_datum run = { top, filename, NULL, 0 };
+	struct log_run_datum run = { top, NULL, filename, NULL, 0 };
+	int was_monitor_running;
+	GtkCheckMenuItem *w;
+
+	/* disable monitoring during the threaded part of this code */
+	was_monitor_running = top->do_monitor_log;
+	top->do_monitor_log = 0;
+	toplevel_monitor_log(top);
 
 	util_cursor_wait(GTK_WIDGET(top->w));
 	progress_show(top->progress, "Opening Log");
@@ -506,17 +601,28 @@ void toplevel_open_log(toplevel_t * top, const char *filename)
 	util_cursor_clear(GTK_WIDGET(top->w));
 
 	if (run.result < 0) {
+		top->do_monitor_log = was_monitor_running;
+		toplevel_monitor_log(top);
 		return;
 	}
+
 	toplevel_destroy_views(top);
 	top->next_model_number = 1;
-	seaudit_set_log(top->s, run.log, filename);
+	seaudit_set_log(top->s, run.log, run.file, filename);
 	toplevel_set_recent_logs_submenu(top);
 	toplevel_enable_log_items(top, TRUE);
 	toplevel_add_new_model(top);
 	toplevel_update_title_bar(top);
 	toplevel_update_status_bar(top);
 	toplevel_update_selection_menu_item(top);
+	top->do_monitor_log = preferences_get_real_time_at_startup(toplevel_get_prefs(top));
+
+	w = GTK_CHECK_MENU_ITEM(glade_xml_get_widget(top->xml, "MonitorLog"));
+
+	gtk_check_menu_item_set_active(w, top->do_monitor_log);
+	/* call this again because the check item could have already
+	 * been active, thus its handler would not run */
+	toplevel_monitor_log(top);
 }
 
 struct policy_run_datum
@@ -875,10 +981,15 @@ void toplevel_on_create_report_activate(gpointer user_data, GtkMenuItem * widget
 	report_window_run(top, view);
 }
 
-void toplevel_on_monitor_log_activate(gpointer user_data, GtkMenuItem * widget __attribute__ ((unused)))
+void toplevel_on_monitor_log_activate(gpointer user_data, GtkMenuItem * widget)
 {
 	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
-	/* FIX ME */
+	if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(widget))) {
+		top->do_monitor_log = 1;
+	} else {
+		top->do_monitor_log = 0;
+	}
+	toplevel_monitor_log(top);
 }
 
 void toplevel_on_help_activate(gpointer user_data, GtkMenuItem * widget __attribute__ ((unused)))
@@ -949,88 +1060,13 @@ void toplevel_on_modify_view_click(gpointer user_data, GtkWidget * widget __attr
 	message_view_modify(view);
 }
 
-void toplevel_on_monitor_log_click(gpointer user_data, GtkWidget * widget, GdkEvent * event)
+void toplevel_on_monitor_log_click(gpointer user_data, GtkWidget * widget __attribute__ ((unused)), GdkEvent * event
+				   __attribute__ ((unused)))
 {
 	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
-	/* FIX ME */
+	GtkCheckMenuItem *w = GTK_CHECK_MENU_ITEM(glade_xml_get_widget(top->xml, "MonitorLog"));
+	gboolean old_state;
+	assert(w != NULL);
+	old_state = gtk_check_menu_item_get_active(w);
+	gtk_check_menu_item_set_active(w, !old_state);
 }
-
-#if 0
-
-void seaudit_on_filter_log_button_clicked(GtkWidget * widget, GdkEvent * event, gpointer callback_data)
-{
-	seaudit_filtered_view_t *view;
-
-	if (seaudit_app->cur_log == NULL) {
-		message_display(seaudit_app->window->window, GTK_MESSAGE_ERROR, "There is no audit log loaded.");
-		return;
-	}
-
-	view = seaudit_window_get_current_view(seaudit_app->window);
-	seaudit_filtered_view_display(view, seaudit_app->window->window);
-	return;
-}
-
-void seaudit_on_real_time_button_pressed(GtkButton * button, gpointer user_data)
-{
-	bool_t state = seaudit_app->real_time_state;
-	seaudit_set_real_time_log_button_state(!state);
-}
-
-/* Timeout function used to keep the log up to date, always
- * return TRUE so we get called repeatedly */
-static gboolean seaudit_real_time_update_log(gpointer callback_data)
-{
-	unsigned int rt = 0;
-#define MSG_SIZE 64		       /* should be big enough */
-
-	/* simply return if the log is not open */
-	if (!seaudit_app->log_file_ptr)
-		return TRUE;
-
-	rt |= audit_log_parse(seaudit_app->cur_log, seaudit_app->log_file_ptr);
-	if (rt & PARSE_RET_NO_SELINUX_ERROR)
-		return TRUE;
-	seaudit_window_filter_views(seaudit_app->window);
-	return TRUE;
-}
-
-/*
- * Helper functions for seaudit_t
- */
-static void seaudit_set_real_time_log_button_state(bool_t state)
-{
-	GtkWidget *widget, *image, *text, *lbl;
-
-	widget = glade_xml_get_widget(seaudit_app->window->xml, "RealTimeButton");
-	g_assert(widget);
-	text = glade_xml_get_widget(seaudit_app->window->xml, "RealTimeLabel");
-	g_assert(text);
-	image = glade_xml_get_widget(seaudit_app->window->xml, "RealTimeImage");
-	g_assert(image);
-	lbl = glade_xml_get_widget(seaudit_app->window->xml, "monitor_lbl");
-	g_assert(lbl);
-	gtk_label_set_text(GTK_LABEL(text), "Toggle Monitor");
-	gtk_image_set_from_stock(GTK_IMAGE(image), GTK_STOCK_REFRESH, GTK_ICON_SIZE_SMALL_TOOLBAR);
-
-	/* remove timeout function if exists */
-	if (seaudit_app->timeout_key)
-		gtk_timeout_remove(seaudit_app->timeout_key);
-
-	if (!state) {
-		/*gtk_image_set_from_stock(GTK_IMAGE(image), GTK_STOCK_STOP, GTK_ICON_SIZE_SMALL_TOOLBAR); */
-		gtk_label_set_markup(GTK_LABEL(lbl), "Monitor status: <span foreground=\"red\">OFF</span>");
-		/* make inactive */
-		seaudit_app->timeout_key = 0;
-		seaudit_app->real_time_state = state;
-	} else {
-		gtk_image_set_from_stock(GTK_IMAGE(image), GTK_STOCK_REFRESH, GTK_ICON_SIZE_SMALL_TOOLBAR);
-		gtk_label_set_markup(GTK_LABEL(lbl), "Monitor status: <span foreground=\"green\">ON</span>");
-		/* make active */
-		seaudit_app->timeout_key = g_timeout_add(seaudit_app->seaudit_conf.real_time_interval,
-							 &seaudit_real_time_update_log, NULL);
-		seaudit_app->real_time_state = state;
-	}
-}
-
-#endif

@@ -246,6 +246,21 @@ extern "C"
 	extern int seaudit_model_remove_all_sort(seaudit_model_t * model);
 
 /**
+ * Return a value indicating if this model has changed since the last
+ * time seaudit_model_get_messages() was called().  Note that upon a
+ * non-zero return value, the vector returned by
+ * seaudit_model_get_messages() might contain the same messages.  For
+ * example, the user could have removed all sorts but then re-insert
+ * them in the same order.
+ *
+ * @param model Model to check.
+ *
+ * @return 0 if the model is unchanged, non-zero if it may have
+ * changed.
+ */
+	extern int seaudit_model_is_changed(seaudit_model_t * model);
+
+/**
  * Return a sorted list of messages associated with this model.  This
  * will cause the model to recalculate, as necessary, all messages
  * according to its filters and then sort them.

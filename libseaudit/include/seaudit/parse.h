@@ -38,7 +38,8 @@ extern "C"
  * Parse the file specified by syslog and puts all selinux audit
  * messages into the log.  It is assumed that log will be created
  * before this function.  If the log already has messages, new
- * messages will be appended to it.
+ * messages will be appended to it.  Afterwards all models watching
+ * this log will be notified of the changes.
  *
  * @param log Audit log to which append messages.
  * @param syslog Handler to an opened file containing audit messages.

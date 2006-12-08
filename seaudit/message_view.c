@@ -1046,9 +1046,12 @@ void message_view_update_rows(message_view_t * view)
 	GtkTreePath *path;
 	GtkTreeIter iter;
 	size_t i, num_old_messages = 0, num_new_messages = 0, num_changed;
-	seaudit_log_t *log = toplevel_get_log(view->top);
+	seaudit_log_t *log;
 
-	util_cursor_wait(view->tree);
+	if (!seaudit_model_is_changed(view->model)) {
+		return;
+	}
+	log = toplevel_get_log(view->top);
 	if (view->store->messages != NULL) {
 		num_old_messages = apol_vector_get_size(view->store->messages);
 	}
@@ -1092,5 +1095,4 @@ void message_view_update_rows(message_view_t * view)
 			gtk_tree_path_free(path);
 		}
 	}
-	util_cursor_clear(view->tree);
 }

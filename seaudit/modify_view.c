@@ -224,10 +224,6 @@ static void modify_view_init_widgets(struct modify_view *mv)
 	       mv->import_button != NULL && mv->export_button != NULL);
 }
 
-/**
- * Because the dialog is hidden rather than being destroyed,
- * initialize its signal handlers exactly once ever.
- */
 static void modify_view_init_signals(struct modify_view *mv)
 {
 	GtkCellRenderer *renderer;

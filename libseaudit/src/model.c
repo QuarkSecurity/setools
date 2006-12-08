@@ -658,6 +658,15 @@ int seaudit_model_remove_all_sort(seaudit_model_t * model)
 	return 0;
 }
 
+int seaudit_model_is_changed(seaudit_model_t * model)
+{
+	if (model == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+	return model->dirty;
+}
+
 apol_vector_t *seaudit_model_get_messages(seaudit_log_t * log, seaudit_model_t * model)
 {
 	if (log == NULL || model == NULL) {

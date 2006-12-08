@@ -495,11 +495,11 @@ static void policy_view_populate_combo_boxes(policy_view_t * pv)
 		}
 	}
 }
+
 void policy_view_update(policy_view_t * pv, const char *path)
 {
 	policy_view_load_policy_source(pv, path);
 	policy_view_populate_combo_boxes(pv);
-	/* sync combo boxes */
 }
 
 void policy_view_find_terules(policy_view_t * pv, seaudit_message_t * message)

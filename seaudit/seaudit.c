@@ -30,6 +30,7 @@
 
 #include <apol/util.h>
 #include <seaudit/model.h>
+#include <seaudit/parse.h>
 #include <seaudit/util.h>
 
 #include <errno.h>
@@ -46,6 +47,7 @@ struct seaudit
 	apol_policy_t *policy;
 	char *policy_path;
 	seaudit_log_t *log;
+	FILE *file;
 	char *log_path;
 	size_t num_log_messages;
 	struct tm *first, *last;
@@ -98,8 +100,12 @@ char *seaudit_get_policy_path(seaudit_t * s)
 	return s->policy_path;
 }
 
-void seaudit_set_log(seaudit_t * s, seaudit_log_t * log, const char *filename)
+void seaudit_set_log(seaudit_t * s, seaudit_log_t * log, FILE * f, const char *filename)
 {
+	if (s->file != NULL) {
+		fclose(s->file);
+		s->file = NULL;
+	}
 	if (log != NULL) {
 		seaudit_model_t *model = NULL;
 		apol_vector_t *messages = NULL;
@@ -118,6 +124,7 @@ void seaudit_set_log(seaudit_t * s, seaudit_log_t * log, const char *filename)
 		 * s->log_path */
 		seaudit_log_destroy(&s->log);
 		s->log = log;
+		s->file = f;
 		free(s->log_path);
 		s->log_path = t;
 		s->num_log_messages = apol_vector_get_size(messages);
@@ -138,6 +145,11 @@ void seaudit_set_log(seaudit_t * s, seaudit_log_t * log, const char *filename)
 		s->num_log_messages = 0;
 		s->first = s->last = NULL;
 	}
+}
+
+int seaudit_parse_log(seaudit_t * s)
+{
+	return seaudit_log_parse(s->log, s->file);
 }
 
 seaudit_log_t *seaudit_get_log(seaudit_t * s)
@@ -179,6 +191,9 @@ static void seaudit_destroy(seaudit_t ** s)
 	if (s != NULL && *s != NULL) {
 		apol_policy_destroy(&(*s)->policy);
 		seaudit_log_destroy(&(*s)->log);
+		if ((*s)->file != NULL) {
+			fclose((*s)->file);
+		}
 		preferences_destroy(&(*s)->prefs);
 		toplevel_destroy(&(*s)->top);
 		free((*s)->policy_path);
@@ -318,87 +333,3 @@ int main(int argc, char **argv)
 	seaudit_destroy(&app);
 	exit(EXIT_SUCCESS);
 }
-
-#if 0
-
-/*
- * glade autoconnected callbacks for the main toolbar
- */
-void seaudit_on_filter_log_button_clicked(GtkWidget * widget, GdkEvent * event, gpointer callback_data)
-{
-	seaudit_filtered_view_t *view;
-
-	if (seaudit_app->cur_log == NULL) {
-		message_display(seaudit_app->window->window, GTK_MESSAGE_ERROR, "There is no audit log loaded.");
-		return;
-	}
-
-	view = seaudit_window_get_current_view(seaudit_app->window);
-	seaudit_filtered_view_display(view, seaudit_app->window->window);
-	return;
-}
-
-void seaudit_on_real_time_button_pressed(GtkButton * button, gpointer user_data)
-{
-	bool_t state = seaudit_app->real_time_state;
-	seaudit_set_real_time_log_button_state(!state);
-}
-
-/*
- * Timeout function used to keep the log up to date, always
- * return TRUE so we get called repeatedly */
-static gboolean seaudit_real_time_update_log(gpointer callback_data)
-{
-	unsigned int rt = 0;
-#define MSG_SIZE 64		       /* should be big enough */
-
-	/* simply return if the log is not open */
-	if (!seaudit_app->log_file_ptr)
-		return TRUE;
-
-	rt |= audit_log_parse(seaudit_app->cur_log, seaudit_app->log_file_ptr);
-	if (rt & PARSE_RET_NO_SELINUX_ERROR)
-		return TRUE;
-	seaudit_window_filter_views(seaudit_app->window);
-	return TRUE;
-}
-
-/*
- * Helper functions for seaudit_t
- */
-static void seaudit_set_real_time_log_button_state(bool_t state)
-{
-	GtkWidget *widget, *image, *text, *lbl;
-
-	widget = glade_xml_get_widget(seaudit_app->window->xml, "RealTimeButton");
-	g_assert(widget);
-	text = glade_xml_get_widget(seaudit_app->window->xml, "RealTimeLabel");
-	g_assert(text);
-	image = glade_xml_get_widget(seaudit_app->window->xml, "RealTimeImage");
-	g_assert(image);
-	lbl = glade_xml_get_widget(seaudit_app->window->xml, "monitor_lbl");
-	g_assert(lbl);
-	gtk_label_set_text(GTK_LABEL(text), "Toggle Monitor");
-	gtk_image_set_from_stock(GTK_IMAGE(image), GTK_STOCK_REFRESH, GTK_ICON_SIZE_SMALL_TOOLBAR);
-
-	/* remove timeout function if exists */
-	if (seaudit_app->timeout_key)
-		gtk_timeout_remove(seaudit_app->timeout_key);
-
-	if (!state) {
-		/*gtk_image_set_from_stock(GTK_IMAGE(image), GTK_STOCK_STOP, GTK_ICON_SIZE_SMALL_TOOLBAR); */
-		gtk_label_set_markup(GTK_LABEL(lbl), "Monitor status: <span foreground=\"red\">OFF</span>");
-		/* make inactive */
-		seaudit_app->timeout_key = 0;
-		seaudit_app->real_time_state = state;
-	} else {
-		gtk_image_set_from_stock(GTK_IMAGE(image), GTK_STOCK_REFRESH, GTK_ICON_SIZE_SMALL_TOOLBAR);
-		gtk_label_set_markup(GTK_LABEL(lbl), "Monitor status: <span foreground=\"green\">ON</span>");
-		/* make active */
-		seaudit_app->timeout_key = g_timeout_add(seaudit_app->seaudit_conf.real_time_interval,
-							 &seaudit_real_time_update_log, NULL);
-		seaudit_app->real_time_state = state;
-	}
-}
-
-#endif

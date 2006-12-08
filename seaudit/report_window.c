@@ -124,12 +124,20 @@ static void report_window_init_dialog(struct report_window *rw, toplevel_t * top
 	rw->config_entry = GTK_ENTRY(glade_xml_get_widget(rw->xml, "ReportWindowConfigEntry"));
 	rw->config_browse = glade_xml_get_widget(rw->xml, "ReportWindowConfigBrowse");
 	assert(rw->config_entry != NULL && rw->config_browse != NULL);
+
+	/* set up signal handlers */
+	g_signal_connect(rw->all_messages_radio, "toggled", G_CALLBACK(report_window_on_all_messages_toggle), rw);
+	g_signal_connect(rw->text_radio, "toggled", G_CALLBACK(report_window_on_output_format_toggle), rw);
+	g_signal_connect(rw->use_stylesheet_toggle, "toggled", G_CALLBACK(report_window_on_use_stylesheet_toggle), rw);
+	g_signal_connect(rw->stylesheet_browse, "clicked", G_CALLBACK(report_window_on_stylesheet_browse_click), rw);
+	g_signal_connect(rw->config_browse, "clicked", G_CALLBACK(report_window_on_config_browse_click), rw);
+
 }
 
 /**
  * The first time the report window is shown, populate its entry boxes
- * with values from the user's preferences and set up signal handlers.
- * On subsequent times remember the user's entries.
+ * with values from the user's preferences.  On subsequent times
+ * remember the user's entries.
  */
 static void report_window_copy_prefs(struct report_window *rw, toplevel_t * top)
 {
@@ -138,11 +146,6 @@ static void report_window_copy_prefs(struct report_window *rw, toplevel_t * top)
 		preferences_t *prefs = toplevel_get_prefs(top);
 		gtk_entry_set_text(rw->stylesheet_entry, preferences_get_stylesheet(prefs));
 		gtk_entry_set_text(rw->config_entry, preferences_get_report(prefs));
-		g_signal_connect(rw->all_messages_radio, "toggled", G_CALLBACK(report_window_on_all_messages_toggle), rw);
-		g_signal_connect(rw->text_radio, "toggled", G_CALLBACK(report_window_on_output_format_toggle), rw);
-		g_signal_connect(rw->use_stylesheet_toggle, "toggled", G_CALLBACK(report_window_on_use_stylesheet_toggle), rw);
-		g_signal_connect(rw->stylesheet_browse, "clicked", G_CALLBACK(report_window_on_stylesheet_browse_click), rw);
-		g_signal_connect(rw->config_browse, "clicked", G_CALLBACK(report_window_on_config_browse_click), rw);
 	}
 	report_window_initialized = 1;
 }
