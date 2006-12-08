@@ -272,11 +272,12 @@ static void modify_view_init_dialog(struct modify_view *mv)
 	}
 }
 
-void modify_view_run(toplevel_t * top, message_view_t * view)
+int modify_view_run(toplevel_t * top, message_view_t * view)
 {
 	struct modify_view mv;
 	seaudit_model_t *orig_model = message_view_get_model(view);
 	gint response;
+	int retval;
 
 	memset(&mv, 0, sizeof(mv));
 	mv.top = top;
@@ -285,7 +286,7 @@ void modify_view_run(toplevel_t * top, message_view_t * view)
 	mv.filter_filename = NULL;
 	if ((mv.model = seaudit_model_create_from_model(orig_model)) == NULL) {
 		toplevel_ERR(mv.top, "Error duplicating model: %s", strerror(errno));
-		return;
+		return 0;
 	}
 	modify_view_init_widgets(&mv);
 	modify_view_init_signals(&mv);
@@ -312,9 +313,12 @@ void modify_view_run(toplevel_t * top, message_view_t * view)
 
 	if (response == GTK_RESPONSE_OK) {
 		message_view_set_model(mv.view, mv.model);
+		retval = 1;
 	} else {
 		seaudit_model_destroy(&mv.model);
+		retval = 0;
 	}
 	gtk_widget_destroy(GTK_WIDGET(mv.dialog));
 	g_object_unref(mv.filter_store);
+	return retval;
 }

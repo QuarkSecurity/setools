@@ -917,7 +917,9 @@ void message_view_saveas(message_view_t * view)
 
 void message_view_modify(message_view_t * view)
 {
-	modify_view_run(view->top, view);
+	if (modify_view_run(view->top, view)) {
+		toplevel_update_status_bar(view->top);
+	}
 }
 
 /**

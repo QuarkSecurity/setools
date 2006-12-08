@@ -143,6 +143,20 @@ seaudit_filter_t *seaudit_filter_create_from_filter(const seaudit_filter_t * fil
 	f->match = filter->match;
 	f->port = filter->port;
 	f->avc_msg_type = filter->avc_msg_type;
+	if (filter->start != NULL) {
+		if ((f->start = calloc(1, sizeof(*f->start))) == NULL) {
+			error = errno;
+			goto cleanup;
+		}
+		memcpy(f->start, filter->start, sizeof(*f->start));
+	}
+	if (filter->end != NULL) {
+		if ((f->end = calloc(1, sizeof(*f->end))) == NULL) {
+			error = errno;
+			goto cleanup;
+		}
+		memcpy(f->end, filter->end, sizeof(*f->end));
+	}
 	f->date_match = filter->date_match;
 	f->model = NULL;
       cleanup:
@@ -610,13 +624,13 @@ int seaudit_filter_set_date(seaudit_filter_t * filter, const struct tm *start, c
 		if ((filter->start = calloc(1, sizeof(*(filter->start)))) == NULL) {
 			retval = -1;
 		} else {
-			memcpy(filter->start, start, sizeof(*start));
+			memmove(filter->start, start, sizeof(*start));
 		}
 		if ((filter->end = calloc(1, sizeof(*(filter->end)))) == NULL) {
 			retval = -1;
 		} else {
 			if (end != NULL) {
-				memcpy(filter->end, end, sizeof(*end));
+				memmove(filter->end, end, sizeof(*end));
 			}
 		}
 	}
@@ -636,7 +650,7 @@ void seaudit_filter_get_date(seaudit_filter_t * filter, struct tm **start, struc
 		*end = NULL;
 	}
 	if (match != NULL) {
-		match = SEAUDIT_FILTER_DATE_MATCH_BEFORE;
+		*match = SEAUDIT_FILTER_DATE_MATCH_BEFORE;
 	}
 	if (filter == NULL || start == NULL || end == NULL || match == NULL) {
 		errno = EINVAL;
@@ -1100,13 +1114,13 @@ static int filter_date_support(const seaudit_filter_t * filter, const seaudit_me
 }
 
 /**
- * Given two dates compare them, checking to see if the dates passed
- * in have valid years and correcting if not before comparing.
+ * Given two dates compare them.  If both structs have years that are
+ * not zeroes then also compare their years.
  */
 static int filter_date_comp(const struct tm *t1, const struct tm *t2)
 {
 	/* tm has year, month, day, hour, min, sec */
-	/* if we should compare the years */
+	/* check if we should compare the years */
 	int retval;
 	if (t1->tm_year != 0 && t2->tm_year != 0 && (retval = t1->tm_year - t2->tm_year) != 0) {
 		return retval;
@@ -1139,7 +1153,7 @@ static int filter_date_accept(const seaudit_filter_t * filter, const seaudit_mes
 	} else {
 		if (compval > 0)
 			return 0;
-		compval = filter_date_comp(filter->end, msg->date_stamp);
+		compval = filter_date_comp(msg->date_stamp, filter->end);
 		return compval < 0;
 	}
 }

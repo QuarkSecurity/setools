@@ -1,6 +1,7 @@
 /**
- *  @file modify_view.h
- *  Dialog that allows the user to modify a particular filter.
+ *  @file policy_components_view.h
+ *  Dialog that shows two columns of strings, an included list and an
+ *  excluded list.  The user then moves items between the two lists.
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
@@ -22,21 +23,29 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef FILTER_VIEW_H
-#define FILTER_VIEW_H
+#ifndef POLICY_COMPONENTS_VIEW_H
+#define POLICY_COMPONENTS_VIEW_H
 
 #include "toplevel.h"
-#include <seaudit/filter.h>
+#include <apol/vector.h>
 #include <gtk/gtk.h>
 
 /**
- * Display and run a dialog that allows the user to modify a single
- * filter.
+ * Display and run a dialog that allows the user to select items from
+ * arrays of strings.
  *
  * @param top Toplevel containing message view.
- * @param view Message view to modify.
  * @param parent Parent window upon which to center this dialog.
+ * @param log_items Vector of strings that the log has.  The function
+ * will not modify this vector.
+ * @param policy_items Vector of strings that the policy has.  If
+ * NULL, then no policy is loaded.  The function will not modify this
+ * vector.
+ * @param include List of strings to be included; the vector will be
+ * modified by this function.  It is assumed that this vector contains
+ * pointers into log_items and policy_items.
  */
-void filter_view_run(seaudit_filter_t * filter, toplevel_t * top, GtkWindow * parent);
+void policy_components_view_run(toplevel_t * top, GtkWindow * parent,
+				apol_vector_t * log_items, apol_vector_t * policy_items, apol_vector_t * included);
 
 #endif

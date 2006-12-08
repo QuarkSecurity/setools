@@ -33,7 +33,9 @@
  *
  * @param top Toplevel containing message view.
  * @param view Message view to modify.
+ *
+ * @return Non-zero if the view changed, zero if not.
  */
-void modify_view_run(toplevel_t * top, message_view_t * view);
+int modify_view_run(toplevel_t * top, message_view_t * view);
 
 #endif
