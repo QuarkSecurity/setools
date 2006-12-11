@@ -136,7 +136,7 @@ extern "C"
 	 * @param p Policy to which check.
 	 * @return 1 if policy is source, 0 if not, < 0 upon error.
  */
-	extern int apol_policy_is_binary(apol_policy_t * p);
+	extern int apol_policy_is_source(apol_policy_t * p);
 
 /**
  * Given a policy, allocate and return a string that describes the
