@@ -3,7 +3,7 @@
  *  Public interface to a seaudit_model_t.  This represents a subset
  *  of log messages from one or more seaudit_log_t, where the subset
  *  is defined by a finite set of seaudit_filters and sorted by some
- *  criterion.
+ *  criterion or criteria.
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
@@ -153,7 +153,7 @@ extern "C"
 /**
  * Get the list of filters for a model.  Whenever a filter is modified
  * the model will be recomputed.  Note: to remove a filter from the
- * model use seaudit_model_removed_filter().
+ * model use seaudit_model_remove_filter().
  *
  * @param model Model containing filters.
  *
@@ -165,17 +165,17 @@ extern "C"
 	extern apol_vector_t *seaudit_model_get_filters(seaudit_model_t * model);
 
 /**
- * Remove a filter from a model.  Filters are identified by their
- * element position within the vector returned by
- * seaudit_model_get_filters().  The model well be recomputed
- * afterwards.
+ * Remove a filter from a model.  The given parameter must match one
+ * of the filters stored within the model; call
+ * seaudit_model_get_filters() to get a list of the model's filters.
  *
  * @param model Model to modify.
- * @param i Index for the filter to be removed.
+ * @param filter Filter to remove.  Upon success the pointer becomes
+ * invalid.
  *
  * @return 0 on success, < 0 on error.
  */
-	extern int seaudit_model_remove_filter(seaudit_model_t * model, size_t i);
+	extern int seaudit_model_remove_filter(seaudit_model_t * model, seaudit_filter_t * filter);
 
 /**
  * Set a model to accept a message if all filters are met (default

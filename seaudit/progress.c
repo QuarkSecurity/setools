@@ -76,6 +76,8 @@ void progress_destroy(progress_t ** progress)
 {
 	if (progress != NULL && *progress != NULL) {
 		free((*progress)->s);
+		g_cond_free((*progress)->cond);
+		g_mutex_free((*progress)->mutex);
 		free(*progress);
 		*progress = NULL;
 	}

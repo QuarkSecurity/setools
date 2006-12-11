@@ -138,11 +138,8 @@ static void modify_view_on_remove_click(GtkButton * button __attribute__ ((unuse
 {
 	struct modify_view *mv = (struct modify_view *)user_data;
 	seaudit_filter_t *filter = modify_view_get_current_filter(mv);
-	size_t i;
 	assert(filter != NULL);
-	apol_vector_t *filters = seaudit_model_get_filters(mv->model);
-	apol_vector_get_index(filters, filter, NULL, NULL, &i);
-	apol_vector_remove(filters, i);
+	seaudit_model_remove_filter(mv->model, filter);
 	modify_view_update_filter_store(mv);
 }
 

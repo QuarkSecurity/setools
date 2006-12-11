@@ -117,6 +117,55 @@ preferences_t *toplevel_get_prefs(toplevel_t * top);
 seaudit_log_t *toplevel_get_log(toplevel_t * top);
 
 /**
+ * Return a vector of strings corresponding to all users found within
+ * the current log file.  The vector will be sorted alphabetically.
+ *
+ * @param top Toplevel containing seaudit log object.
+ *
+ * @return Vector of sorted users, or NULL if no log is loaded.  The
+ * caller must call apol_vector_destroy() upon the return value,
+ * passing NULL as the second parameter.
+ */
+apol_vector_t *toplevel_get_log_users(toplevel_t * top);
+
+/**
+ * Return a vector of strings corresponding to all roles found within
+ * the current log file.  The vector will be sorted alphabetically.
+ *
+ * @param top Toplevel containing seaudit log object.
+ *
+ * @return Vector of sorted roles, or NULL if no log is loaded.  The
+ * caller must call apol_vector_destroy() upon the return value,
+ * passing NULL as the second parameter.
+ */
+apol_vector_t *toplevel_get_log_roles(toplevel_t * top);
+
+/**
+ * Return a vector of strings corresponding to all types found within
+ * the current log file.  The vector will be sorted alphabetically.
+ *
+ * @param top Toplevel containing seaudit log object.
+ *
+ * @return Vector of sorted types, or NULL if no log is loaded.  The
+ * caller must call apol_vector_destroy() upon the return value,
+ * passing NULL as the second parameter.
+ */
+apol_vector_t *toplevel_get_log_types(toplevel_t * top);
+
+/**
+ * Return a vector of strings corresponding to all object classes
+ * found within the current log file.  The vector will be sorted
+ * alphabetically.
+ *
+ * @param top Toplevel containing seaudit log object.
+ *
+ * @return Vector of sorted classes, or NULL if no log is loaded.  The
+ * caller must call apol_vector_destroy() upon the return value,
+ * passing NULL as the second parameter.
+ */
+apol_vector_t *toplevel_get_log_classes(toplevel_t * top);
+
+/**
  * Return the currently loaded policy.
  *
  * @param top Toplevel containing policy.

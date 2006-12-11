@@ -577,15 +577,18 @@ apol_vector_t *seaudit_model_get_filters(seaudit_model_t * model)
 	return model->filters;
 }
 
-int seaudit_model_remove_filter(seaudit_model_t * model, size_t i)
+int seaudit_model_remove_filter(seaudit_model_t * model, seaudit_filter_t * filter)
 {
-	seaudit_filter_t *f;
-	if (model == NULL || i >= apol_vector_get_size(model->filters)) {
+	size_t i;
+	if (model == NULL || filter == NULL) {
 		errno = EINVAL;
 		return -1;
 	}
-	f = apol_vector_get_element(model->filters, i);
-	seaudit_filter_destroy(&f);
+	if (apol_vector_get_index(model->filters, filter, NULL, NULL, &i) < 0) {
+		errno = EINVAL;
+		return -1;
+	}
+	seaudit_filter_destroy(&filter);
 	apol_vector_remove(model->filters, i);
 	model->dirty = 1;
 	return 0;

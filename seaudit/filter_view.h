@@ -1,5 +1,5 @@
 /**
- *  @file modify_view.h
+ *  @file filter_view.h
  *  Dialog that allows the user to modify a particular filter.
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com

@@ -281,27 +281,21 @@ char *seaudit_filter_get_description(seaudit_filter_t * filter)
 
 /**
  * Helper function to set a criterion's vector, by duping the vector
- * and its strings.
+ * and its strings.  Dupe the vector before destroying the existing
+ * one, in case v is the same as tgt.
  */
 static int filter_set_vector(seaudit_filter_t * filter, apol_vector_t ** tgt, apol_vector_t * v)
 {
 	int retval = 0;
-	size_t i;
-	char *s, *t;
-	apol_vector_destroy(tgt, free);
+	apol_vector_t *new_v = NULL;
 	if (v != NULL) {
-		if ((*tgt = apol_vector_create_with_capacity(apol_vector_get_size(v))) == NULL) {
+		if ((new_v = apol_vector_create_from_vector(v, apol_str_strdup, NULL)) == NULL) {
 			retval = -1;
-		} else {
-			for (i = 0; i < apol_vector_get_size(v); i++) {
-				s = apol_vector_get_element(v, i);
-				if ((t = strdup(s)) == NULL || apol_vector_append(*tgt, t) < 0) {
-					free(t);
-					retval = -1;
-					break;
-				}
-			}
 		}
+	}
+	if (retval == 0) {
+		apol_vector_destroy(tgt, free);
+		*tgt = new_v;
 	}
 	if (filter->model != NULL) {
 		model_notify_filter_changed(filter->model, filter);

@@ -3,7 +3,7 @@
  *  Public interface to a seaudit_sort_t.  This represents an abstract
  *  object that specifies how to sort messages within a particular
  *  seaudit_model_t.  The caller obtains a specific sort object and
- *  appends it to a model via seaudit_model_append_search(); the
+ *  appends it to a model via seaudit_model_append_sort(); the
  *  caller cannot get a "generic" sort object.
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com

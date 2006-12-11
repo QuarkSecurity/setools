@@ -75,6 +75,55 @@ extern "C"
  */
 	extern void seaudit_log_destroy(seaudit_log_t ** log);
 
+/**
+ * Return a vector of strings corresponding to all users found within
+ * the log file.  The vector will be sorted alphabetically.
+ *
+ * @param log Log file to access.
+ *
+ * @return Vector of sorted users, or NULL upon error.  The caller
+ * must call apol_vector_destroy() upon the return value, passing NULL
+ * as the second parameter.
+ */
+	apol_vector_t *seaudit_log_get_users(seaudit_log_t * log);
+
+/**
+ * Return a vector of strings corresponding to all roles found within
+ * the log file.  The vector will be sorted alphabetically.
+ *
+ * @param log Log file to access.
+ *
+ * @return Vector of sorted roles, or NULL upon error.  The caller
+ * must call apol_vector_destroy() upon the return value, passing NULL
+ * as the second parameter.
+ */
+	apol_vector_t *seaudit_log_get_roles(seaudit_log_t * log);
+
+/**
+ * Return a vector of strings corresponding to all types found within
+ * the log file.  The vector will be sorted alphabetically.
+ *
+ * @param log Log file to access.
+ *
+ * @return Vector of sorted types, or NULL upon error.  The caller
+ * must call apol_vector_destroy() upon the return value, passing NULL
+ * as the second parameter.
+ */
+	apol_vector_t *seaudit_log_get_types(seaudit_log_t * log);
+
+/**
+ * Return a vector of strings corresponding to all object classes
+ * found within the log file.  The vector will be sorted
+ * alphabetically.
+ *
+ * @param log Log file to access.
+ *
+ * @return Vector of sorted classes, or NULL upon error.  The caller
+ * must call apol_vector_destroy() upon the return value, passing NULL
+ * as the second parameter.
+ */
+	apol_vector_t *seaudit_log_get_classes(seaudit_log_t * log);
+
 #ifdef  __cplusplus
 }
 #endif

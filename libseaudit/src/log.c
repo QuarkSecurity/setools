@@ -82,6 +82,42 @@ void seaudit_log_destroy(seaudit_log_t ** log)
 	*log = NULL;
 }
 
+apol_vector_t *seaudit_log_get_users(seaudit_log_t * log)
+{
+	if (log == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return apol_bst_get_vector(log->users);
+}
+
+apol_vector_t *seaudit_log_get_roles(seaudit_log_t * log)
+{
+	if (log == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return apol_bst_get_vector(log->roles);
+}
+
+apol_vector_t *seaudit_log_get_types(seaudit_log_t * log)
+{
+	if (log == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return apol_bst_get_vector(log->types);
+}
+
+apol_vector_t *seaudit_log_get_classes(seaudit_log_t * log)
+{
+	if (log == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return apol_bst_get_vector(log->classes);
+}
+
 /******************** protected functions below ********************/
 
 int log_append_model(seaudit_log_t * log, seaudit_model_t * model)

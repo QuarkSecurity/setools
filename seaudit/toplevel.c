@@ -385,7 +385,7 @@ toplevel_t *toplevel_create(seaudit_t * s)
 		goto cleanup;
 	}
 	top->w = GTK_WINDOW(glade_xml_get_widget(top->xml, "TopLevel"));
-	gtk_object_set_data(GTK_OBJECT(top->w), "toplevel", top);
+	g_object_set_data(G_OBJECT(top->w), "toplevel", top);
 	init_icons(top);
 	top->notebook = GTK_NOTEBOOK(gtk_notebook_new());
 	g_signal_connect_after(G_OBJECT(top->notebook), "switch-page", G_CALLBACK(toplevel_on_notebook_switch_page), top);
@@ -782,6 +782,46 @@ seaudit_log_t *toplevel_get_log(toplevel_t * top)
 	return seaudit_get_log(top->s);
 }
 
+apol_vector_t *toplevel_get_log_users(toplevel_t * top)
+{
+	seaudit_log_t *log = seaudit_get_log(top->s);
+	if (log == NULL) {
+		return NULL;
+	} else {
+		return seaudit_log_get_users(log);
+	}
+}
+
+apol_vector_t *toplevel_get_log_roles(toplevel_t * top)
+{
+	seaudit_log_t *log = seaudit_get_log(top->s);
+	if (log == NULL) {
+		return NULL;
+	} else {
+		return seaudit_log_get_roles(log);
+	}
+}
+
+apol_vector_t *toplevel_get_log_types(toplevel_t * top)
+{
+	seaudit_log_t *log = seaudit_get_log(top->s);
+	if (log == NULL) {
+		return NULL;
+	} else {
+		return seaudit_log_get_types(log);
+	}
+}
+
+apol_vector_t *toplevel_get_log_classes(toplevel_t * top)
+{
+	seaudit_log_t *log = seaudit_get_log(top->s);
+	if (log == NULL) {
+		return NULL;
+	} else {
+		return seaudit_log_get_classes(log);
+	}
+}
+
 apol_policy_t *toplevel_get_policy(toplevel_t * top)
 {
 	return seaudit_get_policy(top->s);
@@ -850,14 +890,14 @@ void toplevel_WARN(toplevel_t * top, const char *format, ...)
 
 void toplevel_on_destroy(gpointer user_data, GtkObject * object __attribute__ ((unused)))
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	top->w = NULL;
 	gtk_main_quit();
 }
 
 void toplevel_on_open_log_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	char *path = util_open_file(top->w, "Open Log", seaudit_get_log_path(top->s));
 	if (path != NULL) {
 		toplevel_open_log(top, path);
@@ -867,7 +907,7 @@ void toplevel_on_open_log_activate(gpointer user_data, GtkWidget * widget __attr
 
 void toplevel_on_open_policy_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	char *path = util_open_file(top->w, "Open Policy", seaudit_get_policy_path(top->s));
 	if (path != NULL) {
 		toplevel_open_policy(top, path);
@@ -877,7 +917,7 @@ void toplevel_on_open_policy_activate(gpointer user_data, GtkWidget * widget __a
 
 void toplevel_on_preferences_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	if (preferences_view_run(top)) {
 		size_t i;
 		for (i = 0; i < apol_vector_get_size(top->views); i++) {
@@ -889,20 +929,20 @@ void toplevel_on_preferences_activate(gpointer user_data, GtkWidget * widget __a
 
 void toplevel_on_quit_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	top->w = NULL;
 	gtk_main_quit();
 }
 
 void toplevel_on_new_view_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	toplevel_add_new_model(top);
 }
 
 void toplevel_on_open_view_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	char *path = util_open_file(top->w, "Open View", top->view_filename);
 	seaudit_model_t *model = NULL;
 	if (path == NULL) {
@@ -921,7 +961,7 @@ void toplevel_on_open_view_activate(gpointer user_data, GtkWidget * widget __att
 
 void toplevel_on_save_view_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	message_view_t *view = toplevel_get_current_view(top);
 	assert(view != NULL);
 	message_view_save(view);
@@ -929,7 +969,7 @@ void toplevel_on_save_view_activate(gpointer user_data, GtkWidget * widget __att
 
 void toplevel_on_save_viewas_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	message_view_t *view = toplevel_get_current_view(top);
 	assert(view != NULL);
 	message_view_saveas(view);
@@ -937,7 +977,7 @@ void toplevel_on_save_viewas_activate(gpointer user_data, GtkWidget * widget __a
 
 void toplevel_on_modify_view_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	message_view_t *view = toplevel_get_current_view(top);
 	assert(view != NULL);
 	message_view_modify(view);
@@ -945,7 +985,7 @@ void toplevel_on_modify_view_activate(gpointer user_data, GtkWidget * widget __a
 
 void toplevel_on_export_all_messages_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	message_view_t *view = toplevel_get_current_view(top);
 	assert(view != NULL);
 	message_view_export_all_messages(view);
@@ -953,7 +993,7 @@ void toplevel_on_export_all_messages_activate(gpointer user_data, GtkWidget * wi
 
 void toplevel_on_export_selected_messages_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	message_view_t *view = toplevel_get_current_view(top);
 	assert(view != NULL);
 	message_view_export_selected_messages(view);
@@ -961,7 +1001,7 @@ void toplevel_on_export_selected_messages_activate(gpointer user_data, GtkWidget
 
 void toplevel_on_view_entire_message_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	message_view_t *view = toplevel_get_current_view(top);
 	assert(view != NULL);
 	message_view_entire_message(view);
@@ -969,13 +1009,13 @@ void toplevel_on_view_entire_message_activate(gpointer user_data, GtkWidget * wi
 
 void toplevel_on_find_terules_activate(gpointer user_data, GtkWidget * widget __attribute__ ((unused)))
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	toplevel_find_terules(top, NULL);
 }
 
 void toplevel_on_create_report_activate(gpointer user_data, GtkMenuItem * widget __attribute__ ((unused)))
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	message_view_t *view = toplevel_get_current_view(top);
 	assert(view != NULL);
 	report_window_run(top, view);
@@ -983,7 +1023,7 @@ void toplevel_on_create_report_activate(gpointer user_data, GtkMenuItem * widget
 
 void toplevel_on_monitor_log_activate(gpointer user_data, GtkMenuItem * widget)
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(widget))) {
 		top->do_monitor_log = 1;
 	} else {
@@ -994,7 +1034,7 @@ void toplevel_on_monitor_log_activate(gpointer user_data, GtkMenuItem * widget)
 
 void toplevel_on_help_activate(gpointer user_data, GtkMenuItem * widget __attribute__ ((unused)))
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	GtkWidget *window;
 	GtkWidget *scroll;
 	GtkWidget *text_view;
@@ -1037,7 +1077,7 @@ void toplevel_on_help_activate(gpointer user_data, GtkMenuItem * widget __attrib
 
 void toplevel_on_about_seaudit_activate(gpointer user_data, GtkMenuItem * widget __attribute__ ((unused)))
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	gtk_show_about_dialog(top->w,
 			      "comments", "Audit Log Analysis Tool for Security Enhanced Linux",
 			      "copyright", COPYRIGHT_INFO,
@@ -1047,14 +1087,14 @@ void toplevel_on_about_seaudit_activate(gpointer user_data, GtkMenuItem * widget
 void toplevel_on_find_terules_click(gpointer user_data, GtkWidget * widget __attribute__ ((unused)), GdkEvent * event
 				    __attribute__ ((unused)))
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	toplevel_find_terules(top, NULL);
 }
 
 void toplevel_on_modify_view_click(gpointer user_data, GtkWidget * widget __attribute__ ((unused)), GdkEvent * event
 				   __attribute__ ((unused)))
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	message_view_t *view = toplevel_get_current_view(top);
 	assert(view != NULL);
 	message_view_modify(view);
@@ -1063,7 +1103,7 @@ void toplevel_on_modify_view_click(gpointer user_data, GtkWidget * widget __attr
 void toplevel_on_monitor_log_click(gpointer user_data, GtkWidget * widget __attribute__ ((unused)), GdkEvent * event
 				   __attribute__ ((unused)))
 {
-	toplevel_t *top = gtk_object_get_data(GTK_OBJECT(user_data), "toplevel");
+	toplevel_t *top = g_object_get_data(G_OBJECT(user_data), "toplevel");
 	GtkCheckMenuItem *w = GTK_CHECK_MENU_ITEM(glade_xml_get_widget(top->xml, "MonitorLog"));
 	gboolean old_state;
 	assert(w != NULL);

@@ -4072,7 +4072,7 @@ Any Criterion</property>
 			      <property name="visible">True</property>
 			      <property name="tooltip" translatable="yes">Source user(s) to filter</property>
 			      <property name="can_focus">True</property>
-			      <property name="editable">False</property>
+			      <property name="editable">True</property>
 			      <property name="visibility">True</property>
 			      <property name="max_length">0</property>
 			      <property name="text" translatable="yes"></property>
@@ -4094,7 +4094,7 @@ Any Criterion</property>
 			      <property name="visible">True</property>
 			      <property name="tooltip" translatable="yes">Source role(s) to filter</property>
 			      <property name="can_focus">True</property>
-			      <property name="editable">False</property>
+			      <property name="editable">True</property>
 			      <property name="visibility">True</property>
 			      <property name="max_length">0</property>
 			      <property name="text" translatable="yes"></property>
@@ -4116,7 +4116,7 @@ Any Criterion</property>
 			      <property name="visible">True</property>
 			      <property name="tooltip" translatable="yes">Source type(s) to filter</property>
 			      <property name="can_focus">True</property>
-			      <property name="editable">False</property>
+			      <property name="editable">True</property>
 			      <property name="visibility">True</property>
 			      <property name="max_length">0</property>
 			      <property name="text" translatable="yes"></property>
@@ -6201,13 +6201,13 @@ Dec</property>
 	  <property name="border_width">4</property>
 	  <property name="visible">True</property>
 	  <property name="homogeneous">False</property>
-	  <property name="spacing">0</property>
+	  <property name="spacing">10</property>
 
 	  <child>
-	    <widget class="GtkHBox" id="hbox63">
+	    <widget class="GtkVBox" id="vbox37">
 	      <property name="visible">True</property>
 	      <property name="homogeneous">False</property>
-	      <property name="spacing">4</property>
+	      <property name="spacing">0</property>
 
 	      <child>
 		<widget class="GtkLabel" id="label200">
@@ -6222,31 +6222,101 @@ Dec</property>
 		  <property name="yalign">0.5</property>
 		  <property name="xpad">0</property>
 		  <property name="ypad">0</property>
-		  <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+		  <property name="ellipsize">PANGO_ELLIPSIZE_END</property>
 		  <property name="width_chars">-1</property>
 		  <property name="single_line_mode">False</property>
 		  <property name="angle">0</property>
 		</widget>
 		<packing>
 		  <property name="padding">0</property>
-		  <property name="expand">False</property>
-		  <property name="fill">False</property>
+		  <property name="expand">True</property>
+		  <property name="fill">True</property>
 		</packing>
 	      </child>
 
 	      <child>
-		<widget class="GtkComboBox" id="PolicyCompItemsCombo">
+		<widget class="GtkAlignment" id="alignment49">
 		  <property name="visible">True</property>
-		  <property name="items" translatable="yes">log file
-policy file
-log and policy file</property>
-		  <property name="add_tearoffs">False</property>
-		  <property name="focus_on_click">True</property>
+		  <property name="xalign">0.5</property>
+		  <property name="yalign">0.5</property>
+		  <property name="xscale">1</property>
+		  <property name="yscale">1</property>
+		  <property name="top_padding">0</property>
+		  <property name="bottom_padding">0</property>
+		  <property name="left_padding">10</property>
+		  <property name="right_padding">0</property>
+
+		  <child>
+		    <widget class="GtkVBox" id="vbox38">
+		      <property name="visible">True</property>
+		      <property name="homogeneous">False</property>
+		      <property name="spacing">0</property>
+
+		      <child>
+			<widget class="GtkRadioButton" id="PolicyCompLogRadio">
+			  <property name="visible">True</property>
+			  <property name="can_focus">True</property>
+			  <property name="label" translatable="yes">Log</property>
+			  <property name="use_underline">True</property>
+			  <property name="relief">GTK_RELIEF_NORMAL</property>
+			  <property name="focus_on_click">True</property>
+			  <property name="active">True</property>
+			  <property name="inconsistent">False</property>
+			  <property name="draw_indicator">True</property>
+			</widget>
+			<packing>
+			  <property name="padding">0</property>
+			  <property name="expand">False</property>
+			  <property name="fill">False</property>
+			</packing>
+		      </child>
+
+		      <child>
+			<widget class="GtkRadioButton" id="PolicyCompPolicyRadio">
+			  <property name="visible">True</property>
+			  <property name="can_focus">True</property>
+			  <property name="label" translatable="yes">Policy</property>
+			  <property name="use_underline">True</property>
+			  <property name="relief">GTK_RELIEF_NORMAL</property>
+			  <property name="focus_on_click">True</property>
+			  <property name="active">True</property>
+			  <property name="inconsistent">False</property>
+			  <property name="draw_indicator">True</property>
+			  <property name="group">PolicyCompLogRadio</property>
+			</widget>
+			<packing>
+			  <property name="padding">0</property>
+			  <property name="expand">False</property>
+			  <property name="fill">False</property>
+			</packing>
+		      </child>
+
+		      <child>
+			<widget class="GtkRadioButton" id="PolicyCompBothRadio">
+			  <property name="visible">True</property>
+			  <property name="can_focus">True</property>
+			  <property name="label" translatable="yes">Log and Policy</property>
+			  <property name="use_underline">True</property>
+			  <property name="relief">GTK_RELIEF_NORMAL</property>
+			  <property name="focus_on_click">True</property>
+			  <property name="active">True</property>
+			  <property name="inconsistent">False</property>
+			  <property name="draw_indicator">True</property>
+			  <property name="group">PolicyCompLogRadio</property>
+			</widget>
+			<packing>
+			  <property name="padding">0</property>
+			  <property name="expand">False</property>
+			  <property name="fill">False</property>
+			</packing>
+		      </child>
+		    </widget>
+		  </child>
 		</widget>
 		<packing>
 		  <property name="padding">0</property>
 		  <property name="expand">False</property>
-		  <property name="fill">True</property>
+		  <property name="fill">False</property>
 		</packing>
 	      </child>
 	    </widget>
@@ -6275,7 +6345,7 @@ log and policy file</property>
 		    <widget class="GtkVBox" id="vbox35">
 		      <property name="visible">True</property>
 		      <property name="homogeneous">False</property>
-		      <property name="spacing">4</property>
+		      <property name="spacing">0</property>
 
 		      <child>
 			<widget class="GtkScrolledWindow" id="scrolledwindow7">
