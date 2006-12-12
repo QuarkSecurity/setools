@@ -162,6 +162,42 @@ char *seaudit_get_log_path(seaudit_t * s)
 	return s->log_path;
 }
 
+apol_vector_t *seaudit_get_log_users(seaudit_t * s)
+{
+	if (s->log == NULL) {
+		return NULL;
+	} else {
+		return seaudit_log_get_users(s->log);
+	}
+}
+
+apol_vector_t *seaudit_get_log_roles(seaudit_t * s)
+{
+	if (s->log == NULL) {
+		return NULL;
+	} else {
+		return seaudit_log_get_roles(s->log);
+	}
+}
+
+apol_vector_t *seaudit_get_log_types(seaudit_t * s)
+{
+	if (s->log == NULL) {
+		return NULL;
+	} else {
+		return seaudit_log_get_types(s->log);
+	}
+}
+
+apol_vector_t *seaudit_get_log_classes(seaudit_t * s)
+{
+	if (s->log == NULL) {
+		return NULL;
+	} else {
+		return seaudit_log_get_classes(s->log);
+	}
+}
+
 size_t seaudit_get_num_log_messages(seaudit_t * s)
 {
 	return s->num_log_messages;

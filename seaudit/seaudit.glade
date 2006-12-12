@@ -6388,7 +6388,7 @@ Dec</property>
 			  <property name="spacing">0</property>
 
 			  <child>
-			    <widget class="GtkButton" id="PolicyViewIncSelectButton">
+			    <widget class="GtkButton" id="PolicyCompIncSelectButton">
 			      <property name="visible">True</property>
 			      <property name="can_default">True</property>
 			      <property name="can_focus">True</property>
@@ -6400,7 +6400,7 @@ Dec</property>
 			  </child>
 
 			  <child>
-			    <widget class="GtkButton" id="PolicyViewIncUnselectButton">
+			    <widget class="GtkButton" id="PolicyCompIncUnselectButton">
 			      <property name="visible">True</property>
 			      <property name="can_default">True</property>
 			      <property name="can_focus">True</property>
@@ -6546,7 +6546,7 @@ Dec</property>
 		      </child>
 
 		      <child>
-			<widget class="GtkButton" id="PolicyViewToIncButton">
+			<widget class="GtkButton" id="PolicyCompToIncButton">
 			  <property name="visible">True</property>
 			  <property name="can_default">True</property>
 			  <property name="can_focus">True</property>

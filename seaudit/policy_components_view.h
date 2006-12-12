@@ -36,16 +36,22 @@
  *
  * @param top Toplevel containing message view.
  * @param parent Parent window upon which to center this dialog.
+ * @param title Title for the dialog window.
  * @param log_items Vector of strings that the log has.  The function
  * will not modify this vector.
  * @param policy_items Vector of strings that the policy has.  If
  * NULL, then no policy is loaded.  The function will not modify this
  * vector.
- * @param include List of strings to be included; the vector will be
- * modified by this function.  It is assumed that this vector contains
- * pointers into log_items and policy_items.
+ * @param include List of strings to be included.  The strings are
+ * assumed to have been strdup()ped from some other source.  This
+ * function takes ownership of the vector and its contents.
+ *
+ * @return A vector newly allocated strings corresponding to the items
+ * to be included, or NULL upon error.  The caller must call
+ * apol_vector_destroy() upon the return value, passing free as the
+ * second parameter.
  */
-void policy_components_view_run(toplevel_t * top, GtkWindow * parent,
-				apol_vector_t * log_items, apol_vector_t * policy_items, apol_vector_t * included);
+apol_vector_t *policy_components_view_run(toplevel_t * top, GtkWindow * parent, const char *title,
+					  apol_vector_t * log_items, apol_vector_t * policy_items, apol_vector_t * included);
 
 #endif

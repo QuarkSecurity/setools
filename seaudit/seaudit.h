@@ -122,6 +122,58 @@ seaudit_log_t *seaudit_get_log(seaudit_t * s);
 char *seaudit_get_log_path(seaudit_t * s);
 
 /**
+ * Return a vector of strings corresponding to all users found within
+ * currently opened log files.  The vector will be sorted
+ * alphabetically.
+ *
+ * @param s seaudit object to query.
+ *
+ * @return Vector of sorted users, or NULL if no log is loaded.  The
+ * caller must call apol_vector_destroy() upon the return value,
+ * passing NULL as the second parameter.
+ */
+apol_vector_t *seaudit_get_log_users(seaudit_t * s);
+
+/**
+ * Return a vector of strings corresponding to all roles found within
+ * currently opened log files.  The vector will be sorted
+ * alphabetically.
+ *
+ * @param s seaudit object to query.
+ *
+ * @return Vector of sorted roles, or NULL if no log is loaded.  The
+ * caller must call apol_vector_destroy() upon the return value,
+ * passing NULL as the second parameter.
+ */
+apol_vector_t *seaudit_get_log_roles(seaudit_t * s);
+
+/**
+ * Return a vector of strings corresponding to all types found within
+ * currently opened log files.  The vector will be sorted
+ * alphabetically.
+ *
+ * @param s seaudit object to query.
+ *
+ * @return Vector of sorted types, or NULL if no log is loaded.  The
+ * caller must call apol_vector_destroy() upon the return value,
+ * passing NULL as the second parameter.
+ */
+apol_vector_t *seaudit_get_log_types(seaudit_t * s);
+
+/**
+ * Return a vector of strings corresponding to all object classes
+ * found within currently opened log file.  The vector will be sorted
+ * alphabetically.
+ *
+ * @param s seaudit object to query.
+ *
+ * @return Vector of sorted classes, or NULL if no log is loaded.  The
+ * caller must call apol_vector_destroy() upon the return value,
+ * passing NULL as the second parameter.
+ */
+apol_vector_t *seaudit_get_log_classes(seaudit_t * s);
+
+/**
  * Return the number of messages in the current log.
  *
  * @param s seaudit object to query.

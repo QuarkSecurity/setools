@@ -36,14 +36,17 @@ struct polcomp_view
 {
 	GladeXML *xml;
 	toplevel_t *top;
+	apol_vector_t *log_items, *policy_items, *both_items, *included_items;
 	GtkDialog *dialog;
+
+	GtkRadioButton *log_radio, *policy_radio, *both_radio;
 
 	GtkListStore *master_store;
 	GtkTreeModel *inc_store, *exc_store;
 	GtkTreeView *inc_view, *exc_view;
+	GtkButton *inc_select_button, *inc_unselect_button, *exc_select_button, *exc_unselect_button;
 
-	GtkRadioButton *log_radio, *policy_radio, *both_radio;
-	apol_vector_t *log_items, *policy_items, *both_items, *included_items;
+	GtkButton *to_exc_button, *to_inc_button;
 };
 
 enum polcom_columns
@@ -65,9 +68,20 @@ static void policy_components_view_init_widgets(struct polcomp_view *pv)
 	pv->inc_view = GTK_TREE_VIEW(glade_xml_get_widget(pv->xml, "PolicyCompIncView"));
 	pv->exc_view = GTK_TREE_VIEW(glade_xml_get_widget(pv->xml, "PolicyCompExcView"));
 	assert(pv->inc_view != NULL && pv->exc_view != NULL);
+
+	pv->inc_select_button = GTK_BUTTON(glade_xml_get_widget(pv->xml, "PolicyCompIncSelectButton"));
+	pv->inc_unselect_button = GTK_BUTTON(glade_xml_get_widget(pv->xml, "PolicyCompIncUnselectButton"));
+	pv->exc_select_button = GTK_BUTTON(glade_xml_get_widget(pv->xml, "PolicyCompExcSelectButton"));
+	pv->exc_unselect_button = GTK_BUTTON(glade_xml_get_widget(pv->xml, "PolicyCompExcUnselectButton"));
+	assert(pv->inc_select_button != NULL && pv->inc_unselect_button &&
+	       pv->exc_select_button != NULL && pv->exc_unselect_button);
+
+	pv->to_exc_button = GTK_BUTTON(glade_xml_get_widget(pv->xml, "PolicyCompToExcButton"));
+	pv->to_inc_button = GTK_BUTTON(glade_xml_get_widget(pv->xml, "PolicyCompToIncButton"));
+	assert(pv->to_exc_button != NULL && pv->to_inc_button);
 }
 
-/******************** functions to manipulate the lists ********************/
+/******************** functions to build the lists ********************/
 
 /**
  * Determine if a particular row should be visible based upon the
@@ -149,7 +163,7 @@ static void policy_components_view_init_lists(struct polcomp_view *pv)
 		if (pv->policy_items != NULL && apol_vector_get_index(pv->policy_items, s, NULL, NULL, &j) == 0) {
 			is_policy = TRUE;
 		}
-		if (apol_vector_get_index(pv->included_items, s, NULL, NULL, &j) == 0) {
+		if (apol_vector_get_index(pv->included_items, s, apol_str_strcmp, NULL, &j) == 0) {
 			is_included = TRUE;
 		}
 		gtk_list_store_append(pv->master_store, &iter);
@@ -203,15 +217,119 @@ static void policy_components_view_on_source_toggle(GtkToggleButton * widget, gp
 	gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(pv->exc_store));
 }
 
+static void policy_components_gtk_tree_path_free(gpointer data, gpointer user_data __attribute__ ((unused)))
+{
+	gtk_tree_path_free((GtkTreePath *) data);
+}
+
+static void policy_components_gtk_tree_row_reference_free(gpointer data, gpointer user_data __attribute__ ((unused)))
+{
+	gtk_tree_row_reference_free((GtkTreeRowReference *) data);
+}
+
+static void policy_components_view_on_to_exc_click(GtkButton * widget __attribute__ ((unused)), gpointer user_data)
+{
+	struct polcomp_view *pv = (struct polcomp_view *)user_data;
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(pv->inc_view);
+	GList *r, *rows = gtk_tree_selection_get_selected_rows(selection, NULL);
+	GList *refs = NULL;
+
+	/* use references because the filtered store will be changing
+	 * as master_store's ISINC_COLUMN value changes */
+	for (r = rows; r != NULL; r = r->next) {
+		GtkTreePath *path = (GtkTreePath *) r->data;
+		GtkTreeRowReference *ref = gtk_tree_row_reference_new(pv->inc_store, path);
+		refs = g_list_prepend(refs, ref);
+	}
+
+	for (r = refs; r != NULL; r = r->next) {
+		GtkTreeRowReference *ref = (GtkTreeRowReference *) r->data;
+		GtkTreePath *path = gtk_tree_row_reference_get_path(ref);
+		GtkTreeIter iter, child_iter;
+		char *name;
+		size_t i;
+		gtk_tree_model_get_iter(pv->inc_store, &iter, path);
+		gtk_tree_model_filter_convert_iter_to_child_iter(GTK_TREE_MODEL_FILTER(pv->inc_store), &child_iter, &iter);
+		gtk_tree_model_get(GTK_TREE_MODEL(pv->master_store), &child_iter, NAME_COLUMN, &name, -1);
+		gtk_list_store_set(pv->master_store, &child_iter, ISINC_COLUMN, FALSE, -1);
+		assert(apol_vector_get_index(pv->included_items, name, apol_str_strcmp, NULL, &i) == 0);
+		name = apol_vector_get_element(pv->included_items, i);
+		free(name);
+		apol_vector_remove(pv->included_items, i);
+	}
+
+	g_list_foreach(refs, policy_components_gtk_tree_row_reference_free, NULL);
+	g_list_free(refs);
+	g_list_foreach(rows, policy_components_gtk_tree_path_free, NULL);
+	g_list_free(rows);
+	gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(pv->inc_store));
+	gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(pv->exc_store));
+}
+
+static void policy_components_view_on_to_inc_click(GtkButton * widget __attribute__ ((unused)), gpointer user_data)
+{
+	struct polcomp_view *pv = (struct polcomp_view *)user_data;
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(pv->exc_view);
+	GList *r, *rows = gtk_tree_selection_get_selected_rows(selection, NULL);
+
+	/* use references because the filtered store will be changing
+	 * as master_store's ISINC_COLUMN value changes */
+	GList *refs = NULL;
+	for (r = rows; r != NULL; r = r->next) {
+		GtkTreePath *path = (GtkTreePath *) r->data;
+		GtkTreeRowReference *ref = gtk_tree_row_reference_new(pv->exc_store, path);
+		refs = g_list_prepend(refs, ref);
+	}
+
+	for (r = refs; r != NULL; r = r->next) {
+		GtkTreeRowReference *ref = (GtkTreeRowReference *) r->data;
+		GtkTreePath *path = gtk_tree_row_reference_get_path(ref);
+		GtkTreeIter iter, child_iter;
+		char *name;
+		gtk_tree_model_get_iter(pv->exc_store, &iter, path);
+		gtk_tree_model_filter_convert_iter_to_child_iter(GTK_TREE_MODEL_FILTER(pv->exc_store), &child_iter, &iter);
+		gtk_tree_model_get(GTK_TREE_MODEL(pv->master_store), &child_iter, NAME_COLUMN, &name, -1);
+		gtk_list_store_set(pv->master_store, &child_iter, ISINC_COLUMN, TRUE, -1);
+		apol_vector_append(pv->included_items, strdup(name));
+	}
+	apol_vector_sort_uniquify(pv->included_items, apol_str_strcmp, NULL, free);
+	g_list_foreach(refs, policy_components_gtk_tree_row_reference_free, NULL);
+	g_list_free(refs);
+	g_list_foreach(rows, policy_components_gtk_tree_path_free, NULL);
+	g_list_free(rows);
+	gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(pv->inc_store));
+	gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(pv->exc_store));
+}
+
+static void policy_components_view_on_select_click(GtkButton * widget __attribute__ ((unused)), gpointer user_data)
+{
+	GtkTreeView *tv = GTK_TREE_VIEW(user_data);
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(tv);
+	gtk_tree_selection_select_all(selection);
+}
+
+static void policy_components_view_on_unselect_click(GtkButton * widget __attribute__ ((unused)), gpointer user_data)
+{
+	GtkTreeView *tv = GTK_TREE_VIEW(user_data);
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(tv);
+	gtk_tree_selection_unselect_all(selection);
+}
+
 static void policy_components_view_init_signals(struct polcomp_view *pv)
 {
 	g_signal_connect(pv->log_radio, "toggled", G_CALLBACK(policy_components_view_on_source_toggle), pv);
 	g_signal_connect(pv->policy_radio, "toggled", G_CALLBACK(policy_components_view_on_source_toggle), pv);
 	g_signal_connect(pv->both_radio, "toggled", G_CALLBACK(policy_components_view_on_source_toggle), pv);
+	g_signal_connect(pv->to_exc_button, "clicked", G_CALLBACK(policy_components_view_on_to_exc_click), pv);
+	g_signal_connect(pv->to_inc_button, "clicked", G_CALLBACK(policy_components_view_on_to_inc_click), pv);
+	g_signal_connect(pv->inc_select_button, "clicked", G_CALLBACK(policy_components_view_on_select_click), pv->inc_view);
+	g_signal_connect(pv->inc_unselect_button, "clicked", G_CALLBACK(policy_components_view_on_unselect_click), pv->inc_view);
+	g_signal_connect(pv->exc_select_button, "clicked", G_CALLBACK(policy_components_view_on_select_click), pv->exc_view);
+	g_signal_connect(pv->exc_unselect_button, "clicked", G_CALLBACK(policy_components_view_on_unselect_click), pv->exc_view);
 }
 
-void policy_components_view_run(toplevel_t * top, GtkWindow * parent,
-				apol_vector_t * log_items, apol_vector_t * policy_items, apol_vector_t * included)
+apol_vector_t *policy_components_view_run(toplevel_t * top, GtkWindow * parent, const char *title,
+					  apol_vector_t * log_items, apol_vector_t * policy_items, apol_vector_t * included)
 {
 	struct polcomp_view pv;
 	gint response;
@@ -221,19 +339,33 @@ void policy_components_view_run(toplevel_t * top, GtkWindow * parent,
 	pv.xml = glade_xml_new(toplevel_get_glade_xml(top), "PolicyComponentListsWindow", NULL);
 	pv.log_items = log_items;
 	pv.policy_items = policy_items;
-	pv.included_items = included;
+	if (included == NULL) {
+		pv.included_items = apol_vector_create();
+	} else {
+		pv.included_items = apol_vector_create_from_vector(included, apol_str_strdup, NULL);
+	}
+	apol_vector_destroy(&included, free);
+	if (pv.included_items == NULL) {
+		toplevel_ERR(pv.top, "Error creating dialog: %s", strerror(errno));
+		return NULL;
+	}
 
 	policy_components_view_init_widgets(&pv);
 	policy_components_view_init_lists(&pv);
 	policy_components_view_init_signals(&pv);
-
+	gtk_window_set_title(GTK_WINDOW(pv.dialog), title);
 	do {
 		response = gtk_dialog_run(pv.dialog);
 	} while (response != GTK_RESPONSE_CLOSE);
 
 	gtk_widget_destroy(GTK_WIDGET(pv.dialog));
-	apol_vector_destroy(&pv.both_items, NULL);
 	g_object_unref(pv.master_store);
 	g_object_unref(pv.inc_store);
 	g_object_unref(pv.exc_store);
+	apol_vector_destroy(&pv.both_items, NULL);
+	if (apol_vector_get_size(pv.included_items) == 0) {
+		apol_vector_destroy(&pv.included_items, NULL);
+		return NULL;
+	}
+	return pv.included_items;
 }

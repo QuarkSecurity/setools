@@ -647,7 +647,9 @@ static void filter_view_on_suser_context_click(GtkButton * widget __attribute__ 
 	struct filter_view *fv = (struct filter_view *)user_data;
 	apol_vector_t *log_items = toplevel_get_log_users(fv->top);
 	apol_vector_t *policy_items = filter_view_get_policy_users(fv);
-	policy_components_view_run(fv->top, GTK_WINDOW(fv->dialog), log_items, policy_items, fv->suser.items);
+	fv->suser.items =
+		policy_components_view_run(fv->top, GTK_WINDOW(fv->dialog), "Source User Items", log_items, policy_items,
+					   fv->suser.items);
 	apol_vector_destroy(&log_items, NULL);
 	apol_vector_destroy(&policy_items, NULL);
 	filter_view_context_item_to_entry(fv, &fv->suser);
@@ -658,7 +660,9 @@ static void filter_view_on_srole_context_click(GtkButton * widget __attribute__ 
 	struct filter_view *fv = (struct filter_view *)user_data;
 	apol_vector_t *log_items = toplevel_get_log_roles(fv->top);
 	apol_vector_t *policy_items = filter_view_get_policy_roles(fv);
-	policy_components_view_run(fv->top, GTK_WINDOW(fv->dialog), log_items, policy_items, fv->srole.items);
+	fv->srole.items =
+		policy_components_view_run(fv->top, GTK_WINDOW(fv->dialog), "Source Role Items", log_items, policy_items,
+					   fv->srole.items);
 	apol_vector_destroy(&log_items, NULL);
 	apol_vector_destroy(&policy_items, NULL);
 	filter_view_context_item_to_entry(fv, &fv->srole);
@@ -669,7 +673,9 @@ static void filter_view_on_stype_context_click(GtkButton * widget __attribute__ 
 	struct filter_view *fv = (struct filter_view *)user_data;
 	apol_vector_t *log_items = toplevel_get_log_types(fv->top);
 	apol_vector_t *policy_items = filter_view_get_policy_types(fv);
-	policy_components_view_run(fv->top, GTK_WINDOW(fv->dialog), log_items, policy_items, fv->stype.items);
+	fv->stype.items =
+		policy_components_view_run(fv->top, GTK_WINDOW(fv->dialog), "Source Type Items", log_items, policy_items,
+					   fv->stype.items);
 	apol_vector_destroy(&log_items, NULL);
 	apol_vector_destroy(&policy_items, NULL);
 	filter_view_context_item_to_entry(fv, &fv->stype);
@@ -680,7 +686,9 @@ static void filter_view_on_tuser_context_click(GtkButton * widget __attribute__ 
 	struct filter_view *fv = (struct filter_view *)user_data;
 	apol_vector_t *log_items = toplevel_get_log_users(fv->top);
 	apol_vector_t *policy_items = filter_view_get_policy_users(fv);
-	policy_components_view_run(fv->top, GTK_WINDOW(fv->dialog), log_items, policy_items, fv->tuser.items);
+	fv->tuser.items =
+		policy_components_view_run(fv->top, GTK_WINDOW(fv->dialog), "Target User Items", log_items, policy_items,
+					   fv->tuser.items);
 	apol_vector_destroy(&log_items, NULL);
 	apol_vector_destroy(&policy_items, NULL);
 	filter_view_context_item_to_entry(fv, &fv->tuser);
@@ -691,7 +699,9 @@ static void filter_view_on_trole_context_click(GtkButton * widget __attribute__ 
 	struct filter_view *fv = (struct filter_view *)user_data;
 	apol_vector_t *log_items = toplevel_get_log_roles(fv->top);
 	apol_vector_t *policy_items = filter_view_get_policy_roles(fv);
-	policy_components_view_run(fv->top, GTK_WINDOW(fv->dialog), log_items, policy_items, fv->trole.items);
+	fv->trole.items =
+		policy_components_view_run(fv->top, GTK_WINDOW(fv->dialog), "Target Role Items", log_items, policy_items,
+					   fv->trole.items);
 	apol_vector_destroy(&log_items, NULL);
 	apol_vector_destroy(&policy_items, NULL);
 	filter_view_context_item_to_entry(fv, &fv->trole);
@@ -702,7 +712,9 @@ static void filter_view_on_ttype_context_click(GtkButton * widget __attribute__ 
 	struct filter_view *fv = (struct filter_view *)user_data;
 	apol_vector_t *log_items = toplevel_get_log_types(fv->top);
 	apol_vector_t *policy_items = filter_view_get_policy_types(fv);
-	policy_components_view_run(fv->top, GTK_WINDOW(fv->dialog), log_items, policy_items, fv->ttype.items);
+	fv->ttype.items =
+		policy_components_view_run(fv->top, GTK_WINDOW(fv->dialog), "Target Type Items", log_items, policy_items,
+					   fv->ttype.items);
 	apol_vector_destroy(&log_items, NULL);
 	apol_vector_destroy(&policy_items, NULL);
 	filter_view_context_item_to_entry(fv, &fv->ttype);
@@ -713,7 +725,9 @@ static void filter_view_on_class_context_click(GtkButton * widget __attribute__ 
 	struct filter_view *fv = (struct filter_view *)user_data;
 	apol_vector_t *log_items = toplevel_get_log_classes(fv->top);
 	apol_vector_t *policy_items = filter_view_get_policy_classes(fv);
-	policy_components_view_run(fv->top, GTK_WINDOW(fv->dialog), log_items, policy_items, fv->obj_class.items);
+	fv->obj_class.items =
+		policy_components_view_run(fv->top, GTK_WINDOW(fv->dialog), "Object Class Items", log_items, policy_items,
+					   fv->obj_class.items);
 	apol_vector_destroy(&log_items, NULL);
 	apol_vector_destroy(&policy_items, NULL);
 	filter_view_context_item_to_entry(fv, &fv->obj_class);

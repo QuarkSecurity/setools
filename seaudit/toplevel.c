@@ -784,42 +784,22 @@ seaudit_log_t *toplevel_get_log(toplevel_t * top)
 
 apol_vector_t *toplevel_get_log_users(toplevel_t * top)
 {
-	seaudit_log_t *log = seaudit_get_log(top->s);
-	if (log == NULL) {
-		return NULL;
-	} else {
-		return seaudit_log_get_users(log);
-	}
+	return seaudit_get_log_users(top->s);
 }
 
 apol_vector_t *toplevel_get_log_roles(toplevel_t * top)
 {
-	seaudit_log_t *log = seaudit_get_log(top->s);
-	if (log == NULL) {
-		return NULL;
-	} else {
-		return seaudit_log_get_roles(log);
-	}
+	return seaudit_get_log_roles(top->s);
 }
 
 apol_vector_t *toplevel_get_log_types(toplevel_t * top)
 {
-	seaudit_log_t *log = seaudit_get_log(top->s);
-	if (log == NULL) {
-		return NULL;
-	} else {
-		return seaudit_log_get_types(log);
-	}
+	return seaudit_get_log_types(top->s);
 }
 
 apol_vector_t *toplevel_get_log_classes(toplevel_t * top)
 {
-	seaudit_log_t *log = seaudit_get_log(top->s);
-	if (log == NULL) {
-		return NULL;
-	} else {
-		return seaudit_log_get_classes(log);
-	}
+	return seaudit_get_log_classes(top->s);
 }
 
 apol_policy_t *toplevel_get_policy(toplevel_t * top)
