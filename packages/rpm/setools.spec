@@ -1,6 +1,6 @@
 Name: setools
 Version: 3.2
-Release: 0
+Release: rhel4-0
 Vendor: Tresys Technology, LLC
 Packager: Jason Tang <selinux@tresys.com>
 License: GPL
