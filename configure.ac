@@ -281,7 +281,9 @@ EOF
             ;;
     esac
     if test ${copy_bwidget} = yes; then
-        echo "puts \$tcl_library" > ./conftest.tcl
+        changequote(<<<,>>>)dnl
+        echo 'puts [file join $tcl_library BWidget1.8]' > ./conftest.tcl
+        changequote([,])dnl
         BWIDGET_DESTDIR=`${TCLSH_PROG} ./conftest.tcl`
         AC_SUBST(BWIDGET_DESTDIR)
     fi
@@ -522,7 +524,8 @@ if test "x${build_gui}" = xyes; then
   if test $? -ne 0; then
      AC_MSG_ERROR([setools requires GTK+ 2.4 or greater])
   fi
-  gtk_version_2_8=`pkg-config --atleast-version=2.8 gtk+-2.0`
+  pkg-config --atleast-version=2.8 gtk+-2.0
+  gtk_version_2_8=$?
   GTK_CFLAGS=`pkg-config --cflags gtk+-2.0`
   if test -z "${GTK_CFLAGS}"; then
      AC_MSG_ERROR([could not find GTK headers])
@@ -651,7 +654,7 @@ if test ${sepol_new_expand_boolmap} == "yes" ; then
    AC_DEFINE(HAVE_SEPOL_BOOLMAP, 1, [sepol's new expand boolmap behavior])
 fi
 
-if test ${gtk_version_2_8} = 0 ; then
+if test ${gtk_version_2_8} -eq 0 ; then
    AC_DEFINE(GTK_2_8, 1, [GTK+ is version 2.8+])
 fi
 
