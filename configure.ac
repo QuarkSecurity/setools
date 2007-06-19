@@ -715,7 +715,7 @@ AC_CONFIG_FILES([Makefile VERSION \
                  seaudit/Makefile \
                  sediff/Makefile \
                  man/Makefile \
-                 packages/Makefile])
+                 packages/Makefile packages/rpm/Makefile])
 
 AC_OUTPUT
 

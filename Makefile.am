@@ -1,15 +1,11 @@
 ACLOCAL_AMFLAGS = -I m4
 AUTOMAKE_OPTIONS = dist-bzip2
 
-if COPY_BWIDGET
-  MAYBE_BWIDGET = packages
-endif
-
 if BUILD_GUI
   MAYBE_GUI = libapol-tcl apol awish seaudit
 endif
 
-SUBDIRS = libqpol libapol libpoldiff libsefs libseaudit secmds sechecker sediff man $(MAYBE_GUI) $(MAYBE_BWIDGET)
+SUBDIRS = libqpol libapol libpoldiff libsefs libseaudit secmds sechecker sediff man packages $(MAYBE_GUI)
 
 INDENT_OPTS = -npro -nbad -bap -sob -ss -l132 -di1 -nbc -br -nbbb -c40 -cd40 -ncdb -ce -cli0 -cp40 -ncs -d0 -nfc1 -nfca -i8 -ts8 -ci8 -lp -ip0 -npcs -npsl -sc
 
