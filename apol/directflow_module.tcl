@@ -125,6 +125,7 @@ proc Apol_Analysis_directflow::newAnalysis {} {
     set results [_analyze]
     set f [_createResultsDisplay]
     _renderResults $f $results
+    $results -acquire
     $results -delete
     return {}
 }
@@ -136,6 +137,7 @@ proc Apol_Analysis_directflow::updateAnalysis {f} {
     set results [_analyze]
     _clearResultsDisplay $f
     _renderResults $f $results
+    $results -acquire
     $results -delete
     return {}
 }
@@ -220,13 +222,13 @@ proc Apol_Analysis_directflow::_reinitializeVals {} {
     array set vals {
         type {}  type:attrib {}
 
-        classes:all_classes {}
         classes:enable 0
         classes:selected {}
 
         regexp:enable 0
         regexp {}
     }
+    set vals(classes:all_classes) [Apol_Class_Perms::getClasses]
 }
 
 proc Apol_Analysis_directflow::_reinitializeWidgets {} {
@@ -352,6 +354,7 @@ proc Apol_Analysis_directflow::_analyze {} {
     }
     $q set_result_regex $::ApolTop::policy $regexp
     set results [$q run $::ApolTop::policy]
+    $q -acquire
     $q -delete
     return $results
 }
@@ -423,6 +426,7 @@ proc Apol_Analysis_directflow::_treeOpen {tree node} {
                 $tree itemconfigure $node -data [list 1 $results]
                 if {$new_results != {}} {
                     _createResultsNodes $tree $node $new_results 1
+                    $new_results -acquire
                     $new_results -delete
                 }
             }
@@ -458,6 +462,7 @@ proc Apol_Analysis_directflow::_renderResults {f results} {
     $tree opentree top 0
     $tree see top
 
+    $results_list -acquire
     $results_list -delete
 }
 
@@ -496,7 +501,7 @@ proc Apol_Analysis_directflow::_createResultsNodes {tree parent_node results do_
             set target [[[lindex $info_list 0] get_end_type] get_name $::ApolTop::qpolicy]
         }
         set flow_dir [$r get_dir]
-        set step0 [new_apol_infoflow_step_t [[$r get_steps] get_element 0]]
+        set step0 [apol_infoflow_step_from_void [[$r get_steps] get_element 0]]
         set rules [$step0 get_rules]
 
         lappend all_targets $target
@@ -570,7 +575,8 @@ proc Apol_Analysis_directflow::_renderResultsDirectFlow {res tree node data} {
             $v append $r
         }
         apol_tcl_avrule_sort $::ApolTop::policy $v
-        Apol_Widget::appendSearchResultRules $res 12 $v new_qpol_avrule_t
+        Apol_Widget::appendSearchResultRules $res 12 $v qpol_avrule_from_void
+        $v -acquire
         $v -delete
     }
 }

@@ -36,6 +36,10 @@
 
 %import apol.i
 
+%inline %{
+	typedef struct apol_string_vector apol_string_vector_t;
+%}
+
 #ifdef SWIGPYTHON
 
 %typemap(out) time_t {
@@ -61,7 +65,14 @@ import com.tresys.setools.apol.*;
 %}
 %pragma(java) jniclasscode=%{
 	static {
-		System.loadLibrary("jsefs");
+		try
+		{
+			libsefs_get_version ();
+		}
+		catch (UnsatisfiedLinkError ule)
+		{
+			System.loadLibrary("jsefs");
+		}
 	}
 %}
 %pragma(java) moduleimports=%{
@@ -123,8 +134,14 @@ SWIGEXPORT int Tsefs_Init(Tcl_Interp *interp) {
 
 #define __attribute__(x)
 
+%ignore sefs_fcfile::fileList() const;
+
 // don't wrap private friend functions
 #define SWIG_FRIENDS
+
+%newobject sefs_fclist::runQuery(sefs_query * query);
+%newobject sefs_entry::toString();
+%newobject sefs_default_file_contexts_get_path();
 
 %include <sefs/fclist.hh>
 %include <sefs/db.hh>
@@ -136,9 +153,17 @@ SWIGEXPORT int Tsefs_Init(Tcl_Interp *interp) {
 const char *libsefs_get_version (void);
 char *sefs_default_file_contexts_get_path(void);
 
-%extend sefs_entry {
+%inline %{
 	// needed to convert from the results of runQuery() to the entry
-	sefs_entry(void *v) {
+	sefs_entry *sefs_entry_from_void(void *v) {
 		return static_cast<sefs_entry *>(v);
+	}
+%}
+
+%extend sefs_fcfile {
+	const apol_string_vector_t *fileListStrs() const
+	{
+		const apol_vector_t *v = self->fileList();
+		return reinterpret_cast<const apol_string_vector_t*>(v);
 	}
 }

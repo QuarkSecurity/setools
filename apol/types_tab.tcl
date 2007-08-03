@@ -98,14 +98,18 @@ proc Apol_Types::create {tab_name nb} {
 proc Apol_Types::open {ppath} {
     set q [new_apol_type_query_t]
     set v [$q run $::ApolTop::policy]
+    $q -acquire
     $q -delete
     variable typelist [lsort [type_vector_to_list $v]]
+    $v -acquire
     $v -delete
 
     set q [new_apol_attr_query_t]
     set v [$q run $::ApolTop::policy]
+    $q -acquire
     $q -delete
     variable attriblist [lsort [attr_vector_to_list $v]]
+    $v -acquire
     $v -delete
 }
 
@@ -132,12 +136,14 @@ proc Apol_Types::isTypeInPolicy {type} {
     set q [new_apol_type_query_t]
     $q set_type $::ApolTop::policy $type
     set v [$q run $::ApolTop::policy]
+    $q -acquire
     $q -delete
     if {$v == "NULL" || [$v get_size] == 0} {
         set retval 0
     } else {
         set retval 1
     }
+    $v -acquire
     $v -delete
     set retval
 }
@@ -197,16 +203,18 @@ proc Apol_Types::_toggleCheckbuttons {w name1 name2 op} {
 }
 
 proc Apol_Types::_popupTypeInfo {which ta} {
-    set info_fc ""
-    set index_file_loaded 0
+    if {[Apol_File_Contexts::is_db_loaded]} {
+        set entry_vector [Apol_File_Contexts::get_fc_files_for_ta $which $ta]
+        set index_file_loaded 1
+    } else {
+        set entry_vector {}
+        set index_file_loaded 0
+    }
+
     if {$which == "type"} {
         set info_ta [_renderType $ta 1 1]
     } else {
         set info_ta [_renderAttrib $ta 1 0]
-    }
-    if {[Apol_File_Contexts::is_db_loaded]} {
-        set info_fc [Apol_File_Contexts::get_fc_files_for_ta $which $ta]
-        set index_file_loaded 1
     }
 
     set w .ta_infobox
@@ -240,28 +248,28 @@ proc Apol_Types::_popupTypeInfo {which ta} {
         pack $l -anchor nw
     }
     set sw [ScrolledWindow [$notebook getframe fc_info_tab].sw -scrollbar both -auto both]
-    set text [text [$sw getframe].text -wrap none -font {helvetica 10} -bg white]
-    $sw setwidget $text
+    set fc_text [text [$sw getframe].text -wrap none -font {helvetica 10} -bg white]
+    $sw setwidget $fc_text
     pack $sw -expand 1 -fill both
 
     $notebook raise [$notebook page 0]
 
     if {$index_file_loaded} {
-        if {$info_fc != ""} {
-            set num 0
-            foreach item $info_fc {
-                foreach {ctxt class path} $item {}
-                $f_fc insert end "$ctxt\t     $class\t     $path\n"
-                incr num
+        if {$entry_vector != {}} {
+            set num [$entry_vector get_size]
+            $fc_text insert 1.0 "Number of files: $num\n\n"
+            for {set i 0} {$i < $num} {incr i} {
+                set entry [sefs_entry_from_void [$entry_vector get_element $i]]
+                $fc_text insert end "[$entry toString]\n"
             }
-            $text insert 1.0 "Number of files: $num\n\n"
+            $entry_vector -delete
         } else {
-            $text insert end "No files found."
+            $fc_text insert end "No files found."
         }
     } else {
-        $text insert 0.0 "No index file is loaded.  Load an index file through the File Context tab."
+        $fc_text insert 0.0 "No index file is loaded.  Load an index file through the File Context tab."
     }
-    $text configure -state disabled
+    $fc_text configure -state disabled
 
     $w draw {} 0 400x400
 }
@@ -296,8 +304,10 @@ proc Apol_Types::_searchTypes {} {
         $q set_type $::ApolTop::policy $regexp
         $q set_regex $::ApolTop::policy $use_regexp
         set v [$q run $::ApolTop::policy]
+        $q -acquire
         $q -delete
         set types_data [type_vector_to_list $v]
+        $v -acquire
         $v -delete
         append results "TYPES ([llength $types_data]):\n\n"
         foreach t [lsort $types_data] {
@@ -309,8 +319,10 @@ proc Apol_Types::_searchTypes {} {
         $q set_attr $::ApolTop::policy $regexp
         $q set_regex $::ApolTop::policy $use_regexp
         set v [$q run $::ApolTop::policy]
+        $q -acquire
         $q -delete
         set attribs_data [attr_vector_to_list $v]
+        $v -acquire
         $v -delete
         if {$opts(types)} {
             append results "\n\n"
@@ -329,12 +341,14 @@ proc Apol_Types::_renderType {type_name show_attribs show_aliases} {
     set attribs {}
     set i [$qpol_type_datum get_alias_iter $::ApolTop::qpolicy]
     set aliases [iter_to_str_list $i]
+    $i -acquire
     $i -delete
     set i [$qpol_type_datum get_attr_iter $::ApolTop::qpolicy]
     foreach a [iter_to_list $i] {
-        set a [new_qpol_type_t $a]
+        set a [qpol_type_from_void $a]
         lappend attribs [$a get_name $::ApolTop::qpolicy]
     }
+    $i -acquire
     $i -delete
 
     set text "$type_name"
@@ -362,9 +376,10 @@ proc Apol_Types::_renderAttrib {attrib_name show_types show_attribs} {
         set types {}
         set i [$qpol_type_datum get_type_iter $::ApolTop::qpolicy]
         foreach t [iter_to_list $i] {
-            set t [new_qpol_type_t $t]
+            set t [qpol_type_from_void $t]
             lappend types [$t get_name $::ApolTop::qpolicy]
         }
+        $i -acquire
         $i -delete
         append text " ([llength $types] type"
         if {[llength $types] != 1} {
@@ -378,9 +393,10 @@ proc Apol_Types::_renderAttrib {attrib_name show_types show_attribs} {
                 set this_attribs {}
                 set i [$t get_attr_iter $::ApolTop::qpolicy]
                 foreach a [iter_to_list $i] {
-                    set a [new_qpol_type_t $a]
+                    set a [qpol_type_from_void $a]
                     lappend this_attribs [$a get_name $::ApolTop::qpolicy]
                 }
+                $i -acquire
                 $i -delete
 
                 set this_attribs [lsort $this_attribs]

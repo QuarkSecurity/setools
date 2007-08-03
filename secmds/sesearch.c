@@ -184,7 +184,7 @@ static int perform_av_query(const apol_policy_t * policy, const options_t * opt,
 
 	if (opt->allow || opt->all)
 		rules |= QPOL_RULE_ALLOW;
-	if (opt->nallow || opt->all)
+	if ((opt->nallow || opt->all) && qpol_policy_has_capability(apol_policy_get_qpol(policy), QPOL_CAP_NEVERALLOW))
 		rules |= QPOL_RULE_NEVERALLOW;
 	if (opt->auditallow || opt->all)
 		rules |= QPOL_RULE_AUDITALLOW;
@@ -1062,7 +1062,10 @@ int main(int argc, char **argv)
 		apol_class_query_t *regex_match_query = apol_class_query_create();
 		apol_class_query_set_regex(policy, regex_match_query, 1);
 		apol_class_query_set_class(policy, regex_match_query, cmd_opts.class_name);
-		apol_class_get_by_query(policy, regex_match_query, &qpol_matching_classes);
+		if (apol_class_get_by_query(policy, regex_match_query, &qpol_matching_classes)) {
+			apol_class_query_destroy(&regex_match_query);
+			goto cleanup;
+		}
 		const qpol_class_t *class = NULL;
 		for (size_t i = 0; i < apol_vector_get_size(qpol_matching_classes); ++i) {
 			const char *class_name;
@@ -1071,6 +1074,12 @@ int main(int argc, char **argv)
 				break;
 			qpol_class_get_name(apol_policy_get_qpol(policy), class, &class_name);
 			apol_vector_append(cmd_opts.class_vector, (void *)class_name);
+		}
+		if (!apol_vector_get_size(qpol_matching_classes)) {
+			apol_vector_destroy(&qpol_matching_classes);
+			apol_class_query_destroy(&regex_match_query);
+			ERR(policy, "No classes match expression %s", cmd_opts.class_name);
+			goto cleanup;
 		}
 		apol_vector_destroy(&qpol_matching_classes);
 		apol_class_query_destroy(&regex_match_query);

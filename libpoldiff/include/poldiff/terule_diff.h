@@ -38,7 +38,21 @@ extern "C"
 
 /**
  *  Get an array of statistics for the number of differences of each
- *  form for te rules.
+ *  form for TE type_change rules.
+ *
+ *  @param diff The policy difference structure from which to get the
+ *  stats.
+ *  @param stats Array into which to write the numbers (array must be
+ *  pre-allocated).  The order of the values written to the array is
+ *  as follows:  number of items of form POLDIFF_FORM_ADDED, number of
+ *  POLDIFF_FORM_REMOVED, number of POLDIFF_FORM_MODIFIED, number of
+ *  POLDIFF_FORM_ADD_TYPE, and number of POLDIFF_FORM_REMOVE_TYPE.
+ */
+	extern void poldiff_terule_get_stats_change(const poldiff_t * diff, size_t stats[5]);
+
+/**
+ *  Get an array of statistics for the number of differences of each
+ *  form for TE type_member rules.
  *
  *  @param diff The policy difference structure from which to get the
  *  stats.
@@ -49,21 +63,20 @@ extern "C"
  *  POLDIFF_FORM_ADD_TYPE, and number of POLDIFF_FORM_REMOVE_TYPE.
  */
 	extern void poldiff_terule_get_stats_member(const poldiff_t * diff, size_t stats[5]);
-	extern void poldiff_terule_get_stats_change(const poldiff_t * diff, size_t stats[5]);
-	extern void poldiff_terule_get_stats_trans(const poldiff_t * diff, size_t stats[5]);
 
 /**
- *  Get the vector of te rule differences from the te rule difference
- *  summary for just type_member rules.
+ *  Get an array of statistics for the number of differences of each
+ *  form for TE type_transition rules.
  *
- *  @param diff The policy difference structure associated with the te
- *  rule difference summary.
- *
- *  @return A vector of elements of type poldiff_terule_t, or NULL on
- *  error.  The caller should <b>not</b> destroy the vector returned.
- *  If the call fails, errno will be set.
+ *  @param diff The policy difference structure from which to get the
+ *  stats.
+ *  @param stats Array into which to write the numbers (array must be
+ *  pre-allocated).  The order of the values written to the array is
+ *  as follows:  number of items of form POLDIFF_FORM_ADDED, number of
+ *  POLDIFF_FORM_REMOVED, number of POLDIFF_FORM_MODIFIED, number of
+ *  POLDIFF_FORM_ADD_TYPE, and number of POLDIFF_FORM_REMOVE_TYPE.
  */
-	extern const apol_vector_t *poldiff_get_terule_vector_member(const poldiff_t * diff);
+	extern void poldiff_terule_get_stats_trans(const poldiff_t * diff, size_t stats[5]);
 
 /**
  *  Get the vector of te rule differences from the te rule difference
@@ -77,6 +90,19 @@ extern "C"
  *  If the call fails, errno will be set.
  */
 	extern const apol_vector_t *poldiff_get_terule_vector_change(const poldiff_t * diff);
+
+/**
+ *  Get the vector of te rule differences from the te rule difference
+ *  summary for just type_member rules.
+ *
+ *  @param diff The policy difference structure associated with the te
+ *  rule difference summary.
+ *
+ *  @return A vector of elements of type poldiff_terule_t, or NULL on
+ *  error.  The caller should <b>not</b> destroy the vector returned.
+ *  If the call fails, errno will be set.
+ */
+	extern const apol_vector_t *poldiff_get_terule_vector_member(const poldiff_t * diff);
 
 /**
  *  Get the vector of te rule differences from the te rule difference

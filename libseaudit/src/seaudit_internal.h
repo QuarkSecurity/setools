@@ -332,14 +332,14 @@ seaudit_bool_message_t *bool_message_create(void);
  *
  * @return 0 on success, < 0 on error.
  */
-int bool_change_append(seaudit_log_t * log, seaudit_bool_message_t * bool, const char *name, int value);
+int bool_change_append(seaudit_log_t * log, seaudit_bool_message_t * boolm, const char *name, int value);
 
 /**
  * Deallocate all space associated with a boolean change message.
  *
  * @param msg If not NULL, message to free.
  */
-void bool_message_free(seaudit_bool_message_t * bool);
+void bool_message_free(seaudit_bool_message_t * boolm);
 
 /**
  * Given a boolean change message, allocate and return a string that
@@ -377,7 +377,7 @@ char *bool_message_to_string_html(const seaudit_message_t * msg, const char *dat
  * error.  The caller is responsible for free()ing the string
  * afterwards.
  */
-char *bool_message_to_misc_string(const seaudit_bool_message_t * bool);
+char *bool_message_to_misc_string(const seaudit_bool_message_t * boolm);
 
 /*************** load messages (defined in load_message.c) ***************/
 
@@ -474,6 +474,18 @@ void model_notify_filter_changed(seaudit_model_t * model, seaudit_filter_t * fil
 
 /*************** filter functions (defined in filter.c) ***************/
 
+/**
+ * Link a model to a filter.  Whenever the filter changes, it should
+ * call model_notify_filter_changed(); that way the model will
+ * recalculate itself.
+ *
+ * @param filter Filter to be watched.
+ * @param model Model that is watching.
+ */
+void filter_set_model(seaudit_filter_t * filter, seaudit_model_t * model);
+
+/********** more filter functions (defined in filter-internal.c) **********/
+
 typedef int (filter_read_func) (seaudit_filter_t * filter, const xmlChar * ch);
 
 struct filter_parse_state
@@ -491,7 +503,7 @@ struct filter_parse_state
 
     /****
         The following are to be considered private data and may only
-        be used by filter.c.
+        be used by filter-internal.c.
     ****/
     /** the most recently read string that was not part of a tag */
 	xmlChar *cur_string;
@@ -501,16 +513,6 @@ struct filter_parse_state
     /** pointer to a filter parsing function, set by <criteria> tag */
 	filter_read_func *cur_filter_read;
 };
-
-/**
- * Link a model to a filter.  Whenever the filter changes, it should
- * call model_notify_filter_changed(); that way the model will
- * recalculate itself.
- *
- * @param filter Filter to be watched.
- * @param model Model that is watching.
- */
-void filter_set_model(seaudit_filter_t * filter, seaudit_model_t * model);
 
 /**
  * Given a filter and a message, return non-zero if the msg is

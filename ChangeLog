@@ -1,3 +1,104 @@
+2007-08-02  J. Tang  <jtang@tresys.com>
+
+	* Official release of SETools 3.3.
+
+2007-08-02  J. Mowery  <jmowery@tresys.com>
+
+	* Corrected sechecker module incomplete domain transitions
+	  to once again return results for missing RBAC and user policy
+	  for transitions that have sufficient type enforcement rules.
+
+2007-07-27  J. Tang  <jtang@tresys.com>
+
+	* Library jar files are now installed in
+	$PREFIX/share/setools-<version>, with symlinks in
+	$PREFIX/share/java.  They used to be placed in
+	$PREFIX/lib/setools.
+
+	* Added framework for CUnit tests for libseaudit.
+
+2007-07-26  J. Tang  <jtang@tresys.com>
+
+	* Updated all linker map and SWIG interface files to match
+	exported library headers.
+
+	* libseaudit/src/filter.c (seaudit_filter_set_match): Added
+	ability to set strictness of libseaudit filters.  Be default,
+	filters are not strict; this matches previous libseaudit behavior.
+	See seaudit_filter_set_match() for definition of "strictness".
+
+2007-07-26  M. Goldman <mgoldman@tresys.com>
+	* Added tooltip to glade interface noting that diffing never
+	  allow rules could dramaticly increase run time
+
+	* Fixed names in sediffx to be more descriptive (the tree view
+	  in the upper left hand corner).  Names changed from
+	  AVRules auditallow to Audit Allow Rules as an example.
+
+2007-07-24  J. Tang  <jtang@tresys.com>
+
+	* Added framework for CUnit tests for libapol.
+
+2007-07-23  J. Tang  <jtang@tresys.com>
+
+	* Added framework for CUnit tests for libpoldiff and libqpol.
+	configure now has the option --with-test-policies to specify where
+	the test policies reside.
+
+2007-07-20  J. Tang  <jtang@tresys.com>
+
+	* Added seaudit_filter for PID.
+
+2007-07-19  J. Tang  <jtang@tresys.com>
+
+	* Added many optimizations to qpol_policy_build_syn_rule_table()
+	and associated functions.  With some code rewrites, a doubling of
+	the syntactic rule hash table size, and an improved hashing
+	function, it is at least three times faster to build the table.
+
+2007-07-18  J. Tang  <jtang@tresys.com>
+
+	* Fixed error in libpoldiff where if an AV or a TE rule was within
+	a conditional that had multiple boolean variables, the diff
+	algorithm would generate an incorrect STC key for that rule.
+
+2007-07-17  J. Mowery  <jmowery@tresys.com>
+
+	* Updated domain transition analysis to use the BST internally;
+	  this should result in improved performance.
+
+2007-07-13  J. Tang  <jtang@tresys.com>
+
+	* Java SWIG libraries now check if the libraries needs to be
+	loaded before doing such.
+
+	* Added more filtering options to libseaudit.
+
+2007-07-12  J. Tang  <jtang@tresys.com>
+
+	* seaudit_filter_set_ipaddress() is renamed to
+	seaudit_filter_set_anyaddr().  seaudit_filter_set_port() is now
+	seaudit_filter_set_anyport().  Similar changes occurred to the
+	respective accessors.
+
+2007-07-11  M. Goldman  <mgoldman@tresys.com>
+
+	* Split functions relating to item records out into their own
+	  file.  Added documentation for same.
+
+2007-07-09  J. Tang  <jtang@tresys.com>
+
+	* Added additional sort constructors to libseaudit.
+
+2007-07-05  J. Tang  <jtang@tresys.com>
+
+	* seaudit now has a button to clear all messages from a view.
+	This is useful when doing log monitoring, to show only new
+	messages.
+
+	* Added seaudit_model_hide_message(), to suppress display of
+	certain messages within a model.
+
 2007-06-28  J. Tang  <jtang@tresys.com>
 
 	* Updated apol and sediffx to delay loading neverallow rules

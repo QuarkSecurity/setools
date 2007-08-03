@@ -112,6 +112,7 @@ proc Apol_Analysis_transflow::newAnalysis {} {
     set results [_analyze]
     set f [_createResultsDisplay]
     _renderResults $f $results
+    $results -acquire
     $results -delete
     return {}
 }
@@ -123,6 +124,7 @@ proc Apol_Analysis_transflow::updateAnalysis {f} {
     set results [_analyze]
     _clearResultsDisplay $f
     _renderResults $f $results
+    $results -acquire
     $results -delete
     return {}
 }
@@ -277,7 +279,7 @@ proc Apol_Analysis_transflow::_reinitializeVals {} {
     }
     array unset vals perms:*
     foreach class [Apol_Class_Perms::getClasses] {
-        foreach perm [apol_GetAllPermsForClass $class] {
+        foreach perm [Apol_Class_Perms::getPermsForClass $class] {
             set vals(perms:$class:$perm) 1
         }
     }
@@ -564,12 +566,13 @@ proc Apol_Analysis_transflow::_filterTypeLists {attrib} {
     if {$attrib != {}} {
         set typesList {}
         if {[Apol_Types::isAttributeInPolicy $attrib]} {
-            set qpol_type_datum [new_qpol_type_t $::ApolTop::qpolicy $attrib]
+            set qpol_type_datum [qpol_type_from_void $::ApolTop::qpolicy $attrib]
             set i [$qpol_type_datum get_type_iter $::ApolTop::qpolicy]
             foreach t [iter_to_list $i] {
-                set t [new_qpol_type_t $t]
+                set t [qpol_type_from_void $t]
                 lappend typesList [$t get_name $::ApolTop::qpolicy]
             }
+            $i -acquire
             $i -delete
         }
         if {$typesList == {}} {
@@ -658,7 +661,7 @@ proc Apol_Analysis_transflow::_analyze {} {
     set threshold {}
     if {$vals(advanced:enable)} {
         set intermed $vals(intermed:inc_all)
-        set classes {}
+        set classperms {}
         foreach perm_key [array names vals perms:*] {
             if {$vals($perm_key)} {
                 foreach {foo class perm} [split $perm_key :] {break}
@@ -670,7 +673,7 @@ proc Apol_Analysis_transflow::_analyze {} {
         }
     } else {
         set intermed {}
-        set classes {}
+        set classperms {}
     }
 
     set q [new_apol_infoflow_analysis_t]
@@ -680,7 +683,7 @@ proc Apol_Analysis_transflow::_analyze {} {
     foreach i $intermed {
         $q append_intermediate $::ApolTop::policy $i
     }
-    foreach {c p} $classes {
+    foreach {c p} $classperms {
         $q append_class_perm $::ApolTop::policy $c $p
     }
     if {$threshold != {}} {
@@ -688,6 +691,7 @@ proc Apol_Analysis_transflow::_analyze {} {
     }
     $q set_result_regex $::ApolTop::policy $regexp
     set results [$q run $::ApolTop::policy]
+    $q -acquire
     $q -delete
     return $results
 }
@@ -761,6 +765,7 @@ proc Apol_Analysis_transflow::_treeOpen {tree node} {
                 $tree itemconfigure $node -data [list 1 $results]
                 if {$new_results != {}} {
                     _createResultsNodes $tree $node $new_results 1
+                    $new_results -acquire
                     $new_results -delete
                 }
             }
@@ -797,6 +802,7 @@ proc Apol_Analysis_transflow::_renderResults {f results} {
     $tree opentree top 0
     $tree see top
 
+    $results_list -acquire
     $results_list -delete
 }
 
@@ -856,12 +862,12 @@ proc Apol_Analysis_transflow::_createResultsNodes {tree parent_node results do_e
             if {$flow_dir == $::APOL_INFOFLOW_IN} {
                 # flip the steps around
                 for {set i [expr {[$step_v get_size] - 1}]} {$i >= 0} {incr i -1} {
-                    set r [new_apol_infoflow_step_t [$step_v get_element $i]]
+                    set r [apol_infoflow_step_from_void [$step_v get_element $i]]
                     lappend p [_infoflow_step_to_list $r]
                 }
             } else {
                 for {set i 0} {$i < [$step_v get_size]} {incr i} {
-                    set r [new_apol_infoflow_step_t [$step_v get_element $i]]
+                    set r [apol_infoflow_step_from_void [$step_v get_element $i]]
                     lappend p [_infoflow_step_to_list $r]
                 }
             }
@@ -932,7 +938,8 @@ proc Apol_Analysis_transflow::_renderPath {res path_num path} {
         set rules [lindex $steps 3]
         set v [new_apol_vector_t]
         $v append [lindex $rules 0]
-        Apol_Widget::appendSearchResultRules $res 6 $v new_qpol_avrule_t
+        Apol_Widget::appendSearchResultRules $res 6 $v qpol_avrule_from_void
+        $v -acquire
         $v -delete
 
         set v [new_apol_vector_t]
@@ -940,7 +947,8 @@ proc Apol_Analysis_transflow::_renderPath {res path_num path} {
             $v append $r
         }
         apol_tcl_avrule_sort $::ApolTop::policy $v
-        Apol_Widget::appendSearchResultRules $res 10 $v new_qpol_avrule_t
+        Apol_Widget::appendSearchResultRules $res 10 $v qpol_avrule_from_void
+        $v -acquire
         $v -delete
     }
 }
@@ -1119,12 +1127,12 @@ proc Apol_Analysis_transflow::_doFindMore {res tree node} {
         if {$flow_dir == $::APOL_INFOFLOW_IN} {
             # flip the steps around
             for {set i [expr {[$steps_v get_size] - 1}]} {$i >= 0} {incr i -1} {
-                set s [new_apol_infoflow_step_t [$steps_v get_element $i]]
+                set s [apol_infoflow_step_from_void [$steps_v get_element $i]]
                 lappend sorted_path [_infoflow_step_to_list $s]
             }
         } else {
             for {set i 0} {$i < [$steps_v get_size]} {incr i} {
-                set s [new_apol_infoflow_step_t [$steps_v get_element $i]]
+                set s [apol_infoflow_step_from_void [$steps_v get_element $i]]
                 lappend sorted_path [_infoflow_step_to_list $s]
             }
         }
@@ -1135,5 +1143,6 @@ proc Apol_Analysis_transflow::_doFindMore {res tree node} {
 
     $res.tb configure -state disabled
     destroy $d
+    $v -acquire
     $v -delete
 }

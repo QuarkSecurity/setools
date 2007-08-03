@@ -861,22 +861,22 @@ proc Apol_TE::_search_terules {whichButton} {
     variable tabs
 
     if {![ApolTop::is_policy_open]} {
-        tk_messageBox -icon error -type ok -title "Error" -message "No current policy file is opened."
+        tk_messageBox -icon error -type ok -title "TE Rule Search" -message "No current policy file is opened."
         return
     }
 
     # check search options
     if {$enabled(ta:use_source) && $vals(ta:use_source) && $vals(ta:source_sym) == {}} {
-        tk_messageBox -icon error -type ok -title "Error" -message "No source type/attribute was selected."
+        tk_messageBox -icon error -type ok -title "TE Rule Search" -message "No source type/attribute was selected."
         return
     }
     if {$enabled(ta:use_target) && $vals(ta:use_target) && $vals(ta:target_sym) == {}} {
-        tk_messageBox -icon error -type ok -title "Error" -message "No target type/attribute was selected."
+        tk_messageBox -icon error -type ok -title "TE Rule Search" -message "No target type/attribute was selected."
         return
     }
     if {$enabled(ta:use_default) && $vals(ta:use_default) && $vals(ta:default_sym) == {}} {
 
-        tk_messageBox -icon error -type ok -title "Error" -message "No default type selected."
+        tk_messageBox -icon error -type ok -title "TE Rule Search" -message "No default type selected."
         return
     }
 
@@ -889,7 +889,7 @@ proc Apol_TE::_search_terules {whichButton} {
         set terule_selection [expr {$terule_selection | $value}]
     }
     if {$avrule_selection == 0 && $terule_selection == 0} {
-            tk_messageBox -icon error -type ok -title "Error" -message "At least one rule must be selected."
+            tk_messageBox -icon error -type ok -title "TE Rule Search" -message "At least one rule must be selected."
             return
     }
 
@@ -926,7 +926,7 @@ proc Apol_TE::_search_terules {whichButton} {
         foreach p $vals(cp:perms_selected) {
             $avq append_perm $::ApolTop::policy $p
         }
-        $avq set_all_perms $::ApolTop::policy 1
+        $avq set_all_perms $::ApolTop::policy $vals(cp:perms_matchall)
     }
 
     $avq set_rules $::ApolTop::policy $avrule_selection
@@ -942,6 +942,10 @@ proc Apol_TE::_search_terules {whichButton} {
 
     if {$vals(rs:avrule_neverallow)} {
         ApolTop::loadNeverAllows
+    }
+    if {![ApolTop::is_capable "neverallow"]} {
+        set avrule_selection [expr {$avrule_selection & (~$::QPOL_RULE_NEVERALLOW)}]
+        $avq set_rules $::ApolTop::policy $avrule_selection
     }
 
     Apol_Progress_Dialog::wait "TE Rules" "Searching rules" \
@@ -967,7 +971,9 @@ proc Apol_TE::_search_terules {whichButton} {
                 }
             }
 
+            $avq -acquire
             $avq -delete
+            $teq -acquire
             $teq -delete
             if {$avresults != "NULL"} {
                 set num_avresults [$avresults get_size]
@@ -988,15 +994,15 @@ proc Apol_TE::_search_terules {whichButton} {
             if {![ApolTop::is_capable "syntactic rules"]} {
                 apol_tcl_set_info_string $::ApolTop::policy "Rendering $num_avresults AV rule results"
                 apol_tcl_terule_sort $::ApolTop::policy $teresults
-                set numAVs [Apol_Widget::appendSearchResultRules $sr 0 $avresults new_qpol_avrule_t]
+                set numAVs [Apol_Widget::appendSearchResultRules $sr 0 $avresults qpol_avrule_from_void]
                 apol_tcl_set_info_string $::ApolTop::policy "Rendering $num_teresults TE rule results"
                 apol_tcl_avrule_sort $::ApolTop::policy $avresults
-                set numTEs [Apol_Widget::appendSearchResultRules $sr 0 $teresults new_qpol_terule_t]
+                set numTEs [Apol_Widget::appendSearchResultRules $sr 0 $teresults qpol_terule_from_void]
             } else {
                 apol_tcl_set_info_string $::ApolTop::policy "Rendering $num_avresults AV rule results"
-                set numAVs [Apol_Widget::appendSearchResultSynRules $sr 0 $avresults new_qpol_syn_avrule_t]
+                set numAVs [Apol_Widget::appendSearchResultSynRules $sr 0 $avresults qpol_syn_avrule_from_void]
                 apol_tcl_set_info_string $::ApolTop::policy "Rendering $num_teresults TE rule results"
-                set numTEs [Apol_Widget::appendSearchResultSynRules $sr 0 $teresults new_qpol_syn_terule_t]
+                set numTEs [Apol_Widget::appendSearchResultSynRules $sr 0 $teresults qpol_syn_terule_from_void]
             }
             set num_rules [expr {[lindex $numAVs 0] + [lindex $numTEs 0]}]
             set num_enabled [expr {[lindex $numAVs 1] + [lindex $numTEs 1]}]

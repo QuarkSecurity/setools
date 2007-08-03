@@ -168,16 +168,18 @@ static void db_type_compare(sqlite3_context * context, int argc __attribute__ ((
 	assert(sqlite3_value_type(argv[0]) == SQLITE_TEXT);
 	const char *text = reinterpret_cast < const char *>(sqlite3_value_text(argv[0]));
 	bool retval;
-	if (q->type_list == NULL)
-	{
-		retval = query_str_compare(text, q->type, q->retype, q->regex);
-	}
-	else
+	if (q->type_list != NULL)
 	{
 		assert(q->policy != NULL);
 		size_t index;
 		retval = (apol_vector_get_index(q->type_list, text, apol_str_strcmp, NULL, &index) >= 0);
+		if (retval)
+		{
+			sqlite3_result_int(context, 1);
+			return;
+		}
 	}
+	retval = query_str_compare(text, q->type, q->retype, q->regex);
 	sqlite3_result_int(context, (retval ? 1 : 0));
 }
 
@@ -674,7 +676,7 @@ int sefs_db::runQueryMap(sefs_query * query, sefs_fclist_map_fn_t fn, void *data
 		query->compile();
 		if (policy != NULL)
 		{
-			if (query->_type != NULL)
+			if (query->_type != NULL && query->_indirect)
 			{
 				q.type_list =
 					query_create_candidate_type(policy, query->_type, query->_retype, query->_regex,
@@ -685,7 +687,7 @@ int sefs_db::runQueryMap(sefs_query * query, sefs_fclist_map_fn_t fn, void *data
 					throw std::runtime_error(strerror(errno));
 				}
 			}
-			if (query->_range != NULL)
+			if (query->_range != NULL && query->_rangeMatch != 0)
 			{
 				q.apol_range = apol_mls_range_create_from_string(policy, query->_range);
 				if (q.apol_range == NULL)
@@ -799,7 +801,7 @@ int sefs_db::runQueryMap(sefs_query * query, sefs_fclist_map_fn_t fn, void *data
 			where_added = true;
 		}
 
-		if (q.range != NULL)
+		if (q.db_is_mls && q.range != NULL)
 		{
 			if (sqlite3_create_function(_db, "range_compare", 1, SQLITE_UTF8, &q, db_range_compare, NULL, NULL) !=
 			    SQLITE_OK)
@@ -808,7 +810,7 @@ int sefs_db::runQueryMap(sefs_query * query, sefs_fclist_map_fn_t fn, void *data
 				throw std::runtime_error(strerror(errno));
 			}
 			if (apol_str_appendf(&select_stmt, &len,
-					     "%s (range_compare(mls.mls_range_name))", (where_added ? " AND" : " WHERE")) < 0)
+					     "%s (range_compare(mls.mls_range))", (where_added ? " AND" : " WHERE")) < 0)
 			{
 				SEFS_ERR(this, "%s", strerror(errno));
 				throw std::runtime_error(strerror(errno));

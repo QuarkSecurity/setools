@@ -30,6 +30,7 @@ typedef struct result_item result_item_t;
 
 #include <gtk/gtk.h>
 #include <poldiff/poldiff.h>
+#include <poldiff/component_record.h>
 
 /* constructors for various result items */
 
@@ -44,12 +45,12 @@ result_item_t *result_item_create_users(GtkTextTagTable * table);
 result_item_t *result_item_create_booleans(GtkTextTagTable * table);
 
 result_item_t *result_item_create_avrules_allow(GtkTextTagTable * table);
-result_item_t *result_item_create_avrules_neverallow(GtkTextTagTable * table);
-result_item_t *result_item_create_avrules_dontaudit(GtkTextTagTable * table);
 result_item_t *result_item_create_avrules_auditallow(GtkTextTagTable * table);
+result_item_t *result_item_create_avrules_dontaudit(GtkTextTagTable * table);
+result_item_t *result_item_create_avrules_neverallow(GtkTextTagTable * table);
 
-result_item_t *result_item_create_terules_member(GtkTextTagTable * table);
 result_item_t *result_item_create_terules_change(GtkTextTagTable * table);
+result_item_t *result_item_create_terules_member(GtkTextTagTable * table);
 result_item_t *result_item_create_terules_trans(GtkTextTagTable * table);
 
 result_item_t *result_item_create_role_allows(GtkTextTagTable * table);

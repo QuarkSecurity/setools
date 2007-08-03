@@ -25,6 +25,10 @@
 #ifndef POLICY_DEFS
 #define POLICY_DEFS
 
+#include <config.h>
+
+#define POLICY_ROOT TEST_POLICIES "/setools-3.2/sediff"
+
 #define COMPONENTS_ORIG_POLICY (POLICY_ROOT "/testing-component-orig.conf")
 #define COMPONENTS_MOD_POLICY (POLICY_ROOT "/testing-component-mod.conf")
 

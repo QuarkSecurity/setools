@@ -83,12 +83,21 @@ int apol_compare(const apol_policy_t * p, const char *target, const char *name, 
 	if (name == NULL || *name == '\0') {
 		return 1;
 	}
+	char errbuf[1024] = { '\0' };
 	if ((flags & APOL_QUERY_REGEX) && regex != NULL) {
 		if (*regex == NULL) {
-			if ((*regex = malloc(sizeof(**regex))) == NULL || regcomp(*regex, name, REG_EXTENDED | REG_NOSUB)) {
+			if ((*regex = malloc(sizeof(**regex))) == NULL) {
 				free(*regex);
 				*regex = NULL;
 				ERR(p, "%s", strerror(ENOMEM));
+				return -1;
+			}
+			int regretv = regcomp(*regex, name, REG_EXTENDED | REG_NOSUB);
+			if (regretv) {
+				regerror(regretv, *regex, errbuf, 1024);
+				free(*regex);
+				*regex = NULL;
+				ERR(p, "%s", errbuf);
 				return -1;
 			}
 		}
@@ -276,7 +285,7 @@ static int apol_query_append_type(const apol_policy_t * p, apol_vector_t * v, co
 {
 	unsigned char isalias;
 	const qpol_type_t *real_type = type;
-	if (qpol_type_get_isattr(p->p, type, &isalias) < 0) {
+	if (qpol_type_get_isalias(p->p, type, &isalias) < 0) {
 		return -1;
 	}
 	if (isalias) {

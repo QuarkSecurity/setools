@@ -45,7 +45,7 @@ and libraries:
   seaudit       audit log analysis tools: seaudit and seaudit-report
   sechecker     SELinux policy checking tool
   secmds        command line tools: seinfo, sesearch, findcon,
-                replcon, and indexcon.
+                replcon, and indexcon
   sediff        semantic policy difference tools: sediff and sediffx
 
 Each of these components is in a subdirectory under the top-level
@@ -215,6 +215,10 @@ You can customize your SETools build using the flags given to
       Explicitly use PATH as the default SELinux policy source file,
       instead of inferring its location based upon the return value
       of selinux_policy_root().
+
+  --with-test-policies=PATH
+      Use the policies in PATH as input to the SETools tests; these
+      tests are invoked upon `make check'.
 
 Of course, `configure' accepts other usual flags such as --prefix.
 
@@ -404,10 +408,10 @@ maintain compatibility beginning with SETools version 3.0.
 These libraries have SWIG wrappers that are built if
 --enable-swig-java, --enable-swig-python, and/or --enable-swig-tcl are
 given during configuration time.  The generated Java wrappers will be
-in placed in $PREFIX/lib and $PREFIX/lib/setools.  Python wrappers
-will be installed to Python's site-packages directory.  Tcl wrappers
-are built as Tcl packages (e.g., `package require apol') and placed in
-$PREFIX/lib/setools.
+in placed $PREFIX/lib; symlinks to jar files will be in
+$PREFIX/share/java.  Python wrappers will be installed to Python's
+site-packages directory.  Tcl wrappers are built as Tcl packages
+(e.g., `package require apol') and placed in $PREFIX/lib/setools.
 
 
 4. Obtaining SETools

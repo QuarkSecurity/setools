@@ -462,6 +462,7 @@ proc ApolTop::_toplevel_update_stats {} {
     foreach {key func} $iter_funcs {
         set i [$::ApolTop::qpolicy $func]
         set policy_stats($key) [$i get_size]
+        $i -acquire
         $i -delete
     }
 
@@ -473,8 +474,10 @@ proc ApolTop::_toplevel_update_stats {} {
     foreach {key func} $query_funcs {
         set q [$func]
         set v [$q run $::ApolTop::policy]
+        $q -acquire
         $q -delete
         set policy_stats($key) [$v get_size]
+        $v -acquire
         $v -delete
     }
 
@@ -491,6 +494,7 @@ proc ApolTop::_toplevel_update_stats {} {
         } else {
             set i [$::ApolTop::qpolicy get_avrule_iter $bit]
             set policy_stats($key) [$i get_size]
+            $i -acquire
             $i -delete
         }
     }
@@ -503,6 +507,7 @@ proc ApolTop::_toplevel_update_stats {} {
     foreach {key bit} $terule_bits {
         set i [$::ApolTop::qpolicy get_avrule_iter $bit]
         set policy_stats($key) [$i get_size]
+        $i -acquire
         $i -delete
     }
 
@@ -545,6 +550,7 @@ proc ApolTop::_close_policy {} {
             Apol_Perms_Map::close
             variable policy
 	    if {$policy != {}} {
+                $policy -acquire
                 $policy -delete
                 set policy {}
                 variable qpolicy {}
@@ -617,7 +623,7 @@ proc ApolTop::_open_query_file {} {
 
         variable tabs
         foreach tab $tabs {
-            if {$query_id == [lindex $tab 0] && [lsearch [lindex $tab 2] "tag_query_saveable"]} {
+            if {$query_id == [lindex $tab 0] && [lsearch [lindex $tab 2] "tag_query_saveable"] >= 0} {
                 if {[catch {${query_id}::load_query_options $f} err]} {
                     tk_messageBox -icon error -type ok -title "Open Apol Query" \
                         -message $err
@@ -644,6 +650,10 @@ proc ApolTop::_save_query_file {} {
         if {[catch {::open $query_file w} f]} {
             tk_messageBox -icon error -type ok -title "Save Apol Query" \
                 -message "Could not save $query_file: $f"
+        }
+        if {[catch {puts $f [getCurrentTab]} err]} {
+            tk_messageBox -icon error -type ok -title "Save Apol Query" \
+                -message $err
         }
         if {[catch {[getCurrentTab]::save_query_options $f $query_file} err]} {
             tk_messageBox -icon error -type ok -title "Save Apol Query" \

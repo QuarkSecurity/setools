@@ -23,12 +23,6 @@ libpoldiff_pyswig_soname=_poldiff.so.1
 libpoldiff_jswig_soname=libjpoldiff.so.1
 libpoldiff_tswig_soname=libtpoldiff.so.1
 
-libpolsearch_version=1.0
-libpolsearch_soname=libpolsearch.so.1
-libpolsearch_pyswig_soname=_polsearch.so.1
-libpolsearch_jswig_soname=libjpolsearch.so.1
-libpolsearch_tswig_soname=libtpolsearch.so.1
-
 libsefs_version=4.0
 libsefs_soname=libsefs.so.4
 libsefs_pyswig_soname=_sefs.so.4
@@ -42,6 +36,7 @@ libseaudit_jswig_soname=libjseaudit.so.4
 libseaudit_tswig_soname=libtseaudit.so.4
 
 setoolsdir='${prefix}/share/setools-3.3'
+javadir='${prefix}/share/java'
 
 version_min_sepol_major=1
 version_min_sepol_minor=12
@@ -62,7 +57,6 @@ AC_PROG_LEX
 AC_PROG_YACC
 AC_PROG_INSTALL
 AC_HEADER_STDBOOL
-AC_CHECK_SIZEOF(char *)
 AC_C_BIGENDIAN
 AC_CHECK_FUNCS(rand_r)
 AC_SYS_LARGEFILE
@@ -84,12 +78,11 @@ if test "x${enable_debug}" = xyes; then
     DEBUGCFLAGS="-g3 -gdwarf-2 -O0 -Wall -DSETOOLS_DEBUG=1 -fno-strict-aliasing"
     DEBUGCXXFLAGS="-g3 -gdwarf-2 -O0 -Wall -DSETOOLS_DEBUG=1 -fno-strict-aliasing"
     DEBUGJFLAGS="-g"
-    DEBUGLDFLAGS="-g"
+    DEBUGLDFLAGS="-g -lm"
     QPOL_LIB_FLAG='$(top_builddir)/libqpol/src/libqpol.so -Wl,-rpath=$(top_builddir)/libqpol/src'
     APOL_LIB_FLAG='$(top_builddir)/libapol/src/libapol.a -Wl,-rpath=$(top_builddir)/libapol/src'
     SEFS_LIB_FLAG='$(top_builddir)/libsefs/src/libsefs.a -Wl,-rpath=$(top_builddir)/libsefs/src'
     POLDIFF_LIB_FLAG='$(top_builddir)/libpoldiff/src/libpoldiff.a -Wl,-rpath=$(top_builddir)/libpoldiff/src'
-    POLSEARCH_LIB_FLAG='$(top_builddir)/libpolsearch/src/libpolsearch.a -Wl,-rpath=$(top_builddir)/libpolsearch/src'
     SEAUDIT_LIB_FLAG='$(top_builddir)/libseaudit/src/libseaudit.a -Wl,-rpath=$(top_builddir)/libseaudit/src'
     use_shared=no
     AC_MSG_RESULT(yes)
@@ -104,14 +97,12 @@ else
         APOL_LIB_FLAG='$(top_builddir)/libapol/src/libapol.so'
         SEFS_LIB_FLAG='$(top_builddir)/libsefs/src/libsefs.so'
         POLDIFF_LIB_FLAG='$(top_builddir)/libpoldiff/src/libpoldiff.so'
-        POLSEARCH_LIB_FLAG='$(top_builddir)/libpolsearch/src/libpolsearch.so'
         SEAUDIT_LIB_FLAG='$(top_builddir)/libseaudit/src/libseaudit.so'
     else
         QPOL_LIB_FLAG='$(top_builddir)/libqpol/src/libqpol.so'
         APOL_LIB_FLAG='$(top_builddir)/libapol/src/libapol.a'
         SEFS_LIB_FLAG='$(top_builddir)/libsefs/src/libsefs.a'
         POLDIFF_LIB_FLAG='$(top_builddir)/libpoldiff/src/libpoldiff.a'
-        POLSEARCH_LIB_FLAG='$(top_builddir)/libpolsearch/src/libpolsearch.a'
         SEAUDIT_LIB_FLAG='$(top_builddir)/libseaudit/src/libseaudit.a'
     fi
     AC_MSG_RESULT(disabled)
@@ -125,20 +116,17 @@ QPOL_CFLAGS='-I$(top_srcdir)/libqpol/include'
 APOL_CFLAGS='-I$(top_srcdir)/libapol/include'
 SEFS_CFLAGS='-I$(top_srcdir)/libsefs/include'
 POLDIFF_CFLAGS='-I$(top_srcdir)/libpoldiff/include'
-POLSEARCH_CFLAGS='-I$(top_srcdir)/libpolsearch/include'
 SEAUDIT_CFLAGS='-I$(top_srcdir)/libseaudit/include'
 AC_SUBST(QPOL_CFLAGS)
 AC_SUBST(APOL_CFLAGS)
 AC_SUBST(SEFS_CFLAGS)
 AC_SUBST(POLDIFF_CFLAGS)
-AC_SUBST(POLSEARCH_CFLAGS)
 AC_SUBST(SEAUDIT_CFLAGS)
 
 AC_SUBST(QPOL_LIB_FLAG)
 AC_SUBST(APOL_LIB_FLAG)
 AC_SUBST(SEFS_LIB_FLAG)
 AC_SUBST(POLDIFF_LIB_FLAG)
-AC_SUBST(POLSEARCH_LIB_FLAG)
 AC_SUBST(SEAUDIT_LIB_FLAG)
 
 AC_MSG_CHECKING([for how to link against libraries])
@@ -390,13 +378,13 @@ selinux_devel_incdir="${selinux_devel}/include"
 dnl if /lib64 exists then use that directory, otherwise revert to just /lib
 for dir in lib64 lib ; do
   sepol_devel_libdir="${sepol_devel}/${dir}"
-  if test -d ${sepol_devel_libdir} ; then
+  if test -f ${sepol_devel_libdir}/libsepol.so ; then
     break
   fi
 done
 for dir in lib64 lib ; do
   selinux_devel_libdir="${selinux_devel}/${dir}"
-  if test -d ${selinux_devel_libdir} ; then
+  if test -f ${selinux_devel_libdir}/libselinux.so ; then
     break
   fi
 done
@@ -423,6 +411,8 @@ AC_ARG_ENABLE(sepol-src,
               sepol_srcdir="")
 if test "x${sepol_srcdir}" = "x"; then
    sepol_srcdir=${sepol_devel_libdir}
+   AC_CHECK_FILE([${sepol_srcdir}/libsepol.a],,
+      AC_MSG_ERROR([make sure libsepol-devel is installed]))
 else
    AC_MSG_CHECKING([for compatible sepol source tree])
    sepol_version=${sepol_srcdir}/VERSION
@@ -457,9 +447,8 @@ else
    AC_CHECK_HEADER([sepol/policydb/policydb.h], , AC_MSG_ERROR([could not find sepol source tree]))
    CFLAGS="${sepol_src_save_CFLAGS}"
    CPPFLAGS="${sepol_src_save_CPPFLAGS}"
-   if test ! -f "${sepol_srcdir}/libsepol.a"; then
-      AC_MSG_ERROR([could not find precompiled libsepol.a])
-   fi
+   AC_CHECK_FILE([${sepol_srcdir}/libsepol.a],,
+      AC_MSG_ERROR([could not find precompiled libsepol.a]))
    sepol_devel_incdir="${sepol_srcdir}/../include"
 fi
 SELINUX_CFLAGS="-I${sepol_devel_incdir} -I${selinux_devel_incdir}"
@@ -551,6 +540,12 @@ if test ${use_selinux} = "yes"; then
    fi
 fi
 
+AC_ARG_WITH(test-policies,
+            AC_HELP_STRING([--with-test-policies],
+                           [directory containing test policies (developer only flag)]),
+            test_policies="$withval",
+            test_policies=".")
+
 AC_CACHE_SAVE
 
 dnl check for pkg-config
@@ -634,6 +629,13 @@ if test "x${build_gui}" = xyes; then
   AC_SUBST(GTHREAD_LIBS)
 fi
 
+have_cunit="no"
+AC_CHECK_LIB(cunit, CU_initialize_registry, have_cunit="yes", AC_MSG_WARN([CUnit not found; `make check' will fail.]))
+if test ${have_cunit} = "yes"; then
+  CUNIT_LIB_FLAG="-lcunit"
+  AC_SUBST(CUNIT_LIB_FLAG)
+fi
+
 dnl set up variables here
 if test ${use_selinux} = "yes"; then
    AC_DEFINE(LIBSELINUX, 1, [enable libselinux-specific code])
@@ -650,6 +652,7 @@ AM_CONDITIONAL(BUILD_GUI, test ${build_gui} = "yes")
 profile_install_dir='${setoolsdir}/sechecker-profiles'
 
 AC_SUBST(VERSION)
+AC_SUBST(javadir)
 AC_SUBST(sepol_srcdir)
 AC_SUBST(libqpol_version)
 AC_SUBST(libqpol_soname)
@@ -666,11 +669,6 @@ AC_SUBST(libpoldiff_soname)
 AC_SUBST(libpoldiff_pyswig_soname)
 AC_SUBST(libpoldiff_jswig_soname)
 AC_SUBST(libpoldiff_tswig_soname)
-AC_SUBST(libpolsearch_version)
-AC_SUBST(libpolsearch_soname)
-AC_SUBST(libpolsearch_pyswig_soname)
-AC_SUBST(libpolsearch_jswig_soname)
-AC_SUBST(libpolsearch_tswig_soname)
 AC_SUBST(libsefs_version)
 AC_SUBST(libsefs_soname)
 AC_SUBST(libsefs_pyswig_soname)
@@ -689,10 +687,10 @@ AC_SUBST(profile_install_dir)
 AC_DEFINE_UNQUOTED(LIBAPOL_VERSION_STRING, "${libapol_version}", [libapol version])
 AC_DEFINE_UNQUOTED(LIBQPOL_VERSION_STRING, "${libqpol_version}", [libqpol version])
 AC_DEFINE_UNQUOTED(LIBPOLDIFF_VERSION_STRING, "${libpoldiff_version}", [libpoldiff version])
-AC_DEFINE_UNQUOTED(LIBPOLSEARCH_VERSION_STRING, "${libpolsearch_version}", [libpolsearch version])
 AC_DEFINE_UNQUOTED(LIBSEFS_VERSION_STRING, "${libsefs_version}", [libsefs version])
 AC_DEFINE_UNQUOTED(LIBSEAUDIT_VERSION_STRING, "${libseaudit_version}", [libapol version])
-AC_DEFINE(SQLITE_PTR_SZ, SIZEOF_CHAR_P, [size of a pointer, as used by SQLite3])
+AC_DEFINE_UNQUOTED(TEST_POLICIES, "${test_policies}", [location of testing policies])
+
 if test ${sepol_new_defines} != "yes" ; then
    AC_DEFINE(SEPOL_ENOMEM, HASHTAB_OVERFLOW, [remap of libsepol 1.x.x define to 2.x.x])
    AC_DEFINE(SEPOL_EEXIST, HASHTAB_PRESENT, [remap of libsepol 1.x.x define to 2.x.x])
@@ -753,17 +751,15 @@ EOF
 ]], [bwidget_ver=$bwidget_ver; enable_debug=$enable_debug; version=$VERSION])
 
 AC_CONFIG_FILES([Makefile VERSION \
-                 libqpol/Makefile libqpol/src/Makefile libqpol/include/Makefile libqpol/include/qpol/Makefile \
+                 libqpol/Makefile libqpol/src/Makefile libqpol/include/Makefile libqpol/include/qpol/Makefile libqpol/tests/Makefile \
                  libqpol/swig/Makefile libqpol/swig/python/Makefile libqpol/swig/java/Makefile libqpol/swig/java/MANIFEST.MF libqpol/swig/tcl/Makefile \
-                 libapol/Makefile libapol/src/Makefile libapol/include/Makefile libapol/include/apol/Makefile \
+                 libapol/Makefile libapol/src/Makefile libapol/include/Makefile libapol/include/apol/Makefile libapol/tests/Makefile \
                  libapol/swig/Makefile libapol/swig/python/Makefile libapol/swig/java/Makefile libapol/swig/java/MANIFEST.MF libapol/swig/tcl/Makefile \
-                 libpoldiff/Makefile libpoldiff/src/Makefile libpoldiff/include/Makefile libpoldiff/tests/Makefile libpoldiff/include/poldiff/Makefile \
+                 libpoldiff/Makefile libpoldiff/src/Makefile libpoldiff/include/Makefile libpoldiff/include/poldiff/Makefile libpoldiff/tests/Makefile \
                  libpoldiff/swig/Makefile libpoldiff/swig/python/Makefile libpoldiff/swig/java/Makefile libpoldiff/swig/java/MANIFEST.MF libpoldiff/swig/tcl/Makefile \
-                 libpolsearch/Makefile libpolsearch/src/Makefile libpolsearch/include/Makefile libpolsearch/include/polsearch/Makefile \
-                 libpolsearch/swig/Makefile libpolsearch/swig/python/Makefile libpolsearch/swig/java/Makefile libpolsearch/swig/java/MANIFEST.MF libpolsearch/swig/tcl/Makefile \
                  libsefs/Makefile libsefs/src/Makefile libsefs/include/Makefile libsefs/include/sefs/Makefile \
                  libsefs/swig/Makefile libsefs/swig/python/Makefile libsefs/swig/java/Makefile libsefs/swig/tcl/Makefile libsefs/swig/java/MANIFEST.MF \
-                 libseaudit/Makefile libseaudit/src/Makefile libseaudit/include/Makefile libseaudit/include/seaudit/Makefile \
+                 libseaudit/Makefile libseaudit/src/Makefile libseaudit/include/Makefile libseaudit/include/seaudit/Makefile libseaudit/tests/Makefile \
                  libseaudit/swig/Makefile libseaudit/swig/python/Makefile libseaudit/swig/java/Makefile libseaudit/swig/java/MANIFEST.MF libseaudit/swig/tcl/Makefile \
                  secmds/Makefile \
                  apol/Makefile \
@@ -771,7 +767,8 @@ AC_CONFIG_FILES([Makefile VERSION \
                  seaudit/Makefile \
                  sediff/Makefile \
                  man/Makefile \
-                 packages/Makefile packages/rpm/Makefile])
+                 packages/Makefile packages/rpm/Makefile \
+                 packages/libqpol.pc packages/libapol.pc packages/libpoldiff.pc packages/libseaudit.pc packages/libsefs.pc])
 
 AC_OUTPUT
 

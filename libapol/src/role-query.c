@@ -70,11 +70,11 @@ int apol_role_get_by_query(const apol_policy_t * p, apol_role_query_t * r, apol_
 			} else if (compval == 0) {
 				continue;
 			}
-			if (qpol_role_get_type_iter(p->p, role, &type_iter) < 0) {
-				goto cleanup;
-			}
 			if (r->type_name == NULL || r->type_name[0] == '\0') {
 				goto end_of_query;
+			}
+			if (qpol_role_get_type_iter(p->p, role, &type_iter) < 0) {
+				goto cleanup;
 			}
 			append_role = 0;
 			for (; !qpol_iterator_end(type_iter); qpol_iterator_next(type_iter)) {
@@ -90,12 +90,13 @@ int apol_role_get_by_query(const apol_policy_t * p, apol_role_query_t * r, apol_
 					break;
 				}
 			}
+			qpol_iterator_destroy(&type_iter);
 			/* special case: object_r has all types
 			 * assigned to it */
 			compval = apol_compare(p, "object_r", r->role_name, r->flags, &(r->type_regex));
 			if (compval < 0) {
 				goto cleanup;
-			} else if (compval == 1) {
+			} else if (compval == 1 && r->role_name != NULL) {
 				append_role = 1;
 			}
 		}

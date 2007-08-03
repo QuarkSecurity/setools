@@ -7,7 +7,7 @@ package_name = com.tresys.setools.qpol
 package_dir = $(dir $(subst .,/,$(package_name)))qpol
 
 wrappedjar_DATA = qpol.jar
-wrappedjardir = $(libdir)/setools
+wrappedjardir = $(setoolsdir)
 
 dist_noinst_DATA = $(srcdir)/../qpol.i
 BUILT_SOURCES = qpol_wrap.c \
@@ -59,7 +59,7 @@ AM_JFLAGS = @DEBUGJFLAGS@ @WARNJFLAGS@
 AM_LDFLAGS = @DEBUGLDFLAGS@ @WARNLDFLAGS@ @PROFILELDFLAGS@ @QPOL_LIB_FLAG@
 DEPENDENCIES = $(top_builddir)/libqpol/src/libqpol.so
 
-$(firstword $(BUILT_SOURCES)): $(dist_noinst_DATA)
+$(firstword $(BUILT_SOURCES)): $(dist_noinst_DATA) $(DEPENDENCIES)
 	$(SWIG) $(SWIG_JAVA_OPT) -package $(package_name) -o $@ -I$(top_srcdir)/libqpol/include $<
 
 $(wordlist 2,$(words $(BUILT_SOURCES)), $(BUILT_SOURCES)): $(firstword $(BUILT_SOURCES))
@@ -89,6 +89,7 @@ $(wrappedjar_DATA): $(classes)
 install-data-hook:
 	cd $(DESTDIR)$(wrappedsodir) && $(LN_S) -f $(wrappedso_DATA) $(wrappedso_SONAME)
 	cd $(DESTDIR)$(wrappedsodir) && $(LN_S) -f $(wrappedso_DATA) $(short_name)
+	$(mkdir_p) $(DESTDIR)$(javadir) && cd $(DESTDIR)$(javadir) && $(LN_S) -f $(wrappedjardir)/$(wrappedjar_DATA)
 
 uninstall-local:
 	-rm -rf $(DESTDIR)$(wrappedsodir)/$(wrappedso_SONAME) $(DESTDIR)$(wrappedsodir)/$(short_name)

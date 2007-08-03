@@ -130,6 +130,7 @@ proc Apol_Analysis_relabel::newAnalysis {} {
     set results [_analyze]
     set f [_createResultsDisplay]
     _renderResults $f $results
+    #results -acquire
     $results -delete
     return {}
 }
@@ -141,6 +142,7 @@ proc Apol_Analysis_relabel::updateAnalysis {f} {
     set results [_analyze]
     _clearResultsDisplay $f
     _renderResults $f $results
+    $results -acquire
     $results -delete
     return {}
 }
@@ -482,12 +484,13 @@ proc Apol_Analysis_relabel::_filterTypeLists {attrib} {
     if {$attrib != {}} {
         set typesList {}
         if {[Apol_Types::isAttributeInPolicy $attrib]} {
-            set qpol_type_datum [new_qpol_type_t $::ApolTop::qpolicy $attrib]
+            set qpol_type_datum [qpol_type_from_void $::ApolTop::qpolicy $attrib]
             set i [$qpol_type_datum get_type_iter $::ApolTop::qpolicy]
             foreach t [iter_to_list $i] {
-                set t [new_qpol_type_t $t]
+                set t [qpol_type_from_void $t]
                 lappend typesList [$t get_name $::ApolTop::qpolicy]
             }
+            $i -acquire
             $i -delete
         }
         if {$typesList == {}} {
@@ -587,6 +590,7 @@ proc Apol_Analysis_relabel::_analyze {} {
     }
     $q set_result_regex $::ApolTop::policy $regexp
     set results [$q run $::ApolTop::policy]
+    $q -acquire
     $q -delete
     return $results
 }
@@ -767,9 +771,11 @@ proc Apol_Analysis_relabel::_renderResultsRuleObject {res tree node data} {
             } else {
                 set i [$a_rule get_perm_iter $::ApolTop::qpolicy]
                 set a_perms [iter_to_str_list $i]
+                $i -acquire
                 $i -delete
                 set i [$b_rule get_perm_iter $::ApolTop::qpolicy]
                 set b_perms [iter_to_str_list $i]
+                $i -acquire
                 $i -delete
 
                 if {[lsearch $a_perms "relabelto"] >= 0 && \
@@ -794,12 +800,14 @@ proc Apol_Analysis_relabel::_renderResultsRuleObject {res tree node data} {
 
             set v [new_apol_vector_t]
             $v append $a_rule
-            Apol_Widget::appendSearchResultRules $res 6 $v new_qpol_avrule_t
+            Apol_Widget::appendSearchResultRules $res 6 $v qpol_avrule_from_void
+            $v -acquire
             $v -delete
             if {$a_rule != $b_rule} {
                 set v [new_apol_vector_t]
                 $v append $b_rule
-                Apol_Widget::appendSearchResultRules $res 6 $v new_qpol_avrule_t
+                Apol_Widget::appendSearchResultRules $res 6 $v qpol_avrule_from_void
+                $v -acquire
                 $v -delete
             }
         }
@@ -881,6 +889,7 @@ proc Apol_Analysis_relabel::_renderResultsRuleSubject {res tree node data} {
     foreach r $rules {
         $v append $r
     }
-    Apol_Widget::appendSearchResultRules $res 0 $v new_qpol_avrule_t
+    Apol_Widget::appendSearchResultRules $res 0 $v qpol_avrule_from_void
+    $v -acquire
     $v -delete
 }

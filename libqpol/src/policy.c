@@ -416,7 +416,7 @@ static int infer_policy_version(qpol_policy_t * policy)
 		db->policyvers = 19;
 	}
 	/* 18 : the netlink_audit_socket class added */
-	else if (!qpol_policy_get_class_by_name(policy, "netlink_audit_socket", &obj_class)) {
+	else if (hashtab_search(db->p_classes.table, (const hashtab_key_t)"netlink_audit_socket")) {
 		db->policyvers = 18;
 	}
 	/* 17 : IPv6 nodecon statements added */
@@ -424,7 +424,7 @@ static int infer_policy_version(qpol_policy_t * policy)
 		db->policyvers = 17;
 	}
 	/* 16 : conditional policy added */
-	else if (db->p_bool_val_to_name[0]) {
+	else if (db->p_bool_val_to_name && db->p_bool_val_to_name[0]) {
 		db->policyvers = 16;
 	}
 	/* 15 */
@@ -693,7 +693,9 @@ int qpol_policy_open_from_file_opt(const char *path, qpol_policy_t ** policy, qp
 			error = EIO;
 			goto err;
 		}
+		/* By definition, binary policy cannot have neverallow rules and all other rules are always loaded. */
 		(*policy)->options |= QPOL_POLICY_OPTION_NO_NEVERALLOWS;
+		(*policy)->options &= ~(QPOL_POLICY_OPTION_NO_RULES);
 		if (policy_extend(*policy)) {
 			error = errno;
 			goto err;

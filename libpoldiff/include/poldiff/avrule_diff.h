@@ -38,7 +38,7 @@ extern "C"
 
 /**
  *  Get an array of statistics for the number of differences of each
- *  form for av rules.
+ *  form for all AV rules.
  *
  *  @param diff The policy difference structure from which to get the
  *  stats.
@@ -49,9 +49,48 @@ extern "C"
  *  POLDIFF_FORM_ADD_TYPE, and number of POLDIFF_FORM_REMOVE_TYPE.
  */
 	extern void poldiff_avrule_get_stats_allow(const poldiff_t * diff, size_t stats[5]);
-	extern void poldiff_avrule_get_stats_neverallow(const poldiff_t * diff, size_t stats[5]);
-	extern void poldiff_avrule_get_stats_dontaudit(const poldiff_t * diff, size_t stats[5]);
+
+/**
+ *  Get an array of statistics for the number of differences of each
+ *  form for AV auditallow rules.
+ *
+ *  @param diff The policy difference structure from which to get the
+ *  stats.
+ *  @param stats Array into which to write the numbers (array must be
+ *  pre-allocated).  The order of the values written to the array is
+ *  as follows:  number of items of form POLDIFF_FORM_ADDED, number of
+ *  POLDIFF_FORM_REMOVED, number of POLDIFF_FORM_MODIFIED, number of
+ *  POLDIFF_FORM_ADD_TYPE, and number of POLDIFF_FORM_REMOVE_TYPE.
+ */
 	extern void poldiff_avrule_get_stats_auditallow(const poldiff_t * diff, size_t stats[5]);
+
+/**
+ *  Get an array of statistics for the number of differences of each
+ *  form for AV dontaudit rules.
+ *
+ *  @param diff The policy difference structure from which to get the
+ *  stats.
+ *  @param stats Array into which to write the numbers (array must be
+ *  pre-allocated).  The order of the values written to the array is
+ *  as follows:  number of items of form POLDIFF_FORM_ADDED, number of
+ *  POLDIFF_FORM_REMOVED, number of POLDIFF_FORM_MODIFIED, number of
+ *  POLDIFF_FORM_ADD_TYPE, and number of POLDIFF_FORM_REMOVE_TYPE.
+ */
+	extern void poldiff_avrule_get_stats_dontaudit(const poldiff_t * diff, size_t stats[5]);
+
+/**
+ *  Get an array of statistics for the number of differences of each
+ *  form for AV neverallow rules.
+ *
+ *  @param diff The policy difference structure from which to get the
+ *  stats.
+ *  @param stats Array into which to write the numbers (array must be
+ *  pre-allocated).  The order of the values written to the array is
+ *  as follows:  number of items of form POLDIFF_FORM_ADDED, number of
+ *  POLDIFF_FORM_REMOVED, number of POLDIFF_FORM_MODIFIED, number of
+ *  POLDIFF_FORM_ADD_TYPE, and number of POLDIFF_FORM_REMOVE_TYPE.
+ */
+	extern void poldiff_avrule_get_stats_neverallow(const poldiff_t * diff, size_t stats[5]);
 
 /**
  *  Get the vector of av rule differences from the av rule difference
@@ -68,7 +107,7 @@ extern "C"
 
 /**
  *  Get the vector of av rule differences from the av rule difference
- *  summary for just neverallow rules.
+ *  summary for just auditallow rules.
  *
  *  @param diff The policy difference structure associated with the av
  *  rule difference summary.
@@ -77,7 +116,7 @@ extern "C"
  *  error.  The caller should <b>not</b> destroy the vector returned.
  *  If the call fails, errno will be set.
  */
-	extern const apol_vector_t *poldiff_get_avrule_vector_neverallow(const poldiff_t * diff);
+	extern const apol_vector_t *poldiff_get_avrule_vector_auditallow(const poldiff_t * diff);
 
 /**
  *  Get the vector of av rule differences from the av rule difference
@@ -94,7 +133,7 @@ extern "C"
 
 /**
  *  Get the vector of av rule differences from the av rule difference
- *  summary for just auditallow rules.
+ *  summary for just neverallow rules.
  *
  *  @param diff The policy difference structure associated with the av
  *  rule difference summary.
@@ -103,11 +142,11 @@ extern "C"
  *  error.  The caller should <b>not</b> destroy the vector returned.
  *  If the call fails, errno will be set.
  */
-	extern const apol_vector_t *poldiff_get_avrule_vector_auditallow(const poldiff_t * diff);
+	extern const apol_vector_t *poldiff_get_avrule_vector_neverallow(const poldiff_t * diff);
 
 /**
  *  Obtain a newly allocated string representation of a difference in
- *  an av rule.
+ *  any av rule.
  *
  *  @param diff The policy difference structure associated with the av
  *  rule.
@@ -120,7 +159,7 @@ extern "C"
 	extern char *poldiff_avrule_to_string(const poldiff_t * diff, const void *avrule);
 
 /**
- *  Get the form of difference from an av rule diff.
+ *  Get the form of difference from any av rule diff.
  *
  *  @param avrule The av rule from which to get the difference form.
  *
