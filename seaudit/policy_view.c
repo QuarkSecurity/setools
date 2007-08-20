@@ -236,8 +236,8 @@ static void policy_view_on_class_toggle(GtkToggleButton * toggle, gpointer user_
 }
 
 static gboolean policy_view_on_line_event(GtkTextTag * tag
-					  __attribute__ ((unused)), GObject * event_object, GdkEvent * event,
-					  const GtkTextIter * iter, gpointer user_data)
+					  __attribute__ ((unused)), GObject * event_object
+					  __attribute__ ((unused)), GdkEvent * event, const GtkTextIter * iter, gpointer user_data)
 {
 	policy_view_t *pv = (policy_view_t *) user_data;
 	GtkTextIter start, end;
@@ -471,16 +471,16 @@ static void policy_view_populate_combo_boxes(policy_view_t * pv)
 	if (policy != NULL) {
 		qpol_policy_t *qp = apol_policy_get_qpol(policy);
 		size_t i;
-		qpol_type_t *type;
-		qpol_class_t *obj_class;
-		char *s;
+		const qpol_type_t *type;
+		const qpol_class_t *obj_class;
+		const char *s;
 		GtkTreeIter iter;
 		apol_vector_t *v;
 		apol_type_get_by_query(policy, NULL, &v);
 		for (i = 0; i < apol_vector_get_size(v); i++) {
 			type = apol_vector_get_element(v, i);
 			qpol_type_get_name(qp, type, &s);
-			apol_vector_append(pv->type_list, s);
+			apol_vector_append(pv->type_list, (void *)s);
 		}
 		apol_vector_destroy(&v);
 		apol_vector_sort(pv->type_list, apol_str_strcmp, NULL);
@@ -497,7 +497,7 @@ static void policy_view_populate_combo_boxes(policy_view_t * pv)
 		for (i = 0; i < apol_vector_get_size(v); i++) {
 			obj_class = apol_vector_get_element(v, i);
 			qpol_class_get_name(qp, obj_class, &s);
-			apol_vector_append(pv->class_list, s);
+			apol_vector_append(pv->class_list, (void *)s);
 		}
 		apol_vector_destroy(&v);
 		apol_vector_sort(pv->class_list, apol_str_strcmp, NULL);
@@ -528,7 +528,7 @@ void policy_view_find_terules(policy_view_t * pv, seaudit_message_t * message)
 {
 	seaudit_message_type_e type = SEAUDIT_MESSAGE_TYPE_INVALID;
 	void *data = NULL;
-	char *stype = "", *ttype = "", *obj_class = "";
+	const char *stype = "", *ttype = "", *obj_class = "";
 	size_t i;
 	assert(pv->type_list != NULL);
 	assert(pv->class_list != NULL);

@@ -101,6 +101,6 @@ char *util_policy_path_to_string(const apol_policy_path_t * path);
  * Whereas GTK 2.6 has gtk_combo_box_get_active_text(), GTK 2.4
  * (another supported platform) does not.
  */
-const gchar *util_combo_box_get_active_text(GtkComboBox *w);
+const gchar *util_combo_box_get_active_text(GtkComboBox * w);
 
 #endif

@@ -158,7 +158,8 @@ char *util_policy_path_to_full_string(const apol_policy_path_t * path)
 	}
 }
 
-const gchar *util_combo_box_get_active_text(GtkComboBox *w) {
+const gchar *util_combo_box_get_active_text(GtkComboBox * w)
+{
 #ifdef GTK_2_8
 	return gtk_combo_box_get_active_text(w);
 #else

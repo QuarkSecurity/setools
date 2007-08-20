@@ -255,7 +255,10 @@ static gpointer toplevel_open_policy_runner(gpointer data)
 		}
 		progress_update(run->top->progress, "Opening %s", title);
 		free(title);
-		run->policies[i] = apol_policy_create_from_policy_path(path, 0, progress_apol_handle_func, run->top->progress);
+		run->policies[i] =
+			apol_policy_create_from_policy_path(path, QPOL_POLICY_OPTION_NO_RULES, progress_apol_handle_func,
+							    run->top->progress);
+		// poldiff_run() will rebuild the policies as needed
 		if (run->policies[i] == NULL) {
 			run->result = -1;
 			progress_abort(run->top->progress, NULL);
@@ -322,6 +325,9 @@ static gpointer toplevel_run_diff_runner(gpointer data)
 	}
 	run->result = poldiff_run(diff, run->run_flags);
 	sediffx_set_poldiff_run_flags(run->top->s, run->run_flags);
+	if (run->run_flags & (POLDIFF_DIFF_AVRULES | POLDIFF_DIFF_TERULES)) {
+		poldiff_enable_line_numbers(diff);
+	}
 	if (run->result < 0) {
 		progress_abort(run->top->progress, NULL);
 	} else {
