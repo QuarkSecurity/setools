@@ -32,13 +32,12 @@ SETools.
 License: LGPL
 Summary: Policy analysis support libraries for SELinux
 Group: System Environment/Libraries
-Requires: libselinux >= 1.30 libsepol >= 1.12.27 sqlite >= 3.2.0 libxml2 libstdc++.so.6
+Requires: libselinux >= 1.19 libsepol >= 1.12.27 sqlite >= 3.2.0 libxml2 libstdc++.so.6
 Provides: libqpol = %{libqpol_ver} libapol = %{libapol_ver} libpoldiff = %{libpoldiff_ver} libseaudit = %{libseaudit_ver} libsefs = %{libsefs_ver} 
 BuildRequires: flex, bison, pkgconfig
 BuildRequires: glibc-devel libstdc++-devel
-BuildRequires: libselinux-devel >= 1.30 libsepol-devel >= 1.12.27
+BuildRequires: libselinux-devel >= 1.19 libsepol-devel >= 1.12.27
 BuildRequires: sqlite-devel >= 3.2.0 libxml2-devel
-BuildRequires: tcl-devel >= 8.4.9
 BuildRequires: libxml2-devel
 BuildRequires: autoconf >= 2.59 automake
 
@@ -102,11 +101,11 @@ This package includes Java bindings for the following libraries:
 License: LGPL
 Summary: Tcl bindings for SELinux policy analysis
 Group: Development/Languages
-Requires: setools-libs = %{version} tcl >= 8.4.9
+Requires: setools-libs = %{version} tcl >= 8.4.7
 Provides: libqpol-tcl = %{libqpol_ver} libapol-tcl = %{libapol_ver}
 Provides: libpoldiff-tcl = %{libpoldiff_ver}
 Provides: libseaudit-tcl = %{libseaudit_ver} libsefs-tcl = %{libsefs_ver}
-BuildRequires: tcl-devel >= 8.4.9 swig >= 1.3.28
+BuildRequires: tcl-devel >= 8.4.7 swig >= 1.3.28
 
 %description libs-tcl
 SETools is a collection of graphical tools, command-line tools, and
@@ -124,7 +123,7 @@ This package includes Tcl bindings for the following libraries:
 License: LGPL
 Summary: Policy analysis development files for SELinux
 Group: Development/Libraries
-Requires: libselinux-devel >= 1.30 libsepol-devel >= 1.12.27 setools-libs = %{version}
+Requires: libselinux-devel >= 1.19 libsepol-devel >= 1.12.27 setools-libs = %{version}
 BuildRequires: sqlite-devel >= 3.2.0 libxml2-devel
 
 %description devel
@@ -145,7 +144,7 @@ AutoReqProv: no
 Summary: Policy analysis command-line tools for SELinux
 Group: System Environment/Base
 Requires: libqpol >= 1.3 libapol >= 4.1 libpoldiff >= 1.3 libseaudit >= 4.1 libsefs >= 4.0
-Requires: libselinux >= 1.30
+Requires: libselinux >= 1.19
 
 %description console
 SETools is a collection of graphical tools, command-line tools, and
@@ -164,10 +163,10 @@ AutoReqProv: no
 Summary: Policy analysis graphical tools for SELinux
 Group: System Environment/Base
 Requires: libqpol >= 1.3 libapol >= 4.1 libpoldiff >= 1.3 libseaudit >= 4.1 libsefs >= 4.0
-Requires: tcl >= 8.4.9 tk >= 8.4.9 bwidget >= 1.8
+Requires: tcl >= 8.4.7 tk >= 8.4.7 bwidget >= 1.8
 Requires: setools-libs-tcl >= 3.3
-Requires: glib2 gtk2 >= 2.8 libxml2 libglade2
-BuildRequires: gtk2-devel >= 2.8 libglade2-devel libxml2-devel
+Requires: glib2 gtk2 >= 2.4 libxml2 libglade2
+BuildRequires: gtk2-devel >= 2.4 libglade2-devel libxml2-devel
 
 %description gui
 SETools is a collection of graphical tools, command-line tools, and
@@ -493,7 +492,7 @@ rm -rf ${RPM_BUILD_ROOT}
 %postun -p /sbin/ldconfig
 
 %changelog
-* Tue Aug 21 2007 Jason Tang <selinux@tresys.com> 3.3.1-0
+* Wed Aug 22 2007 Jason Tang <selinux@tresys.com> 3.3.1-0
 - update to SETools 3.3.1 release
 
 * Thu Aug 02 2007 Jason Tang <selinux@tresys.com> 3.3-0
