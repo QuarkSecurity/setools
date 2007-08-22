@@ -141,6 +141,11 @@ int apol_constraint_query_set_regex(const apol_policy_t * p, apol_constraint_que
 	return apol_query_set_regex(p, &c->flags, is_regex);
 }
 
+int apol_constraint_query_set_icase(const apol_policy_t * p, apol_constraint_query_t * c, int is_icase)
+{
+	return apol_query_set_icase(p, &c->flags, is_icase);
+}
+
 /******************** validatetrans queries ********************/
 
 int apol_validatetrans_get_by_query(const apol_policy_t * p, apol_validatetrans_query_t * vt, apol_vector_t ** v)

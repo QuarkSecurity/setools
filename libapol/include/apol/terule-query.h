@@ -262,6 +262,17 @@ extern "C"
 	extern int apol_terule_query_set_regex(const apol_policy_t * p, apol_terule_query_t * t, int is_regex);
 
 /**
+ * Set a terule query to be case insensitive. This flag applies to regular
+ * expressions as well as literals.
+ *
+ * @param p Policy handler, to report errors.
+ * @param t TE rule query to set.
+ * @param is_icase Non-zero to enable case insensitive searches, 0 to disable.
+ * @return Always 0.
+ */
+	extern int apol_terule_query_set_icase(const apol_policy_t * p, apol_terule_query_t * t, int is_icase);
+
+/**
  * Given a single terule, return a newly allocated vector of
  * qpol_syn_terule_t pointers (relative to the given policy) which
  * comprise that rule.  The vector will be sorted by line numbers if

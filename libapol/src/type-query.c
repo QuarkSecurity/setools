@@ -122,6 +122,14 @@ int apol_type_query_set_regex(const apol_policy_t * p, apol_type_query_t * t, in
 	return apol_query_set_regex(p, &t->flags, is_regex);
 }
 
+int apol_type_query_set_icase(const apol_policy_t * p, apol_type_query_t * t, int is_icase)
+{
+	if ((t->flags & APOL_QUERY_REGEX)) {
+		apol_regex_destroy(&(t->regex));
+	} 
+	return apol_query_set_icase(p, &t->flags, is_icase);
+}
+
 /******************** attribute queries ********************/
 
 int apol_attr_get_by_query(const apol_policy_t * p, apol_attr_query_t * a, apol_vector_t ** v)
@@ -199,4 +207,12 @@ int apol_attr_query_set_attr(const apol_policy_t * p, apol_attr_query_t * a, con
 int apol_attr_query_set_regex(const apol_policy_t * p, apol_attr_query_t * a, int is_regex)
 {
 	return apol_query_set_regex(p, &a->flags, is_regex);
+}
+
+int apol_attr_query_set_icase(const apol_policy_t * p, apol_attr_query_t * a, int is_icase)
+{
+	if ((a->flags & APOL_QUERY_REGEX)) {
+		apol_regex_destroy(&(a->regex));
+	} 
+	return apol_query_set_icase(p, &a->flags, is_icase);
 }

@@ -636,7 +636,7 @@ static apol_bst_t *apol_infoflow_graph_create_required_types(const apol_policy_t
 	}
 	for (i = 0; i < apol_vector_get_size(v); i++) {
 		s = (char *)apol_vector_get_element(v, i);
-		expanded_types = apol_query_create_candidate_type_list(p, s, 0, 1, APOL_QUERY_SYMBOL_IS_BOTH);
+		expanded_types = apol_query_create_candidate_type_list(p, s, 0, 1, APOL_QUERY_SYMBOL_IS_BOTH, 0);
 		if (expanded_types == NULL) {
 			goto cleanup;
 		}
@@ -879,7 +879,7 @@ static int apol_infoflow_graph_get_nodes_for_type(const apol_policy_t * p, const
 	size_t i, j;
 	apol_vector_t *cand_list = NULL;
 	int retval = -1;
-	if ((cand_list = apol_query_create_candidate_type_list(p, type, 0, 1, APOL_QUERY_SYMBOL_IS_BOTH)) == NULL) {
+	if ((cand_list = apol_query_create_candidate_type_list(p, type, 0, 1, APOL_QUERY_SYMBOL_IS_BOTH, 0)) == NULL, 0) {
 		goto cleanup;
 	}
 	for (i = 0; i < apol_vector_get_size(g->nodes); i++) {

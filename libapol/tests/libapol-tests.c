@@ -33,6 +33,7 @@
 #include "infoflow-tests.h"
 #include "policy-21-tests.h"
 #include "terule-tests.h"
+#include "icase_regex-tests.h"
 
 int main(void)
 {
@@ -50,6 +51,8 @@ int main(void)
 		{"Infoflow Analysis", infoflow_init, infoflow_cleanup, infoflow_tests}
 		,
 		{"TE Rule Query", terule_init, terule_cleanup, terule_tests}
+		,
+		{"Ignore Case & Regex Queries", icase_regex_init, icase_regex_cleanup, icase_regex_tests}
 		,
 		CU_SUITE_INFO_NULL
 	};

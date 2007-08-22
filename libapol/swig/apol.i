@@ -608,6 +608,9 @@ typedef struct apol_type_query {} apol_type_query_t;
 	void set_regex(apol_policy_t *p, int regex) {
 		apol_type_query_set_regex(p, self, regex);
 	};
+   void set_icase(apol_policy_t *p, int is_icase) {
+      apol_type_query_set_icase(p, self, is_icase);
+   };
 };
 
 /* apol attribute query */
@@ -644,6 +647,9 @@ typedef struct apol_attr_query {} apol_attr_query_t;
 	void set_regex(apol_policy_t *p, int regex) {
 		apol_attr_query_set_regex(p, self, regex);
 	};
+   void set_icase(apol_policy_t *p, int is_icase) {
+      apol_attr_query_set_icase(p, self, is_icase);
+   };
 };
 
 /* apol role query */
@@ -687,6 +693,9 @@ typedef struct apol_role_query {} apol_role_query_t;
 	void set_regex(apol_policy_t *p, int regex) {
 		apol_role_query_set_regex(p, self, regex);
 	};
+   void set_icase(apol_policy_t *p, int is_icase) {
+      apol_role_query_set_icase(p, self, is_icase);
+   };
 };
 int apol_role_has_type(apol_policy_t * p, qpol_role_t * r, qpol_type_t * t);
 
@@ -731,6 +740,9 @@ typedef struct apol_class_query {} apol_class_query_t;
 	void set_regex(apol_policy_t *p, int regex) {
 		apol_class_query_set_regex(p, self, regex);
 	};
+   void set_icase(apol_policy_t *p, int is_icase) {
+      apol_class_query_set_icase(p, self, is_icase);
+   };
 };
 
 /* apol common query */
@@ -767,6 +779,9 @@ typedef struct apol_common_query {} apol_common_query_t;
 	void set_regex(apol_policy_t *p, int regex) {
 		apol_common_query_set_regex(p, self, regex);
 	};
+   void set_icase(apol_policy_t *p, int is_icase) {
+      apol_common_query_set_icase(p, self, is_icase);
+   };
 };
 
 /* apol perm query */
@@ -803,6 +818,9 @@ typedef struct apol_perm_query {} apol_perm_query_t;
 	void set_regex(apol_policy_t *p, int regex) {
 		apol_perm_query_set_regex(p, self, regex);
 	};
+   void set_icase(apol_policy_t *p, int is_icase) {
+      apol_perm_query_set_icase(p, self, is_icase);
+   };
 };
 
 /* apol bool query */
@@ -839,6 +857,9 @@ typedef struct apol_bool_query {} apol_bool_query_t;
 	void set_regex(apol_policy_t *p, int regex) {
 		apol_bool_query_set_regex(p, self, regex);
 	};
+   void set_icase(apol_policy_t *p, int is_icase) {
+      apol_bool_query_set_icase(p, self, is_icase);
+   };
 };
 
 /* apol mls level */
@@ -1142,6 +1163,9 @@ typedef struct apol_level_query {} apol_level_query_t;
 	void set_regex(apol_policy_t *p, int regex) {
 		apol_level_query_set_regex(p, self, regex);
 	};
+   void set_icase(apol_policy_t *p, int is_icase) {
+      apol_level_query_set_icase(p, self, is_icase);
+   };
 };
 
 /* apol cat query */
@@ -1178,6 +1202,9 @@ typedef struct apol_cat_query {} apol_cat_query_t;
 	void set_regex(apol_policy_t *p, int regex) {
 		apol_cat_query_set_regex(p, self, regex);
 	};
+   void set_icase(apol_policy_t *p, int is_icase) {
+      apol_cat_query_set_icase(p, self, is_icase);
+   };
 };
 
 /* apol user query */
@@ -1243,6 +1270,9 @@ typedef struct apol_user_query {} apol_user_query_t;
 	void set_regex(apol_policy_t *p, int regex) {
 		apol_user_query_set_regex(p, self, regex);
 	};
+   void set_icase(apol_policy_t *p, int is_icase) {
+      apol_user_query_set_icase(p, self, is_icase);
+   };
 };
 
 /* apol context */
@@ -1396,6 +1426,9 @@ typedef struct apol_constraint_query {} apol_constraint_query_t;
 	void set_regex(apol_policy_t *p, int regex) {
 		apol_constraint_query_set_regex(p, self, regex);
 	};
+   void set_icase(apol_policy_t *p, int is_icase) {
+      apol_constraint_query_set_icase(p, self, is_icase);
+   };
 };
 
 /* apol validatetrans query */
@@ -1432,6 +1465,9 @@ typedef struct apol_validatetrans_query {} apol_validatetrans_query_t;
 	void set_regex(apol_policy_t *p, int regex) {
 		apol_validatetrans_query_set_regex(p, self, regex);
 	};
+   void set_icase(apol_policy_t *p, int is_icase) {
+      apol_validatetrans_query_set_icase(p, self, is_icase);
+   };
 };
 
 /* apol genfscon query */
@@ -1819,6 +1855,9 @@ typedef struct apol_avrule_query {} apol_avrule_query_t;
 	void set_regex(apol_policy_t *p, int regex) {
 		apol_avrule_query_set_regex(p, self, regex);
 	};
+   void set_icase(apol_policy_t *p, int is_icase) {
+      apol_avrule_query_set_icase(p, self, is_icase);
+   };
 };
 %newobject apol_avrule_render(apol_policy_t*, qpol_avrule_t*);
 char *apol_avrule_render(apol_policy_t * policy, qpol_avrule_t * rule);
@@ -1943,6 +1982,9 @@ typedef struct apol_terule_query {} apol_terule_query_t;
 	void set_regex(apol_policy_t *p, int regex) {
 		apol_terule_query_set_regex(p, self, regex);
 	};
+   void set_icase(apol_policy_t *p, int is_icase) {
+      apol_terule_query_set_icase(p, self, is_icase);
+   };
 };
 %newobject apol_terule_render(apol_policy_t*, qpol_terule_t*);
 char *apol_terule_render(apol_policy_t * policy, qpol_terule_t * rule);
@@ -1987,6 +2029,9 @@ typedef struct apol_cond_query {} apol_cond_query_t;
 	void set_regex(apol_policy_t *p, int regex) {
 		apol_cond_query_set_regex(p, self, regex);
 	};
+   void set_icase(apol_policy_t *p, int is_icase) {
+      apol_cond_query_set_icase(p, self, is_icase);
+   };
 };
 %newobject apol_cond_expr_render(apol_policy_t*, qpol_cond_t*);
 char *apol_cond_expr_render(apol_policy_t * p, qpol_cond_t * cond);
@@ -2035,6 +2080,9 @@ typedef struct apol_role_allow_query {} apol_role_allow_query_t;
 	void set_regex(apol_policy_t *p, int regex) {
 		apol_role_allow_query_set_regex(p, self, regex);
 	};
+   void set_icase(apol_policy_t *p, int is_icase) {
+      apol_role_allow_query_set_icase(p, self, is_icase);
+   };
 };
 %newobject apol_role_allow_render(apol_policy_t*, qpol_role_allow_t*);
 char *apol_role_allow_render(apol_policy_t * policy, qpol_role_allow_t * rule);
@@ -2090,6 +2138,9 @@ typedef struct apol_role_trans_query {} apol_role_trans_query_t;
 	void set_regex(apol_policy_t *p, int regex) {
 		apol_role_trans_query_set_regex(p, self, regex);
 	};
+   void set_icase(apol_policy_t *p, int is_icase) {
+      apol_role_trans_query_set_icase(p, self, is_icase);
+   };
 };
 %newobject apol_role_trans_render(apol_policy_t*, qpol_role_trans_t*);
 char *apol_role_trans_render(apol_policy_t * policy, qpol_role_trans_t * rule);
@@ -2152,6 +2203,9 @@ typedef struct apol_range_trans_query {} apol_range_trans_query_t;
 	void set_regex(apol_policy_t *p, int regex) {
 		apol_range_trans_query_set_regex(p, self, regex);
 	};
+   void set_icase(apol_policy_t *p, int is_icase) {
+      apol_range_trans_query_set_icase(p, self, is_icase);
+   };
 };
 %newobject apol_range_trans_render(apol_policy_t*, qpol_range_trans_t*);
 char *apol_range_trans_render(apol_policy_t * policy, qpol_range_trans_t * rule);

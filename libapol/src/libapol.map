@@ -54,6 +54,7 @@ VERS_4.0{
 VERS_4.1{
 	global:
 		apol_avrule_query_set_all_perms;
+		apol_avrule_query_set_icase;
 		apol_bst_inorder_map;
 		apol_context_convert;
 		apol_context_create_from_literal;

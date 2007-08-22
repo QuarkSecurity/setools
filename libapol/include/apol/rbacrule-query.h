@@ -133,6 +133,17 @@ extern "C"
 	extern int apol_role_allow_query_set_regex(const apol_policy_t * p, apol_role_allow_query_t * r, int is_regex);
 
 /**
+ * Set a roleallow query to be case insensitive. This flag applies to regular expressions as well as literals.
+ *
+ * @param p Policy handler, to report errors.
+ * @param r Role allow query to set.
+ * @param is_icase Non-zero to enable case insensitive searches, 0 to disable.
+ *
+ * @return Always 0.
+ */
+	extern int apol_role_allow_query_set_icase(const apol_policy_t * p, apol_role_allow_query_t * r, int is_icase);
+
+/**
  *  Render a role allow rule to a string.
  *
  *  @param policy Policy handler, to report errors.
@@ -260,6 +271,29 @@ extern "C"
  */
 	extern int apol_role_trans_query_set_regex(const apol_policy_t * p, apol_role_trans_query_t * r, int is_regex);
 
+/**
+ * Set a roletrans query to be case insensitive. This flag applies to regular
+ * expressions as well as literals.
+ *
+ * @param p Policy handler, to report errors.
+ * @param r Role trans query to set.
+ * @param is_icase Non-zero to enable case insensitive searches, 0 to disable.
+ *
+ * @return Always 0.
+ */
+	extern int apol_role_trans_query_set_icase(const apol_policy_t * p, apol_role_trans_query_t * r, int is_icase);
+
+/**
+ *  Render a role_transition rule to a string.
+ *
+ *  @param policy Policy handler, to report errors.
+ *  @param rule The rule to render.
+ *
+ *  @return a newly malloc()'d string representation of the rule, or NULL on
+ *  failure; if the call fails, errno will be set. The caller is responsible
+ *  for calling free() on the returned string.
+ */
+	extern char *apol_role_trans_render(const apol_policy_t * policy, const qpol_role_trans_t * rule);
 /**
  *  Render a role_transition rule to a string.
  *

@@ -103,6 +103,7 @@ extern "C"
  * @return 0 on success, negative on error.
  */
 	extern int apol_class_query_set_common(const apol_policy_t * p, apol_class_query_t * c, const char *name);
+
 /**
  * Set a class query to use regular expression searching for all of
  * its fields.	Strings will be treated as regexes instead of
@@ -115,6 +116,18 @@ extern "C"
  * @return Always 0.
  */
 	extern int apol_class_query_set_regex(const apol_policy_t * p, apol_class_query_t * c, int is_regex);
+
+/**
+ * Set a class query to be case insensitive. This flag applies to regular
+ * expressions as well as literals.
+ *
+ * @param p Policy handler, to report errors.
+ * @param c Class query to set.
+ * @param is_icase Non-zero to enable case insensitive searches, 0 to disable.
+ *
+ * @return Always 0.
+ */
+	extern int apol_class_query_set_icase(const apol_policy_t * p, apol_class_query_t * c, int is_icase);
 
 /******************** common class queries ********************/
 
@@ -178,6 +191,18 @@ extern "C"
  * @return Always 0.
  */
 	extern int apol_common_query_set_regex(const apol_policy_t * p, apol_common_query_t * c, int is_regex);
+
+/**
+ * Set a common query to be case insensitive. This flag applies to regular
+ * expressions as well as literals.
+ *
+ * @param p Policy handler, to report errors.
+ * @param c Class query to set.
+ * @param is_icase Non-zero to enable case insensitive searches, 0 to disable.
+ *
+ * @return Always 0.
+ */
+	extern int apol_common_query_set_icase(const apol_policy_t * p, apol_common_query_t * c, int is_icase);
 
 /******************** permission queries ********************/
 
@@ -246,6 +271,18 @@ extern "C"
  * @return Always 0.
  */
 	extern int apol_perm_query_set_regex(const apol_policy_t * p, apol_perm_query_t * pq, int is_regex);
+
+/**
+ * Set a permission query to be case insensitive. This flag applies to regular
+ * expressions as well as literals.
+ *
+ * @param p Policy handler, to report errors.
+ * @param pq Permission query to set.
+ * @param is_icase Non-zero to enable case insensitive searches, 0 to disable.
+ *
+ * @return Always 0.
+ */
+	extern int apol_perm_query_set_icase(const apol_policy_t * p, apol_perm_query_t * pq, int is_icase);
 
 #ifdef	__cplusplus
 }

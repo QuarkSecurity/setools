@@ -115,6 +115,19 @@ extern "C"
  */
 	extern int apol_constraint_query_set_regex(const apol_policy_t * p, apol_constraint_query_t * c, int is_regex);
 
+/**
+ * Set a constraint query to be case insensitive. This flag applies to regular
+ * expressions as well as literals.
+ *
+ * @param p Policy handler, to report errors.
+ * @param c Constraint query to set.
+ * @param is_icase Non-zero to enable case insensitive searches, 0 to
+ * disable.
+ *
+ * @return Always 0.
+ */
+	extern int apol_constraint_query_set_icase(const apol_policy_t * p, apol_constraint_query_t * c, int is_icase);
+
 /******************** validatetrans queries ********************/
 
 /**
@@ -180,6 +193,19 @@ extern "C"
  * @return Always 0.
  */
 	extern int apol_validatetrans_query_set_regex(const apol_policy_t * p, apol_validatetrans_query_t * vt, int is_regex);
+
+/**
+ * Set a validatetrans query to be case insensitive. This flag applies to
+ * regular expressions as well as literals.
+ *
+ * @param p Policy handler, to report errors.
+ * @param vt Validatetrans query to set.
+ * @param is_icase Non-zero to enable case insensitive searches, 0 to
+ * disable.
+ *
+ * @return Always 0.
+ */
+	extern int apol_validatetrans_query_set_icase(const apol_policy_t * p, apol_validatetrans_query_t * vt, int is_icase);
 
 #ifdef	__cplusplus
 }

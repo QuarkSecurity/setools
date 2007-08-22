@@ -188,7 +188,7 @@ static int rule_select(const apol_policy_t * p, apol_vector_t * v, uint32_t rule
 int apol_terule_get_by_query(const apol_policy_t * p, const apol_terule_query_t * t, apol_vector_t ** v)
 {
 	apol_vector_t *source_list = NULL, *target_list = NULL, *class_list = NULL, *default_list = NULL;
-	int retval = -1, source_as_any = 0, is_regex = 0;
+	int retval = -1, source_as_any = 0, is_regex = 0, is_icase = 0;
 	char *bool_name = NULL;
 	*v = NULL;
 	unsigned int flags = 0;
@@ -200,13 +200,14 @@ int apol_terule_get_by_query(const apol_policy_t * p, const apol_terule_query_t 
 		}
 		flags = t->flags;
 		is_regex = t->flags & APOL_QUERY_REGEX;
+		is_icase = t->flags & APOL_QUERY_ICASE;
 		bool_name = t->bool_name;
 		if (t->source != NULL &&
 		    (source_list =
 		     apol_query_create_candidate_type_list(p, t->source, is_regex,
 							   t->flags & APOL_QUERY_SOURCE_INDIRECT,
 							   ((t->flags & (APOL_QUERY_SOURCE_TYPE | APOL_QUERY_SOURCE_ATTRIBUTE)) /
-							    APOL_QUERY_SOURCE_TYPE))) == NULL) {
+							    APOL_QUERY_SOURCE_TYPE), is_icase)) == NULL) {
 			goto cleanup;
 		}
 		if ((t->flags & APOL_QUERY_SOURCE_AS_ANY) && t->source != NULL) {
@@ -219,19 +220,19 @@ int apol_terule_get_by_query(const apol_policy_t * p, const apol_terule_query_t 
 								   t->flags & APOL_QUERY_TARGET_INDIRECT,
 								   ((t->
 								     flags & (APOL_QUERY_TARGET_TYPE | APOL_QUERY_TARGET_ATTRIBUTE))
-								    / APOL_QUERY_TARGET_TYPE))) == NULL) {
+								    / APOL_QUERY_TARGET_TYPE), is_icase)) == NULL) {
 				goto cleanup;
 			}
 			if (t->default_type != NULL &&
 			    (default_list =
 			     apol_query_create_candidate_type_list(p, t->default_type, is_regex, 0,
-								   APOL_QUERY_SYMBOL_IS_TYPE)) == NULL) {
+								   APOL_QUERY_SYMBOL_IS_TYPE, is_icase)) == NULL) {
 				goto cleanup;
 			}
 		}
 		if (t->classes != NULL &&
 		    apol_vector_get_size(t->classes) > 0 &&
-		    (class_list = apol_query_create_candidate_class_list(p, t->classes)) == NULL) {
+		    (class_list = apol_query_create_candidate_class_list(p, t->classes, is_regex, is_icase)) == NULL) {
 			goto cleanup;
 		}
 	}
@@ -262,7 +263,7 @@ int apol_terule_get_by_query(const apol_policy_t * p, const apol_terule_query_t 
 int apol_syn_terule_get_by_query(const apol_policy_t * p, const apol_terule_query_t * t, apol_vector_t ** v)
 {
 	apol_vector_t *source_list = NULL, *target_list = NULL, *class_list = NULL, *default_list = NULL, *syn_v = NULL;
-	int retval = -1, source_as_any = 0, is_regex = 0;
+	int retval = -1, source_as_any = 0, is_regex = 0, is_icase = 0;
 	char *bool_name = NULL;
 	*v = NULL;
 	size_t i;
@@ -287,7 +288,7 @@ int apol_syn_terule_get_by_query(const apol_policy_t * p, const apol_terule_quer
 							       t->flags & APOL_QUERY_SOURCE_INDIRECT,
 							       ((t->flags & (APOL_QUERY_SOURCE_TYPE |
 									     APOL_QUERY_SOURCE_ATTRIBUTE)) /
-								APOL_QUERY_SOURCE_TYPE))) == NULL) {
+								APOL_QUERY_SOURCE_TYPE), is_icase)) == NULL) {
 			goto cleanup;
 		}
 		if ((t->flags & APOL_QUERY_SOURCE_AS_ANY) && t->source != NULL) {
@@ -300,19 +301,19 @@ int apol_syn_terule_get_by_query(const apol_policy_t * p, const apol_terule_quer
 								       t->flags & APOL_QUERY_TARGET_INDIRECT,
 								       ((t->flags & (APOL_QUERY_TARGET_TYPE |
 										     APOL_QUERY_TARGET_ATTRIBUTE))
-									/ APOL_QUERY_TARGET_TYPE))) == NULL) {
+									/ APOL_QUERY_TARGET_TYPE), is_icase)) == NULL) {
 				goto cleanup;
 			}
 			if (t->default_type != NULL &&
 			    (default_list =
 			     apol_query_create_candidate_type_list(p, t->default_type, is_regex, 0,
-								   APOL_QUERY_SYMBOL_IS_TYPE)) == NULL) {
+								   APOL_QUERY_SYMBOL_IS_TYPE, is_icase)) == NULL) {
 				goto cleanup;
 			}
 		}
 		if (t->classes != NULL &&
 		    apol_vector_get_size(t->classes) > 0 &&
-		    (class_list = apol_query_create_candidate_class_list(p, t->classes)) == NULL) {
+		    (class_list = apol_query_create_candidate_class_list(p, t->classes, is_regex, is_icase)) == NULL) {
 			goto cleanup;
 		}
 	}
@@ -350,7 +351,7 @@ int apol_syn_terule_get_by_query(const apol_policy_t * p, const apol_terule_quer
 		source_list =
 			apol_query_create_candidate_type_list(p, t->source, is_regex, 0,
 							      ((t->flags & (APOL_QUERY_SOURCE_TYPE | APOL_QUERY_SOURCE_ATTRIBUTE)) /
-							       APOL_QUERY_SOURCE_TYPE));
+							       APOL_QUERY_SOURCE_TYPE), is_icase);
 		if (!source_list)
 			goto cleanup;
 	}
@@ -363,7 +364,7 @@ int apol_syn_terule_get_by_query(const apol_policy_t * p, const apol_terule_quer
 				apol_query_create_candidate_type_list(p, t->target, is_regex, 0,
 								      ((t->flags & (APOL_QUERY_SOURCE_TYPE |
 										    APOL_QUERY_SOURCE_ATTRIBUTE)) /
-								       APOL_QUERY_SOURCE_TYPE));
+								       APOL_QUERY_SOURCE_TYPE), is_icase);
 			if (!target_list)
 				goto cleanup;
 		}
@@ -540,6 +541,11 @@ int apol_terule_query_set_source_any(const apol_policy_t * p, apol_terule_query_
 int apol_terule_query_set_regex(const apol_policy_t * p, apol_terule_query_t * t, int is_regex)
 {
 	return apol_query_set_regex(p, &t->flags, is_regex);
+}
+
+int apol_terule_query_set_icase(const apol_policy_t * p, apol_terule_query_t * t, int is_icase)
+{
+	return apol_query_set_icase(p, &t->flags, is_icase);
 }
 
 /**

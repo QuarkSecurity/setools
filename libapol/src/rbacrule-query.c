@@ -50,19 +50,21 @@ int apol_role_allow_get_by_query(const apol_policy_t * p, const apol_role_allow_
 {
 	qpol_iterator_t *iter = NULL;
 	apol_vector_t *source_list = NULL, *target_list = NULL;
-	int retval = -1, source_as_any = 0;
+	int retval = -1, source_as_any = 0, is_regex = 0, is_icase = 0;
 	*v = NULL;
 
 	if (r != NULL) {
+		is_regex = r->flags & APOL_QUERY_REGEX;
+		is_icase = r->flags & APOL_QUERY_ICASE;
 		if (r->source != NULL &&
-		    (source_list = apol_query_create_candidate_role_list(p, r->source, r->flags & APOL_QUERY_REGEX)) == NULL) {
+		    (source_list = apol_query_create_candidate_role_list(p, r->source, is_regex, is_icase)) == NULL) {
 			goto cleanup;
 		}
 		if ((r->flags & APOL_QUERY_SOURCE_AS_ANY) && r->source != NULL) {
 			target_list = source_list;
 			source_as_any = 1;
 		} else if (r->target != NULL &&
-			   (target_list = apol_query_create_candidate_role_list(p, r->target, r->flags & APOL_QUERY_REGEX)) == NULL)
+			   (target_list = apol_query_create_candidate_role_list(p, r->target, is_regex, is_icase)) == NULL)
 		{
 			goto cleanup;
 		}
@@ -170,6 +172,11 @@ int apol_role_allow_query_set_regex(const apol_policy_t * p, apol_role_allow_que
 	return apol_query_set_regex(p, &r->flags, is_regex);
 }
 
+int apol_role_allow_query_set_icase(const apol_policy_t * p, apol_role_allow_query_t * r, int is_icase)
+{
+	return apol_query_set_icase(p, &r->flags, is_icase);
+}
+
 char *apol_role_allow_render(const apol_policy_t * policy, const qpol_role_allow_t * rule)
 {
 	char *tmp = NULL;
@@ -216,19 +223,21 @@ int apol_role_trans_get_by_query(const apol_policy_t * p, const apol_role_trans_
 {
 	qpol_iterator_t *iter = NULL;
 	apol_vector_t *source_list = NULL, *target_list = NULL, *default_list = NULL;
-	int retval = -1, source_as_any = 0;
+	int retval = -1, source_as_any = 0, is_regex = 0, is_icase = 0;
 	*v = NULL;
 
 	if (r != NULL) {
+		is_regex = r->flags & APOL_QUERY_REGEX;
+		is_icase = r->flags & APOL_QUERY_ICASE;
 		if (r->source != NULL &&
-		    (source_list = apol_query_create_candidate_role_list(p, r->source, r->flags & APOL_QUERY_REGEX)) == NULL) {
+		    (source_list = apol_query_create_candidate_role_list(p, r->source, is_regex, is_icase)) == NULL) {
 			goto cleanup;
 		}
 		if (r->target != NULL &&
 		    (target_list =
-		     apol_query_create_candidate_type_list(p, r->target, r->flags & APOL_QUERY_REGEX,
+		     apol_query_create_candidate_type_list(p, r->target, is_regex,
 							   r->flags & APOL_QUERY_TARGET_INDIRECT,
-							   APOL_QUERY_SYMBOL_IS_BOTH)) == NULL) {
+							   APOL_QUERY_SYMBOL_IS_BOTH, is_icase)) == NULL) {
 			goto cleanup;
 		}
 		if ((r->flags & APOL_QUERY_SOURCE_AS_ANY) && r->source != NULL) {
@@ -236,7 +245,7 @@ int apol_role_trans_get_by_query(const apol_policy_t * p, const apol_role_trans_
 			source_as_any = 1;
 		} else if (r->default_role != NULL &&
 			   (default_list =
-			    apol_query_create_candidate_role_list(p, r->default_role, r->flags & APOL_QUERY_REGEX)) == NULL) {
+			    apol_query_create_candidate_role_list(p, r->default_role, is_regex, is_icase)) == NULL) {
 			goto cleanup;
 		}
 	}
@@ -364,6 +373,11 @@ int apol_role_trans_query_set_source_any(const apol_policy_t * p, apol_role_tran
 int apol_role_trans_query_set_regex(const apol_policy_t * p, apol_role_trans_query_t * r, int is_regex)
 {
 	return apol_query_set_regex(p, &r->flags, is_regex);
+}
+
+int apol_role_trans_query_set_icase(const apol_policy_t * p, apol_role_trans_query_t * r, int is_icase)
+{
+	return apol_query_set_icase(p, &r->flags, is_icase);
 }
 
 char *apol_role_trans_render(const apol_policy_t * policy, const qpol_role_trans_t * rule)

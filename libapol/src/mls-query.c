@@ -174,6 +174,15 @@ int apol_level_query_set_regex(const apol_policy_t * p, apol_level_query_t * l, 
 	return apol_query_set_regex(p, &l->flags, is_regex);
 }
 
+int apol_level_query_set_icase(const apol_policy_t * p, apol_level_query_t * l, int is_icase)
+{
+	if ((l->flags & APOL_QUERY_REGEX)) {
+		apol_regex_destroy(&(l->sens_regex));
+		apol_regex_destroy(&(l->cat_regex));
+	} 
+	return apol_query_set_icase(p, &l->flags, is_icase);
+}
+
 /******************** category queries ********************/
 
 int apol_cat_get_by_query(const apol_policy_t * p, apol_cat_query_t * c, apol_vector_t ** v)
@@ -245,4 +254,12 @@ int apol_cat_query_set_cat(const apol_policy_t * p, apol_cat_query_t * c, const 
 int apol_cat_query_set_regex(const apol_policy_t * p, apol_cat_query_t * c, int is_regex)
 {
 	return apol_query_set_regex(p, &c->flags, is_regex);
+}
+
+int apol_cat_query_set_icase(const apol_policy_t * p, apol_cat_query_t * c, int is_icase)
+{
+	if ((c->flags & APOL_QUERY_REGEX)) {
+		apol_regex_destroy(&(c->regex));
+	} 
+	return apol_query_set_icase(p, &c->flags, is_icase);
 }

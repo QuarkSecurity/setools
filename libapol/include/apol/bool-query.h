@@ -98,6 +98,19 @@ extern "C"
  */
 	extern int apol_bool_query_set_regex(const apol_policy_t * p, apol_bool_query_t * b, int is_regex);
 
+/**
+ * Set a boolean query to be case insensitive. This flag applies to regular
+ * expressions as well as literals.
+ *
+ * @param p Policy handler, to report errors.
+ * @param b Boolean query to set.
+ * @param is_regex_icase Non-zero to enable case insensitive searches, 0 to
+ * disable.
+ *
+ * @return Always 0.
+ */
+	extern int apol_bool_query_set_icase(const apol_policy_t * p, apol_bool_query_t * b, int is_regex_icase);
+
 #ifdef	__cplusplus
 }
 #endif

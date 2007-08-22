@@ -207,3 +207,13 @@ int apol_user_query_set_regex(const apol_policy_t * p, apol_user_query_t * u, in
 {
 	return apol_query_set_regex(p, &u->flags, is_regex);
 }
+
+int apol_user_query_set_icase(const apol_policy_t * p, apol_user_query_t * u, int is_icase)
+{
+	if ((u->flags & APOL_QUERY_REGEX)) {
+		apol_regex_destroy(&(u->user_regex));
+		apol_regex_destroy(&(u->role_regex));
+	} 
+
+	return apol_query_set_icase(p, &u->flags, is_icase);
+}

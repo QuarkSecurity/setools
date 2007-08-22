@@ -44,15 +44,17 @@ int apol_range_trans_get_by_query(const apol_policy_t * p, const apol_range_tran
 	qpol_iterator_t *iter = NULL;
 	apol_vector_t *source_list = NULL, *target_list = NULL, *class_list = NULL;
 	apol_mls_range_t *range = NULL;
-	int retval = -1, source_as_any = 0;
+	int retval = -1, source_as_any = 0, is_regex = 0, is_icase = 0;
 	*v = NULL;
 
 	if (r != NULL) {
+		is_regex = r->flags & APOL_QUERY_REGEX;
+		is_icase = r->flags & APOL_QUERY_ICASE;
 		if (r->source != NULL &&
 		    (source_list =
-		     apol_query_create_candidate_type_list(p, r->source, r->flags & APOL_QUERY_REGEX,
+		     apol_query_create_candidate_type_list(p, r->source, is_regex,
 							   r->flags & APOL_QUERY_SOURCE_INDIRECT,
-							   APOL_QUERY_SYMBOL_IS_BOTH)) == NULL) {
+							   APOL_QUERY_SYMBOL_IS_BOTH, is_icase)) == NULL) {
 			goto cleanup;
 		}
 		if ((r->flags & APOL_QUERY_SOURCE_AS_ANY) && r->source != NULL) {
@@ -60,14 +62,14 @@ int apol_range_trans_get_by_query(const apol_policy_t * p, const apol_range_tran
 			source_as_any = 1;
 		} else if (r->target != NULL &&
 			   (target_list =
-			    apol_query_create_candidate_type_list(p, r->target, r->flags & APOL_QUERY_REGEX,
+			    apol_query_create_candidate_type_list(p, r->target, is_regex,
 								  r->flags & APOL_QUERY_TARGET_INDIRECT,
-								  APOL_QUERY_SYMBOL_IS_BOTH)) == NULL) {
+								  APOL_QUERY_SYMBOL_IS_BOTH, is_icase)) == NULL) {
 			goto cleanup;
 		}
 		if (r->classes != NULL &&
 		    apol_vector_get_size(r->classes) > 0 &&
-		    (class_list = apol_query_create_candidate_class_list(p, r->classes)) == NULL) {
+		    (class_list = apol_query_create_candidate_class_list(p, r->classes, is_regex, is_icase)) == NULL) {
 			goto cleanup;
 		}
 	}
@@ -230,6 +232,11 @@ int apol_range_trans_query_set_source_any(const apol_policy_t * p, apol_range_tr
 int apol_range_trans_query_set_regex(const apol_policy_t * p, apol_range_trans_query_t * r, int is_regex)
 {
 	return apol_query_set_regex(p, &r->flags, is_regex);
+}
+
+int apol_range_trans_query_set_icase(const apol_policy_t * p, apol_range_trans_query_t * r, int is_icase)
+{
+	return apol_query_set_icase(p, &r->flags, is_icase);
 }
 
 char *apol_range_trans_render(const apol_policy_t * policy, const qpol_range_trans_t * rule)

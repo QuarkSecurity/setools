@@ -143,6 +143,18 @@ extern "C"
  */
 	extern int apol_user_query_set_regex(const apol_policy_t * p, apol_user_query_t * u, int is_regex);
 
+/**
+ * Set a user query to be case insensitive. This flag applies to regular
+ * expressions as well as literals.
+ *
+ * @param p Policy handler, to report errors.
+ * @param u User query to set.
+ * @param is_icase Non-zero to enable case insensitive searches, 0 to disable.
+ *
+ * @return Always 0.
+ */
+	extern int apol_user_query_set_icase(const apol_policy_t * p, apol_user_query_t * u, int is_icase);
+
 #ifdef	__cplusplus
 }
 #endif

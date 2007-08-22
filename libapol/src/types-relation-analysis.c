@@ -607,7 +607,7 @@ static int apol_types_relation_types(const apol_policy_t * p, const qpol_type_t 
 	if (apol_terule_query_set_rules(p, tq, QPOL_RULE_TYPE_TRANS | QPOL_RULE_TYPE_CHANGE) < 0 ||
 	    apol_terule_query_set_source(p, tq, nameA, 1) < 0 ||
 	    apol_terule_get_by_query(p, tq, &v) < 0 ||
-	    (candidate_types = apol_query_create_candidate_type_list(p, nameB, 0, 1, APOL_QUERY_SYMBOL_IS_BOTH)) == NULL) {
+	    (candidate_types = apol_query_create_candidate_type_list(p, nameB, 0, 1, APOL_QUERY_SYMBOL_IS_BOTH, 0)) == NULL) {
 		goto cleanup;
 	}
 	for (i = 0; i < apol_vector_get_size(v); i++) {
@@ -628,7 +628,7 @@ static int apol_types_relation_types(const apol_policy_t * p, const qpol_type_t 
 	apol_vector_destroy(&candidate_types);
 	if (apol_terule_query_set_source(p, tq, nameB, 1) < 0 ||
 	    apol_terule_get_by_query(p, tq, &v) < 0 ||
-	    (candidate_types = apol_query_create_candidate_type_list(p, nameA, 0, 1, APOL_QUERY_SYMBOL_IS_BOTH)) == NULL) {
+	    (candidate_types = apol_query_create_candidate_type_list(p, nameA, 0, 1, APOL_QUERY_SYMBOL_IS_BOTH, 0)) == NULL) {
 		goto cleanup;
 	}
 	for (i = 0; i < apol_vector_get_size(v); i++) {
@@ -673,7 +673,7 @@ static int apol_types_relation_clone_infoflow(const apol_policy_t * p, const apo
 	apol_infoflow_result_t *res, *new_res;
 	size_t i, j;
 	int retval = -1;
-	if ((candidate_types = apol_query_create_candidate_type_list(p, target_name, 0, 1, APOL_QUERY_SYMBOL_IS_BOTH)) == NULL) {
+	if ((candidate_types = apol_query_create_candidate_type_list(p, target_name, 0, 1, APOL_QUERY_SYMBOL_IS_BOTH, 0)) == NULL) {
 		goto cleanup;
 	}
 	for (i = 0; i < apol_vector_get_size(v); i++) {
@@ -830,7 +830,7 @@ static int apol_types_relation_clone_domaintrans(const apol_policy_t * p, const 
 	apol_domain_trans_result_t *res, *new_res;
 	size_t i, j;
 	int retval = -1;
-	if ((candidate_types = apol_query_create_candidate_type_list(p, target_name, 0, 1, APOL_QUERY_SYMBOL_IS_BOTH)) == NULL) {
+	if ((candidate_types = apol_query_create_candidate_type_list(p, target_name, 0, 1, APOL_QUERY_SYMBOL_IS_BOTH, 0)) == NULL) {
 		goto cleanup;
 	}
 	for (i = 0; i < apol_vector_get_size(v); i++) {

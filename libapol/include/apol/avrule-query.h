@@ -179,8 +179,7 @@ extern "C"
  * class.  If more than one class are appended to the query, the
  * rule's class must be one of those appended.  (I.e., the rule's
  * class must be a member of the query's classes.)  Pass a NULL to
- * clear all classes.  Note that this performs straight string
- * comparison, ignoring the regex flag.
+ * clear all classes. 
  *
  * @param p Policy handler, to report errors.
  * @param a AV rule query to set.
@@ -197,8 +196,7 @@ extern "C"
  * least one of the rule's permissions must be one of those appended;
  * that is, the intersection of query's and rule's permissions must be
  * non-empty.  (This behavior can be changed.)  Pass a NULL to clear
- * all permissions.  Note that this performs a straight string
- * comparison, ignoring the regex flag.
+ * all permissions.
  *
  * @param p Policy handler, to report errors.
  * @param a AV rule query to set.
@@ -299,6 +297,19 @@ extern "C"
  * @return Always 0.
  */
 	extern int apol_avrule_query_set_regex(const apol_policy_t * p, apol_avrule_query_t * a, int is_regex);
+
+/**
+ * Set an avrule query to be case insensitive. This flag applies to regular
+ * expressions as well as literals.
+ *
+ * @param p Policy handler, to report errors.
+ * @param a AV rule query to set.
+ * @param is_icase Non-zero to enable case insensitive searches, 0 to
+ * disable.
+ *
+ * @return Always 0.
+ */
+	extern int apol_avrule_query_set_icase(const apol_policy_t * p, apol_avrule_query_t * a, int is_icase);
 
 /**
  * Given a single avrule, return a newly allocated vector of

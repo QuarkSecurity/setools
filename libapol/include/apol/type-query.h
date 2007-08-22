@@ -102,6 +102,17 @@ extern "C"
  */
 	extern int apol_type_query_set_regex(const apol_policy_t * p, apol_type_query_t * t, int is_regex);
 
+/**
+ * Set a type query to be case insensitive. This flag applies to regular expressions as well as literals.
+ *
+ * @param p Policy handler, to report errors.
+ * @param t Type query to set.
+ * @param is_icase Non-zero to enable case insensitive searches, 0 to disable.
+ *
+ * @return Always 0.
+ */
+	extern int apol_type_query_set_icase(const apol_policy_t * p, apol_type_query_t * t, int is_icase);
+
 /******************** attribute queries ********************/
 
 /**
@@ -164,6 +175,18 @@ extern "C"
  * @return Always 0.
  */
 	extern int apol_attr_query_set_regex(const apol_policy_t * p, apol_attr_query_t * a, int is_regex);
+
+/**
+ * Set an attribute query to be case insensitive. This flag applies to regular
+ * expressions as well as literals.
+ *
+ * @param p Policy handler, to report errors.
+ * @param a Attribute query to set.
+ * @param is_icase Non-zero to enable case insensitive searches, 0 to disable.
+ *
+ * @return Always 0.
+ */
+	extern int apol_attr_query_set_icase(const apol_policy_t * p, apol_attr_query_t * a, int is_icase);
 
 #ifdef	__cplusplus
 }

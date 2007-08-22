@@ -180,6 +180,19 @@ extern "C"
 	extern int apol_range_trans_query_set_regex(const apol_policy_t * p, apol_range_trans_query_t * t, int is_regex);
 
 /**
+ * Set a range trans query to be case insensitive. This flag applies to regular
+ * expressions as well as literals.
+ *
+ * @param p Policy handler, to report errors.
+ * @param r Range trans rule query to set.
+ * @param is_icase Non-zero to enable case insensitive regex searching, 0
+ * to disable.
+ *
+ * @return Always 0.
+ */
+	extern int apol_range_trans_query_set_icase(const apol_policy_t * p, apol_range_trans_query_t * t, int is_icase);
+
+/**
  *  Render a range transition to a string.
  *
  *  @param policy Policy handler, to report errors.

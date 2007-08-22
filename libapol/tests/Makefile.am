@@ -7,6 +7,7 @@ libapol_tests_SOURCES = \
 	infoflow-tests.c infoflow-tests.h \
 	policy-21-tests.c policy-21-tests.h \
 	terule-tests.c terule-tests.h \
+	icase_regex-tests.c icase_regex-tests.h \
 	libapol-tests.c
 
 AM_CFLAGS = @DEBUGCFLAGS@ @WARNCFLAGS@ @PROFILECFLAGS@ @SELINUX_CFLAGS@ \

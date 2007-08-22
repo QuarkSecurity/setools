@@ -149,6 +149,15 @@ int apol_role_query_set_regex(const apol_policy_t * p, apol_role_query_t * r, in
 	return apol_query_set_regex(p, &r->flags, is_regex);
 }
 
+int apol_role_query_set_icase(const apol_policy_t * p, apol_role_query_t * r, int is_icase)
+{
+	if ((r->flags & APOL_QUERY_REGEX)) {
+		apol_regex_destroy(&(r->role_regex));
+		apol_regex_destroy(&(r->type_regex));
+	} 
+	return apol_query_set_icase(p, &r->flags, is_icase);
+}
+
 int apol_role_has_type(const apol_policy_t * p, const qpol_role_t * r, const qpol_type_t * t)
 {
 	qpol_iterator_t *iter = NULL;

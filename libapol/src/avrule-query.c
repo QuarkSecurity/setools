@@ -70,6 +70,7 @@ static int rule_select(const apol_policy_t * p, apol_vector_t * v, uint32_t rule
 	size_t num_perms_to_match = 1;
 	int retv = -1;
 	regex_t *bool_regex = NULL;
+	regex_t *perm_regex = NULL;
 
 	if ((flags & APOL_QUERY_MATCH_ALL_PERMS) && perm_list != NULL) {
 		num_perms_to_match = apol_vector_get_size(perm_list);
@@ -160,13 +161,14 @@ static int rule_select(const apol_policy_t * p, apol_vector_t * v, uint32_t rule
 				if (qpol_avrule_get_perm_iter(p->p, rule, &perm_iter) < 0) {
 					goto cleanup;
 				}
-				int match = apol_compare_iter(p, perm_iter, perm, 0, NULL, 1);
+				int match = apol_compare_iter(p, perm_iter, perm, flags, &perm_regex, 1);
 				if (match < 0) {
 					goto cleanup;
 				} else if (match > 0) {
 					match_perm++;
 				}
 				qpol_iterator_destroy(&perm_iter);
+				apol_regex_destroy(&perm_regex);
 			}
 		} else {
 			match_perm = num_perms_to_match;
@@ -192,7 +194,7 @@ static int rule_select(const apol_policy_t * p, apol_vector_t * v, uint32_t rule
 int apol_avrule_get_by_query(const apol_policy_t * p, const apol_avrule_query_t * a, apol_vector_t ** v)
 {
 	apol_vector_t *source_list = NULL, *target_list = NULL, *class_list = NULL, *perm_list = NULL;
-	int retval = -1, source_as_any = 0, is_regex = 0;
+	int retval = -1, source_as_any = 0, is_regex = 0, is_icase = 0;
 	char *bool_name = NULL;
 	*v = NULL;
 	unsigned int flags = 0;
@@ -204,13 +206,15 @@ int apol_avrule_get_by_query(const apol_policy_t * p, const apol_avrule_query_t 
 		}
 		flags = a->flags;
 		is_regex = a->flags & APOL_QUERY_REGEX;
+		is_icase = a->flags & APOL_QUERY_ICASE;
 		bool_name = a->bool_name;
 		if (a->source != NULL &&
 		    (source_list =
 		     apol_query_create_candidate_type_list(p, a->source, is_regex,
 							   a->flags & APOL_QUERY_SOURCE_INDIRECT,
 							   ((a->flags & (APOL_QUERY_SOURCE_TYPE | APOL_QUERY_SOURCE_ATTRIBUTE)) /
-							    APOL_QUERY_SOURCE_TYPE))) == NULL) {
+							    APOL_QUERY_SOURCE_TYPE),
+							   is_icase)) == NULL) {
 			goto cleanup;
 		}
 		if ((a->flags & APOL_QUERY_SOURCE_AS_ANY) && a->source != NULL) {
@@ -222,12 +226,13 @@ int apol_avrule_get_by_query(const apol_policy_t * p, const apol_avrule_query_t 
 								  a->flags & APOL_QUERY_TARGET_INDIRECT,
 								  ((a->
 								    flags & (APOL_QUERY_TARGET_TYPE | APOL_QUERY_TARGET_ATTRIBUTE))
-								   / APOL_QUERY_TARGET_TYPE))) == NULL) {
+								   / APOL_QUERY_TARGET_TYPE),
+								  is_icase)) == NULL) {
 			goto cleanup;
 		}
 		if (a->classes != NULL &&
 		    apol_vector_get_size(a->classes) > 0 &&
-		    (class_list = apol_query_create_candidate_class_list(p, a->classes)) == NULL) {
+		    (class_list = apol_query_create_candidate_class_list(p, a->classes, is_regex, is_icase)) == NULL) {
 			goto cleanup;
 		}
 		if (a->perms != NULL && apol_vector_get_size(a->perms) > 0) {
@@ -263,7 +268,7 @@ int apol_syn_avrule_get_by_query(const apol_policy_t * p, const apol_avrule_quer
 	qpol_iterator_t *iter = NULL, *perm_iter = NULL;
 	apol_vector_t *source_list = NULL, *target_list = NULL, *class_list = NULL, *perm_list = NULL, *syn_v = NULL;
 	apol_vector_t *target_types_list = NULL;
-	int retval = -1, source_as_any = 0, is_regex = 0;
+	int retval = -1, source_as_any = 0, is_regex = 0, is_icase = 0;
 	char *bool_name = NULL;
 	regex_t *bool_regex = NULL;
 	*v = NULL;
@@ -282,6 +287,7 @@ int apol_syn_avrule_get_by_query(const apol_policy_t * p, const apol_avrule_quer
 		}
 		flags = a->flags;
 		is_regex = a->flags & APOL_QUERY_REGEX;
+		is_icase = a->flags & APOL_QUERY_ICASE;
 		bool_name = a->bool_name;
 		if (a->source != NULL &&
 		    (source_list =
@@ -289,7 +295,8 @@ int apol_syn_avrule_get_by_query(const apol_policy_t * p, const apol_avrule_quer
 							       a->flags & APOL_QUERY_SOURCE_INDIRECT,
 							       ((a->flags & (APOL_QUERY_SOURCE_TYPE |
 									     APOL_QUERY_SOURCE_ATTRIBUTE)) /
-								APOL_QUERY_SOURCE_TYPE))) == NULL) {
+								APOL_QUERY_SOURCE_TYPE),
+								   is_icase)) == NULL) {
 			goto cleanup;
 		}
 		if ((a->flags & APOL_QUERY_SOURCE_AS_ANY) && a->source != NULL) {
@@ -301,12 +308,13 @@ int apol_syn_avrule_get_by_query(const apol_policy_t * p, const apol_avrule_quer
 								      a->flags & APOL_QUERY_TARGET_INDIRECT,
 								      ((a->flags & (APOL_QUERY_TARGET_TYPE |
 										    APOL_QUERY_TARGET_ATTRIBUTE))
-								       / APOL_QUERY_TARGET_TYPE))) == NULL) {
+								       / APOL_QUERY_TARGET_TYPE),
+									  is_icase)) == NULL) {
 			goto cleanup;
 		}
 		if (a->classes != NULL &&
 		    apol_vector_get_size(a->classes) > 0 &&
-		    (class_list = apol_query_create_candidate_class_list(p, a->classes)) == NULL) {
+		    (class_list = apol_query_create_candidate_class_list(p, a->classes, is_regex, is_icase)) == NULL) {
 			goto cleanup;
 		}
 		if (a->perms != NULL && apol_vector_get_size(a->perms) > 0) {
@@ -347,7 +355,7 @@ int apol_syn_avrule_get_by_query(const apol_policy_t * p, const apol_avrule_quer
 		source_list =
 			apol_query_create_candidate_type_list(p, a->source, is_regex, 0,
 							      ((a->flags & (APOL_QUERY_SOURCE_TYPE | APOL_QUERY_SOURCE_ATTRIBUTE)) /
-							       APOL_QUERY_SOURCE_TYPE));
+							       APOL_QUERY_SOURCE_TYPE), is_icase);
 		if (!source_list)
 			goto cleanup;
 	}
@@ -360,7 +368,8 @@ int apol_syn_avrule_get_by_query(const apol_policy_t * p, const apol_avrule_quer
 				apol_query_create_candidate_type_list(p, a->target, is_regex, 0,
 								      ((a->flags & (APOL_QUERY_SOURCE_TYPE |
 										    APOL_QUERY_SOURCE_ATTRIBUTE)) /
-								       APOL_QUERY_SOURCE_TYPE));
+								       APOL_QUERY_SOURCE_TYPE),
+									  is_icase);
 			if (!target_list)
 				goto cleanup;
 		}
@@ -563,6 +572,11 @@ int apol_avrule_query_set_source_any(const apol_policy_t * p, apol_avrule_query_
 int apol_avrule_query_set_regex(const apol_policy_t * p, apol_avrule_query_t * a, int is_regex)
 {
 	return apol_query_set_regex(p, &a->flags, is_regex);
+}
+
+int apol_avrule_query_set_icase(const apol_policy_t * p, apol_avrule_query_t * a, int is_icase)
+{
+	return apol_query_set_icase(p, &a->flags, is_icase);
 }
 
 /**

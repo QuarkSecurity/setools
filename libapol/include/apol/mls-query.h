@@ -153,6 +153,19 @@ extern "C"
  */
 	extern int apol_level_query_set_regex(const apol_policy_t * p, apol_level_query_t * l, int is_regex);
 
+/**
+ * Set a level query to be case insensitive. This flag applies to regular
+ * expressions as well as literals.
+ *
+ * @param p Policy handler, to report errors.
+ * @param l Level query to set.
+ * @param is_icase Non-zero to enable case insensitive searches, 0 to
+ * disable.
+ *
+ * @return Always 0.
+ */
+	extern int apol_level_query_set_icase(const apol_policy_t * p, apol_level_query_t * l, int is_icase);
+
 /******************** category queries ********************/
 
 /**
@@ -221,6 +234,19 @@ extern "C"
  */
 	extern int apol_cat_query_set_regex(const apol_policy_t * p, apol_cat_query_t * c, int is_regex);
 
+/**
+ * Set a category query to be case insensitive. This flag applies to regular
+ * expressions as well as literals.
+ *
+ * @param p Policy handler, to report errors.
+ * @param c Category query to set.
+ * @param is_icase Non-zero to enable case insensitive searches, 0 to
+ * disable.
+ *
+ * @return Always 0.
+ */
+	extern int apol_cat_query_set_icase(const apol_policy_t * p, apol_cat_query_t * c, int is_icase);
+	
 #ifdef	__cplusplus
 }
 #endif

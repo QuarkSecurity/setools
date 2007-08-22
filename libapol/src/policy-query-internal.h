@@ -82,6 +82,7 @@ extern "C"
 #define APOL_QUERY_TARGET_ATTRIBUTE 0x800
 
 #define APOL_QUERY_MATCH_ALL_PERMS 0x1000
+#define APOL_QUERY_ICASE 0x2000
 
 /**
  * Destroy a compiled regular expression, setting it to NULL
@@ -126,6 +127,19 @@ extern "C"
  * @return Always returns 0.
  */
 	int apol_query_set_regex(const apol_policy_t * p, unsigned int *flags, const int is_regex);
+
+/**
+ * Sets a query to be case insensitive. Applies to both regexps and
+ * literals.
+ *
+ * @param p Policy handler.
+ * @param flags Reference to the regular expression flag.
+ * @param is_icase If non-zero, set regex case insensitive flag.
+ * Otherwise unset it.
+ *
+ * @return Always returns 0.
+ */
+	int apol_query_set_icase(const apol_policy_t * p, unsigned int *flags, const int is_icase);
 
 /**
  * Determines if a name matches a target symbol name.  If flags has
@@ -291,13 +305,14 @@ extern "C"
  * @param ta_flag Bit-wise or of (APOL_QUERY_SYMBOL_IS_TYPE,
  * APOL_QUERY_SYMBOL_IS_ATTRIBUTE, APOL_QUERY_SYMBOL_IS_BOTH) whether
  * symbol should be matched against type names or attribute names.
+ * @param do_icase If non-size, treat the search symbol as case insensitive.
  *
  * @return Vector of unique qpol_type_t pointers (relative to policy
  * within p), or NULL upon error.  Caller is responsible for calling
  * apol_vector_destroy() afterwards.
  */
 	apol_vector_t *apol_query_create_candidate_type_list(const apol_policy_t * p, const char *symbol, int do_regex,
-							     int do_indirect, unsigned int ta_flag);
+							     int do_indirect, unsigned int ta_flag, int do_icase);
 
 /**
  * Given a symbol name (a type, attribute, alias, or a regular
@@ -318,13 +333,14 @@ extern "C"
  * @param ta_flag Bit-wise or of (APOL_QUERY_SYMBOL_IS_TYPE,
  * APOL_QUERY_SYMBOL_IS_ATTRIBUTE, APOL_QUERY_SYMBOL_IS_BOTH) whether
  * symbol should be matched against type names or attribute names.
+ * @param do_icase If non-size, treat the search symbol as case insensitive.
  *
  * @return Vector of unique qpol_type_t pointers (relative to policy
  * within p), or NULL upon error.  Caller is responsible for calling
  * apol_vector_destroy() afterwards.
  */
 	apol_vector_t *apol_query_create_candidate_syn_type_list(const apol_policy_t * p, const char *symbol, int do_regex,
-								 int do_indirect, unsigned int ta_flag);
+								 int do_indirect, unsigned int ta_flag, int do_icase);
 
 /**
  * Given a symbol name (a role or a regular expression string),
@@ -335,12 +351,13 @@ extern "C"
  * @param p Policy in which to look up roles.
  * @param symbol A string describing one or more role to match.
  * @param do_regex If non-zero, then treat symbol as a regular expression.
+ * @param do_icase If non-size, treat the search symbol as case insensitive.
  *
  * @return Vector of unique qpol_role_t pointers (relative to policy
  * within p), or NULL upon error.  Caller is responsible for calling
  * apol_vector_destroy() afterwards.
  */
-	apol_vector_t *apol_query_create_candidate_role_list(const apol_policy_t * p, char *symbol, int do_regex);
+	apol_vector_t *apol_query_create_candidate_role_list(const apol_policy_t * p, char *symbol, int do_regex, int do_icase);
 
 /**
  * Given a vector of object class strings, determine all of the
@@ -350,12 +367,15 @@ extern "C"
  *
  * @param p Policy in which to look up classes.
  * @param classes Vector of class strings to convert.
+ * @param do_regex If non-zero, treat the search symbol as a regular
+ * expression.
+ * @param do_icase If non-zero, treat the search symbol as case insensitive.
  *
  * @return Vector of unique qpol_class_t pointers (relative to policy
  * within p), or NULL upon error.  Caller is responsible for calling
  * apol_vector_destroy() afterwards.
  */
-	apol_vector_t *apol_query_create_candidate_class_list(const apol_policy_t * p, apol_vector_t * classes);
+	apol_vector_t *apol_query_create_candidate_class_list(const apol_policy_t * p, apol_vector_t * classes, int do_regex, int do_icase);
 
 /**
  * Given a type, return a vector of qpol_type_t pointers to which the

@@ -100,6 +100,19 @@ extern "C"
 	extern int apol_cond_query_set_regex(const apol_policy_t * p, apol_cond_query_t * c, int is_regex);
 
 /**
+ * Set a cond query to be case insensitive. This flag applies to regular
+ * expressions as well as literals.
+ *
+ * @param p Policy handler, to report errors.
+ * @param c Cond rule query to set.
+ * @param is_regex_icase Non-zero to enable case insensitive searches, 0 to
+ * disable.
+ *
+ * @return Always 0.
+ */
+	extern int apol_cond_query_set_icase(const apol_policy_t * p, apol_cond_query_t * c, int is_regex_icase);
+
+/**
  * Given a conditional node, allocate and return a string
  * representation of its conditional expression.
  *
