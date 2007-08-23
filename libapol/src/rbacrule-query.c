@@ -64,8 +64,7 @@ int apol_role_allow_get_by_query(const apol_policy_t * p, const apol_role_allow_
 			target_list = source_list;
 			source_as_any = 1;
 		} else if (r->target != NULL &&
-			   (target_list = apol_query_create_candidate_role_list(p, r->target, is_regex, is_icase)) == NULL)
-		{
+			   (target_list = apol_query_create_candidate_role_list(p, r->target, is_regex, is_icase)) == NULL) {
 			goto cleanup;
 		}
 	}
@@ -244,8 +243,7 @@ int apol_role_trans_get_by_query(const apol_policy_t * p, const apol_role_trans_
 			default_list = source_list;
 			source_as_any = 1;
 		} else if (r->default_role != NULL &&
-			   (default_list =
-			    apol_query_create_candidate_role_list(p, r->default_role, is_regex, is_icase)) == NULL) {
+			   (default_list = apol_query_create_candidate_role_list(p, r->default_role, is_regex, is_icase)) == NULL) {
 			goto cleanup;
 		}
 	}

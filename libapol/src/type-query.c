@@ -126,7 +126,7 @@ int apol_type_query_set_icase(const apol_policy_t * p, apol_type_query_t * t, in
 {
 	if ((t->flags & APOL_QUERY_REGEX)) {
 		apol_regex_destroy(&(t->regex));
-	} 
+	}
 	return apol_query_set_icase(p, &t->flags, is_icase);
 }
 
@@ -213,6 +213,6 @@ int apol_attr_query_set_icase(const apol_policy_t * p, apol_attr_query_t * a, in
 {
 	if ((a->flags & APOL_QUERY_REGEX)) {
 		apol_regex_destroy(&(a->regex));
-	} 
+	}
 	return apol_query_set_icase(p, &a->flags, is_icase);
 }

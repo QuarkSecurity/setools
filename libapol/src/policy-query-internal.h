@@ -375,7 +375,8 @@ extern "C"
  * within p), or NULL upon error.  Caller is responsible for calling
  * apol_vector_destroy() afterwards.
  */
-	apol_vector_t *apol_query_create_candidate_class_list(const apol_policy_t * p, apol_vector_t * classes, int do_regex, int do_icase);
+	apol_vector_t *apol_query_create_candidate_class_list(const apol_policy_t * p, apol_vector_t * classes, int do_regex,
+							      int do_icase);
 
 /**
  * Given a type, return a vector of qpol_type_t pointers to which the

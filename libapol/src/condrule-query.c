@@ -108,7 +108,7 @@ int apol_cond_query_set_icase(const apol_policy_t * p, apol_cond_query_t * c, in
 {
 	if ((c->flags & APOL_QUERY_REGEX)) {
 		apol_regex_destroy(&(c->regex));
-	} 
+	}
 	return apol_query_set_icase(p, &c->flags, is_regex_icase);
 }
 

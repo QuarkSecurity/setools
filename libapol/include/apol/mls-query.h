@@ -246,7 +246,7 @@ extern "C"
  * @return Always 0.
  */
 	extern int apol_cat_query_set_icase(const apol_policy_t * p, apol_cat_query_t * c, int is_icase);
-	
+
 #ifdef	__cplusplus
 }
 #endif

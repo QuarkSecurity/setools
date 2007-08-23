@@ -29,7 +29,6 @@
 
 #include "policy-query-internal.h"
 
-
 #include <errno.h>
 #include <regex.h>
 #include <stdlib.h>
@@ -620,7 +619,6 @@ apol_vector_t *apol_query_create_candidate_role_list(const apol_policy_t * p, ch
 	int retval = -1;
 	int compflags = 0;
 
-
 	if (list == NULL) {
 		ERR(p, "%s", strerror(errno));
 		goto cleanup;
@@ -693,21 +691,21 @@ apol_vector_t *apol_query_create_candidate_class_list(const apol_policy_t * p, a
 			if (do_regex)
 				compflags |= APOL_QUERY_REGEX;
 			if (do_icase)
-				compflags |= APOL_QUERY_ICASE; 
+				compflags |= APOL_QUERY_ICASE;
 			const qpol_policy_t *qpolicy = NULL;
 			if ((qpolicy = apol_policy_get_qpol(p)) == NULL) {
 				goto cleanup;
 			}
-			if (qpol_policy_get_class_iter(qpolicy,&iter) < 0) {
+			if (qpol_policy_get_class_iter(qpolicy, &iter) < 0) {
 				goto cleanup;
 			}
-			for ( ;!qpol_iterator_end(iter) ; qpol_iterator_next(iter)){
+			for (; !qpol_iterator_end(iter); qpol_iterator_next(iter)) {
 				const char *current_class_string;
-				regex_t *regex=NULL;
+				regex_t *regex = NULL;
 				if (qpol_iterator_get_item(iter, (void **)&class) < 0 ||
-					qpol_class_get_name(qpolicy, class, &current_class_string) < 0)
+				    qpol_class_get_name(qpolicy, class, &current_class_string) < 0)
 					goto cleanup;
-				int compval = apol_compare(p, current_class_string,class_string , compflags, &regex);
+				int compval = apol_compare(p, current_class_string, class_string, compflags, &regex);
 				if (compval < 0)
 					goto cleanup;
 				if (compval != 0) {
@@ -720,7 +718,7 @@ apol_vector_t *apol_query_create_candidate_class_list(const apol_policy_t * p, a
 			}
 			qpol_iterator_destroy(&iter);
 		} else {
-		if (qpol_policy_get_class_by_name(p->p, class_string, &class) == 0) {
+			if (qpol_policy_get_class_by_name(p->p, class_string, &class) == 0) {
 				if (apol_vector_append(list, (void *)class) < 0) {
 					ERR(p, "%s", strerror(ENOMEM));
 					goto cleanup;

@@ -213,8 +213,7 @@ int apol_avrule_get_by_query(const apol_policy_t * p, const apol_avrule_query_t 
 		     apol_query_create_candidate_type_list(p, a->source, is_regex,
 							   a->flags & APOL_QUERY_SOURCE_INDIRECT,
 							   ((a->flags & (APOL_QUERY_SOURCE_TYPE | APOL_QUERY_SOURCE_ATTRIBUTE)) /
-							    APOL_QUERY_SOURCE_TYPE),
-							   is_icase)) == NULL) {
+							    APOL_QUERY_SOURCE_TYPE), is_icase)) == NULL) {
 			goto cleanup;
 		}
 		if ((a->flags & APOL_QUERY_SOURCE_AS_ANY) && a->source != NULL) {
@@ -226,8 +225,7 @@ int apol_avrule_get_by_query(const apol_policy_t * p, const apol_avrule_query_t 
 								  a->flags & APOL_QUERY_TARGET_INDIRECT,
 								  ((a->
 								    flags & (APOL_QUERY_TARGET_TYPE | APOL_QUERY_TARGET_ATTRIBUTE))
-								   / APOL_QUERY_TARGET_TYPE),
-								  is_icase)) == NULL) {
+								   / APOL_QUERY_TARGET_TYPE), is_icase)) == NULL) {
 			goto cleanup;
 		}
 		if (a->classes != NULL &&
@@ -295,8 +293,7 @@ int apol_syn_avrule_get_by_query(const apol_policy_t * p, const apol_avrule_quer
 							       a->flags & APOL_QUERY_SOURCE_INDIRECT,
 							       ((a->flags & (APOL_QUERY_SOURCE_TYPE |
 									     APOL_QUERY_SOURCE_ATTRIBUTE)) /
-								APOL_QUERY_SOURCE_TYPE),
-								   is_icase)) == NULL) {
+								APOL_QUERY_SOURCE_TYPE), is_icase)) == NULL) {
 			goto cleanup;
 		}
 		if ((a->flags & APOL_QUERY_SOURCE_AS_ANY) && a->source != NULL) {
@@ -308,8 +305,7 @@ int apol_syn_avrule_get_by_query(const apol_policy_t * p, const apol_avrule_quer
 								      a->flags & APOL_QUERY_TARGET_INDIRECT,
 								      ((a->flags & (APOL_QUERY_TARGET_TYPE |
 										    APOL_QUERY_TARGET_ATTRIBUTE))
-								       / APOL_QUERY_TARGET_TYPE),
-									  is_icase)) == NULL) {
+								       / APOL_QUERY_TARGET_TYPE), is_icase)) == NULL) {
 			goto cleanup;
 		}
 		if (a->classes != NULL &&
@@ -368,8 +364,7 @@ int apol_syn_avrule_get_by_query(const apol_policy_t * p, const apol_avrule_quer
 				apol_query_create_candidate_type_list(p, a->target, is_regex, 0,
 								      ((a->flags & (APOL_QUERY_SOURCE_TYPE |
 										    APOL_QUERY_SOURCE_ATTRIBUTE)) /
-								       APOL_QUERY_SOURCE_TYPE),
-									  is_icase);
+								       APOL_QUERY_SOURCE_TYPE), is_icase);
 			if (!target_list)
 				goto cleanup;
 		}

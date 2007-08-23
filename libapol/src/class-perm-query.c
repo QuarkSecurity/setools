@@ -158,9 +158,10 @@ int apol_class_query_set_icase(const apol_policy_t * p, apol_class_query_t * c, 
 	if ((c->flags & APOL_QUERY_REGEX)) {
 		apol_regex_destroy(&(c->class_regex));
 		apol_regex_destroy(&(c->common_regex));
-	} 
+	}
 	return apol_query_set_icase(p, &c->flags, is_icase);
 }
+
 /******************** common queries ********************/
 
 int apol_common_get_by_query(const apol_policy_t * p, apol_common_query_t * c, apol_vector_t ** v)
@@ -338,6 +339,6 @@ int apol_perm_query_set_icase(const apol_policy_t * p, apol_perm_query_t * pq, i
 {
 	if ((pq->flags & APOL_QUERY_REGEX)) {
 		apol_regex_destroy(&(pq->regex));
-	} 
+	}
 	return apol_query_set_icase(p, &pq->flags, is_icase);
 }

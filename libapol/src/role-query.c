@@ -154,7 +154,7 @@ int apol_role_query_set_icase(const apol_policy_t * p, apol_role_query_t * r, in
 	if ((r->flags & APOL_QUERY_REGEX)) {
 		apol_regex_destroy(&(r->role_regex));
 		apol_regex_destroy(&(r->type_regex));
-	} 
+	}
 	return apol_query_set_icase(p, &r->flags, is_icase);
 }
 

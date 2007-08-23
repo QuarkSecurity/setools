@@ -830,7 +830,8 @@ int qpol_policy_build_syn_rule_table(qpol_policy_t * policy)
 		o2 += (num_items - expected_value) * (num_items - expected_value);
 	}
 	float stddev = sqrtf(o2 / (QPOL_SYN_RULE_TABLE_SIZE - 1));
-	fprintf(stderr, "libqpol synrule table %d bits:  total entries %lu, expected %g\n", QPOL_SYN_RULE_TABLE_BITS, total_entries, expected_value);
+	fprintf(stderr, "libqpol synrule table %d bits:  total entries %lu, expected %g\n", QPOL_SYN_RULE_TABLE_BITS, total_entries,
+		expected_value);
 	fprintf(stderr, "                        min %zd, max %zd, stddev %g\n", min_items, max_items, stddev);
 #endif
 
