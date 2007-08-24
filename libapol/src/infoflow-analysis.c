@@ -880,7 +880,7 @@ static int apol_infoflow_graph_get_nodes_for_type(const apol_policy_t * p, const
 	size_t i, j;
 	apol_vector_t *cand_list = NULL;
 	int retval = -1;
-	if ((cand_list = apol_query_create_candidate_type_list(p, type, 0, 1, APOL_QUERY_SYMBOL_IS_BOTH, 0)) == NULL, 0) {
+	if ((cand_list = apol_query_create_candidate_type_list(p, type, 0, 1, APOL_QUERY_SYMBOL_IS_BOTH, 0)) == NULL) {
 		goto cleanup;
 	}
 	for (i = 0; i < apol_vector_get_size(g->nodes); i++) {

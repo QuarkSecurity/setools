@@ -103,11 +103,13 @@ extern "C"
 	extern int apol_type_query_set_regex(const apol_policy_t * p, apol_type_query_t * t, int is_regex);
 
 /**
- * Set a type query to be case insensitive. This flag applies to regular expressions as well as literals.
+ * Set a type query to be case insensitive. This flag applies to
+ * regular expressions as well as literals.
  *
  * @param p Policy handler, to report errors.
  * @param t Type query to set.
- * @param is_icase Non-zero to enable case insensitive searches, 0 to disable.
+ * @param is_icase Non-zero to enable case insensitive searches, 0 to
+ * disable.
  *
  * @return Always 0.
  */

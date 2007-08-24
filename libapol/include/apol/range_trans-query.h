@@ -184,7 +184,7 @@ extern "C"
  * expressions as well as literals.
  *
  * @param p Policy handler, to report errors.
- * @param r Range trans rule query to set.
+ * @param t Range trans rule query to set.
  * @param is_icase Non-zero to enable case insensitive regex searching, 0
  * to disable.
  *
