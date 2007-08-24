@@ -2,7 +2,10 @@
  * @file
  *
  * A parameter object for use in polsearch_criterion to check string
- * expressions representing symbol names.
+ * expressions representing symbol names.  A string expression is one
+ * or more strings that could match.  For example, if a string
+ * expression consists of the set {A B C}, it will return true if
+ * matching against B but not D.
  *
  * @author Jeremy A. Mowery jmowery@tresys.com
  * @author Jason Tang  jtang@tresys.com
@@ -48,11 +51,23 @@ class polsearch_string_expression_parameter:public polsearch_parameter
 {
       public:
 	/**
-	 * Create a string expression parameter.
+	 * Create a string expression parameter.  This denotes a
+	 * single string to match.
 	 * @param expr The string representing the expression to match.
 	 * @exception std::invalid_argument Invalid expression.
 	 */
 	polsearch_string_expression_parameter(const std::string & expr) throw(std::invalid_argument);
+
+	/**
+	 * Create a string expression parameter from a vector of
+	 * strings.  A match is successful if it matches any element
+	 * from this vector.
+	 * @param expr A vector of strings to match.
+	 * @exception std::invalid_argument Invalid expression on any
+	 * element within the vector.
+	 */
+	 polsearch_string_expression_parameter(const std::vector < std::string > &expr) throw(std::invalid_argument);
+
 	//! Copy constructor.
 	 polsearch_string_expression_parameter(const polsearch_string_expression_parameter & rhs);
 	//! Destructor.
@@ -100,7 +115,7 @@ class polsearch_string_expression_parameter:public polsearch_parameter
 	virtual polsearch_parameter *clone() const throw(std::bad_alloc);
 
       private:
-	 std::string _expression;      //!< The expression string. TODO the real members.
+	 std::vector < std::string > _expression;	//!< Vector of valid strings to match
 };
 
 #endif				       /* POLSEARCH_STRING_EXPRESSION_PARAMETER_HH */

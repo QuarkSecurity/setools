@@ -31,6 +31,7 @@
 #include <polsearch/test.hh>
 #include <polsearch/criterion.hh>
 #include <polsearch/regex_parameter.hh>
+#include <polsearch/string_expression_parameter.hh>
 #include <polsearch/bool_parameter.hh>
 #include <polsearch/result.hh>
 #include <polsearch/proof.hh>
@@ -93,8 +94,59 @@ static void create_query(void)
 	delete bq;
 }
 
+#include <iostream>
+
+static void strexpr_query(void)
+{
+	polsearch_bool_query *bq = new polsearch_bool_query(POLSEARCH_MATCH_ALL);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(bq);
+	CU_ASSERT(bq->match() == POLSEARCH_MATCH_ALL);
+	polsearch_test & nt = bq->addTest(POLSEARCH_TEST_NAME);
+	CU_ASSERT(nt.testCond() == POLSEARCH_TEST_NAME);
+
+	bool caught_invalid_criterion = false;
+	try
+	{
+		nt.addCriterion(POLSEARCH_OP_RULE_TYPE);
+	}
+	catch(std::invalid_argument)
+	{
+		caught_invalid_criterion = true;
+	}
+	catch(...)
+	{
+	}
+	CU_ASSERT(caught_invalid_criterion);
+
+	polsearch_criterion & nc = nt.addCriterion(POLSEARCH_OP_IS);
+	CU_ASSERT(nc.op() == POLSEARCH_OP_IS);
+	vector < string > strings;
+	strings.push_back("rey_b");
+	strings.push_back("lenny_b");
+	polsearch_string_expression_parameter *sxp = new polsearch_string_expression_parameter(strings);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(sxp);
+	nc.param(sxp);
+
+	CU_ASSERT(nt.isContinueable() == false);
+
+	vector < polsearch_result > res_v = bq->run(sp, NULL);
+	CU_ASSERT(!res_v.empty());
+	CU_ASSERT(res_v.size() == 1);
+	//results should be lenny_b
+	for (vector < polsearch_result >::const_iterator i = res_v.begin(); i != res_v.end(); i++)
+	{
+		CU_ASSERT(i->elementType() == POLSEARCH_ELEMENT_BOOL);
+		const qpol_bool_t *b = static_cast < const qpol_bool_t * >(i->element());
+		const char *name;
+		CU_ASSERT(qpol_bool_get_name(apol_policy_get_qpol(sp), b, &name) == 0);
+		CU_ASSERT_STRING_EQUAL(name, "lenny_b");
+	}
+	delete bq;
+}
+
 CU_TestInfo bool_query_tests[] = {
 	{"create query", create_query},
+	{"string expression query", strexpr_query},
 	CU_TEST_INFO_NULL
 };
 

@@ -45,7 +45,25 @@ polsearch_string_expression_parameter::polsearch_string_expression_parameter(con
 													     invalid_argument):polsearch_parameter
 	()
 {
-	_expression = expr;
+	if (expr == "")
+	{
+		throw std::invalid_argument("String expression cannot be empty.");
+	}
+	_expression.push_back(expr);
+}
+
+polsearch_string_expression_parameter::polsearch_string_expression_parameter(const std::vector < std::string >
+									     &expr) throw(std::
+											  invalid_argument):polsearch_parameter()
+{
+	for (vector < string >::const_iterator i = expr.begin(); i != expr.end(); i++)
+	{
+		if (*i == "")
+		{
+			throw std::invalid_argument("String expression cannot be empty.");
+		}
+		_expression.push_back(*i);
+	}
 }
 
 polsearch_string_expression_parameter::
@@ -59,22 +77,44 @@ polsearch_string_expression_parameter::~polsearch_string_expression_parameter()
 	//nothign to do
 }
 
-bool polsearch_string_expression_parameter::match(const std::string & str,
-						  const std::vector < std::string >
-						  &Xnames) const throw(std::invalid_argument)
+static bool exists(const vector < string > &v, const string & s)
 {
+	for (vector < string >::const_iterator i = v.begin(); i != v.end(); i++)
+	{
+		if (*i == s)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool polsearch_string_expression_parameter::match(const std::string & str,
+						  const std::vector < std::string > &Xnames) const throw(std::invalid_argument)
+{
+	if (str == "")
+	{
+		throw std::invalid_argument("String to match can not be empty.");
+	}
 	if (str == "X")
 	{
 		for (vector < string >::const_iterator i = Xnames.begin(); i != Xnames.end(); i++)
 		{
-			//TODO does *i match expression
+			if (*i == "")
+			{
+				throw std::invalid_argument("String to match can not be empty.");
+			}
+			if (exists(_expression, *i))
+			{
+				return true;
+			}
 		}
+		return false;
 	}
 	else
 	{
-		//TODO does str match expression
+		return exists(_expression, str);
 	}
-	return false;
 }
 
 bool polsearch_string_expression_parameter::match(const std::vector < std::string > &test_list,
