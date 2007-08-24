@@ -79,3 +79,8 @@ VERS_4.1{
 		apol_str_to_protocol;
 		apol_str_to_objclass;
 } VERS_4.0;
+
+VERS_4.2{
+	global:
+		apol_*_set_icase;
+} VERS_4.1;
