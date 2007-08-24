@@ -144,16 +144,18 @@ extern "C"
 /**
  * Determines if a name matches a target symbol name.  If flags has
  * the APOL_QUERY_REGEX bit set, then (1) compile the regular
- * expression if NULL, and (2) apply it to target.  Otherwise do a
- * string comparison between name and target.  If name is NULL and/or
- * empty then the comparison always succeeds regardless of flags and
- * regex.
+ * expression if NULL, and (2) apply it to target.  If it has
+ * APOL_QUERY_ICASE bit set, then do case insensitive matching (in
+ * addition to regex matching if requested).  Otherwise do a string
+ * comparison between name and target.  If name is NULL and/or empty
+ * then the comparison always succeeds regardless of flags and regex.
  *
  * @param p Policy handler.
  * @param target Name of target symbol to compare.
  * @param name Source target from which to compare.
  * @param flags If APOL_QUERY_REGEX bit is set, treat name as a
- * regular expression.
+ * regular expression.  Also, if APOL_QUERY_ICASE bit is set, do case
+ * insensitive matching.
  * @param regex If using regexp comparison, the compiled regular
  * expression to use; the pointer will be allocated space if regexp is
  * legal.  If NULL, then compile the regexp pattern given by name and
@@ -305,7 +307,7 @@ extern "C"
  * @param ta_flag Bit-wise or of (APOL_QUERY_SYMBOL_IS_TYPE,
  * APOL_QUERY_SYMBOL_IS_ATTRIBUTE, APOL_QUERY_SYMBOL_IS_BOTH) whether
  * symbol should be matched against type names or attribute names.
- * @param do_icase If non-size, treat the search symbol as case insensitive.
+ * @param do_icase If non-zero, treat the search symbol as case insensitive.
  *
  * @return Vector of unique qpol_type_t pointers (relative to policy
  * within p), or NULL upon error.  Caller is responsible for calling
@@ -333,7 +335,7 @@ extern "C"
  * @param ta_flag Bit-wise or of (APOL_QUERY_SYMBOL_IS_TYPE,
  * APOL_QUERY_SYMBOL_IS_ATTRIBUTE, APOL_QUERY_SYMBOL_IS_BOTH) whether
  * symbol should be matched against type names or attribute names.
- * @param do_icase If non-size, treat the search symbol as case insensitive.
+ * @param do_icase If non-zero, treat the search symbol as case insensitive.
  *
  * @return Vector of unique qpol_type_t pointers (relative to policy
  * within p), or NULL upon error.  Caller is responsible for calling
@@ -351,7 +353,7 @@ extern "C"
  * @param p Policy in which to look up roles.
  * @param symbol A string describing one or more role to match.
  * @param do_regex If non-zero, then treat symbol as a regular expression.
- * @param do_icase If non-size, treat the search symbol as case insensitive.
+ * @param do_icase If non-zero, treat the search symbol as case insensitive.
  *
  * @return Vector of unique qpol_role_t pointers (relative to policy
  * within p), or NULL upon error.  Caller is responsible for calling

@@ -155,10 +155,8 @@ int apol_class_query_set_regex(const apol_policy_t * p, apol_class_query_t * c, 
 
 int apol_class_query_set_icase(const apol_policy_t * p, apol_class_query_t * c, int is_icase)
 {
-	if ((c->flags & APOL_QUERY_REGEX)) {
-		apol_regex_destroy(&(c->class_regex));
-		apol_regex_destroy(&(c->common_regex));
-	}
+	apol_regex_destroy(&(c->class_regex));
+	apol_regex_destroy(&(c->common_regex));
 	return apol_query_set_icase(p, &c->flags, is_icase);
 }
 
@@ -195,7 +193,7 @@ int apol_common_get_by_query(const apol_policy_t * p, apol_common_query_t * c, a
 			}
 		}
 		if (apol_vector_append(*v, common_datum)) {
-			ERR(p, "%s", strerror(ENOMEM));
+			ERR(p, "%s", strerror(errno));
 			goto cleanup;
 		}
 	}
@@ -232,6 +230,12 @@ int apol_common_query_set_common(const apol_policy_t * p, apol_common_query_t * 
 int apol_common_query_set_regex(const apol_policy_t * p, apol_common_query_t * c, int is_regex)
 {
 	return apol_query_set_regex(p, &c->flags, is_regex);
+}
+
+int apol_common_query_set_icase(const apol_policy_t * p, apol_common_query_t * c, int is_icase)
+{
+	apol_regex_destroy(&(c->regex));
+	return apol_query_set_icase(p, &c->flags, is_icase);
 }
 
 /******************** permission queries ********************/
@@ -337,8 +341,6 @@ int apol_perm_query_set_regex(const apol_policy_t * p, apol_perm_query_t * pq, i
 
 int apol_perm_query_set_icase(const apol_policy_t * p, apol_perm_query_t * pq, int is_icase)
 {
-	if ((pq->flags & APOL_QUERY_REGEX)) {
-		apol_regex_destroy(&(pq->regex));
-	}
+	apol_regex_destroy(&(pq->regex));
 	return apol_query_set_icase(p, &pq->flags, is_icase);
 }

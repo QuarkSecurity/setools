@@ -143,6 +143,8 @@ int apol_constraint_query_set_regex(const apol_policy_t * p, apol_constraint_que
 
 int apol_constraint_query_set_icase(const apol_policy_t * p, apol_constraint_query_t * c, int is_icase)
 {
+	apol_regex_destroy(&(c->class_regex));
+	apol_regex_destroy(&(c->perm_regex));
 	return apol_query_set_icase(p, &c->flags, is_icase);
 }
 
@@ -219,4 +221,10 @@ int apol_validatetrans_query_set_class(const apol_policy_t * p, apol_validatetra
 int apol_validatetrans_query_set_regex(const apol_policy_t * p, apol_validatetrans_query_t * vt, int is_regex)
 {
 	return apol_query_set_regex(p, &vt->flags, is_regex);
+}
+
+int apol_validatetrans_query_set_icase(const apol_policy_t * p, apol_validatetrans_query_t * vt, int is_icase)
+{
+	apol_regex_destroy(&(vt->regex));
+	return apol_query_set_icase(p, &vt->flags, is_icase);
 }

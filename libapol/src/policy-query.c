@@ -617,7 +617,6 @@ apol_vector_t *apol_query_create_candidate_role_list(const apol_policy_t * p, ch
 	regex_t *regex = NULL;
 	qpol_iterator_t *iter = NULL;
 	int retval = -1;
-	int compflags = 0;
 
 	if (list == NULL) {
 		ERR(p, "%s", strerror(errno));
@@ -632,6 +631,7 @@ apol_vector_t *apol_query_create_candidate_role_list(const apol_policy_t * p, ch
 	}
 
 	if (do_regex || do_icase) {
+		int compflags = 0;
 		if (do_regex)
 			compflags |= APOL_QUERY_REGEX;
 		if (do_icase)

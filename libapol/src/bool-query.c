@@ -112,9 +112,6 @@ int apol_bool_query_set_regex(const apol_policy_t * p, apol_bool_query_t * b, in
 
 int apol_bool_query_set_icase(const apol_policy_t * p, apol_bool_query_t * b, int is_icase)
 {
-	/* force a regex recompile to account for the icase flag */
-	if ((b->flags & APOL_QUERY_REGEX)) {
-		apol_regex_destroy(&(b->regex));
-	}
+	apol_regex_destroy(&(b->regex));
 	return apol_query_set_icase(p, &b->flags, is_icase);
 }
