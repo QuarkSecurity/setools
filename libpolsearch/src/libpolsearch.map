@@ -2,6 +2,17 @@ VERS_1.0{
 	global:
 		extern "C++"
 		{
+				# typeinfo exports
+				*polsearch_*_parameter;
+				*polsearch_*_query;
+				*polsearch_criterion;
+				*polsearch_parameter;
+				*polsearch_proof;
+				*polsearch_query;
+				*polsearch_result;
+				*polsearch_test;
+				*std::invalid_argument;
+
 				polsearch_*query::*;
 				polsearch_criterion::*;
 				polsearch_result::*;
