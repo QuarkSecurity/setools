@@ -361,7 +361,7 @@ bool validate_operator(polsearch_element elem_type, polsearch_test_cond cond, po
  * @param pt The type of parameter.
  * @return The corresponding enumeration value.
  */
-static polsearch_param_type param_id(const std::type_info & pt)
+static polsearch_param_type param_id(polsearch_test_cond cond, const std::type_info & pt)
 {
 	if (pt == typeid(polsearch_bool_parameter))
 		return POLSEARCH_PARAM_TYPE_BOOL;
@@ -370,7 +370,7 @@ static polsearch_param_type param_id(const std::type_info & pt)
 	else if (pt == typeid(polsearch_regex_parameter))
 		return POLSEARCH_PARAM_TYPE_REGEX;
 	else if (pt == typeid(polsearch_number_parameter))
-		return POLSEARCH_PARAM_TYPE_RULE_TYPE;
+		return (cond == POLSEARCH_TEST_AVRULE ? POLSEARCH_PARAM_TYPE_AVRULE_TYPE : POLSEARCH_PARAM_TYPE_TERULE_TYPE);
 	else if (pt == typeid(polsearch_level_parameter))
 		return POLSEARCH_PARAM_TYPE_LEVEL;
 	else if (pt == typeid(polsearch_range_parameter))
@@ -382,7 +382,7 @@ static polsearch_param_type param_id(const std::type_info & pt)
 bool validate_parameter_type(polsearch_element elem_type, polsearch_test_cond cond, polsearch_op opr,
 			     const std::type_info & param_type)
 {
-	return validate_parameter_type(elem_type, cond, opr, param_id(param_type));
+	return validate_parameter_type(elem_type, cond, opr, param_id(cond, param_type));
 }
 
 bool validate_parameter_type(polsearch_element elem_type, polsearch_test_cond cond, polsearch_op opr,
@@ -409,7 +409,8 @@ bool validate_parameter_type(polsearch_element elem_type, polsearch_test_cond co
 	}
 	case POLSEARCH_OP_RULE_TYPE:
 	{
-		if (param_type == POLSEARCH_PARAM_TYPE_RULE_TYPE)
+		if ((param_type == POLSEARCH_PARAM_TYPE_AVRULE_TYPE && cond == POLSEARCH_TEST_AVRULE) ||
+					(param_type == POLSEARCH_PARAM_TYPE_TERULE_TYPE && cond == POLSEARCH_TEST_TERULE))
 			return true;
 		break;
 	}

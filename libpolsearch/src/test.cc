@@ -111,7 +111,7 @@ void polsearch_test::removeCriterion(polsearch_criterion & c) throw(std::invalid
 	throw invalid_argument("Criterion is not part of the test");
 }
 
-size_t polsearch_test::size() const
+size_t polsearch_test::numCriteria() const
 {
 	return _criteria.size();
 }

@@ -89,7 +89,7 @@ class polsearch_query
 	 * Get the number of tests in the query.
 	 * @return The number of tests in the query.
 	 */
-	size_t size() const;
+	size_t numTests() const;
 
 	/**
 	 * Run the query.

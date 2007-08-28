@@ -130,6 +130,9 @@ polsearch_param_type polsearch_criterion::getValidParamType() const
 		if (validate_parameter_type(_test->elementType(), _test->testCond(), _op, static_cast < polsearch_param_type > (i)))
 			return static_cast < polsearch_param_type > (i);
 	}
+
+	//should not get here
+	assert(0);
 	return POLSEARCH_PARAM_TYPE_NONE;
 }
 

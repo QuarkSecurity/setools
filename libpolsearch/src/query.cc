@@ -108,7 +108,7 @@ void polsearch_query::removeTest(polsearch_test & t) throw(std::invalid_argument
 	throw invalid_argument("Test is not part of the query");
 }
 
-size_t polsearch_query::size() const
+size_t polsearch_query::numTests() const
 {
 	return _tests.size();
 }

@@ -98,7 +98,7 @@ class polsearch_test
 	 * Get the number of criteria in the test.
 	 * @return The number of criteria in the test.
 	 */
-	size_t size() const;
+	size_t numCriteria() const;
 
 	 /**
 	  * Determine if the condition tested can have more than one criterion.

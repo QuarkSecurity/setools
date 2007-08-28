@@ -118,7 +118,8 @@ enum polsearch_param_type
 	POLSEARCH_PARAM_TYPE_NONE = 0, /*!< only used for error conditions */
 	POLSEARCH_PARAM_TYPE_REGEX,    /*!< parameter is a string (std::string) representing a regular expression */
 	POLSEARCH_PARAM_TYPE_STR_EXPR, /*!< parameter is a string expression (polsearch_string_expression) */
-	POLSEARCH_PARAM_TYPE_RULE_TYPE,	/*!< parameter is a rule type code (uint32_t) */
+	POLSEARCH_PARAM_TYPE_AVRULE_TYPE,	/*!< parameter is an access vector rule type code (uint32_t) */
+	POLSEARCH_PARAM_TYPE_TERULE_TYPE,	/*!< parameter is a type rule type code (uint32_t) */
 	POLSEARCH_PARAM_TYPE_BOOL,     /*!< parameter is a boolean value (bool) */
 	POLSEARCH_PARAM_TYPE_LEVEL,    /*!< parameter is an apol_mls_level_t * */
 	POLSEARCH_PARAM_TYPE_RANGE     /*!< parameter is an apol_mls_range_t * */
