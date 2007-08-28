@@ -52,7 +52,7 @@ using std::string;
 
 // internal functions
 
-polsearch_element_e determine_candidate_type(polsearch_test_cond_e test_cond) throw(std::invalid_argument)
+polsearch_element determine_candidate_type(polsearch_test_cond test_cond) throw(std::invalid_argument)
 {
 	switch (test_cond)
 	{
@@ -136,7 +136,7 @@ polsearch_element_e determine_candidate_type(polsearch_test_cond_e test_cond) th
 	}
 }
 
-bool validate_test_condition(polsearch_element_e elem_type, polsearch_test_cond_e cond)
+bool validate_test_condition(polsearch_element elem_type, polsearch_test_cond cond)
 {
 	switch (cond)
 	{
@@ -249,7 +249,7 @@ bool validate_test_condition(polsearch_element_e elem_type, polsearch_test_cond_
 	return false;
 }
 
-bool validate_operator(polsearch_element_e elem_type, polsearch_test_cond_e cond, polsearch_op_e opr)
+bool validate_operator(polsearch_element elem_type, polsearch_test_cond cond, polsearch_op opr)
 {
 	// First, validate that the condition makes sense for this element.
 	if (!validate_test_condition(elem_type, cond))
@@ -361,7 +361,7 @@ bool validate_operator(polsearch_element_e elem_type, polsearch_test_cond_e cond
  * @param pt The type of parameter.
  * @return The corresponding enumeration value.
  */
-static polsearch_param_type_e param_id(const std::type_info & pt)
+static polsearch_param_type param_id(const std::type_info & pt)
 {
 	if (pt == typeid(polsearch_bool_parameter))
 		return POLSEARCH_PARAM_TYPE_BOOL;
@@ -379,14 +379,14 @@ static polsearch_param_type_e param_id(const std::type_info & pt)
 		return POLSEARCH_PARAM_TYPE_NONE;
 }
 
-bool validate_parameter_type(polsearch_element_e elem_type, polsearch_test_cond_e cond, polsearch_op_e opr,
+bool validate_parameter_type(polsearch_element elem_type, polsearch_test_cond cond, polsearch_op opr,
 			     const std::type_info & param_type)
 {
 	return validate_parameter_type(elem_type, cond, opr, param_id(param_type));
 }
 
-bool validate_parameter_type(polsearch_element_e elem_type, polsearch_test_cond_e cond, polsearch_op_e opr,
-			     polsearch_param_type_e param_type)
+bool validate_parameter_type(polsearch_element elem_type, polsearch_test_cond cond, polsearch_op opr,
+			     polsearch_param_type param_type)
 {
 	if (!validate_operator(elem_type, cond, opr))
 		return false;
@@ -457,7 +457,7 @@ bool validate_parameter_type(polsearch_element_e elem_type, polsearch_test_cond_
 	return false;
 }
 
-const char *symbol_get_name(const void *symbol, polsearch_element_e sym_type, const apol_policy_t * policy)
+const char *symbol_get_name(const void *symbol, polsearch_element sym_type, const apol_policy_t * policy)
 {
 	if (!policy)
 	{
@@ -530,8 +530,7 @@ const char *symbol_get_name(const void *symbol, polsearch_element_e sym_type, co
 	return name;
 }
 
-vector < string > get_all_names(const void *element, polsearch_element_e elem_type,
-				const apol_policy_t * policy)throw(std::bad_alloc)
+vector < string > get_all_names(const void *element, polsearch_element elem_type, const apol_policy_t * policy)throw(std::bad_alloc)
 {
 	vector < string > ret_v;
 	qpol_iterator_t *iter = NULL;
@@ -585,7 +584,7 @@ std::vector < std::string > mkvector(const apol_vector_t * rhs)
 	return v;
 }
 
-void *element_copy(polsearch_element_e elem_type, const void *elem) throw(std::bad_alloc)
+void *element_copy(polsearch_element elem_type, const void *elem) throw(std::bad_alloc)
 {
 	switch (elem_type)
 	{
@@ -656,7 +655,7 @@ static void wrap_apol_mls_range_free(void *x)
 	apol_mls_range_destroy(&m);
 }
 
-polsearch_proof_element_free_fn get_element_free_fn(polsearch_element_e elem_type)
+polsearch_proof_element_free_fn get_element_free_fn(polsearch_element elem_type)
 {
 	switch (elem_type)
 	{

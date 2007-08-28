@@ -49,7 +49,7 @@ class polsearch_cat_query:public polsearch_query
 	 * either POLSEARCH_MATCH_ALL or POLSEARCH_MATCH_ANY.
 	 * @exception std::invalid_argument Invalid matching behavior requested.
 	 */
-	polsearch_cat_query(polsearch_match_e m = POLSEARCH_MATCH_ALL) throw(std::invalid_argument);
+	polsearch_cat_query(polsearch_match m = POLSEARCH_MATCH_ALL) throw(std::invalid_argument);
 	/**
 		 * Copy constructor
 		 * @param rhs The query to copy.
@@ -68,7 +68,7 @@ class polsearch_cat_query:public polsearch_query
 		 * Get the type of element queried.
 		 * @return Always returns POLSEARCH_ELEMENT_CATEGORY.
 	 */
-	virtual polsearch_element_e elementType() const;
+	virtual polsearch_element elementType() const;
 
       protected:
 	/**

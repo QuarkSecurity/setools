@@ -25,7 +25,8 @@
 #ifndef SECHECKER_RESULT_HH
 #define SECHECKER_RESULT_HH
 
-#include <polsearch/polsearch.hh>
+#include "profile.hh"
+#include <apol/policy.h>
 
 #include <string>
 #include <map>
@@ -62,20 +63,25 @@ namespace sechecker
 		 * if \a data_ does not need to be freed, pass NULL.
 		 * @param dup_ Function to call to copy \a data_; if it is safe to only
 		 * copy the pointer address, pass NULL.
+		 * @exception std::bad_alloc Unable to duplicate data_.
 		 */
-		template < typename T > element(T * data_, free_fn free_, dup_fn dup_);
+		template < typename T > element(T * data_, free_fn free_, dup_fn dup_) throw(std::bad_alloc);
 		/**
 		 * Copy an element.
 		 * @param rhs The element to copy.
 		 * @post It is safe to destroy both the original and the copy.
+		 * @exception std::bad_alloc Unable to duplicate data_.
 		 */
-		element(const element & rhs);
+		element(const element & rhs) throw(std::bad_alloc);
 		/**
 		 * Assignment operator. This performs a deep copy of the element.
 		 * @param rhs The element to use as the right hand side of the assignment.
 		 * @return The element after assignment.
+		 * @exception std::bad_alloc Unable to duplicate data_.
 		 */
-		const element & operator=(const element & rhs);
+		const element & operator=(const element & rhs) throw(std::bad_alloc);
+		//! Destructor.
+		~element();
 		/**
 		 * Get the element data.
 		 * @return Pointer to the element data.
@@ -202,8 +208,9 @@ namespace sechecker
 		 * Set the output mode for the results.
 		 * @param out_mode The desired amount of output when reporting the results.
 		 * @return The output mode set.
+		 * @exception std::invalid_argument Invalid output mode requested.
 		 */
-		output_format outputMode(output_format out_mode);
+		output_format outputMode(output_format out_mode) throw(std::invalid_argument);
 
 		/**
 		 * Get the set of entries. Each entry represents the results for a single element.

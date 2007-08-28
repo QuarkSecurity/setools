@@ -42,7 +42,7 @@
 using std::invalid_argument;
 using std::vector;
 
-polsearch_query::polsearch_query(polsearch_match_e m) throw(std::invalid_argument)
+polsearch_query::polsearch_query(polsearch_match m) throw(std::invalid_argument)
 {
 	if (m != POLSEARCH_MATCH_ALL && m != POLSEARCH_MATCH_ANY)
 		throw invalid_argument("Invalid matching behavior requested.");
@@ -61,12 +61,12 @@ polsearch_query::~polsearch_query()
 	// no-op
 }
 
-polsearch_match_e polsearch_query::match() const
+polsearch_match polsearch_query::match() const
 {
 	return _match;
 }
 
-polsearch_match_e polsearch_query::match(polsearch_match_e m) throw(std::invalid_argument)
+polsearch_match polsearch_query::match(polsearch_match m) throw(std::invalid_argument)
 {
 	if (m != POLSEARCH_MATCH_ALL && m != POLSEARCH_MATCH_ANY)
 		throw invalid_argument("Invalid matching behavior requested.");
@@ -84,10 +84,33 @@ std::vector < polsearch_test_cond > polsearch_query::getValidTests()
 	return v;
 }
 
-polsearch_test & polsearch_query::addTest(polsearch_test_cond_e test_cond) throw(std::invalid_argument)
+polsearch_test & polsearch_query::addTest(polsearch_test_cond test_cond) throw(std::invalid_argument)
 {
 	_tests.push_back(polsearch_test(this, test_cond));
 	return _tests.back();
+}
+
+polsearch_test & polsearch_query::getTest(size_t i) throw(std::out_of_range)
+{
+	return _tests.at(i);	       //throws out_of_range if i is not in range
+}
+
+void polsearch_query::removeTest(polsearch_test & t) throw(std::invalid_argument)
+{
+	for (vector < polsearch_test >::iterator i = _tests.begin(); i != _tests.end(); i++)
+	{
+		if (*i == t)
+		{
+			_tests.erase(i);
+			return;
+		}
+	}
+	throw invalid_argument("Test is not part of the query");
+}
+
+size_t polsearch_query::size() const
+{
+	return _tests.size();
 }
 
 std::vector < polsearch_result > polsearch_query::run(const apol_policy_t * policy,

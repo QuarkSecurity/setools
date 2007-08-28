@@ -105,7 +105,12 @@ namespace sechecker
 		 * Get the set of loaded modules.
 		 * @return The set of loaded modules.
 		 */
-		const std::map < std::string, module > &modules() const;
+		 std::map < std::string, module * >&modules();
+		/**
+		 * Get the set of loaded modules.
+		 * @return The set of loaded modules.
+		 */
+		const std::map < std::string, module * >&modules() const;
 
 		/**
 		 * Run a list of modules. All listed modules will be run only once
@@ -210,7 +215,7 @@ namespace sechecker
 		 */
 		const module & addModule(const module & mod) throw(std::invalid_argument);
 
-		 std::map < std::string, module > _modules;	//!< The set of loaded modules.
+		 std::map < std::string, module * >_modules;	//!< The set of loaded modules.
 		 std::map < std::string, profile > _profiles;	//!< The set of known profiles.
 		 std::string _active_profile;	//!< The name of the currently active profile.
 		sefs_fclist *_fclist;  //!< The file contexts list to use when running modules.

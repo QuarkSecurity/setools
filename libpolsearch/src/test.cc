@@ -47,7 +47,7 @@ polsearch_test::polsearch_test()
 	throw std::runtime_error("Cannot directly create tests.");
 }
 
-polsearch_test::polsearch_test(polsearch_query * query, polsearch_test_cond_e test_cond) throw(std::invalid_argument)
+polsearch_test::polsearch_test(polsearch_query * query, polsearch_test_cond test_cond) throw(std::invalid_argument)
 {
 	if (!validate_test_condition(query->elementType(), test_cond))
 		throw invalid_argument("The given test condition is not valid for the given element.");
@@ -69,17 +69,17 @@ polsearch_test::~polsearch_test()
 	// no-op
 }
 
-polsearch_element_e polsearch_test::elementType() const
+polsearch_element polsearch_test::elementType() const
 {
 	return _query->elementType();
 }
 
-polsearch_test_cond_e polsearch_test::testCond() const
+polsearch_test_cond polsearch_test::testCond() const
 {
 	return _test_cond;
 }
 
-polsearch_test_cond_e polsearch_test::testCond(polsearch_test_cond_e test_cond) throw(std::invalid_argument)
+polsearch_test_cond polsearch_test::testCond(polsearch_test_cond test_cond) throw(std::invalid_argument)
 {
 	if (!validate_test_condition(_query->elementType(), test_cond))
 		throw invalid_argument("Invalid test for this element.");
@@ -87,10 +87,33 @@ polsearch_test_cond_e polsearch_test::testCond(polsearch_test_cond_e test_cond) 
 	return _test_cond = test_cond;
 }
 
-polsearch_criterion & polsearch_test::addCriterion(polsearch_op_e opr, bool neg) throw(std::invalid_argument)
+polsearch_criterion & polsearch_test::addCriterion(polsearch_op opr, bool neg) throw(std::invalid_argument)
 {
 	_criteria.push_back(polsearch_criterion(this, opr, neg));
 	return _criteria.back();
+}
+
+polsearch_criterion & polsearch_test::getCriterion(size_t i) throw(std::out_of_range)
+{
+	return _criteria.at(i);	       //throws out_of_range if i is not in range
+}
+
+void polsearch_test::removeCriterion(polsearch_criterion & c) throw(std::invalid_argument)
+{
+	for (vector < polsearch_criterion >::iterator i = _criteria.begin(); i != _criteria.end(); i++)
+	{
+		if (*i == c)
+		{
+			_criteria.erase(i);
+			return;
+		}
+	}
+	throw invalid_argument("Criterion is not part of the test");
+}
+
+size_t polsearch_test::size() const
+{
+	return _criteria.size();
 }
 
 bool polsearch_test::isContinueable()
@@ -122,12 +145,12 @@ bool polsearch_test::isContinueable()
 	}
 }
 
-std::vector < polsearch_op_e > polsearch_test::getValidOperators()
+std::vector < polsearch_op > polsearch_test::getValidOperators()
 {
-	vector < polsearch_op_e > v;
+	vector < polsearch_op > v;
 	for (int i = POLSEARCH_OP_NONE; i <= POLSEARCH_OP_AS_TYPE; i++)
-		if (validate_operator(_query->elementType(), _test_cond, static_cast < polsearch_op_e > (i)))
-			v.push_back(static_cast < polsearch_op_e > (i));
+		if (validate_operator(_query->elementType(), _test_cond, static_cast < polsearch_op > (i)))
+			v.push_back(static_cast < polsearch_op > (i));
 
 	return v;
 }
@@ -181,10 +204,10 @@ int fcentry_callback(sefs_fclist * fclist, const sefs_entry * entry, void *data)
  * @exception std::runtime_error Error attempting to build the candidate list.
  * @exception std::bad_alloc Out of memory.
  */
-static vector < const void *>get_test_candidates(const apol_policy_t * policy, const void *element, polsearch_element_e elem_type,
-						 polsearch_test_cond_e test_cond) throw(std::runtime_error, std::bad_alloc)
+static vector < const void *>get_test_candidates(const apol_policy_t * policy, const void *element, polsearch_element elem_type,
+						 polsearch_test_cond test_cond) throw(std::runtime_error, std::bad_alloc)
 {
-	polsearch_element_e candidate_type = determine_candidate_type(test_cond);
+	polsearch_element candidate_type = determine_candidate_type(test_cond);
 	vector < const void *>ret_v;
 	const qpol_policy_t *qp = apol_policy_get_qpol(policy);
 	qpol_iterator_t *iter = NULL;
@@ -483,7 +506,7 @@ const std::vector < polsearch_result > polsearch_test::run(const apol_policy_t *
 			throw runtime_error("Attempt to test invalid criteria");
 
 	vector < polsearch_result > result_v;
-	polsearch_element_e candidate_type = determine_candidate_type(_test_cond);
+	polsearch_element candidate_type = determine_candidate_type(_test_cond);
 
 	for (size_t i = 0; i < Xcandidates.size(); i++)
 	{
@@ -552,4 +575,24 @@ void polsearch_test::update()
 	{
 		i->_test = this;
 	}
+}
+
+bool polsearch_test::operator==(const polsearch_test & rhs) const
+{
+	if (_query != rhs._query)
+		return false;
+	if (_test_cond != rhs._test_cond)
+		return false;
+	for (vector < polsearch_criterion >::const_iterator i = _criteria.begin(), j = rhs._criteria.begin();
+	     i != _criteria.end() && j != rhs._criteria.end(); i++, j++)
+	{
+		if (*i != *j)
+			return false;
+	}
+	return true;
+}
+
+bool polsearch_test::operator!=(const polsearch_test & rhs) const
+{
+	return !(*this == rhs);
 }

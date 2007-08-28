@@ -30,7 +30,7 @@
 #include <apol/policy.h>
 
 #include <string>
-#include <std::except>
+#include <stdexcept>
 
 namespace sechecker
 {
@@ -73,12 +73,12 @@ namespace sechecker
 		 * Get the name of the requirement.
 		 * @return The requirement's name.
 		 */
-		const std::string & name() const;
+		const std::string name() const;
 		/**
 		 * Get a description of the requirement.
 		 * @return A description of the requirement.
 		 */
-		const std::string & description() const;
+		const std::string description() const;
 		/**
 		 * Determine if this requirement has been satisfied.
 		 * @pre check() has already been called.

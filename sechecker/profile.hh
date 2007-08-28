@@ -25,6 +25,8 @@
 #ifndef SECHECKER_PROFILE_HH
 #define SECHECKER_PROFILE_HH
 
+#include "option.hh"
+
 #include <string>
 #include <map>
 #include <vector>
@@ -61,8 +63,9 @@ namespace sechecker
 			 * should be included in the report with the given output format.
 			 * @param name_ The name of the module.
 			 * @param output The level of output for this module in the report.
+			 * @exception std::invalid_argument Empty name or invalid output mode requested.
 			 */
-			module_specification(const std::string & name_, output_format output);
+			module_specification(const std::string & name_, output_format output) throw(std::invalid_argument);
 			/**
 			 * Copy a module specification entry.
 			 * @param rhs The module specification entry to copy.
@@ -70,6 +73,12 @@ namespace sechecker
 			 module_specification(const module_specification & rhs);
 			//! Destructor.
 			~module_specification();
+
+			/**
+ 			 * Get the output format for the specified module.
+ 			 * @return The level of output for the specified module.
+ 			 */
+			output_format outputMode() const;
 
 			/**
 			 * Add an option to the module specification. This option will override
@@ -80,6 +89,11 @@ namespace sechecker
 			 */
 			void addOption(const std::string & name_,
 				       const std::vector < std::string > &vals) throw(std::invalid_argument);
+			/**
+			 * Get the set of options for the specified module.
+			 * @return The set of options for the specified module.
+			 */
+			const std::map < std::string, option > &options() const;
 
 		      private:
 			 std::string _name;	//!< The name of the module.

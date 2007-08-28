@@ -45,7 +45,7 @@ using std::string;
 using std::runtime_error;
 using std::bad_alloc;
 
-polsearch_type_query::polsearch_type_query(polsearch_match_e m) throw(std::invalid_argument):polsearch_query(m)
+polsearch_type_query::polsearch_type_query(polsearch_match m) throw(std::invalid_argument):polsearch_query(m)
 {
 	//nothing more to do
 }
@@ -95,7 +95,7 @@ std::string polsearch_type_query::toString() const
 	return "";
 }
 
-polsearch_element_e polsearch_type_query::elementType() const
+polsearch_element polsearch_type_query::elementType() const
 {
 	return POLSEARCH_ELEMENT_TYPE;
 }

@@ -57,12 +57,12 @@ class polsearch_test
 	 * Get the element type tested by the test.
 	 * @return The element type tested.
 	 */
-	polsearch_element_e elementType() const;
+	polsearch_element elementType() const;
 	/**
 	 * Get the condition tested.
 	 * @return The condition tested.
 	 */
-	polsearch_test_cond_e testCond() const;
+	polsearch_test_cond testCond() const;
 	/**
 	 * Set the condition tested.
 	 * @param test_cond The condition to set.
@@ -70,7 +70,7 @@ class polsearch_test
 	 * @exception std::invalid_argument The given condition is not valid
 	 * for the element type tested.
 	 */
-	polsearch_test_cond_e testCond(polsearch_test_cond_e test_cond) throw(std::invalid_argument);
+	polsearch_test_cond testCond(polsearch_test_cond test_cond) throw(std::invalid_argument);
 
 	/**
 	 * Add a criterion to check for the given condition.
@@ -80,7 +80,25 @@ class polsearch_test
 	 * the element tested and/or the current condition. The criterion will not
 	 * be changed if it cannot successfully be added to the test.
 	 */
-	 polsearch_criterion & addCriterion(polsearch_op_e opr, bool neg = false) throw(std::invalid_argument);
+	 polsearch_criterion & addCriterion(polsearch_op opr, bool neg = false) throw(std::invalid_argument);
+	/**
+	 * Get access to a criterion in the test.
+	 * @param i Index of the criterion to access.
+	 * @return Reference to the criterion at index \a i.
+	 * @exception std::out_of_range Index \a i is not in range.
+	 */
+	 polsearch_criterion & getCriterion(size_t i) throw(std::out_of_range);
+	/**
+	 * Remove a criterion from the test.
+	 * @param c The criterion to remove.
+	 * @exception std::invalid_argument Criterion \a c is not part of the test.
+	 */
+	void removeCriterion(polsearch_criterion & c) throw(std::invalid_argument);
+	/**
+	 * Get the number of criteria in the test.
+	 * @return The number of criteria in the test.
+	 */
+	size_t size() const;
 
 	 /**
 	  * Determine if the condition tested can have more than one criterion.
@@ -94,7 +112,7 @@ class polsearch_test
 	  * @return A vector of all valid operators for the current test condition
 	  * and the element type of the associated query.
 	  */
-	 std::vector < polsearch_op_e > getValidOperators();
+	 std::vector < polsearch_op > getValidOperators();
 
 	friend class polsearch_query;
 
@@ -128,7 +146,21 @@ class polsearch_test
 	 * @exception std::invalid_argument Test condition is not valid for
 	 * the given element type.
 	 */
-	 polsearch_test(polsearch_query * query, polsearch_test_cond_e test_cond) throw(std::invalid_argument);
+	 polsearch_test(polsearch_query * query, polsearch_test_cond test_cond) throw(std::invalid_argument);
+
+	/**
+	 * Determine if two tests are the same.
+	 * @param rhs The test to compare.
+	 * @return If the tests are identical, return \a true, otherwise return \a false.
+	 */
+	bool operator==(const polsearch_test & rhs) const;
+
+	/**
+	 * Determine if two tests are not the same.
+	 * @param rhs The test to compare.
+	 * @return If the tests are not identical, return \a true, otherwise return \a false.
+	 */
+	bool operator!=(const polsearch_test & rhs) const;
 
       private:
 
@@ -138,7 +170,7 @@ class polsearch_test
 	void update();
 
 	polsearch_query *_query;       /*!< The query with which this test is associated. */
-	polsearch_test_cond_e _test_cond;	/*!< The condition tested. */
+	polsearch_test_cond _test_cond;	/*!< The condition tested. */
 	 std::vector < polsearch_criterion > _criteria;	/*!< The criteria to check. */
 };
 

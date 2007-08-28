@@ -48,7 +48,7 @@ polsearch_result::polsearch_result()
 	throw std::runtime_error("Cannot directly create result entries.");
 }
 
-polsearch_result::polsearch_result(polsearch_element_e elem_type, const void *elem, const apol_policy_t * p, sefs_fclist * fclist)
+polsearch_result::polsearch_result(polsearch_element elem_type, const void *elem, const apol_policy_t * p, sefs_fclist * fclist)
 {
 	_element_type = elem_type;
 	_element = elem;
@@ -70,7 +70,7 @@ polsearch_result::~polsearch_result()
 	//nothing to do
 }
 
-polsearch_element_e polsearch_result::elementType() const
+polsearch_element polsearch_result::elementType() const
 {
 	return _element_type;
 }
@@ -102,7 +102,7 @@ void polsearch_result::merge(const polsearch_result & rhs) throw(std::invalid_ar
 	}
 }
 
-polsearch_proof & polsearch_result::addProof(polsearch_test_cond_e test, polsearch_element_e elem_type, void *elem,
+polsearch_proof & polsearch_result::addProof(polsearch_test_cond test, polsearch_element elem_type, void *elem,
 					     polsearch_proof_element_free_fn free_fn)
 {
 	_proof.push_back(polsearch_proof(test, elem_type, element_copy(elem_type, elem), _policy, _fclist, free_fn));

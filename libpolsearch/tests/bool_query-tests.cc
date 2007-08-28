@@ -63,7 +63,7 @@ static void create_query(void)
 	CU_ASSERT_PTR_NOT_NULL_FATAL(rxp);
 	nc.param(rxp);
 	CU_ASSERT(nt.isContinueable() == false);
-	vector < polsearch_test_cond_e > valid = bq->getValidTests();
+	vector < polsearch_test_cond > valid = bq->getValidTests();
 	CU_ASSERT(valid.size() == 2);
 	polsearch_test & st = bq->addTest(POLSEARCH_TEST_STATE);
 	CU_ASSERT(st.testCond() == POLSEARCH_TEST_STATE);

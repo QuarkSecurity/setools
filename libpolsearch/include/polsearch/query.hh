@@ -49,14 +49,14 @@ class polsearch_query
 	 * Get the matching behavior of the query.
 	 * @return The current matching behavior of the query.
 	 */
-	polsearch_match_e match() const;
+	polsearch_match match() const;
 	/**
 	 * Set the matching behavior of the query.
 	 * @param m One of POLSEARCH_MATCH_ALL or POLSEARCH_MATCH_ANY to set.
 	 * @return The behavior set.
 	 * @exception std::invalid_argument Invalid matching behavior requested.
 	 */
-	polsearch_match_e match(polsearch_match_e m) throw(std::invalid_argument);
+	polsearch_match match(polsearch_match m) throw(std::invalid_argument);
 	/**
 	 * Get a list of the valid types of tests to perform for the element
 	 * type specified by the query.
@@ -71,7 +71,25 @@ class polsearch_query
 	 * @exception std::invalid_argument Given condition is not valid for
 	 * the element type queried.
 	 */
-	 polsearch_test & addTest(polsearch_test_cond_e test_cond) throw(std::invalid_argument);
+	 polsearch_test & addTest(polsearch_test_cond test_cond) throw(std::invalid_argument);
+	/**
+	 * Get access to a test in the query.
+	 * @param i Index of the test to access.
+	 * @return Reference to the test at index \a i.
+	 * @exception std::out_of_range Index \a i not in range.
+	 */
+	 polsearch_test & getTest(size_t i) throw(std::out_of_range);
+	/**
+	 * Remove a test from the query.
+	 * @param t Test to remove.
+	 * @exception std::invalid_argument Test \a t is not part of the query.
+	 */
+	void removeTest(polsearch_test & t) throw(std::invalid_argument);
+	/**
+	 * Get the number of tests in the query.
+	 * @return The number of tests in the query.
+	 */
+	size_t size() const;
 
 	/**
 	 * Run the query.
@@ -97,7 +115,7 @@ class polsearch_query
 	 * Get the type of element queried.
 	 * @return The type of element queried.
 	 */
-	virtual polsearch_element_e elementType() const = 0;
+	virtual polsearch_element elementType() const = 0;
 
       protected:
 	/**
@@ -106,7 +124,7 @@ class polsearch_query
 	 * either POLSEARCH_MATCH_ALL or POLSEARCH_MATCH_ANY.
 	 * @exception std::invalid_argument Invalid matching behavior requested.
 	 */
-	 polsearch_query(polsearch_match_e m = POLSEARCH_MATCH_ALL) throw(std::invalid_argument);
+	 polsearch_query(polsearch_match m = POLSEARCH_MATCH_ALL) throw(std::invalid_argument);
 	/**
 	 * Base class copy constructor
 	 * @param rhs The query to copy.
@@ -133,7 +151,7 @@ class polsearch_query
 	 */
 	void update();
 
-	polsearch_match_e _match;      /*!< The matching behavior used for determining if an element matches with multiple tests. */
+	polsearch_match _match;	       /*!< The matching behavior used for determining if an element matches with multiple tests. */
 };
 
 #endif				       /* POLSEARCH_QUERY_HH */

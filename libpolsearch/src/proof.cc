@@ -44,7 +44,7 @@ polsearch_proof::polsearch_proof()
 	throw std::runtime_error("Cannot directly create proof entries.");
 }
 
-polsearch_proof::polsearch_proof(polsearch_test_cond_e test, polsearch_element_e elem_type, void *elem, const apol_policy_t * p,
+polsearch_proof::polsearch_proof(polsearch_test_cond test, polsearch_element elem_type, void *elem, const apol_policy_t * p,
 				 sefs_fclist * fclist, polsearch_proof_element_free_fn free_fn)
 {
 	_test_cond = test;
@@ -96,7 +96,7 @@ string polsearch_proof::toString() const
 	return tmp;
 }
 
-polsearch_element_e polsearch_proof::elementType() const
+polsearch_element polsearch_proof::elementType() const
 {
 	return _element_type;
 }
@@ -106,7 +106,7 @@ const void *polsearch_proof::element() const
 	return _element;
 }
 
-polsearch_test_cond_e polsearch_proof::testCond() const
+polsearch_test_cond polsearch_proof::testCond() const
 {
 	return _test_cond;
 }

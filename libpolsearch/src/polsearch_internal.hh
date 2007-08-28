@@ -43,7 +43,7 @@
  * criteria are met.
  * @exception std::invalid_argument The given test is not valid.
  */
-polsearch_element_e determine_candidate_type(polsearch_test_cond_e test_cond) throw(std::invalid_argument);
+polsearch_element determine_candidate_type(polsearch_test_cond test_cond) throw(std::invalid_argument);
 
 /**
  * Determine if a test condition is valid for a particular element type.
@@ -52,7 +52,7 @@ polsearch_element_e determine_candidate_type(polsearch_test_cond_e test_cond) th
  * @return If test condition \a test_cond is valid for \a elem_type,
  * return \a true, otherwise, return \a false.
  */
-bool validate_test_condition(polsearch_element_e elem_type, polsearch_test_cond_e cond);
+bool validate_test_condition(polsearch_element elem_type, polsearch_test_cond cond);
 
 /**
  * Determine if a comparison operator is valid for a particular test condition and
@@ -63,7 +63,7 @@ bool validate_test_condition(polsearch_element_e elem_type, polsearch_test_cond_
  * @return If operator \a opr is valid for \a cond and \a elem_type, return \a true,
  * otherwise, return \a false.
  */
-bool validate_operator(polsearch_element_e elem_type, polsearch_test_cond_e cond, polsearch_op_e opr);
+bool validate_operator(polsearch_element elem_type, polsearch_test_cond cond, polsearch_op opr);
 
 /**
  * Determine if a parameter type is valid for a particular comparison operator,
@@ -75,7 +75,7 @@ bool validate_operator(polsearch_element_e elem_type, polsearch_test_cond_e cond
  * @return If parameter type \a param_type is valid for \a cond,
  * \a elem_type, and \a opr, return \a true, otherwise, return \a false.
  */
-bool validate_parameter_type(polsearch_element_e elem_type, polsearch_test_cond_e cond, polsearch_op_e opr,
+bool validate_parameter_type(polsearch_element elem_type, polsearch_test_cond cond, polsearch_op opr,
 			     const std::type_info & param_type);
 
 /**
@@ -88,8 +88,8 @@ bool validate_parameter_type(polsearch_element_e elem_type, polsearch_test_cond_
  * @return If parameter type \a param_type is valid for \a cond,
  * \a elem_type, and \a opr, return \a true, otherwise, return \a false.
  */
-bool validate_parameter_type(polsearch_element_e elem_type, polsearch_test_cond_e cond, polsearch_op_e opr,
-			     polsearch_param_type_e param_type);
+bool validate_parameter_type(polsearch_element elem_type, polsearch_test_cond cond, polsearch_op opr,
+			     polsearch_param_type param_type);
 
 /**
  * Get the name of a policy symbol.
@@ -98,7 +98,7 @@ bool validate_parameter_type(polsearch_element_e elem_type, polsearch_test_cond_
  * @param policy The policy from which \a symbol comes.
  * @return The name of the symbol or NULL on error.
  */
-const char *symbol_get_name(const void *symbol, polsearch_element_e sym_type, const apol_policy_t * policy);
+const char *symbol_get_name(const void *symbol, polsearch_element sym_type, const apol_policy_t * policy);
 
 /**
  * Get all valid names for a policy element.
@@ -109,7 +109,7 @@ const char *symbol_get_name(const void *symbol, polsearch_element_e sym_type, co
  * empty if \a element is of a type which cannot be identified by a name.
  * @exception std::bad_alloc Out of memory.
  */
-std::vector < std::string > get_all_names(const void *element, polsearch_element_e elem_type,
+std::vector < std::string > get_all_names(const void *element, polsearch_element elem_type,
 					  const apol_policy_t * policy) throw(std::bad_alloc);
 
 /**
@@ -127,7 +127,7 @@ std::vector < std::string > mkvector(const apol_vector_t * rhs);
  * @param elem The element to copy.
  * @return A newly allocated copy of \a elem.
  */
-void *element_copy(polsearch_element_e elem_type, const void *elem) throw(std::bad_alloc);
+void *element_copy(polsearch_element elem_type, const void *elem) throw(std::bad_alloc);
 
 /**
  * Get the function to free an element for use when adding proof entries or
@@ -136,6 +136,6 @@ void *element_copy(polsearch_element_e elem_type, const void *elem) throw(std::b
  * @return Function pointer to the free function to call to free an element
  * of type \a elem_type or NULL if no function needs to be called.
  */
-polsearch_proof_element_free_fn get_element_free_fn(polsearch_element_e elem_type);
+polsearch_proof_element_free_fn get_element_free_fn(polsearch_element elem_type);
 
 #endif				       /* POLSEARCH_INTERNAL_HH */

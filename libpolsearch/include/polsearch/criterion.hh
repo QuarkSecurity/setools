@@ -58,13 +58,13 @@ class polsearch_criterion
 	 * Get the operator used.
 	 * @return The operator used.
 	 */
-	polsearch_op_e op() const;
+	polsearch_op op() const;
 	/**
 	 * Set the operator to use.
 	 * @param opr The operator to set.
 	 * @return The operator set.
 	 */
-	polsearch_op_e op(polsearch_op_e opr);
+	polsearch_op op(polsearch_op opr);
 
 	/**
 	 * Get the negated flag.
@@ -107,10 +107,10 @@ class polsearch_criterion
 	 */
 	polsearch_parameter *param(polsearch_parameter * p) throw(std::invalid_argument);
 	/**
-	 * Get a list of valid parameter types for the criterion.
-	 * @return A vector of all valid types of parameter the criterion can check.
+	 * Get the valid parameter type for the criterion.
+	 * @return The valid type of parameter the criterion can check.
 	 */
-	 std::vector < polsearch_param_type_e > getValidParamTypes() const;
+	polsearch_param_type getValidParamType() const;
 
 	/**
 	 * Get a string representing the criterion.
@@ -146,10 +146,23 @@ class polsearch_criterion
 		 * @param opr The comparison operator to use.
 		 * @param neg If \a true, invert the logic result of \a opr.
 		 */
-	 polsearch_criterion(const polsearch_test * Test, polsearch_op_e opr, bool neg = false) throw(std::invalid_argument);
+	 polsearch_criterion(const polsearch_test * Test, polsearch_op opr, bool neg = false) throw(std::invalid_argument);
+
+	/**
+	 * Determine if two criteria are the same.
+	 * @param rhs The criterion to compare.
+	 * @return If the two criteria are identical, return \a true, otherwise return \a false.
+	 */
+	bool operator==(const polsearch_criterion & rhs) const;
+	/**
+	 * Determine if two criteria are not the same.
+	 * @param rhs The criterion to compare.
+	 * @return If the two criteria are not identical, return \a true, otherwise return \a false.
+	 */
+	bool operator!=(const polsearch_criterion & rhs) const;
 
       private:
-	 polsearch_op_e _op;	       /*!< The comparison operator. */
+	 polsearch_op _op;	       /*!< The comparison operator. */
 	bool _negated;		       /*!< The negated flag. */
 	const polsearch_test *_test;   /*!< The test with which the criterion is associated. */
 	polsearch_parameter *_param;   /*!< The parameter used as the second argument or \a _op. */

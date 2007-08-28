@@ -55,13 +55,13 @@ class polsearch_result
 	 * Get the element type for this result entry.
 	 * @return The element type.
 	 */
-	polsearch_element_e elementType() const;
+	polsearch_element elementType() const;
 	/**
 	 * Get the element for this result entry.
 	 * @return The element matched. The caller is responsible for casting the
 	 * returned object to the correct type.
 	 * @see See polsearch_result::elementType() to get the type of element
-	 * and polsearch_element_e for the correct type to which to cast the
+	 * and polsearch_element for the correct type to which to cast the
 	 * returned object.
 	 */
 	const void *element() const;
@@ -88,7 +88,7 @@ class polsearch_result
 	 * @param free_fn If non-null, function to call to free all memory used by \a elem.
 	 * @return A reference to the newly added proof entry.
 	 */
-	 polsearch_proof & addProof(polsearch_test_cond_e test, polsearch_element_e elem_type, void *elem,
+	 polsearch_proof & addProof(polsearch_test_cond test, polsearch_element elem_type, void *elem,
 				    polsearch_proof_element_free_fn free_fn);
 
 	/**
@@ -115,7 +115,7 @@ class polsearch_result
 	 * @param p The policy associated with \a elem.
 	 * @param fclist The file_contexts list associated with \a elem.
 	 */
-	 polsearch_result(polsearch_element_e elem_type, const void *elem, const apol_policy_t * p, sefs_fclist * fclist = NULL);
+	 polsearch_result(polsearch_element elem_type, const void *elem, const apol_policy_t * p, sefs_fclist * fclist = NULL);
 
 	/**
 	 * Add a copy of a proof entry to this result.
@@ -125,7 +125,7 @@ class polsearch_result
 	 polsearch_proof & addProof(const polsearch_proof & proof_entry);
 
       private:
-	 polsearch_element_e _element_type;	/*!< The type of element. */
+	 polsearch_element _element_type;	/*!< The type of element. */
 	const void *_element;	       /*!< The element matched. This object is not owned by the result. */
 	 std::vector < polsearch_proof > _proof;	/*!< List of proof that \a _element matched the query. */
 	const apol_policy_t *_policy;  /*!< The policy associated with \a _element. */

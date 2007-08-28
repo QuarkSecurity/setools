@@ -52,7 +52,7 @@ polsearch_criterion::polsearch_criterion()
 	throw std::runtime_error("Cannot directly create criteria.");
 }
 
-polsearch_criterion::polsearch_criterion(const polsearch_test * Test, polsearch_op_e opr, bool neg) throw(std::invalid_argument)
+polsearch_criterion::polsearch_criterion(const polsearch_test * Test, polsearch_op opr, bool neg) throw(std::invalid_argument)
 {
 	if (!validate_operator(Test->elementType(), Test->testCond(), opr))
 		throw invalid_argument("Invalid operator for the given test.");
@@ -79,12 +79,12 @@ polsearch_criterion::~polsearch_criterion()
 	delete _param;
 }
 
-polsearch_op_e polsearch_criterion::op() const
+polsearch_op polsearch_criterion::op() const
 {
 	return _op;
 }
 
-polsearch_op_e polsearch_criterion::op(polsearch_op_e opr)
+polsearch_op polsearch_criterion::op(polsearch_op opr)
 {
 	return _op = opr;
 }
@@ -123,16 +123,14 @@ polsearch_parameter *polsearch_criterion::param(polsearch_parameter * p) throw(s
 	return _param = p;
 }
 
-std::vector < polsearch_param_type_e > polsearch_criterion::getValidParamTypes() const
+polsearch_param_type polsearch_criterion::getValidParamType() const
 {
-	vector < polsearch_param_type_e > valid;
 	for (int i = POLSEARCH_PARAM_TYPE_REGEX; i <= POLSEARCH_PARAM_TYPE_RANGE; i++)
 	{
-		if (validate_parameter_type
-		    (_test->elementType(), _test->testCond(), _op, static_cast < polsearch_param_type_e > (i)))
-			valid.push_back(static_cast < polsearch_param_type_e > (i));
+		if (validate_parameter_type(_test->elementType(), _test->testCond(), _op, static_cast < polsearch_param_type > (i)))
+			return static_cast < polsearch_param_type > (i);
 	}
-	return valid;
+	return POLSEARCH_PARAM_TYPE_NONE;
 }
 
 std::string polsearch_criterion::toString() const
@@ -230,8 +228,8 @@ static vector < string > expand_semantic_type(const apol_policy_t * policy, cons
  * @exception std::runtime_error Conflicting candidate type and operator.
  * @exception std::bad_alloc Out of memory.
  */
-enum match_type determine_match_type(const apol_policy_t * policy, const void *candidate, polsearch_element_e candidate_type,
-				     polsearch_op_e opr, union match_input &input) throw(std::runtime_error, std::bad_alloc)
+enum match_type determine_match_type(const apol_policy_t * policy, const void *candidate, polsearch_element candidate_type,
+				     polsearch_op opr, union match_input &input) throw(std::runtime_error, std::bad_alloc)
 {
 	qpol_policy_t *qp = apol_policy_get_qpol(policy);
 	qpol_iterator_t *iter = NULL;
@@ -661,7 +659,7 @@ void polsearch_criterion::check(const apol_policy_t * policy, std::vector < cons
 	if (!_test)
 		throw runtime_error("Cannot check criteria until associated with a test.");
 
-	polsearch_element_e candidate_type = determine_candidate_type(_test->testCond());
+	polsearch_element candidate_type = determine_candidate_type(_test->testCond());
 	for (size_t i = 0; i < test_candidates.size(); i++)
 	{
 		bool match = false;
@@ -745,4 +743,22 @@ void polsearch_criterion::check(const apol_policy_t * policy, std::vector < cons
 			i--;
 		}
 	}
+}
+
+bool polsearch_criterion::operator==(const polsearch_criterion & rhs) const
+{
+	if (_op != rhs._op)
+		return false;
+	if (_negated != rhs._negated)
+		return false;
+	if (_test != rhs._test)
+		return false;
+	if (_param->paramType() != rhs._param->paramType() || _param->toString() != rhs._param->toString())
+		return false;
+	return true;
+}
+
+bool polsearch_criterion::operator!=(const polsearch_criterion & rhs) const
+{
+	return !(*this == rhs);
 }

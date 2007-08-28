@@ -99,8 +99,7 @@ import com.tresys.setools.sefs.*;
 
 %javaconst(1);
 
-%template(opVector) std::vector<polsearch_op_e>;
-%template(paramTypeVector) std::vector<polsearch_param_type_e>;
+%template(opVector) std::vector<polsearch_op>;
 %template(testCondVector) std::vector<polsearch_test_cond>;
 
 #else
@@ -119,8 +118,7 @@ typedef uint32_t size_t;
 
 #ifdef SWIGPYTHON
 
-%template(opVector) std::vector<polsearch_op_e>;
-%template(paramTypeVector) std::vector<polsearch_param_type_e>;
+%template(opVector) std::vector<polsearch_op>;
 %template(testCondVector) std::vector<polsearch_test_cond>;
 
 #endif  // end of Python specific code
@@ -171,8 +169,7 @@ SWIGEXPORT int Tpolsearch_Init(Tcl_Interp *interp) {
 }
 %enddef
 
-enum_vector(polsearch_op_e);
-enum_vector(polsearch_param)
+enum_vector(polsearch_op);
 enum_vector(polsearch_test_cond);
 
 #endif  // end of Tcl specific code
@@ -182,6 +179,9 @@ enum_vector(polsearch_test_cond);
 //Java can't handle const and non-const versions of same function
 %ignore polsearch_criterion::param()const;
 %ignore *::clone() const;
+%ignore *::operator==;
+%ignore *::operator!=;
+%ignore *::operator=;
 
 #define __attribute__(x)
 
@@ -193,7 +193,7 @@ namespace std {
 	%template(resultVector) vector<polsearch_result>;
 	%template(proofVector) vector<polsearch_proof>;
 	%template(stringVector) vector<string>;
-        %template(intVector) vector<int>;
+	%template(intVector) vector<int>;
 }
 
 #define SWIG_FRIENDS

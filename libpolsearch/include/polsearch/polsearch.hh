@@ -27,15 +27,15 @@
 #define POLSEARCH_HH
 
 /** Value to indicate the overall matching behavior of the query */
-typedef enum polsearch_match
+enum polsearch_match
 {
 	POLSEARCH_MATCH_ERROR = -1,    /*!< Error condition. */
 	POLSEARCH_MATCH_ALL = 0,       /*!< Returned symbols must match all tests. */
 	POLSEARCH_MATCH_ANY	       /*!< Returned symbols must match at least one test. */
-} polsearch_match_e;
+};
 
 /** Values to indicate the type of policy element. This is a superset of polsearch_symbol_e */
-typedef enum polsearch_element
+enum polsearch_element
 {
 	POLSEARCH_ELEMENT_NONE = 0,    /*!< only used for error conditions */
 	POLSEARCH_ELEMENT_TYPE,	       /*!< qpol_type_t */
@@ -58,10 +58,10 @@ typedef enum polsearch_element
 	POLSEARCH_ELEMENT_MLS_RANGE,   /*!< apol_mls_range_t */
 	POLSEARCH_ELEMENT_PERMISSION,  /*!< char * */
 	POLSEARCH_ELEMENT_BOOL_STATE   /*!< bool */
-} polsearch_element_e;
+};
 
 /** Value to indicate the test condition */
-typedef enum polsearch_test_cond
+enum polsearch_test_cond
 {
 	POLSEARCH_TEST_NONE = 0,       /*!< only used for error conditions */
 	POLSEARCH_TEST_NAME,	       /*!< primary name of the symbol */
@@ -82,10 +82,10 @@ typedef enum polsearch_test_cond
 	POLSEARCH_TEST_PERMISSIONS,    /*!< assigned permissions */
 	POLSEARCH_TEST_CATEGORIES,     /*!< assigned categories */
 	POLSEARCH_TEST_STATE	       /*!< boolean default state */
-} polsearch_test_cond_e;
+};
 
 /** Value to indicate the comparison operator for a parameter */
-typedef enum polsearch_op
+enum polsearch_op
 {
 	POLSEARCH_OP_NONE = 0,	       /*!< only used for error conditions */
 	POLSEARCH_OP_IS,	       /*!< symbol (or state) is */
@@ -110,10 +110,10 @@ typedef enum polsearch_op
 	POLSEARCH_OP_AS_USER,	       /*!< has as user */
 	POLSEARCH_OP_AS_ROLE,	       /*!< has as role */
 	POLSEARCH_OP_AS_TYPE	       /*!< has as type */
-} polsearch_op_e;
+};
 
 /** Value to indicate the type of the parameter value of a criterion */
-typedef enum polsearch_param_type
+enum polsearch_param_type
 {
 	POLSEARCH_PARAM_TYPE_NONE = 0, /*!< only used for error conditions */
 	POLSEARCH_PARAM_TYPE_REGEX,    /*!< parameter is a string (std::string) representing a regular expression */
@@ -122,7 +122,7 @@ typedef enum polsearch_param_type
 	POLSEARCH_PARAM_TYPE_BOOL,     /*!< parameter is a boolean value (bool) */
 	POLSEARCH_PARAM_TYPE_LEVEL,    /*!< parameter is an apol_mls_level_t * */
 	POLSEARCH_PARAM_TYPE_RANGE     /*!< parameter is an apol_mls_range_t * */
-} polsearch_param_type_e;
+};
 
 /**
  * Free callback for proof elements.

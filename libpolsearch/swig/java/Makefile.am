@@ -12,8 +12,8 @@ wrappedjardir = $(libdir)/setools
 dist_noinst_DATA = $(srcdir)/../polsearch.i
 BUILT_SOURCES = polsearch_wrap.cc \
 	criterionVector.java \
+	intVector.java \
 	opVector.java \
-	paramTypeVector.java \
 	polsearch_attribute_query.java \
 	polsearch_bool_parameter.java \
 	polsearch_bool_query.java \
@@ -21,14 +21,14 @@ BUILT_SOURCES = polsearch_wrap.cc \
 	polsearch_class_query.java \
 	polsearch_common_query.java \
 	polsearch_criterion.java \
-	polsearch_element_e.java \
+	polsearch_element.java \
 	polsearch_level_parameter.java \
 	polsearch_level_query.java \
-	polsearch_match_e.java \
+	polsearch_match.java \
 	polsearch_number_parameter.java \
-	polsearch_op_e.java \
+	polsearch_op.java \
 	polsearch_parameter.java \
-	polsearch_param_type_e.java \
+	polsearch_param_type.java \
 	polsearch_proof.java \
 	polsearch_query.java \
 	polsearch_range_parameter.java \
@@ -36,7 +36,7 @@ BUILT_SOURCES = polsearch_wrap.cc \
 	polsearch_role_query.java \
 	polsearch_string_expression_parameter.java \
 	polsearch_result.java \
-	polsearch_test_cond_e.java \
+	polsearch_test_cond.java \
 	polsearch_test.java \
 	polsearch_type_query.java \
 	polsearch_user_query.java \

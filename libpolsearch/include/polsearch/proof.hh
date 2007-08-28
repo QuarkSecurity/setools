@@ -64,7 +64,7 @@ class polsearch_proof
 	 * Get the type of element stored in the proof.
 	 * @return The type of element stored in the proof.
 	 */
-	polsearch_element_e elementType() const;
+	polsearch_element elementType() const;
 	/**
 	 * Get the element stored in the proof.
 	 * @return The element stored in the proof.
@@ -74,7 +74,7 @@ class polsearch_proof
 	 * Get the test condition the element statisfied.
 	 * @return The test condition.
 	 */
-	polsearch_test_cond_e testCond() const;
+	polsearch_test_cond testCond() const;
 	/**
 	 * Assignment operator defined so that memory ownership of \a _element
 	 * is properly handled in all cases.
@@ -83,7 +83,7 @@ class polsearch_proof
 	 */
 	 polsearch_proof & operator=(const polsearch_proof & rhs);
 
-	friend polsearch_proof & polsearch_result::addProof(polsearch_test_cond_e test, polsearch_element_e elem_type, void *elem,
+	friend polsearch_proof & polsearch_result::addProof(polsearch_test_cond test, polsearch_element elem_type, void *elem,
 							    polsearch_proof_element_free_fn free_fn);
 	friend int fcentry_callback(sefs_fclist * fclist, const sefs_entry * entry, void *data);
 
@@ -103,12 +103,12 @@ class polsearch_proof
 	 * @param free_fn Callback to be envoked if \a elem should be freed.
 	 * If NULL, do not free \a elem when this proof is destroyed.
 	 */
-	 polsearch_proof(polsearch_test_cond_e test, polsearch_element_e elem_type, void *elem, const apol_policy_t * p,
+	 polsearch_proof(polsearch_test_cond test, polsearch_element elem_type, void *elem, const apol_policy_t * p,
 			 sefs_fclist * fclist, polsearch_proof_element_free_fn free_fn = NULL);
 
       private:
-	 polsearch_test_cond_e _test_cond;	/*!< Test condition matched by the element */
-	polsearch_element_e _element_type;	/*!< The type of element to display as proof (may not be same type as tested element). */
+	 polsearch_test_cond _test_cond;	/*!< Test condition matched by the element */
+	polsearch_element _element_type;	/*!< The type of element to display as proof (may not be same type as tested element). */
 	void *_element;		       /*!< The element to display as proof. */
 	const apol_policy_t *_policy;  /*!< The policy associated with \a _element. */
 	sefs_fclist_t *_fclist;	       /*!< The fclist associated with \a _element. */
