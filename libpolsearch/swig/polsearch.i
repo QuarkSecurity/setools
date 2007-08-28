@@ -62,6 +62,13 @@
 %import apol.i
 %import sefs.i
 
+%nodefaultctor;
+%include std_string.i
+%include std_vector.i
+%naturalvar std::string;
+
+/******************** Java specializations ********************/
+
 #ifdef SWIGJAVA
 
 /* handle size_t correctly in java as architecture independent */
@@ -92,6 +99,10 @@ import com.tresys.setools.sefs.*;
 
 %javaconst(1);
 
+%template(opVector) std::vector<polsearch_op_e>;
+%template(paramTypeVector) std::vector<polsearch_param_type_e>;
+%template(testCondVector) std::vector<polsearch_test_cond>;
+
 #else
 /* not in java so handle size_t as architecture dependent */
 #ifdef SWIGWORDSIZE64
@@ -101,6 +112,22 @@ typedef uint32_t size_t;
 #endif
 
 #endif  // end of Java specific code
+
+
+/******************** Python specializations ********************/
+
+
+#ifdef SWIGPYTHON
+
+%template(opVector) std::vector<polsearch_op_e>;
+%template(paramTypeVector) std::vector<polsearch_param_type_e>;
+%template(testCondVector) std::vector<polsearch_test_cond>;
+
+#endif  // end of Python specific code
+
+
+/******************** Tcl specializations ********************/
+
 
 #ifdef SWIGTCL
 
@@ -135,13 +162,21 @@ SWIGEXPORT int Tpolsearch_Init(Tcl_Interp *interp) {
 	Tcl_SetObjResult(interp, Tcl_NewLongObj((long) $1));
 }
 
+%define enum_vector(T)
+%typemap(out) std::vector<T> {
+	for (unsigned int i=0; i<$1.size(); i++) {
+               Tcl_ListObjAppendElement(interp, $result, \
+                                         Tcl_NewIntObj((($1_type &)$1)[i]));
+	}
+}
+%enddef
+
+enum_vector(polsearch_op_e);
+enum_vector(polsearch_param)
+enum_vector(polsearch_test_cond);
+
 #endif  // end of Tcl specific code
 
-
-%nodefaultctor;
-%include std_string.i
-%include std_vector.i
-%naturalvar std::string;
 
 %ignore fcentry_callback;
 //Java can't handle const and non-const versions of same function
@@ -149,6 +184,17 @@ SWIGEXPORT int Tpolsearch_Init(Tcl_Interp *interp) {
 %ignore *::clone() const;
 
 #define __attribute__(x)
+
+
+//tell SWIG which types of vectors the target language will be used
+namespace std {
+	%template(testVector) vector<polsearch_test>;
+	%template(criterionVector) vector<polsearch_criterion>;
+	%template(resultVector) vector<polsearch_result>;
+	%template(proofVector) vector<polsearch_proof>;
+	%template(stringVector) vector<string>;
+        %template(intVector) vector<int>;
+}
 
 #define SWIG_FRIENDS
 
@@ -177,14 +223,4 @@ const char *libpolsearch_get_version (void);
 %include <polsearch/result.hh>
 %include <polsearch/proof.hh>
 
-//tell SWIG which types of vectors the target language will need
-namespace std {
-	%template(testVector) vector<polsearch_test>;
-	%template(criterionVector) vector<polsearch_criterion>;
-	%template(resultVector) vector<polsearch_result>;
-	%template(proofVector) vector<polsearch_proof>;
-	%template(testCondVector) vector<polsearch_test_cond_e>;
-	%template(opVector) vector<polsearch_op_e>;
-	%template(paramTypeVector) vector<polsearch_param_type_e>;
-	%template(stringVector) vector<string>;
-}
+//template std::vector<polsearch_test_cond>;

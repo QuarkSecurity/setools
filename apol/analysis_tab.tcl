@@ -17,6 +17,7 @@ namespace eval Apol_Analysis {
     variable vals
     variable widgets
     variable tabs
+    set vals(modules) {}
 }
 
 proc Apol_Analysis::create {tab_name nb} {
@@ -144,8 +145,9 @@ proc Apol_Analysis::load_query_options {file_channel} {
 
 proc Apol_Analysis::registerAnalysis {mod_proc mod_name} {
     variable vals
-    lappend vals(modules) $mod_proc
-    lappend vals(module_names) $mod_name
+    set vals(module_names) [lsort [lappend vals(module_names) $mod_name]]
+    set i [lsearch $vals(module_names) $mod_name]
+    set vals(modules) [linsert $vals(modules) $i $mod_proc]
     set vals($mod_proc:name) $mod_name
 }
 

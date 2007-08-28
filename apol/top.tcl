@@ -910,6 +910,10 @@ proc print_version_info {} {
     puts "apol [tcl_config_get_version]\n$::COPYRIGHT_INFO"
 }
 
+proc print_init {s} {
+    puts -nonewline $s
+}
+
 if {[catch {tcl_config_init_libraries}]} {
     puts stderr "The SETools libraries could not be found in one of these subdirectories:\n$auto_path"
     exit -1

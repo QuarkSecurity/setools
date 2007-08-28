@@ -62,7 +62,7 @@ class polsearch_query
 	 * type specified by the query.
 	 * @return A vector containing all valid tests for the specified element type.
 	 */
-	 std::vector < polsearch_test_cond_e > getValidTests();
+	 std::vector < polsearch_test_cond > getValidTests();
 
 	/**
 	 * Add a test to the query.

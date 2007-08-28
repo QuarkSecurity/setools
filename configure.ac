@@ -295,7 +295,7 @@ if test ${build_apol} = "yes"; then
 fi
 
 if test "x${enable_debug}" = xyes; then
-   TCL_AUTOPATH='$(top_builddir)/libqpol/swig/tcl $(top_builddir)/libapol/swig/tcl $(top_builddir)/libsefs/swig/tcl $(top_builddir)/apol'
+   TCL_AUTOPATH='$(top_builddir)/libqpol/swig/tcl $(top_builddir)/libapol/swig/tcl $(top_builddir)/libsefs/swig/tcl $(top_builddir)/libpolsearch/swig/tcl $(top_builddir)/apol'
 else
    TCL_AUTOPATH='$(libdir)/setools'
 fi

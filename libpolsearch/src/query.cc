@@ -74,12 +74,12 @@ polsearch_match_e polsearch_query::match(polsearch_match_e m) throw(std::invalid
 	return _match = m;
 }
 
-std::vector < polsearch_test_cond_e > polsearch_query::getValidTests()
+std::vector < polsearch_test_cond > polsearch_query::getValidTests()
 {
-	vector < polsearch_test_cond_e > v;
+	vector < polsearch_test_cond > v;
 	for (int i = POLSEARCH_TEST_NONE; i <= POLSEARCH_TEST_STATE; i++)
-		if (validate_test_condition(elementType(), static_cast < polsearch_test_cond_e > (i)))
-			v.push_back(static_cast < polsearch_test_cond_e > (i));
+		if (validate_test_condition(elementType(), static_cast < polsearch_test_cond > (i)))
+			v.push_back(static_cast < polsearch_test_cond > (i));
 
 	return v;
 }
