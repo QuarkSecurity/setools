@@ -93,9 +93,9 @@ polsearch_criterion & polsearch_test::addCriterion(polsearch_op opr, bool neg) t
 	return _criteria.back();
 }
 
-bool polsearch_test::isContinueable()
+bool polsearch_is_test_continueable(polsearch_test_cond cond)
 {
-	switch (_test_cond)
+	switch (cond)
 	{
 	case POLSEARCH_TEST_AVRULE:   /*!< there is an av rule */
 	case POLSEARCH_TEST_TERULE:   /*!< there is a type rule */

@@ -82,13 +82,6 @@ class polsearch_test
 	 */
 	 polsearch_criterion & addCriterion(polsearch_op opr, bool neg = false) throw(std::invalid_argument);
 
-	 /**
-	  * Determine if the condition tested can have more than one criterion.
-	  * @return If multiple criteria are valid, return \a true; otherwise
-	  * return \a false.
-	  */
-	bool isContinueable();
-
 	friend class polsearch_query;
 
 	/**
@@ -157,5 +150,13 @@ class polsearch_test
  * and the element type.
  */
 std::vector < polsearch_op > polsearch_get_valid_operators(polsearch_element elem_type, polsearch_test_cond cond);
+
+/**
+ * Determine if the condition tested can have more than one criterion.
+ * @param cond The condition tested.
+ * @return If multiple criteria are valid, return \a true; otherwise
+ * return \a false.
+ */
+bool polsearch_is_test_continueable(polsearch_test_cond cond);
 
 #endif				       /* POLSEARCH_TEST_HH */
