@@ -63,6 +63,7 @@
 %import sefs.i
 
 %nodefaultctor;
+
 %include std_string.i
 %include std_vector.i
 %naturalvar std::string;
@@ -143,6 +144,22 @@ static char *tcl_get_error(void)
 }
 #undef SWIG_exception
 #define SWIG_exception(code, msg) {tcl_throw_error(msg); goto fail;}
+
+/*
+#undef SWIG_Tcl_SetErrorObj
+SWIGINTERN void
+SWIG_Tcl_SetErrorObj(Tcl_Interp *interp, const char *ctype, Tcl_Obj *obj)
+{
+  Tcl_ResetResult(interp);
+  void *v;
+  swig_type_info ty;
+  SWIG_ConvertPtr(obj, &v, &ty, 0);
+  std::exeception *e = dynamic_cast<std::exception *>(v);
+  std::cout << "exception: " << e->what() << std::endl;
+  Tcl_SetObjResult(interp, obj);
+  Tcl_SetErrorCode(interp, "SWIG", ctype, NULL);
+}
+*/
 %}
 
 %wrapper %{
@@ -175,6 +192,8 @@ enum_vector(polsearch_test_cond);
 #endif  // end of Tcl specific code
 
 
+/******************** rest of SWIG stuff ********************/
+
 %ignore fcentry_callback;
 //Java can't handle const and non-const versions of same function
 %ignore polsearch_criterion::param()const;
@@ -184,7 +203,6 @@ enum_vector(polsearch_test_cond);
 %ignore *::operator=;
 
 #define __attribute__(x)
-
 
 //tell SWIG which types of vectors the target language will be used
 namespace std {

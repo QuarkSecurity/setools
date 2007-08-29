@@ -756,7 +756,12 @@ bool polsearch_criterion::operator==(const polsearch_criterion & rhs) const
 		return false;
 	if (_test != rhs._test)
 		return false;
-	if (_param->paramType() != rhs._param->paramType() || _param->toString() != rhs._param->toString())
+	if (_param && !rhs._param)
+		return false;
+	if (!_param && rhs._param)
+		return false;
+	if ((_param && rhs._param) &&
+	    (_param->paramType() != rhs._param->paramType() || _param->toString() != rhs._param->toString()))
 		return false;
 	return true;
 }

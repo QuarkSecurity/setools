@@ -397,7 +397,7 @@ bool validate_parameter_type(polsearch_element elem_type, polsearch_test_cond co
 	{
 		if (cond == POLSEARCH_TEST_STATE && param_type == POLSEARCH_PARAM_TYPE_BOOL)
 			return true;
-		else if (param_type == POLSEARCH_PARAM_TYPE_STR_EXPR)
+		else if (cond != POLSEARCH_TEST_STATE && param_type == POLSEARCH_PARAM_TYPE_STR_EXPR)
 			return true;
 		break;
 	}
@@ -410,7 +410,7 @@ bool validate_parameter_type(polsearch_element elem_type, polsearch_test_cond co
 	case POLSEARCH_OP_RULE_TYPE:
 	{
 		if ((param_type == POLSEARCH_PARAM_TYPE_AVRULE_TYPE && cond == POLSEARCH_TEST_AVRULE) ||
-					(param_type == POLSEARCH_PARAM_TYPE_TERULE_TYPE && cond == POLSEARCH_TEST_TERULE))
+		    (param_type == POLSEARCH_PARAM_TYPE_TERULE_TYPE && cond == POLSEARCH_TEST_TERULE))
 			return true;
 		break;
 	}

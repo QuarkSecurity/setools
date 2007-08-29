@@ -500,10 +500,13 @@ const std::vector < polsearch_result > polsearch_test::run(const apol_policy_t *
 	if (_criteria.empty())
 		throw runtime_error("No criteria to test.");
 
-	for (size_t i = 0; i < _criteria.size(); i++)
+	for (size_t i = 0; i < _criteria.size(); i++) {
+		if (_criteria[i].param() == NULL)
+			throw runtime_error("Attempt to test invalid criteria");
 		if (!validate_parameter_type
 		    (_query->elementType(), _test_cond, _criteria[i].op(), _criteria[i].param()->paramType()))
 			throw runtime_error("Attempt to test invalid criteria");
+	}
 
 	vector < polsearch_result > result_v;
 	polsearch_element candidate_type = determine_candidate_type(_test_cond);

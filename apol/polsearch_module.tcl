@@ -19,19 +19,6 @@ namespace eval Apol_Analysis_polsearch {
     variable vals
     variable widgets
     Apol_Analysis::registerAnalysis "Apol_Analysis_polsearch" "Symbol Search"
-    variable queries
-    array set queries {
-        polsearch_attribute_query "Attributes"
-        polsearch_bool_query "Booleans"
-        polsearch_cat_query "Categories"
-        polsearch_class_query "Classes"
-        polsearch_common_query "Common Classes"
-        polsearch_level_query "Levels"
-        polsearch_role_query "Roles"
-        polsearch_type_query "Types"
-        polsearch_user_query "Users"
-    }
-    variable matches
 }
 
 proc Apol_Analysis_polsearch::create {options_frame} {
@@ -70,7 +57,7 @@ proc Apol_Analysis_polsearch::create {options_frame} {
     set sw [ScrolledWindow $options_frame.sw -auto horizontal]
     set widgets(rules) [ScrollableFrame $sw.rules -areaheight 0 -areawidth 0 \
                             -constrainedheight 0 -constrainedwidth 0 \
-                            -bg [Apol_Prefs::getPref active_bg]]
+                            -height 100 -bg [Apol_Prefs::getPref active_bg]]
     $sw setwidget $widgets(rules)
     pack $sw -expand 1 -fill both -padx 4 -pady 4
 
@@ -99,11 +86,11 @@ proc Apol_Analysis_polsearch::newAnalysis {} {
     if {[set rt [_checkParams]] != {}} {
         return $rt
     }
-    set results [_analyze]
+    if {[catch {_analyze} results]} {
+        return $results
+    }
     set f [_createResultsDisplay]
     _renderResults $f $results
-    $results -acquire
-    $results -delete
     return {}
 }
 
@@ -112,11 +99,11 @@ proc Apol_Analysis_polsearch::updateAnalysis {f} {
     if {[set rt [_checkParams]] != {}} {
         return $rt
     }
-    set results [_analyze]
+    if {[catch {_analyze} results]} {
+        return $results
+    }
     _clearResultsDisplay $f
     _renderResults $f $results
-    $results -acquire
-    $results -delete
     return {}
 }
 
@@ -136,10 +123,10 @@ proc Apol_Analysis_polsearch::saveQuery {channel} {
     variable widgets
     foreach {key value} [array get vals] {
         switch -glob $key -- {
-            current_query -
             match_label -
             prev_query -
             query_label -
+            query_obj -
             t:*:* {
                 # do nothing
             }
@@ -179,6 +166,19 @@ proc Apol_Analysis_polsearch::getTextWidget {tab} {
 #################### private functions below ####################
 
 proc Apol_Analysis_polsearch::_staticInitializeVals {} {
+    variable queries
+    array set queries {
+        polsearch_attribute_query "Attributes"
+        polsearch_bool_query "Booleans"
+        polsearch_cat_query "Categories"
+        polsearch_class_query "Classes"
+        polsearch_common_query "Common Classes"
+        polsearch_level_query "Levels"
+        polsearch_role_query "Roles"
+        polsearch_type_query "Types"
+        polsearch_user_query "Users"
+    }
+
     variable matches
     array set matches [list \
                            $::POLSEARCH_MATCH_ALL "All Rules" \
@@ -230,26 +230,72 @@ proc Apol_Analysis_polsearch::_staticInitializeVals {} {
                        $::POLSEARCH_OP_AS_ROLE "with role" \
                        $::POLSEARCH_OP_AS_TYPE "with type"]
 
+    variable neg_ops
+    array set neg_ops [list \
+                       $::POLSEARCH_OP_IS "is/are not" \
+                       $::POLSEARCH_OP_MATCH_REGEX "does not match regular expression" \
+                       $::POLSEARCH_OP_RULE_TYPE "without rule type" \
+                       $::POLSEARCH_OP_INCLUDE "does not include" \
+                       $::POLSEARCH_OP_AS_SOURCE "without source" \
+                       $::POLSEARCH_OP_AS_TARGET "without target" \
+                       $::POLSEARCH_OP_AS_CLASS "without class" \
+                       $::POLSEARCH_OP_AS_PERM "without permission" \
+                       $::POLSEARCH_OP_AS_DEFAULT "without default" \
+                       $::POLSEARCH_OP_AS_SRC_TGT "without source nor target" \
+                       $::POLSEARCH_OP_AS_SRC_TGT_DFLT "without source, target, nor default" \
+                       $::POLSEARCH_OP_AS_SRC_DFLT "without source nor default" \
+                       $::POLSEARCH_OP_IN_COND "not in a conditional with boolean" \
+                       $::POLSEARCH_OP_AS_LEVEL_EXACT "without level" \
+                       $::POLSEARCH_OP_AS_LEVEL_DOM "with a level not dominating" \
+                       $::POLSEARCH_OP_AS_LEVEL_DOMBY "with a level not dominated by" \
+                       $::POLSEARCH_OP_AS_RANGE_EXACT "without range" \
+                       $::POLSEARCH_OP_AS_RANGE_SUPER "with range not within" \
+                       $::POLSEARCH_OP_AS_RANGE_SUB "with range not containing" \
+                       $::POLSEARCH_OP_AS_USER "without user" \
+                       $::POLSEARCH_OP_AS_ROLE "without role" \
+                       $::POLSEARCH_OP_AS_TYPE "without type"]
+
     variable param_types
     array set param_types [list \
                                $::POLSEARCH_PARAM_TYPE_REGEX _param_expression \
                                $::POLSEARCH_PARAM_TYPE_STR_EXPR _param_str_expr \
-                               $::POLSEARCH_PARAM_TYPE_RULE_TYPE _param_rule_type \
+                               $::POLSEARCH_PARAM_TYPE_AVRULE_TYPE _param_avrule_type \
+                               $::POLSEARCH_PARAM_TYPE_TERULE_TYPE _param_terule_type \
                                $::POLSEARCH_PARAM_TYPE_BOOL _param_bool \
                                $::POLSEARCH_PARAM_TYPE_LEVEL _param_level \
                                $::POLSEARCH_PARAM_TYPE_RANGE _param_range]
+
+    variable elements
+    array set elements [list \
+                            $::POLSEARCH_ELEMENT_TYPE qpol_type_from_void \
+                            $::POLSEARCH_ELEMENT_ATTRIBUTE qpol_type_from_void \
+                            $::POLSEARCH_ELEMENT_ROLE qpol_role_from_void \
+                            $::POLSEARCH_ELEMENT_USER qpol_user_from_void \
+                            $::POLSEARCH_ELEMENT_CLASS qpol_class_from_void \
+                            $::POLSEARCH_ELEMENT_COMMON qpol_common_from_void \
+                            $::POLSEARCH_ELEMENT_CATEGORY qpol_category_from_void \
+                            $::POLSEARCH_ELEMENT_LEVEL qpol_level_from_void \
+                            $::POLSEARCH_ELEMENT_BOOL qpol_bool_from_void]
+
+    variable avrules [list $::QPOL_RULE_ALLOW allow \
+                          $::QPOL_RULE_AUDITALLOW auditallow \
+                          $::QPOL_RULE_DONTAUDIT dontaudit \
+                          $::QPOL_RULE_NEVERALLOW neverallow]
+    variable terules [list $::QPOL_RULE_TYPE_TRANS type_trans \
+                          $::QPOL_RULE_TYPE_MEMBER type_member \
+                          $::QPOL_RULE_TYPE_CHANGE type_change]
 }
 
 proc Apol_Analysis_polsearch::_reinitializeVals {} {
     variable vals
     array unset vals t:*
     array set vals {
-        current_query {}
         query {}
         query_label {}
+        query_obj {}
         prev_query {}
     }
-    # vals(current_query) is a pointer to a libpolsearch object for
+    # $vals(query_obj) is a pointer to a libpolsearch object for
     # the query that is being constructed
 
     set vals(match) $::POLSEARCH_MATCH_ALL
@@ -272,15 +318,22 @@ proc Apol_Analysis_polsearch::_toggleQuery {state} {
 
     set vals(prev_query) $vals(query)
 
-    set vals(current_query) [new_$vals(query)]
-    $vals(current_query) -acquire
     foreach w [winfo children [$widgets(rules) getframe]] {
         destroy $w
     }
-
+    array unset vals t:*
     set widgets(next_test) 0
+
+    if {$vals(query) != {}} {
+        set vals(query_obj) [new_$vals(query)]
+        $vals(query_obj) -acquire
+    } else {
+        set vals(query_obj) {}
+    }
+
     if {$state == "init"} {
-        # FIX ME: create all rules widgets for the given query
+        # FIX ME: create all rules widgets for the given query, based
+        # upon info from file
     } else {
         _add
     }
@@ -318,70 +371,309 @@ proc Apol_Analysis_polsearch::_add {} {
                      -textvariable Apol_Analysis_polsearch::vals(t:$x:test_label)]
     set test_menu [menu $test_mb.m -type normal -tearoff 0]
     $test_mb configure -menu $test_menu
-    set op_mb [menubutton $f.op -bd 2 -relief raised -indicatoron 1 -width 24 \
-                   -textvariable Apol_Analysis_polsearch::vals(t:$x:op_label)]
+    set op_mb [menubutton $f.op -bd 2 -relief raised -indicatoron 1 -width 28 \
+                   -textvariable Apol_Analysis_polsearch::vals(t:$x:0:op_label)]
     set op_menu [menu $op_mb.m -type normal -tearoff 0]
     $op_mb configure -menu $op_menu
-    pack $test_mb $op_mb -side left -padx 4
+    set pm [PagesManager $f.param -background [Apol_Prefs::getPref active_bg]]
+    pack $test_mb $op_mb $pm -side left -padx 4
 
-    set valid_tests [$vals(current_query) getValidTests]
+    # also widgets for each of the different types of parameters
+    variable param_types
+    foreach p [array names param_types] {
+        set f [$pm add $p]
+        $param_types($p) create $x 0 $f
+    }
+    $pm compute_size
+
+    set valid_tests [$vals(query_obj) getValidTests]
     foreach t $valid_tests {
         $test_menu add radiobutton -label $tests($t) -value $t \
-            -command [list Apol_Analysis_polsearch::_test_selected $x $op_menu] \
+            -command [list Apol_Analysis_polsearch::_test_selected $x $op_menu $pm] \
             -variable Apol_Analysis_polsearch::vals(t:$x:test)
     }
     set vals(t:$x:test_label) $tests([lindex $valid_tests 0])
     set vals(t:$x:test) [lindex $valid_tests 0]
     set vals(t:$x:test_prev) $::POLSEARCH_TEST_NONE
-    _test_selected $x $op_menu
+    _test_selected $x $op_menu $pm
 }
 
-proc Apol_Analysis_polsearch::_test_selected {x op_menu} {
+proc Apol_Analysis_polsearch::_test_selected {x op_menu pm} {
+    variable neg_ops
     variable ops
     variable tests
     variable vals
+    variable widgets
 
     if {$vals(t:$x:test) == $vals(t:$x:test_prev)} {
         return
     }
 
-    # FIX ME: delete existing test
-    $op_menu delete 0 end
+    if {[info exists vals(t:$x:test_num)]} {
+        set test_obj [$vals(query_obj) getTest $vals(t:$x:test_num)]
+        $vals(query_obj) removeTest $test_obj
+        # FIX ME: destroy continued widgets
+        array unset vals t:$x:\[0-9\]:*
+        foreach key [array names vals t:*:test_num] {
+            if {$vals($key) > $vals(t:$x:test_num)} {
+                incr vals($key) -1
+            }
+        }
+    }
 
     set vals(t:$x:test_prev) $vals(t:$x:test)
     set vals(t:$x:test_label) $tests($vals(t:$x:test))
 
-    set vals(t:$x:test_obj) [$vals(current_query) addTest $vals(t:$x:test)]
-    set valid_ops [$vals(t:$x:test_obj) getValidOperators]
-
-    foreach o $valid_ops {
-        $op_menu add radiobutton -label $ops($o) -value $o \
-            -command [list Apol_Analysis_polsearch::_op_selected $x] \
-            -variable Apol_Analysis_polsearch::vals(t:$x:op)
+    set test_obj [$vals(query_obj) addTest $vals(t:$x:test)]
+    $test_obj -disown
+    set vals(t:$x:test_num) [expr {[$vals(query_obj) numTests] - 1}]
+    set vals(t:$x:next_op) 0
+    if {[$test_obj isContinueable]} {
+        $widgets(bb) itemconfigure 0 -state normal
+    } else {
+        $widgets(bb) itemconfigure 0 -state disabled
     }
-    set vals(t:$x:op_label) $ops([lindex $valid_ops 0])
-    set vals(t:$x:op) [lindex $valid_ops 0]
-    set vals(t:$x:op_prev) $::POLSEARCH_OP_NONE
-    _op_selected $x
+
+    set valid_ops [$test_obj getValidOperators]
+    $op_menu delete 0 end
+    foreach o $valid_ops {
+        $op_menu add radiobutton -label $ops($o) -value [list $o 0] \
+            -command [list Apol_Analysis_polsearch::_op_selected $pm $x 0] \
+            -variable Apol_Analysis_polsearch::vals(t:$x:0:op)
+        $op_menu add radiobutton -label $neg_ops($o) -value [list $o 1] \
+            -command [list Apol_Analysis_polsearch::_op_selected $pm $x 0] \
+            -variable Apol_Analysis_polsearch::vals(t:$x:0:op)
+    }
+    set vals(t:$x:0:op_label) $ops([lindex $valid_ops 0])
+    set vals(t:$x:0:op) [list [lindex $valid_ops 0] 0]
+    set vals(t:$x:0:op_prev) {$::POLSEARCH_OP_NONE 1}
+    _op_selected $pm $x 0
 }
 
-proc Apol_Analysis_polsearch::_op_selected {x} {
-    variable ops
+proc Apol_Analysis_polsearch::_op_selected {pm x y} {
     variable vals
 
-    if {$vals(t:$x:op) == $vals(t:$x:op_prev)} {
+    if {$vals(t:$x:$y:op) == $vals(t:$x:$y:op_prev)} {
         return
     }
 
-    # FIX ME: clear away previous parameter
+    set test_obj [$vals(query_obj) getTest $vals(t:$x:test_num)]
+    if {[info exists vals(t:$x:$y:op_num)]} {
+        set op_obj [$test_obj getCriterion $vals(t:$x:$y:op_num)]
+        $test_obj removeCriterion $op_obj
+        foreach key [array names vals t:$x:*:op_num] {
+            if {$vals($key) > $vals(t:$x:$y:op_num)} {
+                incr vals($key) -1
+            }
+        }
+    }
 
-    set vals(t:$x:op_prev) $vals(t:$x:op)
-    set vals(t:$x:op_label) $ops($vals(t:$x:op))
+    set vals(t:$x:$y:op_prev) $vals(t:$x:$y:op)
+    foreach {op_num truthval} $vals(t:$x:$y:op) {break}
+    if {$truthval == 0} {
+        # in libpolsearch, the second parameter to addCriterion is 'invert'
+        variable ops
+        set vals(t:$x:$y:op_label) $ops($op_num)
+    } else {
+        variable neg_ops
+        set vals(t:$x:$y:op_label) $neg_ops($op_num)
+    }
 
-    # FIX ME: can getValidParamTypes() return more than one thing?
-    # FIX ME: flip to appropriate param display
+    set op_obj [$test_obj addCriterion $op_num $truthval]
+    $op_obj -disown
+    set vals(t:$x:$y:op_num) [expr {[$test_obj numCriteria] - 1}]
+    incr vals(t:$x:next_op)
+
+    variable param_types
+    set validParam [$op_obj getValidParamType]
+    $param_types($validParam) update $x $y
+    $pm raise $validParam
 }
 
+########## individual parameter widget handling routines ##########
+
+proc Apol_Analysis_polsearch::_param_expression {action x y args} {
+    variable vals
+    switch -- $action {
+        create {
+            set f [lindex $args 0]
+            set e [entry $f.e -width 30 \
+                       -validate focusout \
+                       -vcmd [list Apol_Analysis_polsearch::_param_expression update $x $y] \
+                       -textvariable Apol_Analysis_polsearch::vals(t:$x:$y:param:regex)]
+            pack $e -expand 0 -fill x
+        }
+        update {
+            set test_obj [$vals(query_obj) getTest $vals(t:$x:test_num)]
+            set op_obj [$test_obj getCriterion $vals(t:$x:$y:op_num)]
+            if {$vals(t:$x:$y:param:regex) != {}} {
+                # FIX ME: add icase?
+                set p [new_polsearch_regex_parameter $vals(t:$x:$y:param:regex)]
+                $op_obj param $p
+                $p -disown
+            }
+            return 1
+        }
+    }
+}
+
+proc Apol_Analysis_polsearch::_param_str_expr {action x y args} {
+    variable vals
+    switch -- $action {
+        create {
+            set f [lindex $args 0]
+            set e [entry $f.e -width 30 \
+                       -validate focusout \
+                       -vcmd [list Apol_Analysis_polsearch::_param_str_expr update $x $y] \
+                       -textvariable Apol_Analysis_polsearch::vals(t:$x:$y:param:str_expr) -bg red]
+            # FIX ME: colored red to differentiate from regex entry
+            pack $e -expand 0 -fill x
+        }
+        update {
+            set test_obj [$vals(query_obj) getTest $vals(t:$x:test_num)]
+            set op_obj [$test_obj getCriterion $vals(t:$x:$y:op_num)]
+            if {$vals(t:$x:$y:param:str_expr) != {}} {
+                set v {}
+                foreach s [split $vals(t:$x:$y:param:str_expr)] {
+                    if {$s != {}} {
+                        lappend v $s
+                    }
+                }
+                # FIX ME: add icase?
+                set p [new_polsearch_string_expression_parameter $v]
+                $op_obj param $p
+                $p -disown
+            }
+            return 1
+        }
+    }
+}
+
+proc Apol_Analysis_polsearch::_param_avrule_type {action x y args} {
+    variable avrules
+    variable vals
+    switch -- $action {
+        create {
+            set f [lindex $args 0]
+            set b_mb [menubutton $f.mb -bd 2 -relief raised -indicatoron 1 -width 10 \
+                          -textvariable Apol_Analysis_polsearch::vals(t:$x:$y:param:avrule_label)]
+            pack $b_mb -expand 0 -fill none -anchor w
+            set b_menu [menu $b_mb.m -type normal -tearoff 0]
+            $b_mb configure -menu $b_menu
+            foreach {v l} $avrules {
+                $b_menu add radiobutton -label $l -value $v \
+                    -command [list Apol_Analysis_polsearch::_param_avrule_type update $x $y] \
+                    -variable Apol_Analysis_polsearch::vals(t:$x:$y:param:avrule)
+            }
+            set vals(t:$x:$y:param:avrule) [lindex $avrules 0]
+            set vals(t:$x:$y:param:avrule_label) [lindex $avrules 1]
+        }
+        update {
+            set test_obj [$vals(query_obj) getTest $vals(t:$x:test_num)]
+            set op_obj [$test_obj getCriterion $vals(t:$x:$y:op_num)]
+            set p [new_polsearch_number_parameter $vals(t:$x:$y:param:avrule)]
+            $op_obj param $p
+            $p -disown
+            set new_label [lindex $avrules [expr {[lsearch $avrules $vals(t:$x:$y:param:avrule)] + 1}]]
+            set vals(t:$x:$y:param:avrule_label) $new_label
+        }
+    }
+}
+
+proc Apol_Analysis_polsearch::_param_terule_type {action x y args} {
+    variable terules
+    variable vals
+    switch -- $action {
+        create {
+            set f [lindex $args 0]
+            set b_mb [menubutton $f.mb -bd 2 -relief raised -indicatoron 1 -width 12 \
+                          -textvariable Apol_Analysis_polsearch::vals(t:$x:$y:param:terule_label)]
+            pack $b_mb -expand 0 -fill none -anchor w
+            set b_menu [menu $b_mb.m -type normal -tearoff 0]
+            $b_mb configure -menu $b_menu
+            foreach {v l} $terules {
+                $b_menu add radiobutton -label $l -value $v \
+                    -command [list Apol_Analysis_polsearch::_param_terule_type update $x $y] \
+                    -variable Apol_Analysis_polsearch::vals(t:$x:$y:param:terule)
+            }
+            set vals(t:$x:$y:param:terule) [lindex $terules 0]
+            set vals(t:$x:$y:param:terule_label) [lindex $terules 1]
+        }
+        update {
+            set test_obj [$vals(query_obj) getTest $vals(t:$x:test_num)]
+            set op_obj [$test_obj getCriterion $vals(t:$x:$y:op_num)]
+            set p [new_polsearch_number_parameter $vals(t:$x:$y:param:terule)]
+            $op_obj param $p
+            $p -disown
+            set new_label [lindex $terules [expr {[lsearch $terules $vals(t:$x:$y:param:terule)] + 1}]]
+            set vals(t:$x:$y:param:terule_label) $new_label
+        }
+    }
+}
+
+proc Apol_Analysis_polsearch::_param_bool {action x y args} {
+    variable vals
+    switch -- $action {
+        create {
+            set f [lindex $args 0]
+            set b_mb [menubutton $f.mb -bd 2 -relief raised -indicatoron 1 -width 6 \
+                          -textvariable Apol_Analysis_polsearch::vals(t:$x:$y:param:bool)]
+            pack $b_mb -expand 0 -fill none -anchor w
+            set b_menu [menu $b_mb.m -type normal -tearoff 0]
+            $b_mb configure -menu $b_menu
+            $b_menu add radiobutton -label true -value true \
+                -command [list Apol_Analysis_polsearch::_param_bool update $x $y] \
+                -variable Apol_Analysis_polsearch::vals(t:$x:$y:param:bool)
+            $b_menu add radiobutton -label false -value false \
+                -command [list Apol_Analysis_polsearch::_param_bool update $x $y] \
+                -variable Apol_Analysis_polsearch::vals(t:$x:$y:param:bool)
+            set vals(t:$x:$y:param:bool) true
+        }
+        update {
+            set test_obj [$vals(query_obj) getTest $vals(t:$x:test_num)]
+            set op_obj [$test_obj getCriterion $vals(t:$x:$y:op_num)]
+            if {$vals(t:$x:$y:param:bool) == "true"} {
+                set p [new_polsearch_bool_parameter 1]
+            } else {
+                set p [new_polsearch_bool_parameter 0]
+            }
+            $op_obj param $p
+            $p -disown
+        }
+    }
+}
+
+proc Apol_Analysis_polsearch::_param_level {action x y args} {
+    variable vals
+    switch -- $action {
+        create {
+            set f [lindex $args 0]
+            set l [label $f.l -text "level goes here"]
+            pack $l -expand 0 -fill x
+        }
+        update {
+            set test_obj [$vals(query_obj) getTest $vals(t:$x:test_num)]
+            set op_obj [$test_obj getCriterion $vals(t:$x:$y:op_num)]
+            # FIX ME: create a polsearch_level_parameter
+        }
+    }
+}
+
+proc Apol_Analysis_polsearch::_param_range {action x y args} {
+    variable vals
+    switch -- $action {
+        create {
+            set f [lindex $args 0]
+            set l [label $f.l -text "range goes here"]
+            pack $l -expand 0 -fill x
+        }
+        update {
+            set test_obj [$vals(query_obj) getTest $vals(t:$x:test_num)]
+            set op_obj [$test_obj getCriterion $vals(t:$x:$y:op_num)]
+            # FIX ME: create a polsearch_range_parameter
+        }
+    }
+}
 
 #################### functions that do analyses ####################
 
@@ -390,7 +682,7 @@ proc Apol_Analysis_polsearch::_checkParams {} {
     if {![ApolTop::is_policy_open]} {
         return "No current policy file is opened."
     }
-    if {$vals(current_query) == {}} {
+    if {$vals(query_obj) == {}} {
         return "The symbol to search has not yet been selected."
     }
     return {}  ;# all parameters passed, now ready to do search
@@ -398,19 +690,12 @@ proc Apol_Analysis_polsearch::_checkParams {} {
 
 proc Apol_Analysis_polsearch::_analyze {} {
     variable vals
-    set q [new_apol_types_relation_analysis_t]
-    $q set_first_type $::ApolTop::policy $vals(typeA)
-    $q set_other_type $::ApolTop::policy $vals(typeB)
-    set analyses 0
-    foreach key [array names vals run:*] {
-        set analyses [expr {$analyses | $vals($key)}]
+    set db [Apol_File_Contexts::get_db]
+    if {$db != {}} {
+        $vals(query_obj) run $::ApolTop::policy $db
+    } else {
+        $vals(query_obj) run $::ApolTop::policy
     }
-    $q set_analyses $::ApolTop::policy $analyses
-
-    set results [$q run $::ApolTop::policy]
-    $q -acquire
-    $q -delete
-    return $results
 }
 
 ################# functions that control analysis output #################
@@ -443,18 +728,14 @@ proc Apol_Analysis_polsearch::_treeSelect {res tree node} {
     if {$node != {}} {
         $res.tb configure -state normal
         $res.tb delete 0.0 end
-        set data [$tree itemcget $node -data]
-        set name [$tree itemcget $node -text]
-        if {[set parent [$tree parent $node]] != "root"} {
-            set parent_name [$tree itemcget $parent -text]
-            set parent_data [$tree itemcget $parent -data]
-        }
+        $res.tb insert end "Proof info would go here." {}
         $res.tb configure -state disabled
     }
 }
 
 proc Apol_Analysis_polsearch::_clearResultsDisplay {f} {
     variable vals
+    # FIX ME: delete vector of results from tree's root
     Apol_Widget::clearSearchTree [$f.left getframe].res
     set res [$f.right getframe].res
     Apol_Widget::clearSearchResults $res
@@ -465,8 +746,24 @@ proc Apol_Analysis_polsearch::_renderResults {f results} {
     variable vals
 
     set tree [[$f.left getframe].res getframe].tree
-    set res [$f.right getframe].res
+
+    foreach r $results {
+        set x [$r element]
+        variable elements
+        set q [$elements([$r elementType]) $x]
+        set name [$q get_name $::ApolTop::qpolicy]
+        set proofs [$r proof]
+        $proofs -acquire
+        $tree insert end root x\#auto -text $name -drawcross never -data $proofs    }
+
     set first_node [$tree nodes root 0]
-    $tree selection set $first_node
-    $tree see $first_node
+    if {$first_node == {}} {
+        set res [$f.right getframe].res
+        $res.tb configure -state normal
+        $res.tb insert end "No matching symbols found."
+        $res.tb configure -state disabled
+    } else {
+        $tree selection set $first_node
+        $tree see $first_node
+    }
 }

@@ -185,6 +185,11 @@ proc Apol_File_Contexts::is_db_loaded {} {
     return 0
 }
 
+proc Apol_File_Contexts::get_db {} {
+    variable opts
+    set opts(db)
+}
+
 proc Apol_File_Contexts::get_fc_files_for_ta {which ta} {
     set q [new_sefs_query]
     if {$which == "type"} {
