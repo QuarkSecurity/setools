@@ -57,12 +57,6 @@ class polsearch_query
 	 * @exception std::invalid_argument Invalid matching behavior requested.
 	 */
 	polsearch_match match(polsearch_match m) throw(std::invalid_argument);
-	/**
-	 * Get a list of the valid types of tests to perform for the element
-	 * type specified by the query.
-	 * @return A vector containing all valid tests for the specified element type.
-	 */
-	 std::vector < polsearch_test_cond > getValidTests();
 
 	/**
 	 * Add a test to the query.
@@ -72,24 +66,6 @@ class polsearch_query
 	 * the element type queried.
 	 */
 	 polsearch_test & addTest(polsearch_test_cond test_cond) throw(std::invalid_argument);
-	/**
-	 * Get access to a test in the query.
-	 * @param i Index of the test to access.
-	 * @return Reference to the test at index \a i.
-	 * @exception std::out_of_range Index \a i not in range.
-	 */
-	 polsearch_test & getTest(size_t i) throw(std::out_of_range);
-	/**
-	 * Remove a test from the query.
-	 * @param t Test to remove.
-	 * @exception std::invalid_argument Test \a t is not part of the query.
-	 */
-	void removeTest(polsearch_test & t) throw(std::invalid_argument);
-	/**
-	 * Get the number of tests in the query.
-	 * @return The number of tests in the query.
-	 */
-	size_t numTests() const;
 
 	/**
 	 * Run the query.
@@ -153,5 +129,13 @@ class polsearch_query
 
 	polsearch_match _match;	       /*!< The matching behavior used for determining if an element matches with multiple tests. */
 };
+
+/**
+ * Get a list of the valid types of tests to perform for the element
+ * type specified.
+ * @param elem_type The type of element queried.
+ * @return A vector containing all valid tests for the specified element type.
+ */
+std::vector < polsearch_test_cond > polsearch_get_valid_tests(polsearch_element elem_type);
 
 #endif				       /* POLSEARCH_QUERY_HH */

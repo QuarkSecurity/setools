@@ -106,11 +106,6 @@ class polsearch_criterion
 	 * wrong type for the current operator.
 	 */
 	polsearch_parameter *param(polsearch_parameter * p) throw(std::invalid_argument);
-	/**
-	 * Get the valid parameter type for the criterion.
-	 * @return The valid type of parameter the criterion can check.
-	 */
-	polsearch_param_type getValidParamType() const;
 
 	/**
 	 * Get a string representing the criterion.
@@ -167,5 +162,14 @@ class polsearch_criterion
 	const polsearch_test *_test;   /*!< The test with which the criterion is associated. */
 	polsearch_parameter *_param;   /*!< The parameter used as the second argument or \a _op. */
 };
+
+/**
+ * Get the valid parameter type for a criterion with the given operator, test condition and element type.
+ * @param elem_type The type of element queried.
+ * @param cond The condition tested.
+ * @param opr The comparison operator.
+ * @return The valid type of parameter the criterion can check.
+ */
+polsearch_param_type polsearch_get_valid_param_type(polsearch_element elem_type, polsearch_test_cond cond, polsearch_op opr);
 
 #endif				       /* POLSEARCH_CRITERION_HH */

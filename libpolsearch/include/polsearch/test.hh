@@ -81,24 +81,6 @@ class polsearch_test
 	 * be changed if it cannot successfully be added to the test.
 	 */
 	 polsearch_criterion & addCriterion(polsearch_op opr, bool neg = false) throw(std::invalid_argument);
-	/**
-	 * Get access to a criterion in the test.
-	 * @param i Index of the criterion to access.
-	 * @return Reference to the criterion at index \a i.
-	 * @exception std::out_of_range Index \a i is not in range.
-	 */
-	 polsearch_criterion & getCriterion(size_t i) throw(std::out_of_range);
-	/**
-	 * Remove a criterion from the test.
-	 * @param c The criterion to remove.
-	 * @exception std::invalid_argument Criterion \a c is not part of the test.
-	 */
-	void removeCriterion(polsearch_criterion & c) throw(std::invalid_argument);
-	/**
-	 * Get the number of criteria in the test.
-	 * @return The number of criteria in the test.
-	 */
-	size_t numCriteria() const;
 
 	 /**
 	  * Determine if the condition tested can have more than one criterion.
@@ -106,13 +88,6 @@ class polsearch_test
 	  * return \a false.
 	  */
 	bool isContinueable();
-
-	 /**
-	  * Get a list of valid comparison operators for this test.
-	  * @return A vector of all valid operators for the current test condition
-	  * and the element type of the associated query.
-	  */
-	 std::vector < polsearch_op > getValidOperators();
 
 	friend class polsearch_query;
 
@@ -173,5 +148,14 @@ class polsearch_test
 	polsearch_test_cond _test_cond;	/*!< The condition tested. */
 	 std::vector < polsearch_criterion > _criteria;	/*!< The criteria to check. */
 };
+
+/**
+ * Get a list of valid comparison operators for a test.
+ * @param elem_type The type of element queried.
+ * @param cond The condition tested.
+ * @return A vector of all valid operators for the specified test condition
+ * and the element type.
+ */
+std::vector < polsearch_op > polsearch_get_valid_operators(polsearch_element elem_type, polsearch_test_cond cond);
 
 #endif				       /* POLSEARCH_TEST_HH */

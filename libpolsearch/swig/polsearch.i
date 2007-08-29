@@ -66,6 +66,7 @@
 
 %include std_string.i
 %include std_vector.i
+%include std_except.i
 %naturalvar std::string;
 
 /******************** Java specializations ********************/
@@ -145,21 +146,6 @@ static char *tcl_get_error(void)
 #undef SWIG_exception
 #define SWIG_exception(code, msg) {tcl_throw_error(msg); goto fail;}
 
-/*
-#undef SWIG_Tcl_SetErrorObj
-SWIGINTERN void
-SWIG_Tcl_SetErrorObj(Tcl_Interp *interp, const char *ctype, Tcl_Obj *obj)
-{
-  Tcl_ResetResult(interp);
-  void *v;
-  swig_type_info ty;
-  SWIG_ConvertPtr(obj, &v, &ty, 0);
-  std::exeception *e = dynamic_cast<std::exception *>(v);
-  std::cout << "exception: " << e->what() << std::endl;
-  Tcl_SetObjResult(interp, obj);
-  Tcl_SetErrorCode(interp, "SWIG", ctype, NULL);
-}
-*/
 %}
 
 %wrapper %{

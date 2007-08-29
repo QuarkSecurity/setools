@@ -47,7 +47,7 @@ polsearch_test::polsearch_test()
 	throw std::runtime_error("Cannot directly create tests.");
 }
 
-polsearch_test::polsearch_test(polsearch_query * query, polsearch_test_cond test_cond) throw(std::invalid_argument)
+polsearch_test::polsearch_test(polsearch_query * query, polsearch_test_cond test_cond) throw(std::invalid_argument):_criteria()
 {
 	if (!validate_test_condition(query->elementType(), test_cond))
 		throw invalid_argument("The given test condition is not valid for the given element.");
@@ -93,29 +93,6 @@ polsearch_criterion & polsearch_test::addCriterion(polsearch_op opr, bool neg) t
 	return _criteria.back();
 }
 
-polsearch_criterion & polsearch_test::getCriterion(size_t i) throw(std::out_of_range)
-{
-	return _criteria.at(i);	       //throws out_of_range if i is not in range
-}
-
-void polsearch_test::removeCriterion(polsearch_criterion & c) throw(std::invalid_argument)
-{
-	for (vector < polsearch_criterion >::iterator i = _criteria.begin(); i != _criteria.end(); i++)
-	{
-		if (*i == c)
-		{
-			_criteria.erase(i);
-			return;
-		}
-	}
-	throw invalid_argument("Criterion is not part of the test");
-}
-
-size_t polsearch_test::numCriteria() const
-{
-	return _criteria.size();
-}
-
 bool polsearch_test::isContinueable()
 {
 	switch (_test_cond)
@@ -145,11 +122,11 @@ bool polsearch_test::isContinueable()
 	}
 }
 
-std::vector < polsearch_op > polsearch_test::getValidOperators()
+std::vector < polsearch_op > polsearch_get_valid_operators(polsearch_element elem_type, polsearch_test_cond cond)
 {
 	vector < polsearch_op > v;
 	for (int i = POLSEARCH_OP_NONE; i <= POLSEARCH_OP_AS_TYPE; i++)
-		if (validate_operator(_query->elementType(), _test_cond, static_cast < polsearch_op > (i)))
+		if (validate_operator(elem_type, cond, static_cast < polsearch_op > (i)))
 			v.push_back(static_cast < polsearch_op > (i));
 
 	return v;
@@ -160,8 +137,8 @@ struct fcdata
 {
 	const vector < polsearch_criterion > *criteria;	//! The list of criteria to check for each entry.
 	const apol_policy_t *policy;   //! The policy to use for symbols.
-	vector < string > *Xnames;     //! The list of possible names for the symbol X.
-	vector < polsearch_proof > *cur_proof;	//! The vector to which to append proof entries.
+	 vector < string > *Xnames;    //! The list of possible names for the symbol X.
+	 vector < polsearch_proof > *cur_proof;	//! The vector to which to append proof entries.
 };
 
 /**
@@ -500,7 +477,8 @@ const std::vector < polsearch_result > polsearch_test::run(const apol_policy_t *
 	if (_criteria.empty())
 		throw runtime_error("No criteria to test.");
 
-	for (size_t i = 0; i < _criteria.size(); i++) {
+	for (size_t i = 0; i < _criteria.size(); i++)
+	{
 		if (_criteria[i].param() == NULL)
 			throw runtime_error("Attempt to test invalid criteria");
 		if (!validate_parameter_type

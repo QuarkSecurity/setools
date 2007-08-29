@@ -123,11 +123,11 @@ polsearch_parameter *polsearch_criterion::param(polsearch_parameter * p) throw(s
 	return _param = p;
 }
 
-polsearch_param_type polsearch_criterion::getValidParamType() const
+polsearch_param_type polsearch_get_valid_param_type(polsearch_element elem_type, polsearch_test_cond cond, polsearch_op opr)
 {
 	for (int i = POLSEARCH_PARAM_TYPE_REGEX; i <= POLSEARCH_PARAM_TYPE_RANGE; i++)
 	{
-		if (validate_parameter_type(_test->elementType(), _test->testCond(), _op, static_cast < polsearch_param_type > (i)))
+		if (validate_parameter_type(elem_type, cond, opr, static_cast < polsearch_param_type > (i)))
 			return static_cast < polsearch_param_type > (i);
 	}
 

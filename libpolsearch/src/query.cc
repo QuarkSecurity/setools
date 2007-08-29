@@ -74,11 +74,11 @@ polsearch_match polsearch_query::match(polsearch_match m) throw(std::invalid_arg
 	return _match = m;
 }
 
-std::vector < polsearch_test_cond > polsearch_query::getValidTests()
+std::vector < polsearch_test_cond > polsearch_get_valid_tests(polsearch_element elem_type)
 {
 	vector < polsearch_test_cond > v;
 	for (int i = POLSEARCH_TEST_NONE; i <= POLSEARCH_TEST_STATE; i++)
-		if (validate_test_condition(elementType(), static_cast < polsearch_test_cond > (i)))
+		if (validate_test_condition(elem_type, static_cast < polsearch_test_cond > (i)))
 			v.push_back(static_cast < polsearch_test_cond > (i));
 
 	return v;
@@ -86,31 +86,7 @@ std::vector < polsearch_test_cond > polsearch_query::getValidTests()
 
 polsearch_test & polsearch_query::addTest(polsearch_test_cond test_cond) throw(std::invalid_argument)
 {
-	_tests.push_back(polsearch_test(this, test_cond));
-	return _tests.back();
-}
-
-polsearch_test & polsearch_query::getTest(size_t i) throw(std::out_of_range)
-{
-	return _tests.at(i);	       //throws out_of_range if i is not in range
-}
-
-void polsearch_query::removeTest(polsearch_test & t) throw(std::invalid_argument)
-{
-	for (vector < polsearch_test >::iterator i = _tests.begin(); i != _tests.end(); i++)
-	{
-		if (*i == t)
-		{
-			_tests.erase(i);
-			return;
-		}
-	}
-	throw invalid_argument("Test is not part of the query");
-}
-
-size_t polsearch_query::numTests() const
-{
-	return _tests.size();
+	return *_tests.insert(_tests.end(), polsearch_test(this, test_cond));
 }
 
 std::vector < polsearch_result > polsearch_query::run(const apol_policy_t * policy,
