@@ -32,6 +32,7 @@ proc Apol_Prefs::create {} {
         title_font "Helvetica 10 bold italic"
         active_bg white
         active_fg black
+        select_bg gray
         highlight_fg red
         top_width 1000
         top_height 700
@@ -53,6 +54,7 @@ proc Apol_Prefs::create {} {
 #   "title_font"
 #   "active_bg"
 #   "disable_bg"
+#   "select_bg"
 #   "active_fg"
 #   "highlight_fg"
 # Initial window size:

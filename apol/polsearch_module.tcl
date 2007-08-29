@@ -57,7 +57,8 @@ proc Apol_Analysis_polsearch::create {options_frame} {
     set sw [ScrolledWindow $options_frame.sw -auto horizontal]
     set widgets(rules) [ScrollableFrame $sw.rules -areaheight 0 -areawidth 0 \
                             -constrainedheight 0 -constrainedwidth 0 \
-                            -height 100 -bg [Apol_Prefs::getPref active_bg]]
+                            -width 500 -height 100 \
+                            -bg [Apol_Prefs::getPref active_bg]]
     $sw setwidget $widgets(rules)
     pack $sw -expand 1 -fill both -padx 4 -pady 4
 
@@ -303,6 +304,11 @@ proc Apol_Analysis_polsearch::_reinitializeVals {} {
 }
 
 proc Apol_Analysis_polsearch::_reinitializeWidgets {} {
+    variable widgets
+    set widgets(line_selected) {0 0}
+    $widgets(bb) itemconfigure 0 -state disabled
+    $widgets(bb) itemconfigure 1 -state disabled
+    $widgets(bb) itemconfigure 2 -state disabled
     _toggleQuery init
     _toggleMatch
 }
@@ -322,7 +328,9 @@ proc Apol_Analysis_polsearch::_toggleQuery {state} {
         destroy $w
     }
     array unset vals t:*
+    array unset widgets t:*
     set widgets(next_test) 0
+    set widgets(line_selected) {0 0}
 
     if {$vals(query) != {}} {
         set vals(query_obj) [new_$vals(query)]
@@ -339,13 +347,9 @@ proc Apol_Analysis_polsearch::_toggleQuery {state} {
     }
 
     variable queries
-    $widgets(bb) itemconfigure 0 -state disabled
-    $widgets(bb) itemconfigure 1 -state disabled
-    $widgets(bb) itemconfigure 2 -state disabled
     if {$vals(query) == {}} {
         set vals(query_label) {}
     } else {
-        $widgets(bb) itemconfigure 1 -state normal
         set vals(query_label) $queries($vals(query))
     }
 }
@@ -354,6 +358,7 @@ proc Apol_Analysis_polsearch::_toggleMatch {} {
     variable vals
     variable matches
     set vals(match_label) $matches($vals(match))
+    # FIX ME: actually set matching behavior
 }
 
 proc Apol_Analysis_polsearch::_add {} {
@@ -362,26 +367,34 @@ proc Apol_Analysis_polsearch::_add {} {
     variable widgets
 
     set x $widgets(next_test)
-    set f [frame [$widgets(rules) getframe].f$x -bg [Apol_Prefs::getPref active_bg]]
     incr widgets(next_test)
-    pack $f -expand 0 -fill x -anchor w -padx 4 -pady 4
+    set f [frame [$widgets(rules) getframe].f$x \
+               -bg [Apol_Prefs::getPref active_bg] -bd 2]
+    set widgets(t:$x:frame) $f
+    pack $f -expand 1 -fill x
 
-    set test_mb [menubutton $f.t -bd 2 -relief raised -indicatoron 1 \
+    set f0 [frame $f.f0 -bd 2]
+    set widgets(t:$x:0:frame) $f0
+    bind $f0 <Button-1> [list Apol_Analysis_polsearch::_line_selected $x 0]
+    pack $f0 -expand 1 -fill x
+
+    set test_mb [menubutton $f0.t -bd 2 -relief raised -indicatoron 1 \
                      -width 24 \
                      -textvariable Apol_Analysis_polsearch::vals(t:$x:test_label)]
     set test_menu [menu $test_mb.m -type normal -tearoff 0]
     $test_mb configure -menu $test_menu
-    set op_mb [menubutton $f.op -bd 2 -relief raised -indicatoron 1 -width 28 \
+    set op_mb [menubutton $f0.op -bd 2 -relief raised -indicatoron 1 -width 28 \
                    -textvariable Apol_Analysis_polsearch::vals(t:$x:0:op_label)]
     set op_menu [menu $op_mb.m -type normal -tearoff 0]
     $op_mb configure -menu $op_menu
-    set pm [PagesManager $f.param -background [Apol_Prefs::getPref active_bg]]
-    pack $test_mb $op_mb $pm -side left -padx 4
+    set pm [PagesManager $f0.param -background [Apol_Prefs::getPref active_bg]]
+    pack $test_mb $op_mb $pm -side left -anchor w -padx 4 -pady 4
 
     # also widgets for each of the different types of parameters
     variable param_types
     foreach p [array names param_types] {
         set f [$pm add $p]
+        $f configure -bg [Apol_Prefs::getPref active_bg]
         $param_types($p) create $x 0 $f
     }
     $pm compute_size
@@ -406,6 +419,7 @@ proc Apol_Analysis_polsearch::_test_selected {x op_menu pm} {
     variable widgets
 
     if {$vals(t:$x:test) == $vals(t:$x:test_prev)} {
+        _line_selected $x 0
         return
     }
 
@@ -413,7 +427,7 @@ proc Apol_Analysis_polsearch::_test_selected {x op_menu pm} {
         set test_obj [$vals(query_obj) getTest $vals(t:$x:test_num)]
         $vals(query_obj) removeTest $test_obj
         # FIX ME: destroy continued widgets
-        array unset vals t:$x:\[0-9\]:*
+        array unset vals t:$x:\[1-9\]*:*
         foreach key [array names vals t:*:test_num] {
             if {$vals($key) > $vals(t:$x:test_num)} {
                 incr vals($key) -1
@@ -428,11 +442,6 @@ proc Apol_Analysis_polsearch::_test_selected {x op_menu pm} {
     $test_obj -disown
     set vals(t:$x:test_num) [expr {[$vals(query_obj) numTests] - 1}]
     set vals(t:$x:next_op) 0
-    if {[$test_obj isContinueable]} {
-        $widgets(bb) itemconfigure 0 -state normal
-    } else {
-        $widgets(bb) itemconfigure 0 -state disabled
-    }
 
     set valid_ops [$test_obj getValidOperators]
     $op_menu delete 0 end
@@ -454,6 +463,7 @@ proc Apol_Analysis_polsearch::_op_selected {pm x y} {
     variable vals
 
     if {$vals(t:$x:$y:op) == $vals(t:$x:$y:op_prev)} {
+        _line_selected $x $y
         return
     }
 
@@ -486,8 +496,45 @@ proc Apol_Analysis_polsearch::_op_selected {pm x y} {
 
     variable param_types
     set validParam [$op_obj getValidParamType]
-    $param_types($validParam) update $x $y
+    # the next call will also shift the line selection to this line
+    $param_types($validParam) update $x $y focusin
     $pm raise $validParam
+}
+
+proc Apol_Analysis_polsearch::_line_selected {x y} {
+    variable vals
+    variable widgets
+
+    foreach {old_x old_y} $widgets(line_selected) {break}
+    $widgets(t:$old_x:$old_y:frame) configure -bg [Apol_Prefs::getPref active_bg] -relief flat
+    if {$old_y == 0} {
+        $widgets(t:$old_x:frame) configure -bg [Apol_Prefs::getPref active_bg] -relief flat
+    }
+
+    $widgets(t:$x:$y:frame) configure -bg [Apol_Prefs::getPref select_bg]
+    if {$y == 0} {
+        $widgets(t:$x:frame) configure -bg [Apol_Prefs::getPref select_bg] -relief groove
+    } else {
+        $widgets(t:$x:$y:frame) configure -relief groove
+    }
+    
+
+    # enable continue button only if the current test is continuable
+    set test_obj [$vals(query_obj) getTest $vals(t:$x:test_num)]
+    if {[$test_obj isContinueable]} {
+        $widgets(bb) itemconfigure 0 -state normal
+    } else {
+        $widgets(bb) itemconfigure 0 -state disabled
+    }
+
+    # always enable add button
+    $widgets(bb) itemconfigure 1 -state normal
+
+    # maybe enable remove button under certain circumstances
+    $widgets(bb) itemconfigure 2 -state disabled
+    # FIX ME
+
+    set widgets(line_selected) [list $x $y]
 }
 
 ########## individual parameter widget handling routines ##########
@@ -498,19 +545,23 @@ proc Apol_Analysis_polsearch::_param_expression {action x y args} {
         create {
             set f [lindex $args 0]
             set e [entry $f.e -width 30 \
-                       -validate focusout \
-                       -vcmd [list Apol_Analysis_polsearch::_param_expression update $x $y] \
+                       -validate focus \
+                       -vcmd [list Apol_Analysis_polsearch::_param_expression update $x $y %V] \
                        -textvariable Apol_Analysis_polsearch::vals(t:$x:$y:param:regex)]
             pack $e -expand 0 -fill x
         }
         update {
-            set test_obj [$vals(query_obj) getTest $vals(t:$x:test_num)]
-            set op_obj [$test_obj getCriterion $vals(t:$x:$y:op_num)]
-            if {$vals(t:$x:$y:param:regex) != {}} {
-                # FIX ME: add icase?
-                set p [new_polsearch_regex_parameter $vals(t:$x:$y:param:regex)]
-                $op_obj param $p
-                $p -disown
+            if {[lindex $args 0] == "focusin"} {
+                _line_selected $x $y
+            } else {
+                set test_obj [$vals(query_obj) getTest $vals(t:$x:test_num)]
+                set op_obj [$test_obj getCriterion $vals(t:$x:$y:op_num)]
+                if {$vals(t:$x:$y:param:regex) != {}} {
+                    # FIX ME: add icase?
+                    set p [new_polsearch_regex_parameter $vals(t:$x:$y:param:regex)]
+                    $op_obj param $p
+                    $p -disown
+                }
             }
             return 1
         }
@@ -523,26 +574,30 @@ proc Apol_Analysis_polsearch::_param_str_expr {action x y args} {
         create {
             set f [lindex $args 0]
             set e [entry $f.e -width 30 \
-                       -validate focusout \
-                       -vcmd [list Apol_Analysis_polsearch::_param_str_expr update $x $y] \
+                       -validate focus \
+                       -vcmd [list Apol_Analysis_polsearch::_param_str_expr update $x $y %V] \
                        -textvariable Apol_Analysis_polsearch::vals(t:$x:$y:param:str_expr) -bg red]
             # FIX ME: colored red to differentiate from regex entry
             pack $e -expand 0 -fill x
         }
         update {
-            set test_obj [$vals(query_obj) getTest $vals(t:$x:test_num)]
-            set op_obj [$test_obj getCriterion $vals(t:$x:$y:op_num)]
-            if {$vals(t:$x:$y:param:str_expr) != {}} {
-                set v {}
-                foreach s [split $vals(t:$x:$y:param:str_expr)] {
-                    if {$s != {}} {
-                        lappend v $s
+            if {[lindex $args 0] == "focusin"} {
+                _line_selected $x $y
+            } else {
+                set test_obj [$vals(query_obj) getTest $vals(t:$x:test_num)]
+                set op_obj [$test_obj getCriterion $vals(t:$x:$y:op_num)]
+                if {$vals(t:$x:$y:param:str_expr) != {}} {
+                    set v {}
+                    foreach s [split $vals(t:$x:$y:param:str_expr)] {
+                        if {$s != {}} {
+                            lappend v $s
+                        }
                     }
+                    # FIX ME: add icase?
+                    set p [new_polsearch_string_expression_parameter $v]
+                    $op_obj param $p
+                    $p -disown
                 }
-                # FIX ME: add icase?
-                set p [new_polsearch_string_expression_parameter $v]
-                $op_obj param $p
-                $p -disown
             }
             return 1
         }
@@ -569,6 +624,7 @@ proc Apol_Analysis_polsearch::_param_avrule_type {action x y args} {
             set vals(t:$x:$y:param:avrule_label) [lindex $avrules 1]
         }
         update {
+            _line_selected $x $y
             set test_obj [$vals(query_obj) getTest $vals(t:$x:test_num)]
             set op_obj [$test_obj getCriterion $vals(t:$x:$y:op_num)]
             set p [new_polsearch_number_parameter $vals(t:$x:$y:param:avrule)]
@@ -600,6 +656,7 @@ proc Apol_Analysis_polsearch::_param_terule_type {action x y args} {
             set vals(t:$x:$y:param:terule_label) [lindex $terules 1]
         }
         update {
+            _line_selected $x $y
             set test_obj [$vals(query_obj) getTest $vals(t:$x:test_num)]
             set op_obj [$test_obj getCriterion $vals(t:$x:$y:op_num)]
             set p [new_polsearch_number_parameter $vals(t:$x:$y:param:terule)]
@@ -630,6 +687,7 @@ proc Apol_Analysis_polsearch::_param_bool {action x y args} {
             set vals(t:$x:$y:param:bool) true
         }
         update {
+            _line_selected $x $y
             set test_obj [$vals(query_obj) getTest $vals(t:$x:test_num)]
             set op_obj [$test_obj getCriterion $vals(t:$x:$y:op_num)]
             if {$vals(t:$x:$y:param:bool) == "true"} {
@@ -766,4 +824,8 @@ proc Apol_Analysis_polsearch::_renderResults {f results} {
         $tree selection set $first_node
         $tree see $first_node
     }
+}
+
+proc pa {} {
+    parray ::Apol_Analysis_polsearch::vals
 }
