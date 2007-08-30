@@ -120,8 +120,18 @@ typedef uint32_t size_t;
 
 #ifdef SWIGPYTHON
 
-%template(opVector) std::vector<polsearch_op>;
-%template(testCondVector) std::vector<polsearch_test_cond>;
+%define python_enum_vector(T)
+	%typemap(out) std::vector<T> {
+		$result = PyList_New(0);
+		for (std::vector<T>::iterator i = $1.begin(); i != $1.end(); i++)
+		{
+			PyList_Append($result, PyInt_FromLong(*i));
+		}
+	}
+%enddef
+
+python_enum_vector(polsearch_op);
+python_enum_vector(polsearch_test_cond);
 
 #endif  // end of Python specific code
 
@@ -163,7 +173,7 @@ SWIGEXPORT int Tpolsearch_Init(Tcl_Interp *interp) {
 	Tcl_SetObjResult(interp, Tcl_NewLongObj((long) $1));
 }
 
-%define enum_vector(T)
+%define tcl_enum_vector(T)
 %typemap(out) std::vector<T> {
 	for (unsigned int i=0; i<$1.size(); i++) {
                Tcl_ListObjAppendElement(interp, $result, \
@@ -172,8 +182,8 @@ SWIGEXPORT int Tpolsearch_Init(Tcl_Interp *interp) {
 }
 %enddef
 
-enum_vector(polsearch_op);
-enum_vector(polsearch_test_cond);
+tcl_enum_vector(polsearch_op);
+tcl_enum_vector(polsearch_test_cond);
 
 #endif  // end of Tcl specific code
 

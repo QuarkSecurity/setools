@@ -62,8 +62,8 @@ static void create_query(void)
 	polsearch_regex_parameter *rxp = new polsearch_regex_parameter("^[a-m]");
 	CU_ASSERT_PTR_NOT_NULL_FATAL(rxp);
 	nc.param(rxp);
-	CU_ASSERT(nt.isContinueable() == false);
-	vector < polsearch_test_cond > valid = bq->getValidTests();
+	CU_ASSERT(polsearch_is_test_continueable(nt.testCond()) == false);
+	vector < polsearch_test_cond > valid = polsearch_get_valid_tests(bq->elementType());
 	CU_ASSERT(valid.size() == 2);
 	polsearch_test & st = bq->addTest(POLSEARCH_TEST_STATE);
 	CU_ASSERT(st.testCond() == POLSEARCH_TEST_STATE);
@@ -127,7 +127,7 @@ static void strexpr_query(void)
 	CU_ASSERT_PTR_NOT_NULL_FATAL(sxp);
 	nc.param(sxp);
 
-	CU_ASSERT(nt.isContinueable() == false);
+	CU_ASSERT(polsearch_is_test_continueable(nt.testCond()) == false);
 
 	vector < polsearch_result > res_v = bq->run(sp, NULL);
 	CU_ASSERT(!res_v.empty());
