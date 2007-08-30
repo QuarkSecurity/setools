@@ -32,7 +32,7 @@ proc Apol_Prefs::create {} {
         title_font "Helvetica 10 bold italic"
         active_bg white
         active_fg black
-        select_bg gray
+        select_bg lightblue
         highlight_fg red
         top_width 1000
         top_height 700
