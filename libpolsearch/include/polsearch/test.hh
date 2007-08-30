@@ -76,6 +76,8 @@ class polsearch_test
 	 * Add a criterion to check for the given condition.
 	 * @param opr The comparison operator to use.
 	 * @param neg If \a true, invert the logic result of \a opr.
+	 * @return A reference to the newly added criterion. This reference is
+	 * only valid until the next call to addCriterion().
 	 * @exception std::invalid_argument The given criterion is not valid for
 	 * the element tested and/or the current condition. The criterion will not
 	 * be changed if it cannot successfully be added to the test.

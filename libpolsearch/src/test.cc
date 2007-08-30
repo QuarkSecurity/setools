@@ -460,8 +460,6 @@ static vector < const void *>get_test_candidates(const apol_policy_t * policy, c
 		throw runtime_error("Impossible case reached.");
 	}
 	}
-	if (!candidates && ret_v.empty())
-		throw runtime_error("No match for requested candidates.");
 	//note: get_size of NULL returns 0
 	for (size_t i = 0; i < apol_vector_get_size(candidates); i++)
 		ret_v.push_back(apol_vector_get_element(candidates, i));

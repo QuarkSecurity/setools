@@ -50,8 +50,9 @@ namespace sechecker
 		 * SECHK_OUTPUT_DEFAULT, use each module's output mode instead.
 		 * @param min_sev The minimum severity of a module to report its results. Output
 		 * for all modules in the report with severity less than this value will be supressed.
+		 * @exception std::invalid_argument Invalid output mode or severity requested.
 		 */
-		report(const sechecker * top, output_format out_mode = SECHK_OUTPUT_DEFAULT, severity min_sev = SECHK_SEV_LOW);
+		report(const sechecker * top, output_format out_mode = SECHK_OUTPUT_DEFAULT, severity min_sev = SECHK_SEV_LOW) throw(std::invalid_argument);
 		/**
 		 * Copy a report.
 		 * @param rhs The report to copy.
@@ -72,8 +73,9 @@ namespace sechecker
 		 * @param mod_name The name of the module with results to add.
 		 * @exception std::out_of_range No module with name \a mod_name exists.
 		 * @exception std::runtime_error Module \a mod_name has not been run.
+		 * @exception std::invalid_argument Results for \a mod_name
 		 */
-		void addResults(std::string mod_name) throw(std::out_of_range, std::runtime_error);
+		void addResults(std::string mod_name) throw(std::out_of_range, std::runtime_error, std::invalid_argument);
 
 		/**
 		 * Get the preferred level of output for the report.
@@ -85,8 +87,9 @@ namespace sechecker
 		 * @param out_mode The level of output to use for all modules. If \a out_mode is
 		 * SECHK_OUTPUT_DEFAULT, use each module's output mode instead.
 		 * @return The level of output set.
+		 * @exception std::invalid_argument Invalid output mode requested.
 		 */
-		output_format outputMode(output_format out_mode);
+		output_format outputMode(output_format out_mode) throw(std::invalid_argument);
 
 		/**
 		 * Get the minimum severity of a module to report its results.
@@ -97,8 +100,9 @@ namespace sechecker
 		 * Get the minimum severity of a module to report its results.
 		 * @param min_sev The severity level to set.
 		 * @return The severity level set.
+		 * @exception std::invalid_argument Invalid severity requested.
 		 */
-		severity minSev(severity min_sev);
+		severity minSev(severity min_sev) throw(std::invalid_argument);
 
 	      private:
 		 std::map < std::string, const result *>_results;	//!< The set of results to include in the report.

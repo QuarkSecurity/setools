@@ -61,7 +61,8 @@ class polsearch_query
 	/**
 	 * Add a test to the query.
 	 * @param test_cond The condition to be tested.
-	 * @return A reference to the newly created and added test.
+	 * @return A reference to the newly created and added test. This reference
+	 * is only valid until the next call to addTest().
 	 * @exception std::invalid_argument Given condition is not valid for
 	 * the element type queried.
 	 */
@@ -69,7 +70,8 @@ class polsearch_query
 
 	/**
 	 * Run the query.
-	 * @param policy The policy containing the elements to match.
+	 * @param policy The policy containing the elements to match. If the query
+	 * includes tests that check rules, all rules should be loaded for this policy.
 	 * @param fclist A file_contexts list to optionally use for tests that
 	 * match file_context entries. It is an error to not provide \a fclist
 	 * if a test matches file_context entries.

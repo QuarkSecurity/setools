@@ -96,25 +96,14 @@ bool polsearch_string_expression_parameter::match(const std::string & str,
 	{
 		throw std::invalid_argument("String to match can not be empty.");
 	}
-	if (str == "X")
+	if (exists(_expression, "X"))
 	{
-		for (vector < string >::const_iterator i = Xnames.begin(); i != Xnames.end(); i++)
+		if (exists(Xnames, str))
 		{
-			if (*i == "")
-			{
-				throw std::invalid_argument("String to match can not be empty.");
-			}
-			if (exists(_expression, *i))
-			{
-				return true;
-			}
+			return true;
 		}
-		return false;
 	}
-	else
-	{
-		return exists(_expression, str);
-	}
+	return exists(_expression, str);
 }
 
 bool polsearch_string_expression_parameter::match(const std::vector < std::string > &test_list,
