@@ -73,7 +73,7 @@ namespace sechecker
 		 * @param mod_name The name of the module with results to add.
 		 * @exception std::out_of_range No module with name \a mod_name exists.
 		 * @exception std::runtime_error Module \a mod_name has not been run.
-		 * @exception std::invalid_argument Results for \a mod_name
+		 * @exception std::invalid_argument Results for \a mod_name have already been added.
 		 */
 		void addResults(std::string mod_name) throw(std::out_of_range, std::runtime_error, std::invalid_argument);
 

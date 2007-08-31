@@ -66,13 +66,13 @@ namespace sechecker
 		 * @param out The stream to which to write output.
 		 * @return \a out after writing.
 		 */
-		 std::ostream & list_modules(std::ostream & out);
+		 std::ostream & listModules(std::ostream & out);
 		/**
 		 * Output a list of all profiles currently loaded and their brief descriptions.
 		 * @param out The stream to which to write output.
 		 * @return \a out after writing.
 		 */
-		 std::ostream & list_profiles(std::ostream & out);
+		 std::ostream & listProfiles(std::ostream & out);
 
 		/**
 		 * Get the set of known profiles, keyed by name.
@@ -83,8 +83,9 @@ namespace sechecker
 		 * Add a profile to the set of known profiles.
 		 * @param prof The profile to add. (It will be duplicated.)
 		 * @return The profile added.
+		 * @exception std::invalid_argument A profile with the same name already exists.
 		 */
-		const profile & addProfile(const profile & prof);
+		const profile & addProfile(const profile & prof) throw(std::invalid_argument);
 
 		/**
 		 * Get the name of the currently active profile.
@@ -98,19 +99,37 @@ namespace sechecker
 		 * Set to empty string to deacitivate all profiles.
 		 * @return The name of the profile set as active or empty string if no
 		 * profile is active.
+		 * @exception std::out_of_range No profile with name \a prof_name exists,
+		 * or the profile specifies one or more modules which do not exist.
+		 * @exception std::invalid_argument One or more options specified by the
+		 * profile are invalid.
 		 */
-		const std::string & activeProfile(const std::string & prof_name) throw(std::out_of_range);
+		const std::string & activeProfile(const std::string & prof_name) throw(std::out_of_range, std::invalid_argument);
 
 		/**
 		 * Get the set of loaded modules.
 		 * @return The set of loaded modules.
 		 */
-		 std::map < std::string, module * >&modules();
+		 std::map < std::string, std::pair < module * , void * > >&modules();
 		/**
 		 * Get the set of loaded modules.
 		 * @return The set of loaded modules.
 		 */
-		const std::map < std::string, module * >&modules() const;
+		const std::map < std::string, std::pair < module * , void * > >&modules() const;
+
+		/**
+		 * Load a module. If the module is already loaded this does nothing.
+		 * @param name_ The name of the module to load.
+		 * @post The module is in the set of loaded modules.
+		 * @exception std::ios_base::failure Error loading the module from file.
+		 */
+		void loadModule(std::string name_) throw(std::ios_base::failure);
+
+		/**
+		 * Unload all modules and close any handles to them.
+		 * @post \a _modules will be empty.
+		 */
+		void close();
 
 		/**
 		 * Run a list of modules. All listed modules will be run only once
@@ -213,9 +232,9 @@ namespace sechecker
 		 * @return The module added.
 		 * @exception std::invalid_argument A module with the same name already exists.
 		 */
-		const module & addModule(const module & mod) throw(std::invalid_argument);
+		const module * addModule(module * mod) throw(std::invalid_argument);
 
-		 std::map < std::string, module * >_modules;	//!< The set of loaded modules.
+		 std::map < std::string, std::pair < module *, void * > >_modules;	//!< The set of loaded modules and module handles.
 		 std::map < std::string, profile > _profiles;	//!< The set of known profiles.
 		 std::string _active_profile;	//!< The name of the currently active profile.
 		sefs_fclist *_fclist;  //!< The file contexts list to use when running modules.
@@ -229,5 +248,6 @@ namespace sechecker
 #include "option.hh"
 #include "profile.hh"
 #include "result.hh"
+#include "report.hh"
 
 #endif				       /* SECHECKER_HH */

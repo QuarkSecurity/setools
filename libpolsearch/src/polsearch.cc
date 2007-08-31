@@ -258,6 +258,7 @@ bool validate_operator(polsearch_element elem_type, polsearch_test_cond cond, po
 	switch (cond)
 	{
 	case POLSEARCH_TEST_NAME:
+	case POLSEARCH_TEST_COMMON:
 	{
 		if (opr == POLSEARCH_OP_IS || opr == POLSEARCH_OP_MATCH_REGEX)
 			return true;
@@ -273,7 +274,6 @@ bool validate_operator(polsearch_element elem_type, polsearch_test_cond cond, po
 	case POLSEARCH_TEST_ROLES:
 	case POLSEARCH_TEST_TYPES:
 	case POLSEARCH_TEST_USERS:
-	case POLSEARCH_TEST_COMMON:
 	case POLSEARCH_TEST_PERMISSIONS:
 	case POLSEARCH_TEST_CATEGORIES:
 	{

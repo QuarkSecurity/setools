@@ -116,6 +116,24 @@ namespace sechecker
 		~profile();
 
 		/**
+		 * Get the name of the profile.
+		 * @return The name of the profile.
+		 */
+		const std::string & name() const;
+
+		/**
+		 * Get the version of sechecker required for the profile.
+		 * @return The version of sechecker required for the profile.
+		 */
+		const std::string & version() const;
+
+		/**
+		 * Get the description of the profile.
+		 * @return The description of the profile.
+		 */
+		const std::string & description() const;
+
+		/**
 		 * Get a list of all modules specified in the profile.
 		 * @return A list of all modules specified in the profile.
 		 */
@@ -125,8 +143,8 @@ namespace sechecker
 		 * @pre All modules specified are loaded.
 		 * @param top The sechecker object containing the modules
 		 * specified in the profile.
-		 * @post Only modules specified in the profile are selected; all
-		 * options for those modules are overridden by those in the profile.
+		 * @post All options for the specified modules are overridden by
+		 * those in the profile.
 		 * @exception std::invalid_argument One or more of the values given
 		 * for output or options is invalid.
 		 * @exception std::out_of_range One or more of the modules specified
