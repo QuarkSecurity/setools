@@ -65,7 +65,7 @@ proc Apol_Analysis_polsearch::create {options_frame} {
     set widgets(bb) [ButtonBox $options_frame.bb -homogeneous 1 -padx 4 \
                          -state disabled]
     $widgets(bb) add -text "Continue" -state disabled \
-        -command Apol_Analysis_polsearch::_add_child
+        -command Apol_Analysis_polsearch::_add_child_button
     $widgets(bb) add -text "Add" -state disabled \
         -command Apol_Analysis_polsearch::_add
     $widgets(bb) add -text "Remove" -state disabled
@@ -119,14 +119,15 @@ proc Apol_Analysis_polsearch::switchTab {query_options} {
     variable vals
     array set vals $query_options
     _reinitializeWidgets
-    # FIX ME
+    _toggleQuery init
 }
 
 proc Apol_Analysis_polsearch::saveQuery {channel} {
     variable vals
     variable widgets
+    set vals(serialized_tests) [_serialize_tests]
     foreach {key value} [array get vals] {
-        switch -glob $key -- {
+        switch -glob -- $key {
             match_label -
             prev_query -
             query_label -
@@ -143,6 +144,7 @@ proc Apol_Analysis_polsearch::saveQuery {channel} {
 proc Apol_Analysis_polsearch::loadQuery {channel} {
     variable vals
 
+    _reinitializeVals
     while {[gets $channel line] >= 0} {
         set line [string trim $line]
         # Skip empty lines and comments
@@ -155,10 +157,8 @@ proc Apol_Analysis_polsearch::loadQuery {channel} {
         set vals($key) $value
     }
 
-    set vals(prev_query) {}
     _reinitializeWidgets
-    # FIX ME
-    _toggleMatch
+    _toggleQuery init
 }
 
 proc Apol_Analysis_polsearch::getTextWidget {tab} {
@@ -294,7 +294,7 @@ proc Apol_Analysis_polsearch::_staticInitializeVals {} {
                           $::QPOL_RULE_AUDITALLOW auditallow \
                           $::QPOL_RULE_DONTAUDIT dontaudit \
                           $::QPOL_RULE_NEVERALLOW neverallow]
-    variable terules [list $::QPOL_RULE_TYPE_TRANS type_trans \
+    variable terules [list $::QPOL_RULE_TYPE_TRANS type_transition \
                           $::QPOL_RULE_TYPE_MEMBER type_member \
                           $::QPOL_RULE_TYPE_CHANGE type_change]
 }
@@ -306,6 +306,7 @@ proc Apol_Analysis_polsearch::_reinitializeVals {} {
         query {}
         query_label {}
         prev_query {}
+        serialized_tests {}
     }
     set vals(match) $::POLSEARCH_MATCH_ALL
     _toggleMatch
@@ -341,9 +342,14 @@ proc Apol_Analysis_polsearch::_toggleQuery {state} {
     set widgets(line_selected) {0 0}
 
     if {$state == "init"} {
-        # FIX ME: create all rules widgets for the given query, based
-        # upon info from file
+        # create all widgets to represent existing tests stored in vals
+        if {[info exists vals(serialized_tests)]} {
+            foreach test $vals(serialized_tests) {
+                _add $test
+            }
+        }
     } else {
+        # clear away all existing tests, then add the initial test
         _add
     }
 
@@ -363,7 +369,7 @@ proc Apol_Analysis_polsearch::_toggleMatch {} {
 }
 
 # Called when the user clicks on the add button.
-proc Apol_Analysis_polsearch::_add {} {
+proc Apol_Analysis_polsearch::_add {{existing_test {}}} {
     variable tests
     variable vals
     variable widgets
@@ -409,18 +415,33 @@ proc Apol_Analysis_polsearch::_add {} {
             -variable Apol_Analysis_polsearch::vals(t:$x:test)
     }
     set vals(t:$x:test_label) $tests([lindex $valid_tests 0])
-    set vals(t:$x:test) [lindex $valid_tests 0]
+
     set vals(t:$x:test_prev) $::POLSEARCH_TEST_NONE
-    _test_selected $x $op_menu $pm
+    if {$existing_test == {}} {
+        set vals(t:$x:test) [lindex $valid_tests 0]
+        _test_selected $x $op_menu $pm
+    } else {
+        set vals(t:$x:test) [lindex $existing_test 0]
+        _test_selected $x $op_menu $pm [lindex $existing_test 1]
+        foreach child [lrange $existing_test 2 end] {
+            _add_child $x $child
+            
+        }
+    }
 }
 
 # Called when the user clicks on the continue button.
-proc Apol_Analysis_polsearch::_add_child {} {
+proc Apol_Analysis_polsearch::_add_child_button {} {
+    variable widgets
+    set x [lindex $widgets(line_selected) 0]
+    _add_child $x
+}
+
+proc Apol_Analysis_polsearch::_add_child {x {existing_op {}}} {
     variable tests
     variable vals
     variable widgets
 
-    set x [lindex $widgets(line_selected) 0]
     set y $widgets(t:$x:next_op)
     incr widgets(t:$x:next_op)
 
@@ -448,26 +469,10 @@ proc Apol_Analysis_polsearch::_add_child {} {
     }
     $pm compute_size
 
-    variable ops
-    variable neg_ops
-    set valid_ops [polsearch_get_valid_operators $vals(query) $vals(t:$x:test)]
-    foreach o $valid_ops {
-        $op_menu add radiobutton -label $ops($o) -value [list $o 0] \
-            -command [list Apol_Analysis_polsearch::_op_selected $pm $x $y] \
-            -variable Apol_Analysis_polsearch::vals(t:$x:$y:op)
-        $op_menu add radiobutton -label $neg_ops($o) -value [list $o 1] \
-            -command [list Apol_Analysis_polsearch::_op_selected $pm $x $y] \
-            -variable Apol_Analysis_polsearch::vals(t:$x:$y:op)
-    }
-    set vals(t:$x:$y:op_label) $ops([lindex $valid_ops 0])
-    set vals(t:$x:$y:op) [list [lindex $valid_ops 0] 0]
-    set vals(t:$x:$y:op_prev) {$::POLSEARCH_OP_NONE 0}
-    _op_selected $pm $x $y
+    _add_op_common $x $y $op_menu $pm $existing_op
 }
 
-proc Apol_Analysis_polsearch::_test_selected {x op_menu pm} {
-    variable neg_ops
-    variable ops
+proc Apol_Analysis_polsearch::_test_selected {x op_menu pm {existing_op {}}} {
     variable tests
     variable vals
     variable widgets
@@ -488,21 +493,37 @@ proc Apol_Analysis_polsearch::_test_selected {x op_menu pm} {
 
     set vals(t:$x:test_prev) $vals(t:$x:test)
     set vals(t:$x:test_label) $tests($vals(t:$x:test))
-
-    set valid_ops [polsearch_get_valid_operators $vals(query) $vals(t:$x:test)]
     $op_menu delete 0 end
+    _add_op_common $x 0 $op_menu $pm $existing_op
+}
+
+proc Apol_Analysis_polsearch::_add_op_common {x y op_menu pm existing_op} {
+    variable vals
+
+    variable neg_ops
+    variable ops
+    set valid_ops [polsearch_get_valid_operators $vals(query) $vals(t:$x:test)]
     foreach o $valid_ops {
         $op_menu add radiobutton -label $ops($o) -value [list $o 0] \
-            -command [list Apol_Analysis_polsearch::_op_selected $pm $x 0] \
-            -variable Apol_Analysis_polsearch::vals(t:$x:0:op)
+            -command [list Apol_Analysis_polsearch::_op_selected $pm $x $y] \
+            -variable Apol_Analysis_polsearch::vals(t:$x:$y:op)
         $op_menu add radiobutton -label $neg_ops($o) -value [list $o 1] \
-            -command [list Apol_Analysis_polsearch::_op_selected $pm $x 0] \
-            -variable Apol_Analysis_polsearch::vals(t:$x:0:op)
+            -command [list Apol_Analysis_polsearch::_op_selected $pm $x $y] \
+            -variable Apol_Analysis_polsearch::vals(t:$x:$y:op)
     }
-    set vals(t:$x:0:op_label) $ops([lindex $valid_ops 0])
-    set vals(t:$x:0:op) [list [lindex $valid_ops 0] 0]
-    set vals(t:$x:0:op_prev) {$::POLSEARCH_OP_NONE 0}
-    _op_selected $pm $x 0
+
+    set vals(t:$x:$y:op_prev) {$::POLSEARCH_OP_NONE 0}
+    if {$existing_op == {}} {
+        set vals(t:$x:$y:op) [list [lindex $valid_ops 0] 0]
+    } else {
+        set vals(t:$x:$y:op) [lrange $existing_op 0 1]
+    }
+
+    foreach param [lrange $existing_op 2 end] {
+        foreach {param_name v} $param {break}
+        set vals(t:$x:$y:param:$param_name) $v
+    }
+    _op_selected $pm $x $y
 }
 
 proc Apol_Analysis_polsearch::_op_selected {pm x y} {
@@ -661,6 +682,12 @@ proc Apol_Analysis_polsearch::_param_avrule_type {action x y args} {
             set vals(t:$x:$y:param:avrule_label) $new_label
         }
         valid {
+            if {$vals(t:$x:$y:param:avrule) == $::QPOL_RULE_NEVERALLOW} {
+                ApolTop::loadNeverAllows
+                if {![ApolTop::is_capable "neverallow"]} {
+                    return "The current policy does not support neverallow searching."
+                }
+            }
             return {}
         }
         new_obj {
@@ -727,7 +754,7 @@ proc Apol_Analysis_polsearch::_param_bool {action x y args} {
             return {}
         }
         new_obj {
-            new_polsearch_number_parameter $vals(t:$x:$y:param:bool)
+            new_polsearch_bool_parameter $vals(t:$x:$y:param:bool)
         }
     }
 }
@@ -774,6 +801,28 @@ proc Apol_Analysis_polsearch::_param_range {action x y args} {
 
 #################### functions that do analyses ####################
 
+proc Apol_Analysis_polsearch::_serialize_tests {} {
+    variable vals
+    set res {}
+    foreach key [lsort [array names vals t:*:test]] {
+        set x [lindex [split $key :] 1]
+        set test $vals(t:$x:test)
+        foreach key [lsort [array names vals t:$x:*:op]] {
+            set y [lindex [split $key :] 2]
+            set op $vals($key)
+            lappend op [list avrule $vals(t:$x:$y:param:avrule)]
+            lappend op [list bool $vals(t:$x:$y:param:bool)]
+            lappend op [list regex $vals(t:$x:$y:param:regex)]
+            lappend op [list str_expr $vals(t:$x:$y:param:str_expr)]
+            lappend op [list terule $vals(t:$x:$y:param:terule)]
+# FIX ME: serialize levels and ranges
+            lappend test $op
+        }
+        lappend res $test
+    }
+    set res
+}
+
 proc Apol_Analysis_polsearch::_checkParams {} {
     variable param_types
     variable vals
@@ -792,6 +841,7 @@ proc Apol_Analysis_polsearch::_checkParams {} {
             return $r
         }
     }
+    set vals(serialized_tests) [_serialize_tests]
     return {}  ;# all parameters passed, now ready to do search
 }
 

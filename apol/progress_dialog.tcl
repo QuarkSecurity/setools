@@ -35,7 +35,11 @@ proc Apol_Progress_Dialog::wait {title initialtext lambda} {
     if {$text_width < 32} {
         set text_width 32
     }
-    ProgressDlg .apol_progress -title $title \
+    set i 0
+    while {[winfo exists .apol_progress$i]} {
+        incr i
+    }
+    ProgressDlg .apol_progress$i -title $title \
         -type normal -stop {} -separator 1 -parent . -maximum 2 \
         -width $text_width -textvariable Apol_Progress_Dialog::text \
         -variable Apol_Progress_Dialog::val
@@ -50,7 +54,7 @@ proc Apol_Progress_Dialog::wait {title initialtext lambda} {
     set waiting 0
 
     . configure -cursor $orig_cursor
-    destroy .apol_progress
+    destroy .apol_progress$i
     update idletasks
     return -code $catchval $retval
 }
