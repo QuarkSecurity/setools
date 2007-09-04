@@ -110,12 +110,12 @@ namespace sechecker
 		 * Get the set of loaded modules.
 		 * @return The set of loaded modules.
 		 */
-		 std::map < std::string, std::pair < module * , void * > >&modules();
+		 std::map < std::string, std::pair < module *, void * > >&modules();
 		/**
 		 * Get the set of loaded modules.
 		 * @return The set of loaded modules.
 		 */
-		const std::map < std::string, std::pair < module * , void * > >&modules() const;
+		const std::map < std::string, std::pair < module *, void * > >&modules() const;
 
 		/**
 		 * Load a module. If the module is already loaded this does nothing.
@@ -232,7 +232,7 @@ namespace sechecker
 		 * @return The module added.
 		 * @exception std::invalid_argument A module with the same name already exists.
 		 */
-		const module * addModule(module * mod) throw(std::invalid_argument);
+		const module *addModule(module * mod) throw(std::invalid_argument);
 
 		 std::map < std::string, std::pair < module *, void * > >_modules;	//!< The set of loaded modules and module handles.
 		 std::map < std::string, profile > _profiles;	//!< The set of known profiles.

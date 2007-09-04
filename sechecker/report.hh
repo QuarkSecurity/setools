@@ -52,7 +52,8 @@ namespace sechecker
 		 * for all modules in the report with severity less than this value will be supressed.
 		 * @exception std::invalid_argument Invalid output mode or severity requested.
 		 */
-		report(const sechecker * top, output_format out_mode = SECHK_OUTPUT_DEFAULT, severity min_sev = SECHK_SEV_LOW) throw(std::invalid_argument);
+		report(const sechecker * top, output_format out_mode = SECHK_OUTPUT_DEFAULT, severity min_sev =
+		       SECHK_SEV_LOW) throw(std::invalid_argument);
 		/**
 		 * Copy a report.
 		 * @param rhs The report to copy.

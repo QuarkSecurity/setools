@@ -207,7 +207,6 @@ namespace std {
 	%template(resultVector) vector<polsearch_result>;
 	%template(proofVector) vector<polsearch_proof>;
 	%template(stringVector) vector<string>;
-	%template(intVector) vector<int>;
 }
 
 #define SWIG_FRIENDS
@@ -236,5 +235,3 @@ const char *libpolsearch_get_version (void);
 %include <polsearch/string_expression_parameter.hh>
 %include <polsearch/result.hh>
 %include <polsearch/proof.hh>
-
-//template std::vector<polsearch_test_cond>;
