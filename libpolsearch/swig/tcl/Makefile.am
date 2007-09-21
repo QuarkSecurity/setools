@@ -33,6 +33,7 @@ $(wrappedso_DATA): $(BUILT_SOURCES)
 
 $(package_SCRIPTS): $(wrappedso_DATA)
 	echo "pkg_mkIndex . $^" | LD_LIBRARY_PATH=$(top_builddir)/libqpol/src:$(top_builddir)/libapol/src:$(top_builddir)/libsefs/src:$(top_builddir)/libpolsearch/src $(TCLSH_PROG)
+	chmod 644 $@
 	$(mkdir_p) polsearch
 	cp $(wrappedso_DATA) $@ polsearch
 
