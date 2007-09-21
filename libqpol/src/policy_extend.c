@@ -64,7 +64,7 @@
 #define QPOL_SYN_RULE_TABLE_HASH(rule_key) \
 (((((rule_key->source_val & 0xff) << 8) | (rule_key->target_val & 0xff)) ^ \
  (rule_key->class_val & 0xf) ^ \
- ((int) rule_key->cond & 0xfff0)) & QPOL_SYN_RULE_TABLE_MASK)
+ ((int) ((size_t) rule_key->cond) & 0xfff0)) & QPOL_SYN_RULE_TABLE_MASK)
 
 typedef struct qpol_syn_rule_key
 {
