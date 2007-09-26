@@ -68,7 +68,8 @@ proc Apol_Analysis_polsearch::create {options_frame} {
         -command Apol_Analysis_polsearch::_add_child_button
     $widgets(bb) add -text "Add" -state disabled \
         -command Apol_Analysis_polsearch::_add
-    $widgets(bb) add -text "Remove" -state disabled
+    $widgets(bb) add -text "Remove" -state disabled \
+        -command Apol_Analysis_polsearch::_remove
     pack $widgets(bb) -expand 0 -fill none -anchor e -padx 4
 }
 
@@ -416,6 +417,7 @@ proc Apol_Analysis_polsearch::_add {{existing_test {}}} {
     }
     set vals(t:$x:test_label) $tests([lindex $valid_tests 0])
 
+    set vals(t:$x:num_childops) 0
     set vals(t:$x:test_prev) $::POLSEARCH_TEST_NONE
     if {$existing_test == {}} {
         set vals(t:$x:test) [lindex $valid_tests 0]
@@ -425,7 +427,7 @@ proc Apol_Analysis_polsearch::_add {{existing_test {}}} {
         _test_selected $x $op_menu $pm [lindex $existing_test 1]
         foreach child [lrange $existing_test 2 end] {
             _add_child $x $child
-            
+
         }
     }
 }
@@ -444,6 +446,7 @@ proc Apol_Analysis_polsearch::_add_child {x {existing_op {}}} {
 
     set y $widgets(t:$x:next_op)
     incr widgets(t:$x:next_op)
+    incr vals(t:$x:num_childops)
 
     set f $widgets(t:$x:frame)
     set f0 [frame $f.f$y -bd 2]
@@ -491,6 +494,7 @@ proc Apol_Analysis_polsearch::_test_selected {x op_menu pm {existing_op {}}} {
     }
     array unset vals t:$x:\[1-9\]*:*
 
+    set vals(t:$x:num_childops) 0
     set vals(t:$x:test_prev) $vals(t:$x:test)
     set vals(t:$x:test_label) $tests($vals(t:$x:test))
     $op_menu delete 0 end
@@ -553,39 +557,92 @@ proc Apol_Analysis_polsearch::_op_selected {pm x y} {
     $pm raise $validParam
 }
 
+proc Apol_Analysis_polsearch::_remove {} {
+    variable vals
+    variable widgets
+
+    foreach {x y} $widgets(line_selected) {break}
+    if {$y == 0} {
+        destroy $widgets(t:$x:frame)
+        array unset widgets t:$x:*
+        array unset vals t:$x:*
+    } else {
+        destroy $widgets(t:$x:$y:frame)
+        array unset widgets t:$x:$y:*
+        array unset vals t:$x:$y:*
+        incr vals(t:$x:num_childops) -1
+    }
+
+    # select the next line on the display
+    if {$y == 0} {
+        for {set next_x [expr {$x + 1}]} {$next_x < $widgets(next_test)} {incr next_x} {
+            if {[info exists widgets(t:$next_x:frame)]} {
+                _line_selected $next_x 0
+                return
+            }
+        }
+        for {set next_x [expr {$x - 1}]} {$next_x >= 0} {incr next_x -1} {
+            if {[info exists widgets(t:$next_x:frame)]} {
+                _line_selected $next_x 0
+                return
+            }
+        }
+    } else {
+        for {set next_y [expr {$y + 1}]} {$next_y < $widgets(t:$x:next_op)} {incr next_y} {
+            if {[info exists widgets(t:$x:$next_y:frame)]} {
+                _line_selected $x $next_y
+                return
+            }
+        }
+        for {set next_y [expr {$y - 1}]} {$next_y >= 0} {incr next_y -1} {
+            if {[info exists widgets(t:$x:$next_y:frame)]} {
+                _line_selected $x $next_y
+                return
+            }
+        }
+    }
+    _line_selected -1 -1
+}
+
 proc Apol_Analysis_polsearch::_line_selected {x y} {
     variable vals
     variable widgets
 
     foreach {old_x old_y} $widgets(line_selected) {break}
-    if {[info exists widgets(t:$old_x:$old_y:frame)]} {
-        $widgets(t:$old_x:$old_y:frame) configure -bg [Apol_Prefs::getPref active_bg] -relief flat
-    }
-    if {$old_y == 0 && [info exists widgets(t:$old_x:frame)]} {
-        $widgets(t:$old_x:frame) configure -bg [Apol_Prefs::getPref active_bg] -relief flat
-    }
-
-    $widgets(t:$x:$y:frame) configure -bg [Apol_Prefs::getPref select_bg]
-    if {$y == 0} {
-        $widgets(t:$x:frame) configure -bg [Apol_Prefs::getPref select_bg] -relief groove
-    } else {
-        $widgets(t:$x:$y:frame) configure -relief groove
+    if {$old_x >= 0} {
+        if {[info exists widgets(t:$old_x:$old_y:frame)]} {
+            $widgets(t:$old_x:$old_y:frame) configure -bg [Apol_Prefs::getPref active_bg] -relief flat
+        }
+        if {$old_y == 0 && [info exists widgets(t:$old_x:frame)]} {
+            $widgets(t:$old_x:frame) configure -bg [Apol_Prefs::getPref active_bg] -relief flat
+        }
     }
 
+    $widgets(bb) itemconfigure 0 -state disabled
 
-    # enable continue button only if the current test is continuable
-    if {[polsearch_is_test_continueable $vals(t:$x:test)]} {
-        $widgets(bb) itemconfigure 0 -state normal
-    } else {
-        $widgets(bb) itemconfigure 0 -state disabled
+    if {$x >= 0} {
+        $widgets(t:$x:$y:frame) configure -bg [Apol_Prefs::getPref select_bg]
+        if {$y == 0} {
+            $widgets(t:$x:frame) configure -bg [Apol_Prefs::getPref select_bg] -relief groove
+        } else {
+            $widgets(t:$x:$y:frame) configure -relief groove
+        }
+
+        # enable continue button only if the current test is continuable
+        if {[polsearch_is_test_continueable $vals(t:$x:test)]} {
+            $widgets(bb) itemconfigure 0 -state normal
+        }
     }
 
     # always enable add button
     $widgets(bb) itemconfigure 1 -state normal
 
     # maybe enable remove button under certain circumstances
-    $widgets(bb) itemconfigure 2 -state disabled
-    # FIX ME
+    if {$x >= 0 && ($y > 0 || $vals(t:$x:num_childops) == 0)} {
+        $widgets(bb) itemconfigure 2 -state normal
+    } else {
+        $widgets(bb) itemconfigure 2 -state disabled
+    }
 
     set widgets(line_selected) [list $x $y]
 }
