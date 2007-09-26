@@ -206,7 +206,7 @@ namespace sechecker
 		 * @return The policy set.
 		 * @exception std::invalid_argument The provided fclist and policy are not compatiple.
 		 */
-		apol_policy_t *policy(apol_policy_t * pol);
+		apol_policy_t *policy(apol_policy_t * pol) throw(std::invalid_argument);
 
 		/**
 		 * Get the file contexts list used when running modules.
