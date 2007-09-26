@@ -144,32 +144,23 @@ namespace sechecker
 		for (vector < string >::const_iterator i = mod_names.begin(); i != mod_names.end(); i++)
 			runModules(*i);
 	}
-		/**
-	 * Run a single module (and any of its dependencies).
-	 * This function will only run a module once including any previous calls
-	 * to runModules().
-	 * @param mod_name Name of the module to run.
-	 * @post The module with name \a mod_name will have a valid and complete result.
-	 * @exception std::out_of_range No module with name \a mod_name exists.
-	 * @exception std::runtime_error Could not complete running of module \a mod_name
-	 * or one of its dependencies.
-		 */
+
 	void sechecker::runModules(const std::string & mod_name) throw(std::out_of_range, std::runtime_error)
 	{
-		map<string, pair<module*, void* > >::iterator iter = _modules.find(mod_name);
+		map < string, pair < module *, void * > >::iterator iter = _modules.find(mod_name);
 		if (iter == _modules.end())
 		{
 			throw out_of_range("No module with name " + mod_name + " exists");
 		}
-		module * mod = iter->second.first;
-		vector<string> dep_stack;
+		module *mod = iter->second.first;
+		vector < string > dep_stack;
 		dep_stack.push_back(mod->name());
-		for (vector<string>::iterator i = dep_stack.begin(); i != dep_stack.end(); i++)
+		for (vector < string >::iterator i = dep_stack.begin(); i != dep_stack.end(); i++)
 		{
-			for (vector<string>::const_iterator j = mod->dependencies().begin(); j != mod->dependencies().end(); j++)
+			for (vector < string >::const_iterator j = mod->dependencies().begin(); j != mod->dependencies().end(); j++)
 			{
 				bool found = false;
-				for (vector<string>::iterator k = dep_stack.begin(); k != dep_stack.end(); k++)
+				for (vector < string >::iterator k = dep_stack.begin(); k != dep_stack.end(); k++)
 					if (*k == *j)
 						found = true;
 				if (!found)
@@ -177,7 +168,7 @@ namespace sechecker
 			}
 		}
 
-		for (vector<string>::reverse_iterator i = dep_stack.rend(); i != dep_stack.rbegin(); i--)
+		for (vector < string >::reverse_iterator i = dep_stack.rend(); i != dep_stack.rbegin(); i--)
 		{
 			iter = _modules.find(*i);
 			if (iter == _modules.end())
@@ -197,43 +188,33 @@ namespace sechecker
 		runModules(v);
 	}
 
-		/**
-	 * Create a report object for the listed modules.
-	 * @param mod_names List of the names of the modules to include in the report.
-	 * @return A newly created report object. The caller is responsible for calling
-	 * delete on the returned object.
-	 * @exception std::out_of_range A module in the list does not exist.
-	 * @exception std::runtime_error One or more of the list modules has not been run.
-		 */
 	report *sechecker::createReport(const std::vector < std::string > &mod_names) const throw(std::out_of_range,
 												  std::runtime_error)
 	{
-		//TODO report creation
+		report *rpt = new report(this);
+		for (vector < string >::const_iterator i = mod_names.begin(); i != mod_names.end(); i++)
+		{
+			rpt->addResults(*i);
+		}
+
+		return rpt;
 	}
-		/**
-	 * Create a report object for a single module.
-	 * @param mod_name The name of the module for which to create the report.
-	 * @return A newly created report object. The caller is responsible for calling
-	 * delete on the returned object.
-	 * @exception std::out_of_range No module with name \a mod_name exists.
-	 * @exception std::runtime_error The module named \a mod_name has not been run.
-		 */
-	report *sechecker::createReport(const std::string & mod_name) const throw(std::out_of_range, std::runtime_error)
+
+	report *sechecker::createReport(const std::string & mod_name)const throw(std::out_of_range, std::runtime_error)
 	{
-		//TODO report creation
+		report *rpt = new report(this);
+		rpt->addResults(mod_name);
+
+		return rpt;
 	}
-		/**
-	 * Create a report object for all modules specified in the currently active profile.
-	 * @return A newly created report object. The caller is responsible for calling
-	 * delete on the returned object.
-	 * @exception std::out_of_range One or more of the modules specified in the currently active
-	 * profile does not exist.
-	 * @exception std::runtime_error One or more of the modules specified in the currently active
-	 * profile has not been run. This exception is also thrown if there is no active profile.
-		 */
+
 	report *sechecker::createReport() const throw(std::out_of_range, std::runtime_error)
 	{
-		//TODO report creation
+		if (_active_profile == "")
+			throw runtime_error("No active profile");
+		map < string, profile >::const_iterator iter = _profiles.find(_active_profile);
+		vector < string > list = iter->second.getModuleList();
+		return createReport(list);
 	}
 
 	apol_policy_t *sechecker::policy() const

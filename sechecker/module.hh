@@ -148,7 +148,7 @@ namespace sechecker
 		 * Get the list of module dependencies.
 		 * @return The list of module dependencies.
 		 */
-		const std::vector<std::string>& dependencies() const;
+		const std::vector < std::string > &dependencies() const;
 
 		/**
 		 * Get the set of requirements that a policy (or associated file

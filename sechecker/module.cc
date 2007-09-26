@@ -183,7 +183,7 @@ namespace sechecker
 		return opt;
 	}
 
-	const std::vector<std::string>& module::dependencies() const
+	const std::vector < std::string > &module::dependencies() const
 	{
 		return _dependencies;
 	}
