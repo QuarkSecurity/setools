@@ -120,7 +120,6 @@ proc Apol_Analysis_polsearch::switchTab {query_options} {
     variable vals
     array set vals $query_options
     _reinitializeWidgets
-    _toggleQuery init
 }
 
 proc Apol_Analysis_polsearch::saveQuery {channel} {
@@ -159,7 +158,6 @@ proc Apol_Analysis_polsearch::loadQuery {channel} {
     }
 
     _reinitializeWidgets
-    _toggleQuery init
 }
 
 proc Apol_Analysis_polsearch::getTextWidget {tab} {
@@ -315,7 +313,7 @@ proc Apol_Analysis_polsearch::_reinitializeVals {} {
 
 proc Apol_Analysis_polsearch::_reinitializeWidgets {} {
     variable widgets
-    set widgets(line_selected) {0 0}
+    set widgets(line_selected) {-1 -1}
     $widgets(bb) itemconfigure 0 -state disabled
     $widgets(bb) itemconfigure 1 -state disabled
     $widgets(bb) itemconfigure 2 -state disabled
@@ -340,7 +338,7 @@ proc Apol_Analysis_polsearch::_toggleQuery {state} {
     array unset vals t:*
     array unset widgets t:*
     set widgets(next_test) 0
-    set widgets(line_selected) {0 0}
+    set widgets(line_selected) {-1 -1}
 
     if {$state == "init"} {
         # create all widgets to represent existing tests stored in vals
@@ -609,12 +607,18 @@ proc Apol_Analysis_polsearch::_line_selected {x y} {
     variable widgets
 
     foreach {old_x old_y} $widgets(line_selected) {break}
+    if {$old_x == $x && $old_y == $y} {
+        return
+    }
+
     if {$old_x >= 0} {
         if {[info exists widgets(t:$old_x:$old_y:frame)]} {
             $widgets(t:$old_x:$old_y:frame) configure -bg [Apol_Prefs::getPref active_bg] -relief flat
+            focus $widgets(t:$old_x:$old_y:frame)
         }
         if {$old_y == 0 && [info exists widgets(t:$old_x:frame)]} {
             $widgets(t:$old_x:frame) configure -bg [Apol_Prefs::getPref active_bg] -relief flat
+            focus $widgets(t:$old_x:frame)
         }
     }
 
@@ -661,14 +665,12 @@ proc Apol_Analysis_polsearch::_param_expression {action x y args} {
         create {
             set f [lindex $args 0]
             set e [entry $f.e -width 30 \
-                       -validate focusin \
-                       -vcmd [list Apol_Analysis_polsearch::_param_expression update $x $y] \
                        -textvariable Apol_Analysis_polsearch::vals(t:$x:$y:param:regex)]
             pack $e -expand 1 -fill x
+            bind $e <Button-1> [list Apol_Analysis_polsearch::_line_selected $x $y]
         }
         update {
             _line_selected $x $y
-            return 1
         }
         valid {
             if {$vals(t:$x:$y:param:regex) == {}} {
@@ -689,14 +691,12 @@ proc Apol_Analysis_polsearch::_param_str_expr {action x y args} {
         create {
             set f [lindex $args 0]
             set e [entry $f.e -width 30 \
-                       -validate focusin \
-                       -vcmd [list Apol_Analysis_polsearch::_param_str_expr update $x $y] \
                        -textvariable Apol_Analysis_polsearch::vals(t:$x:$y:param:str_expr)]
             pack $e -expand 1 -fill x
+            bind $e <Button-1> [list Apol_Analysis_polsearch::_line_selected $x $y]
         }
         update {
             _line_selected $x $y
-            return 1
         }
         valid {
             if {$vals(t:$x:$y:param:str_expr) == {}} {
@@ -821,17 +821,25 @@ proc Apol_Analysis_polsearch::_param_level {action x y args} {
     switch -- $action {
         create {
             set f [lindex $args 0]
-            set l [label $f.l -text "level goes here"]
-            pack $l -expand 0 -fill x
+            set b [button $f.l -textvariable Apol_Analysis_polsearch::vals(t:$x:$y:param:level_text) \
+                       -command [list Apol_Analysis_polsearch::_show_level_dialog $x $y]]
+            pack $b -expand 0 -fill x
+            set vals(t:$x:$y:param:level_text) "*"
+            set vals(t:$x:$y:param:level) {}
         }
         update {
+            puts "updating param level from $vals(t:$x:$y:param:level_text)"
             _line_selected $x $y
+            set vals(t:$x:$y:param:level) [new_apol_mls_level_t $::ApolTop::policy $vals(t:$x:$y:param:level_text)]
         }
         valid {
-            return "No level provided."   ;# FIX ME
+            if {$vals(t:$x:$y:param:level_text) == "*"} {
+                return "No level selected."
+            }
+            return {}
         }
         new_obj {
-            return {}  ;# FIX ME
+            new_polsearch_level_parameter $vals(t:$x:$y:param:level)
         }
     }
 }
@@ -841,18 +849,50 @@ proc Apol_Analysis_polsearch::_param_range {action x y args} {
     switch -- $action {
         create {
             set f [lindex $args 0]
-            set l [label $f.l -text "range goes here"]
-            pack $l -expand 0 -fill x
+            set b [button $f.r -textvariable Apol_Analysis_polsearch::vals(t:$x:$y:param:range_text) \
+                       -command [list Apol_Analysis_polsearch::_show_range_dialog $x $y]]
+            pack $b -expand 0 -fill x
+            set vals(t:$x:$y:param:range_text) "* - *"
+            set vals(t:$x:$y:param:range) {}
         }
         update {
             _line_selected $x $y
+            if {$vals(t:$x:$y:param:range) == {}} {
+            } else {
+                set vals(t:$x:$y:param:range_text) [$vals(t:$x:$y:param:range) render $::ApolTop::policy]
+            }
         }
         valid {
-            return "No range provided."  ;# FIX ME
+            if {$vals(t:$x:$y:param:range_text) == "* - *"} {
+                return "No range selected."
+            }
+            return {}
         }
         new_obj {
-            return {}  ;# FIX ME
+            new_polsearch_range_parameter $vals(t:$x:$y:param:range)
         }
+    }
+}
+
+proc Apol_Analysis_polsearch::_show_level_dialog {x y} {
+    variable vals
+    _line_selected $x $y
+    set new_level [Apol_Level_Dialog::getLevel $vals(t:$x:$y:param:level)]
+    if {$new_level != {}} {
+        set vals(t:$x:$y:param:level) $new_level
+        $vals(t:$x:$y:param:level) -acquire
+        set vals(t:$x:$y:param:level_text) [$vals(t:$x:$y:param:level) render $::ApolTop::policy]
+    }
+}
+
+proc Apol_Analysis_polsearch::_show_range_dialog {x y} {
+    variable vals
+    _line_selected $x $y
+    set new_range [Apol_Range_Dialog::getRange $vals(t:$x:$y:param:range)]
+    if {$new_range != {}} {
+        set vals(t:$x:$y:param:range) $new_range
+        $vals(t:$x:$y:param:range) -acquire
+        set vals(t:$x:$y:param:range_text) [$vals(t:$x:$y:param:range) render $::ApolTop::policy]
     }
 }
 
@@ -867,12 +907,9 @@ proc Apol_Analysis_polsearch::_serialize_tests {} {
         foreach key [lsort [array names vals t:$x:*:op]] {
             set y [lindex [split $key :] 2]
             set op $vals($key)
-            lappend op [list avrule $vals(t:$x:$y:param:avrule)]
-            lappend op [list bool $vals(t:$x:$y:param:bool)]
-            lappend op [list regex $vals(t:$x:$y:param:regex)]
-            lappend op [list str_expr $vals(t:$x:$y:param:str_expr)]
-            lappend op [list terule $vals(t:$x:$y:param:terule)]
-# FIX ME: serialize levels and ranges
+            foreach p {avrule bool regex str_expr terule level_text range_text} {
+                lappend op [list $z $vals(t:$x:$y:param:$p)]
+            }
             lappend test $op
         }
         lappend res $test
@@ -964,7 +1001,7 @@ proc Apol_Analysis_polsearch::_treeSelect {res tree node} {
     if {$node != {}} {
         $res.tb configure -state normal
         $res.tb delete 0.0 end
-        $res.tb insert end "Proof info would go here." {}
+        $res.tb insert end "FIX ME: Proof info would go here." {}
         $res.tb configure -state disabled
     }
 }
