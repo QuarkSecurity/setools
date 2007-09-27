@@ -303,7 +303,7 @@ enum match_type determine_match_type(const apol_policy_t * policy, const void *c
 			throw runtime_error("Incompatible comparison.");
 		}
 	}
-	case POLSEARCH_OP_AS_SOURCE:
+	case POLSEARCH_OP_SOURCE:
 	{
 		if (candidate_type == POLSEARCH_ELEMENT_AVRULE || candidate_type == POLSEARCH_ELEMENT_TERULE ||
 		    candidate_type == POLSEARCH_ELEMENT_RANGE_TRANS)
@@ -335,7 +335,7 @@ enum match_type determine_match_type(const apol_policy_t * policy, const void *c
 			throw runtime_error("Incompatible comparison.");
 		}
 	}
-	case POLSEARCH_OP_AS_TARGET:
+	case POLSEARCH_OP_TARGET:
 	{
 		if (candidate_type == POLSEARCH_ELEMENT_AVRULE || candidate_type == POLSEARCH_ELEMENT_TERULE ||
 		    candidate_type == POLSEARCH_ELEMENT_RANGE_TRANS || candidate_type == POLSEARCH_ELEMENT_ROLE_TRANS)
@@ -366,7 +366,7 @@ enum match_type determine_match_type(const apol_policy_t * policy, const void *c
 			throw runtime_error("Incompatible comparison.");
 		}
 	}
-	case POLSEARCH_OP_AS_CLASS:
+	case POLSEARCH_OP_CLASS:
 	{
 		const qpol_class_t *cls = NULL;
 		const char *name;
@@ -392,7 +392,7 @@ enum match_type determine_match_type(const apol_policy_t * policy, const void *c
 		input.str = new string(name);
 		return MATCH_STRING;
 	}
-	case POLSEARCH_OP_AS_PERM:
+	case POLSEARCH_OP_PERM:
 	{
 		if (candidate_type == POLSEARCH_ELEMENT_AVRULE)
 		{
@@ -413,7 +413,7 @@ enum match_type determine_match_type(const apol_policy_t * policy, const void *c
 		}
 		return MATCH_LIST;
 	}
-	case POLSEARCH_OP_AS_DEFAULT:
+	case POLSEARCH_OP_DEFAULT:
 	{
 		if (candidate_type == POLSEARCH_ELEMENT_TERULE)
 		{
@@ -436,7 +436,7 @@ enum match_type determine_match_type(const apol_policy_t * policy, const void *c
 			throw runtime_error("Incompatible comparison");
 		}
 	}
-	case POLSEARCH_OP_AS_SRC_TGT:
+	case POLSEARCH_OP_SRC_TGT:
 	{
 		if (candidate_type == POLSEARCH_ELEMENT_AVRULE || candidate_type == POLSEARCH_ELEMENT_TERULE ||
 		    candidate_type == POLSEARCH_ELEMENT_RANGE_TRANS)
@@ -480,7 +480,7 @@ enum match_type determine_match_type(const apol_policy_t * policy, const void *c
 			throw runtime_error("Incompatible comparison");
 		}
 	}
-	case POLSEARCH_OP_AS_SRC_TGT_DFLT:
+	case POLSEARCH_OP_SRC_TGT_DFLT:
 	{
 		const qpol_type_t *src = NULL;
 		const qpol_type_t *tgt = NULL;
@@ -500,7 +500,7 @@ enum match_type determine_match_type(const apol_policy_t * policy, const void *c
 			throw runtime_error("Incompatible comparison");
 		}
 	}
-	case POLSEARCH_OP_AS_SRC_DFLT:
+	case POLSEARCH_OP_SRC_DFLT:
 	{
 		if (candidate_type == POLSEARCH_ELEMENT_TERULE)
 		{
@@ -569,9 +569,9 @@ enum match_type determine_match_type(const apol_policy_t * policy, const void *c
 		qpol_iterator_destroy(&iter);
 		return MATCH_LIST;
 	}
-	case POLSEARCH_OP_AS_LEVEL_EXACT:
-	case POLSEARCH_OP_AS_LEVEL_DOM:
-	case POLSEARCH_OP_AS_LEVEL_DOMBY:
+	case POLSEARCH_OP_LEVEL_EXACT:
+	case POLSEARCH_OP_LEVEL_DOM:
+	case POLSEARCH_OP_LEVEL_DOMBY:
 	{
 		if (candidate_type == POLSEARCH_ELEMENT_LEVEL)
 		{
@@ -592,14 +592,14 @@ enum match_type determine_match_type(const apol_policy_t * policy, const void *c
 			throw runtime_error("Incompatible comparison");
 		}
 	}
-	case POLSEARCH_OP_AS_RANGE_EXACT:
-	case POLSEARCH_OP_AS_RANGE_SUPER:
-	case POLSEARCH_OP_AS_RANGE_SUB:
+	case POLSEARCH_OP_RANGE_EXACT:
+	case POLSEARCH_OP_RANGE_SUPER:
+	case POLSEARCH_OP_RANGE_SUB:
 	{
 		input.rng = static_cast < const apol_mls_range_t *>(candidate);
 		return MATCH_RANGE;
 	}
-	case POLSEARCH_OP_AS_USER:
+	case POLSEARCH_OP_USER:
 	{
 		if (candidate_type == POLSEARCH_ELEMENT_FC_ENTRY)
 		{
@@ -615,7 +615,7 @@ enum match_type determine_match_type(const apol_policy_t * policy, const void *c
 		}
 		return MATCH_LIST;
 	}
-	case POLSEARCH_OP_AS_ROLE:
+	case POLSEARCH_OP_ROLE:
 	{
 		if (candidate_type == POLSEARCH_ELEMENT_FC_ENTRY)
 		{
@@ -631,7 +631,7 @@ enum match_type determine_match_type(const apol_policy_t * policy, const void *c
 		}
 		return MATCH_LIST;
 	}
-	case POLSEARCH_OP_AS_TYPE:
+	case POLSEARCH_OP_TYPE:
 	{
 		if (candidate_type == POLSEARCH_ELEMENT_FC_ENTRY)
 		{
@@ -690,11 +690,11 @@ void polsearch_criterion::check(const apol_policy_t * policy, std::vector < cons
 		case MATCH_LEVEL:
 		{
 			int method;
-			if (_op == POLSEARCH_OP_AS_LEVEL_EXACT)
+			if (_op == POLSEARCH_OP_LEVEL_EXACT)
 				method = APOL_MLS_EQ;
-			else if (_op == POLSEARCH_OP_AS_LEVEL_DOM)
+			else if (_op == POLSEARCH_OP_LEVEL_DOM)
 				method = APOL_MLS_DOM;
-			else if (_op == POLSEARCH_OP_AS_LEVEL_DOMBY)
+			else if (_op == POLSEARCH_OP_LEVEL_DOMBY)
 				method = APOL_MLS_DOMBY;
 			else
 			{
@@ -707,11 +707,11 @@ void polsearch_criterion::check(const apol_policy_t * policy, std::vector < cons
 		case MATCH_RANGE:
 		{
 			unsigned int method;
-			if (_op == POLSEARCH_OP_AS_RANGE_EXACT)
+			if (_op == POLSEARCH_OP_RANGE_EXACT)
 				method = APOL_QUERY_EXACT;
-			else if (_op == POLSEARCH_OP_AS_RANGE_SUB)
+			else if (_op == POLSEARCH_OP_RANGE_SUB)
 				method = APOL_QUERY_SUB;
-			else if (_op == POLSEARCH_OP_AS_RANGE_SUPER)
+			else if (_op == POLSEARCH_OP_RANGE_SUPER)
 				method = APOL_QUERY_SUPER;
 			else
 			{

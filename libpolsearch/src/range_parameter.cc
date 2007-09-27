@@ -82,12 +82,14 @@ bool polsearch_range_parameter::match(const apol_policy_t * policy, const apol_m
 	arng_in = apol_mls_range_create_from_mls_range(rng);
 	if (!arng_in)
 		throw bad_alloc();
-	apol_mls_range_convert(policy, arng_in);
+	if (apol_mls_range_is_literal(arng_in))
+		apol_mls_range_convert(policy, arng_in);
 
 	arng_param = apol_mls_range_create_from_mls_range(_range);
 	if (!arng_in)
 		throw bad_alloc();
-	apol_mls_range_convert(policy, arng_param);
+	if (apol_mls_range_is_literal(arng_param))
+		apol_mls_range_convert(policy, arng_param);
 
 	int cmp = apol_mls_range_compare(policy, arng_param, arng_in, m);
 

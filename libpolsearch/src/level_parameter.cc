@@ -83,12 +83,14 @@ bool polsearch_level_parameter::match(const apol_policy_t * policy, const apol_m
 	alvl_in = apol_mls_level_create_from_mls_level(lvl);
 	if (!alvl_in)
 		throw bad_alloc();
-	apol_mls_level_convert(policy, alvl_in);
+	if (apol_mls_level_is_literal(alvl_in))
+		apol_mls_level_convert(policy, alvl_in);
 
 	alvl_param = apol_mls_level_create_from_mls_level(_level);
 	if (!alvl_in)
 		throw bad_alloc();
-	apol_mls_level_convert(policy, alvl_param);
+	if (apol_mls_level_is_literal(alvl_param))
+		apol_mls_level_convert(policy, alvl_param);
 
 	int cmp = apol_mls_level_compare(policy, alvl_in, alvl_param);
 

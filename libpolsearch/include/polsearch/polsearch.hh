@@ -92,24 +92,24 @@ enum polsearch_op
 	POLSEARCH_OP_MATCH_REGEX,      /*!< symbol name (or alias name) matches regular expression */
 	POLSEARCH_OP_RULE_TYPE,	       /*!< is rule type */
 	POLSEARCH_OP_INCLUDE,	       /*!< set includes */
-	POLSEARCH_OP_AS_SOURCE,	       /*!< has as rule source */
-	POLSEARCH_OP_AS_TARGET,	       /*!< has as rule target */
-	POLSEARCH_OP_AS_CLASS,	       /*!< has as rule class */
-	POLSEARCH_OP_AS_PERM,	       /*!< has as rule permission */
-	POLSEARCH_OP_AS_DEFAULT,       /*!< has as rule default */
-	POLSEARCH_OP_AS_SRC_TGT,       /*!< has as rule source or target */
-	POLSEARCH_OP_AS_SRC_TGT_DFLT,  /*!< has as rule source, target, or default */
-	POLSEARCH_OP_AS_SRC_DFLT,      /*!< has as rule source or default */
+	POLSEARCH_OP_SOURCE,	       /*!< has as rule source */
+	POLSEARCH_OP_TARGET,	       /*!< has as rule target */
+	POLSEARCH_OP_CLASS,	       /*!< has as rule class */
+	POLSEARCH_OP_PERM,	       /*!< has as rule permission */
+	POLSEARCH_OP_DEFAULT,	       /*!< has as rule default */
+	POLSEARCH_OP_SRC_TGT,	       /*!< has as rule source or target */
+	POLSEARCH_OP_SRC_TGT_DFLT,     /*!< has as rule source, target, or default */
+	POLSEARCH_OP_SRC_DFLT,	       /*!< has as rule source or default */
 	POLSEARCH_OP_IN_COND,	       /*!< is in a conditional with boolean */
-	POLSEARCH_OP_AS_LEVEL_EXACT,   /*!< user level exact comparison */
-	POLSEARCH_OP_AS_LEVEL_DOM,     /*!< user level dominates parameter */
-	POLSEARCH_OP_AS_LEVEL_DOMBY,   /*!< user level dominated by parameter */
-	POLSEARCH_OP_AS_RANGE_EXACT,   /*!< has exactly range */
-	POLSEARCH_OP_AS_RANGE_SUPER,   /*!< has range that is a superset of parameter */
-	POLSEARCH_OP_AS_RANGE_SUB,     /*!< has that is a subset of parameter range */
-	POLSEARCH_OP_AS_USER,	       /*!< has as user */
-	POLSEARCH_OP_AS_ROLE,	       /*!< has as role */
-	POLSEARCH_OP_AS_TYPE	       /*!< has as type */
+	POLSEARCH_OP_LEVEL_EXACT,      /*!< user level exact comparison */
+	POLSEARCH_OP_LEVEL_DOM,	       /*!< user level dominates parameter */
+	POLSEARCH_OP_LEVEL_DOMBY,      /*!< user level dominated by parameter */
+	POLSEARCH_OP_RANGE_EXACT,      /*!< has exactly range */
+	POLSEARCH_OP_RANGE_SUPER,      /*!< has range that is a superset of parameter */
+	POLSEARCH_OP_RANGE_SUB,	       /*!< has that is a subset of parameter range */
+	POLSEARCH_OP_USER,	       /*!< has as user */
+	POLSEARCH_OP_ROLE,	       /*!< has as role */
+	POLSEARCH_OP_TYPE	       /*!< has as type */
 };
 
 /** Value to indicate the type of the parameter value of a criterion */

@@ -125,7 +125,7 @@ bool polsearch_is_test_continueable(polsearch_test_cond cond)
 std::vector < polsearch_op > polsearch_get_valid_operators(polsearch_element elem_type, polsearch_test_cond cond)
 {
 	vector < polsearch_op > v;
-	for (int i = POLSEARCH_OP_NONE; i <= POLSEARCH_OP_AS_TYPE; i++)
+	for (int i = POLSEARCH_OP_NONE; i <= POLSEARCH_OP_TYPE; i++)
 		if (validate_operator(elem_type, cond, static_cast < polsearch_op > (i)))
 			v.push_back(static_cast < polsearch_op > (i));
 

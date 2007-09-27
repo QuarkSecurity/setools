@@ -223,24 +223,24 @@ proc Apol_Analysis_polsearch::_staticInitializeVals {} {
                        $::POLSEARCH_OP_MATCH_REGEX "matches regular expression" \
                        $::POLSEARCH_OP_RULE_TYPE "with rule type" \
                        $::POLSEARCH_OP_INCLUDE "includes" \
-                       $::POLSEARCH_OP_AS_SOURCE "with source" \
-                       $::POLSEARCH_OP_AS_TARGET "with target" \
-                       $::POLSEARCH_OP_AS_CLASS "with class" \
-                       $::POLSEARCH_OP_AS_PERM "with permission" \
-                       $::POLSEARCH_OP_AS_DEFAULT "with default" \
-                       $::POLSEARCH_OP_AS_SRC_TGT "with source or target" \
-                       $::POLSEARCH_OP_AS_SRC_TGT_DFLT "with source, target, or default" \
-                       $::POLSEARCH_OP_AS_SRC_DFLT "with source or default" \
+                       $::POLSEARCH_OP_SOURCE "with source" \
+                       $::POLSEARCH_OP_TARGET "with target" \
+                       $::POLSEARCH_OP_CLASS "with class" \
+                       $::POLSEARCH_OP_PERM "with permission" \
+                       $::POLSEARCH_OP_DEFAULT "with default" \
+                       $::POLSEARCH_OP_SRC_TGT "with source or target" \
+                       $::POLSEARCH_OP_SRC_TGT_DFLT "with source, target, or default" \
+                       $::POLSEARCH_OP_SRC_DFLT "with source or default" \
                        $::POLSEARCH_OP_IN_COND "in a conditional with boolean" \
-                       $::POLSEARCH_OP_AS_LEVEL_EXACT "with level" \
-                       $::POLSEARCH_OP_AS_LEVEL_DOM "with a level dominating" \
-                       $::POLSEARCH_OP_AS_LEVEL_DOMBY "with a level dominated by" \
-                       $::POLSEARCH_OP_AS_RANGE_EXACT "with range" \
-                       $::POLSEARCH_OP_AS_RANGE_SUPER "with range within" \
-                       $::POLSEARCH_OP_AS_RANGE_SUB "with range containing" \
-                       $::POLSEARCH_OP_AS_USER "with user" \
-                       $::POLSEARCH_OP_AS_ROLE "with role" \
-                       $::POLSEARCH_OP_AS_TYPE "with type"]
+                       $::POLSEARCH_OP_LEVEL_EXACT "with level" \
+                       $::POLSEARCH_OP_LEVEL_DOM "with a level dominating" \
+                       $::POLSEARCH_OP_LEVEL_DOMBY "with a level dominated by" \
+                       $::POLSEARCH_OP_RANGE_EXACT "with range" \
+                       $::POLSEARCH_OP_RANGE_SUPER "with range within" \
+                       $::POLSEARCH_OP_RANGE_SUB "with range containing" \
+                       $::POLSEARCH_OP_USER "with user" \
+                       $::POLSEARCH_OP_ROLE "with role" \
+                       $::POLSEARCH_OP_TYPE "with type"]
 
     variable neg_ops
     array set neg_ops [list \
@@ -248,24 +248,24 @@ proc Apol_Analysis_polsearch::_staticInitializeVals {} {
                        $::POLSEARCH_OP_MATCH_REGEX "does not match regular expression" \
                        $::POLSEARCH_OP_RULE_TYPE "without rule type" \
                        $::POLSEARCH_OP_INCLUDE "does not include" \
-                       $::POLSEARCH_OP_AS_SOURCE "without source" \
-                       $::POLSEARCH_OP_AS_TARGET "without target" \
-                       $::POLSEARCH_OP_AS_CLASS "without class" \
-                       $::POLSEARCH_OP_AS_PERM "without permission" \
-                       $::POLSEARCH_OP_AS_DEFAULT "without default" \
-                       $::POLSEARCH_OP_AS_SRC_TGT "without source nor target" \
-                       $::POLSEARCH_OP_AS_SRC_TGT_DFLT "without source, target, nor default" \
-                       $::POLSEARCH_OP_AS_SRC_DFLT "without source nor default" \
+                       $::POLSEARCH_OP_SOURCE "without source" \
+                       $::POLSEARCH_OP_TARGET "without target" \
+                       $::POLSEARCH_OP_CLASS "without class" \
+                       $::POLSEARCH_OP_PERM "without permission" \
+                       $::POLSEARCH_OP_DEFAULT "without default" \
+                       $::POLSEARCH_OP_SRC_TGT "without source nor target" \
+                       $::POLSEARCH_OP_SRC_TGT_DFLT "without source, target, nor default" \
+                       $::POLSEARCH_OP_SRC_DFLT "without source nor default" \
                        $::POLSEARCH_OP_IN_COND "not in a conditional with boolean" \
-                       $::POLSEARCH_OP_AS_LEVEL_EXACT "without level" \
-                       $::POLSEARCH_OP_AS_LEVEL_DOM "with a level not dominating" \
-                       $::POLSEARCH_OP_AS_LEVEL_DOMBY "with a level not dominated by" \
-                       $::POLSEARCH_OP_AS_RANGE_EXACT "without range" \
-                       $::POLSEARCH_OP_AS_RANGE_SUPER "with range not within" \
-                       $::POLSEARCH_OP_AS_RANGE_SUB "with range not containing" \
-                       $::POLSEARCH_OP_AS_USER "without user" \
-                       $::POLSEARCH_OP_AS_ROLE "without role" \
-                       $::POLSEARCH_OP_AS_TYPE "without type"]
+                       $::POLSEARCH_OP_LEVEL_EXACT "without level" \
+                       $::POLSEARCH_OP_LEVEL_DOM "with a level not dominating" \
+                       $::POLSEARCH_OP_LEVEL_DOMBY "with a level not dominated by" \
+                       $::POLSEARCH_OP_RANGE_EXACT "without range" \
+                       $::POLSEARCH_OP_RANGE_SUPER "with range not within" \
+                       $::POLSEARCH_OP_RANGE_SUB "with range not containing" \
+                       $::POLSEARCH_OP_USER "without user" \
+                       $::POLSEARCH_OP_ROLE "without role" \
+                       $::POLSEARCH_OP_TYPE "without type"]
 
     variable param_types
     array set param_types [list \

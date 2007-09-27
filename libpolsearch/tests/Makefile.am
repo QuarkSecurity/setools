@@ -4,6 +4,7 @@ check_PROGRAMS = libpolsearch-tests
 libpolsearch_tests_SOURCES = \
 	bool_query-tests.hh \
 	bool_query-tests.cc \
+	user_query-tests.cc user_query-tests.hh \
 	libpolsearch-tests.cc
 
 AM_CXXFLAGS = @DEBUGCFLAGS@ @WARNCFLAGS@ @PROFILECFLAGS@ @SELINUX_CFLAGS@ \

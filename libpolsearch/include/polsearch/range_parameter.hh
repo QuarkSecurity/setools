@@ -48,7 +48,8 @@ class polsearch_range_parameter:public polsearch_parameter
 	/**
 	 * Create a MLS range parameter.
 	 * @param rng The range to which to compare when calling \a match().
-	 * This range will be duplicated by this call.
+	 * This range will be duplicated by this call.  \a rng can be a literal
+	 * range.
 	 * @exception std::bad_alloc Out of memory.
 	 */
 	polsearch_range_parameter(const apol_mls_range_t * rng) throw(std::bad_alloc);

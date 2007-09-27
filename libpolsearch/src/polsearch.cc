@@ -283,59 +283,59 @@ bool validate_operator(polsearch_element elem_type, polsearch_test_cond cond, po
 	}
 	case POLSEARCH_TEST_AVRULE:
 	{
-		if (opr == POLSEARCH_OP_RULE_TYPE || opr == POLSEARCH_OP_AS_SOURCE ||
-		    opr == POLSEARCH_OP_AS_TARGET || opr == POLSEARCH_OP_AS_CLASS ||
-		    opr == POLSEARCH_OP_AS_SRC_TGT || opr == POLSEARCH_OP_IN_COND || opr == POLSEARCH_OP_AS_PERM)
+		if (opr == POLSEARCH_OP_RULE_TYPE || opr == POLSEARCH_OP_SOURCE ||
+		    opr == POLSEARCH_OP_TARGET || opr == POLSEARCH_OP_CLASS ||
+		    opr == POLSEARCH_OP_SRC_TGT || opr == POLSEARCH_OP_IN_COND || opr == POLSEARCH_OP_PERM)
 			return true;
 		break;
 	}
 	case POLSEARCH_TEST_TERULE:
 	{
-		if (opr == POLSEARCH_OP_RULE_TYPE || opr == POLSEARCH_OP_AS_SOURCE ||
-		    opr == POLSEARCH_OP_AS_TARGET || opr == POLSEARCH_OP_AS_CLASS ||
-		    opr == POLSEARCH_OP_AS_SRC_TGT || opr == POLSEARCH_OP_IN_COND ||
-		    opr == POLSEARCH_OP_AS_DEFAULT || opr == POLSEARCH_OP_AS_SRC_DFLT || opr == POLSEARCH_OP_AS_SRC_TGT_DFLT)
+		if (opr == POLSEARCH_OP_RULE_TYPE || opr == POLSEARCH_OP_SOURCE ||
+		    opr == POLSEARCH_OP_TARGET || opr == POLSEARCH_OP_CLASS ||
+		    opr == POLSEARCH_OP_SRC_TGT || opr == POLSEARCH_OP_IN_COND ||
+		    opr == POLSEARCH_OP_DEFAULT || opr == POLSEARCH_OP_SRC_DFLT || opr == POLSEARCH_OP_SRC_TGT_DFLT)
 			return true;
 		break;
 	}
 	case POLSEARCH_TEST_ROLEALLOW:
 	{
-		if (opr == POLSEARCH_OP_AS_SOURCE || opr == POLSEARCH_OP_AS_TARGET || opr == POLSEARCH_OP_AS_SRC_TGT)
+		if (opr == POLSEARCH_OP_SOURCE || opr == POLSEARCH_OP_TARGET || opr == POLSEARCH_OP_SRC_TGT)
 			return true;
 		break;
 	}
 	case POLSEARCH_TEST_ROLETRANS:
 	{
-		if (opr == POLSEARCH_OP_AS_SOURCE || opr == POLSEARCH_OP_AS_TARGET ||
-		    opr == POLSEARCH_OP_AS_DEFAULT || opr == POLSEARCH_OP_AS_SRC_DFLT)
+		if (opr == POLSEARCH_OP_SOURCE || opr == POLSEARCH_OP_TARGET ||
+		    opr == POLSEARCH_OP_DEFAULT || opr == POLSEARCH_OP_SRC_DFLT)
 			return true;
 		break;
 	}
 	case POLSEARCH_TEST_RANGETRANS:
 	{
-		if (opr == POLSEARCH_OP_AS_RANGE_EXACT || opr == POLSEARCH_OP_AS_RANGE_SUPER ||
-		    opr == POLSEARCH_OP_AS_RANGE_SUB || opr == POLSEARCH_OP_AS_SOURCE ||
-		    opr == POLSEARCH_OP_AS_TARGET || opr == POLSEARCH_OP_AS_CLASS || opr == POLSEARCH_OP_AS_SRC_TGT)
+		if (opr == POLSEARCH_OP_RANGE_EXACT || opr == POLSEARCH_OP_RANGE_SUPER ||
+		    opr == POLSEARCH_OP_RANGE_SUB || opr == POLSEARCH_OP_SOURCE ||
+		    opr == POLSEARCH_OP_TARGET || opr == POLSEARCH_OP_CLASS || opr == POLSEARCH_OP_SRC_TGT)
 			return true;
 		break;
 	}
 	case POLSEARCH_TEST_FCENTRY:
 	{
-		if (opr == POLSEARCH_OP_AS_USER || opr == POLSEARCH_OP_AS_ROLE ||
-		    opr == POLSEARCH_OP_AS_TYPE || opr == POLSEARCH_OP_AS_RANGE_EXACT || opr == POLSEARCH_OP_AS_RANGE_SUPER ||
-		    opr == POLSEARCH_OP_AS_RANGE_SUB || opr == POLSEARCH_OP_AS_CLASS)
+		if (opr == POLSEARCH_OP_USER || opr == POLSEARCH_OP_ROLE ||
+		    opr == POLSEARCH_OP_TYPE || opr == POLSEARCH_OP_RANGE_EXACT || opr == POLSEARCH_OP_RANGE_SUPER ||
+		    opr == POLSEARCH_OP_RANGE_SUB || opr == POLSEARCH_OP_CLASS)
 			return true;
 		break;
 	}
 	case POLSEARCH_TEST_DEFAULT_LEVEL:
 	{
-		if (opr == POLSEARCH_OP_AS_LEVEL_EXACT || opr == POLSEARCH_OP_AS_LEVEL_DOM || opr == POLSEARCH_OP_AS_LEVEL_DOMBY)
+		if (opr == POLSEARCH_OP_LEVEL_EXACT || opr == POLSEARCH_OP_LEVEL_DOM || opr == POLSEARCH_OP_LEVEL_DOMBY)
 			return true;
 		break;
 	}
 	case POLSEARCH_TEST_RANGE:
 	{
-		if (opr == POLSEARCH_OP_AS_RANGE_EXACT || opr == POLSEARCH_OP_AS_RANGE_SUPER || opr == POLSEARCH_OP_AS_RANGE_SUB)
+		if (opr == POLSEARCH_OP_RANGE_EXACT || opr == POLSEARCH_OP_RANGE_SUPER || opr == POLSEARCH_OP_RANGE_SUB)
 			return true;
 		break;
 	}
@@ -415,34 +415,34 @@ bool validate_parameter_type(polsearch_element elem_type, polsearch_test_cond co
 		break;
 	}
 	case POLSEARCH_OP_INCLUDE:
-	case POLSEARCH_OP_AS_SOURCE:
-	case POLSEARCH_OP_AS_TARGET:
-	case POLSEARCH_OP_AS_CLASS:
-	case POLSEARCH_OP_AS_PERM:
-	case POLSEARCH_OP_AS_DEFAULT:
-	case POLSEARCH_OP_AS_SRC_TGT:
-	case POLSEARCH_OP_AS_SRC_TGT_DFLT:
-	case POLSEARCH_OP_AS_SRC_DFLT:
+	case POLSEARCH_OP_SOURCE:
+	case POLSEARCH_OP_TARGET:
+	case POLSEARCH_OP_CLASS:
+	case POLSEARCH_OP_PERM:
+	case POLSEARCH_OP_DEFAULT:
+	case POLSEARCH_OP_SRC_TGT:
+	case POLSEARCH_OP_SRC_TGT_DFLT:
+	case POLSEARCH_OP_SRC_DFLT:
 	case POLSEARCH_OP_IN_COND:
-	case POLSEARCH_OP_AS_USER:
-	case POLSEARCH_OP_AS_ROLE:
-	case POLSEARCH_OP_AS_TYPE:
+	case POLSEARCH_OP_USER:
+	case POLSEARCH_OP_ROLE:
+	case POLSEARCH_OP_TYPE:
 	{
 		if (param_type == POLSEARCH_PARAM_TYPE_STR_EXPR)
 			return true;
 		break;
 	}
-	case POLSEARCH_OP_AS_LEVEL_EXACT:
-	case POLSEARCH_OP_AS_LEVEL_DOM:
-	case POLSEARCH_OP_AS_LEVEL_DOMBY:
+	case POLSEARCH_OP_LEVEL_EXACT:
+	case POLSEARCH_OP_LEVEL_DOM:
+	case POLSEARCH_OP_LEVEL_DOMBY:
 	{
 		if (param_type == POLSEARCH_PARAM_TYPE_LEVEL)
 			return true;
 		break;
 	}
-	case POLSEARCH_OP_AS_RANGE_EXACT:
-	case POLSEARCH_OP_AS_RANGE_SUPER:
-	case POLSEARCH_OP_AS_RANGE_SUB:
+	case POLSEARCH_OP_RANGE_EXACT:
+	case POLSEARCH_OP_RANGE_SUPER:
+	case POLSEARCH_OP_RANGE_SUB:
 	{
 		if (param_type == POLSEARCH_PARAM_TYPE_RANGE)
 			return true;

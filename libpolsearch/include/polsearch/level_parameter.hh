@@ -48,7 +48,8 @@ class polsearch_level_parameter:public polsearch_parameter
 	/**
 	 * Create a MLS level parameter.
 	 * @param lvl The level to which to compare when calling \a match().
-	 * This level will be duplicated by this call.
+	 * This level will be duplicated by this call.  \a lvl can be a literal
+	 * level.
 	 * @exception std::bad_alloc Out of memory.
 	 */
 	polsearch_level_parameter(const apol_mls_level_t * lvl) throw(std::bad_alloc);

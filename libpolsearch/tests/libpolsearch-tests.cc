@@ -29,6 +29,7 @@
 #include <CUnit/Basic.h>
 
 #include "bool_query-tests.hh"
+#include "user_query-tests.hh"
 
 int main(void)
 {
@@ -39,6 +40,8 @@ int main(void)
 
 	CU_SuiteInfo suites[] = {
 		{"bool_query", bool_query_init, bool_query_cleanup, bool_query_tests}
+		,
+		{"user_query", user_query_init, user_query_cleanup, user_query_tests}
 		,
 		CU_SUITE_INFO_NULL
 	};
