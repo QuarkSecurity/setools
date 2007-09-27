@@ -828,9 +828,13 @@ proc Apol_Analysis_polsearch::_param_level {action x y args} {
             set vals(t:$x:$y:param:level) {}
         }
         update {
-            puts "updating param level from $vals(t:$x:$y:param:level_text)"
             _line_selected $x $y
-            set vals(t:$x:$y:param:level) [new_apol_mls_level_t $::ApolTop::policy $vals(t:$x:$y:param:level_text)]
+            if {$::ApolTop::policy == {} || $vals(t:$x:$y:param:level_text) == "*"} {
+                set vals(t:$x:$y:param:level) {}
+            } else {
+                set vals(t:$x:$y:param:level) [new_apol_mls_level_t $::ApolTop::policy $vals(t:$x:$y:param:level_text)]
+                $vals(t:$x:$y:param:level) -acquire
+            }
         }
         valid {
             if {$vals(t:$x:$y:param:level_text) == "*"} {
@@ -857,9 +861,11 @@ proc Apol_Analysis_polsearch::_param_range {action x y args} {
         }
         update {
             _line_selected $x $y
-            if {$vals(t:$x:$y:param:range) == {}} {
+            if {$::ApolTop::policy == {} || $vals(t:$x:$y:param:range_text) == "* - *"} {
+                set vals(t:$x:$y:param:range) {}
             } else {
-                set vals(t:$x:$y:param:range_text) [$vals(t:$x:$y:param:range) render $::ApolTop::policy]
+                set vals(t:$x:$y:param:range) [new_apol_mls_range_t $::ApolTop::policy $vals(t:$x:$y:param:range_text)]
+                $vals(t:$x:$y:param:range) -acquire
             }
         }
         valid {
@@ -908,7 +914,7 @@ proc Apol_Analysis_polsearch::_serialize_tests {} {
             set y [lindex [split $key :] 2]
             set op $vals($key)
             foreach p {avrule bool regex str_expr terule level_text range_text} {
-                lappend op [list $z $vals(t:$x:$y:param:$p)]
+                lappend op [list $p $vals(t:$x:$y:param:$p)]
             }
             lappend test $op
         }
