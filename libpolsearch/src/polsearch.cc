@@ -199,7 +199,7 @@ bool validate_test_condition(polsearch_element elem_type, polsearch_test_cond co
 	{
 		if (elem_type == POLSEARCH_ELEMENT_TYPE || elem_type == POLSEARCH_ELEMENT_ROLE ||
 		    elem_type == POLSEARCH_ELEMENT_CLASS || elem_type == POLSEARCH_ELEMENT_LEVEL ||
-		    elem_type == POLSEARCH_ELEMENT_CATEGORY)
+		    elem_type == POLSEARCH_ELEMENT_CATEGORY || elem_type == POLSEARCH_ELEMENT_USER)
 			return true;
 		break;
 	}
