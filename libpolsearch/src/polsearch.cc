@@ -672,10 +672,7 @@ polsearch_proof_element_free_fn get_element_free_fn(polsearch_element elem_type)
 	{
 		return wrap_apol_mls_range_free;
 	}
-	case POLSEARCH_ELEMENT_STRING:	/*!< char * */
-/*	{
-		return free;
-	}*/
+	case POLSEARCH_ELEMENT_STRING:	/*!< const char * */
 	case POLSEARCH_ELEMENT_TYPE:  /*!< qpol_type_t */
 	case POLSEARCH_ELEMENT_ATTRIBUTE:	/*!< qpol_type_t */
 	case POLSEARCH_ELEMENT_ROLE:  /*!< qpol_role_t */
