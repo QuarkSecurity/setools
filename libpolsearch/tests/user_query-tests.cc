@@ -211,12 +211,98 @@ static void level_query(void)
 
 static void range_query(void)
 {
+	polsearch_user_query *uq = new polsearch_user_query(POLSEARCH_MATCH_ALL);
+	polsearch_test & lt = uq->addTest(POLSEARCH_TEST_RANGE);
+	CU_ASSERT(lt.testCond() == POLSEARCH_TEST_RANGE);
+
+	vector < polsearch_op > valid = polsearch_get_valid_operators(uq->elementType(), POLSEARCH_TEST_RANGE);
+	bool found_range_exact = false, found_range_super = false, found_range_sub = false;
+	for (vector < polsearch_op >::const_iterator i = valid.begin(); i != valid.end(); i++)
+	{
+		switch (*i)
+		{
+		case POLSEARCH_OP_RANGE_EXACT:
+			found_range_exact = true;
+			break;
+		case POLSEARCH_OP_RANGE_SUPER:
+			found_range_super = true;
+			break;
+		case POLSEARCH_OP_RANGE_SUB:
+			found_range_sub = true;
+			break;
+		default:
+			CU_ASSERT(0);
+		}
+	}
+	CU_ASSERT(found_range_exact && found_range_super && found_range_sub);
+
+	polsearch_criterion & nc = lt.addCriterion(POLSEARCH_OP_RANGE_SUB);
+	CU_ASSERT(nc.op() == POLSEARCH_OP_RANGE_SUB);
+
+	polsearch_regex_parameter *rxp = NULL;
+	bool caught_invalid_parameter = false;
+	try
+	{
+		rxp = new polsearch_regex_parameter("^[pqt]");
+		nc.param(rxp);
+	}
+	catch(std::invalid_argument & e)
+	{
+		caught_invalid_parameter = true;
+	}
+	catch(...)
+	{
+	}
+	CU_ASSERT(caught_invalid_parameter);
+	delete rxp;
+
+	apol_mls_range_t *r = apol_mls_range_create_from_string(sp, "s0-s2:c2.c12");
+	CU_ASSERT_PTR_NOT_NULL_FATAL(r);
+	polsearch_range_parameter *rp = new polsearch_range_parameter(r);
+	apol_mls_range_destroy(&r);
+	nc.param(rp);
+	CU_ASSERT(polsearch_is_test_continueable(lt.testCond()) == false);
+
+	vector < polsearch_result > res_v = uq->run(sp, NULL);
+	CU_ASSERT(!res_v.empty());
+	CU_ASSERT(res_v.size() == 2);
+
+	bool found_tom = false, found_guest = false;
+
+	for (vector < polsearch_result >::const_iterator i = res_v.begin(); i != res_v.end(); i++)
+	{
+		CU_ASSERT(i->proof().size() == 1);
+		const polsearch_proof *pr = &(i->proof()[0]);
+		CU_ASSERT(pr->testCond() == POLSEARCH_TEST_RANGE);
+		CU_ASSERT(pr->elementType() == POLSEARCH_ELEMENT_MLS_RANGE);
+
+		const qpol_user_t *user = static_cast < const qpol_user_t * >(i->element());
+		const char *name;
+		qpol_user_get_name(apol_policy_get_qpol(sp), user, &name);
+		if (strcmp(name, "tom_u") == 0)
+		{
+			found_tom = true;
+		}
+		else if (strcmp(name, "guest_u") == 0)
+		{
+			found_guest = true;
+		}
+		else
+		{
+			CU_ASSERT(0);
+		}
+	}
+	CU_ASSERT(found_tom && found_guest);
+	delete uq;
 }
 
 CU_TestInfo user_query_tests[] = {
-	{"create query", create_query},
-	{"level query", level_query},
-	{"range query", range_query},
+	{"create query", create_query}
+	,
+	{"level query", level_query}
+	,
+	{"range query", range_query}
+	,
 	CU_TEST_INFO_NULL
 };
 

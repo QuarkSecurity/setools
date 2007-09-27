@@ -940,6 +940,9 @@ proc Apol_Analysis_polsearch::_checkParams {} {
             _line_selected $x $y
             return $r
         }
+        if {$vals(t:$x:test) == $::POLSEARCH_TEST_FCENTRY && ![Apol_File_Contexts::is_db_loaded]} {
+            return "No file contexts database opened."
+        }
     }
     set vals(serialized_tests) [_serialize_tests]
     return {}  ;# all parameters passed, now ready to do search

@@ -402,8 +402,16 @@ static vector < const void *>get_test_candidates(const apol_policy_t * policy, c
 	case POLSEARCH_ELEMENT_MLS_RANGE:
 	{
 		const qpol_mls_range_t *rng = NULL;
-		qpol_user_get_range(qp, static_cast < const qpol_user_t * >(element), &rng);
-		ret_v.push_back(static_cast < const void *>(rng));
+		if (elem_type == POLSEARCH_ELEMENT_USER)
+		{
+			qpol_user_get_range(qp, static_cast < const qpol_user_t * >(element), &rng);
+		}
+		else if (elem_type == POLSEARCH_ELEMENT_RANGE_TRANS)
+		{
+			qpol_range_trans_get_range(qp, static_cast < const qpol_range_trans_t * >(element), &rng);
+		}
+		const apol_mls_range_t *arng = apol_mls_range_create_from_qpol_mls_range(policy, rng);
+		ret_v.push_back(static_cast < const void *>(arng));
 		break;
 	}
 	case POLSEARCH_ELEMENT_PERMISSION:
