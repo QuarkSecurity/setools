@@ -750,6 +750,9 @@ void polsearch_criterion::check(const apol_policy_t * policy, std::vector < cons
 			if (candidate_type == POLSEARCH_ELEMENT_MLS_LEVEL)	//the following odd cast handles freeing the memory temporarily used for the level
 				apol_mls_level_destroy((reinterpret_cast <
 							apol_mls_level_t ** >(const_cast < void **>(&(test_candidates[i])))));
+			if (candidate_type == POLSEARCH_ELEMENT_MLS_RANGE)	//the following odd cast handles freeing the memory temporarily used for the level
+				apol_mls_range_destroy((reinterpret_cast <
+						apol_mls_range_t ** >(const_cast < void **>(&(test_candidates[i])))));
 			test_candidates.erase(test_candidates.begin() + i);
 			i--;
 		}

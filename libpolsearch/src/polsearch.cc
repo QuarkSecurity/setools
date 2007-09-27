@@ -607,7 +607,6 @@ void *element_copy(polsearch_element elem_type, const void *elem) throw(std::bad
 			throw bad_alloc();
 		return lvl;
 	}
-	case POLSEARCH_ELEMENT_STRING:
 	case POLSEARCH_ELEMENT_PERMISSION:
 	{
 		char *tmp = strdup(static_cast < const char *>(elem));
@@ -615,6 +614,7 @@ void *element_copy(polsearch_element elem_type, const void *elem) throw(std::bad
 			throw bad_alloc();
 		return tmp;
 	}
+	case POLSEARCH_ELEMENT_STRING:
 	case POLSEARCH_ELEMENT_BOOL_STATE:
 	case POLSEARCH_ELEMENT_TYPE:
 	case POLSEARCH_ELEMENT_ATTRIBUTE:
@@ -673,9 +673,9 @@ polsearch_proof_element_free_fn get_element_free_fn(polsearch_element elem_type)
 		return wrap_apol_mls_range_free;
 	}
 	case POLSEARCH_ELEMENT_STRING:	/*!< char * */
-	{
+/*	{
 		return free;
-	}
+	}*/
 	case POLSEARCH_ELEMENT_TYPE:  /*!< qpol_type_t */
 	case POLSEARCH_ELEMENT_ATTRIBUTE:	/*!< qpol_type_t */
 	case POLSEARCH_ELEMENT_ROLE:  /*!< qpol_role_t */

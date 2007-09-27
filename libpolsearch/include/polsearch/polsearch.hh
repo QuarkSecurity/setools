@@ -47,7 +47,7 @@ enum polsearch_element
 	POLSEARCH_ELEMENT_CATEGORY,    /*!< qpol_cat_t */
 	POLSEARCH_ELEMENT_LEVEL,       /*!< qpol_level_t */
 	POLSEARCH_ELEMENT_BOOL,	       /*!< qpol_bool_t */
-	POLSEARCH_ELEMENT_STRING,      /*!< char * */
+	POLSEARCH_ELEMENT_STRING,      /*!< std::string */
 	POLSEARCH_ELEMENT_AVRULE,      /*!< qpol_avrule_t */
 	POLSEARCH_ELEMENT_TERULE,      /*!< qpol_terule_t */
 	POLSEARCH_ELEMENT_ROLE_ALLOW,  /*!< qpol_role_allow_t */
