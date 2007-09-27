@@ -541,6 +541,9 @@ const std::vector < polsearch_result > polsearch_test::run(const apol_policy_t *
 					//create proof and append to result; const cast due to some qpol objects' need to be freed
 					res.addProof(_test_cond, candidate_type, const_cast < void *>(test_candidates[j]),
 						     get_element_free_fn(candidate_type));
+					//addProof copies the candidate so destroy if needed
+					if (get_element_free_fn(candidate_type))
+						get_element_free_fn(candidate_type)(const_cast < void *>(test_candidates[j]));
 				}
 				//append result to result_v
 				result_v.push_back(res);

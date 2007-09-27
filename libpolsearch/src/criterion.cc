@@ -596,7 +596,15 @@ enum match_type determine_match_type(const apol_policy_t * policy, const void *c
 	case POLSEARCH_OP_RANGE_SUPER:
 	case POLSEARCH_OP_RANGE_SUB:
 	{
-		input.rng = static_cast < const apol_mls_range_t *>(candidate);
+		if (candidate_type == POLSEARCH_ELEMENT_FC_ENTRY)
+		{
+			const apol_context_t *ctx = static_cast < const sefs_entry * >(candidate)->context();
+			input.rng = apol_context_get_range(ctx);
+		}
+		else
+		{
+			input.rng = static_cast < const apol_mls_range_t *>(candidate);
+		}
 		return MATCH_RANGE;
 	}
 	case POLSEARCH_OP_USER:
