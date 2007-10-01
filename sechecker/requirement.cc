@@ -71,15 +71,6 @@ namespace sechecker
 		return _satisfied;
 	}
 
-		/**
-		 * Check the requirement.
-		 * If the policy and file context list (if needed) satisfy the requirement,
-		 * update the \a _satisfied field.
-		 * @param pol The policy to check.
-		 * @param list The file context list to check.
-		 * (Only used for SECHK_REQUIRE_FCLIST and SECHK_REQUIRE_MLS.)
-		 * @return If the requirement is satisfied, return \a true, otherwise return \a false.
-		 */
 	bool requirement::check(apol_policy_t * pol, sefs_fclist * list)
 	{
 		switch (_code)

@@ -75,6 +75,12 @@ namespace sechecker
 			~module_specification();
 
 			/**
+			 * Get the name of the specified module.
+			 * @return The name of the specified module.
+			 */
+			const std::string & name () const;
+
+			/**
  			 * Get the output format for the specified module.
  			 * @return The level of output for the specified module.
  			 */

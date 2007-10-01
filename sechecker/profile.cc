@@ -22,12 +22,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <config.h>
+
 #include "sechecker.hh"
+
+#include <apol/util.h>
 
 #include <string>
 #include <map>
 #include <vector>
 #include <stdexcept>
+#include <libxml/xmlreader.h>
+#include <cstdlib>
 
 using std::invalid_argument;
 using std::out_of_range;
@@ -66,6 +72,11 @@ namespace sechecker
 		return _output_mode;
 	}
 
+	const std::string & profile::module_specification::name() const
+	{
+		return _name;
+	}
+
 	void profile::module_specification::addOption(const std::string & name_,
 						      const std::vector < std::string > &vals) throw(std::invalid_argument)
 	{
@@ -80,13 +91,165 @@ namespace sechecker
 		return _options;
 	}
 
+	/**
+	 * Given a C string return the corresponding output_format.
+	 * @param str The string representing the output format.
+	 * @return The corresponding output_format for \a str.
+	 */
+	static output_format strtoof(const char *str)
+	{
+		if (!strcmp(str, "default"))
+			return SECHK_OUTPUT_DEFAULT;
+		else if (!strcmp(str, "quiet"))
+			return SECHK_OUTPUT_QUIET;
+		else if (!strcmp(str, "short"))
+			return SECHK_OUTPUT_SHORT;
+		else if (!strcmp(str, "verbose"))
+			return SECHK_OUTPUT_VERBOSE;
+		else
+			return SECHK_OUTPUT_NONE;
+	}
+
 	profile::profile(const std::string & path)throw(std::runtime_error):_mod_specs()
 	{
 		_version = "";
 		_name = "";
 		_description = "";
+		xmlDtdPtr dtd = NULL;
+		xmlDocPtr xml = NULL;
+		xmlValidCtxtPtr ctxt = NULL;
 
-		//TODO port profile parser
+		LIBXML_TEST_VERSION;
+		char* dtd_path =  apol_file_find_path("sechecker/sechecker.dtd");
+		if (!dtd_path)
+			throw runtime_error("Could not find profile DTD");
+		string dtd_uri = "file:///localhost";
+		dtd_uri += dtd_path;
+		free(dtd_path);
+
+		dtd = xmlParseDTD(NULL, reinterpret_cast<const xmlChar*>(dtd_uri.c_str()));
+		if (!dtd)
+			throw runtime_error("Could not parse DTD");
+		xml = xmlParseFile(path.c_str());
+		if (!xml)
+		{
+			xmlFreeDtd(dtd);
+			throw runtime_error("Error parsing profile");
+		}
+		ctxt = xmlNewValidCtxt();
+		if (!ctxt)
+		{
+			xmlFreeDoc(xml);
+			xmlFreeDtd(dtd);
+			throw runtime_error("Could not create validation context");
+		}
+
+		int retv = xmlValidateDtd(ctxt, xml, dtd);
+		xmlFreeValidCtxt(ctxt);
+		xmlFreeDoc(xml);
+		xmlFreeDtd(dtd);
+		if (!retv)
+			throw runtime_error("Profile contains invalid XML");
+
+		xmlTextReaderPtr reader = xmlReaderForFile(path.c_str(), NULL, 0);
+		if (!reader)
+			throw runtime_error("Could not create XML reader");
+
+		module_specification* cur_mod = NULL;
+		vector<string> items;
+		string option_name = "";
+		while ((retv = xmlTextReaderRead(reader)))
+		{
+			if (retv == -1)
+				throw runtime_error("Error reading profile");
+
+			switch (xmlTextReaderNodeType(reader))
+			{
+				case XML_ELEMENT_DECL:
+				{
+					const xmlChar * tag_name = xmlTextReaderConstName(reader);
+					if (xmlStrEqual(tag_name, reinterpret_cast<const xmlChar*>("module")) == 1)
+					{
+						pair<map<string,module_specification>::iterator, bool> x = _mod_specs.insert(make_pair(cur_mod->name(), *cur_mod));
+						if (!x.second) {
+							string message = "Could not add specification for module " + cur_mod->name();
+							delete cur_mod;
+							throw runtime_error(message);
+						}
+						delete cur_mod;
+						cur_mod = NULL;
+					}
+					else if (xmlStrEqual(tag_name, reinterpret_cast<const xmlChar*>("option")) == 1)
+					{
+						cur_mod->addOption(option_name, items);
+						option_name = "";
+						items.clear();
+					}
+				}
+				case XML_ELEMENT_NODE:
+				{
+					const xmlChar * tag_name = xmlTextReaderConstName(reader);
+					if (xmlStrEqual(tag_name, reinterpret_cast<const xmlChar*>("sechecker")) == 1)
+					{
+						xmlChar *version = xmlTextReaderGetAttribute(reader, reinterpret_cast<const xmlChar*>("version"));
+						if (!version)
+							throw runtime_error("Invalid sechecker tag");
+						char *end_pos = NULL;
+						double v = strtod(reinterpret_cast<const char *>(version), &end_pos);
+						if (end_pos)
+							throw runtime_error("Invalid version specified");
+						if (v < 2.00 || v > atof(SECHECKER_VERSION))
+							throw runtime_error("Profile specifies an incompatible version number");
+						_version = string(reinterpret_cast<const char*>(version));
+						free(version);
+					}
+					else if (xmlStrEqual(tag_name, reinterpret_cast<const xmlChar*>("profile")) == 1)
+					{
+						xmlChar *name = xmlTextReaderGetAttribute(reader, reinterpret_cast<const xmlChar*>("name"));
+						if (!name)
+							throw runtime_error("Invalid profile tag");
+						_name = string(reinterpret_cast<const char *>(name));
+						free(name);
+					}
+					else if (xmlStrEqual(tag_name, reinterpret_cast<const xmlChar*>("desc")) == 1)
+					{
+						_description = string(reinterpret_cast<const char *>(xmlTextReaderConstValue(reader)));
+						if (_description.empty())
+							throw runtime_error("Invalid profile description");
+					}
+					else if (xmlStrEqual(tag_name, reinterpret_cast<const xmlChar*>("module")) == 1)
+					{
+						xmlChar *name = xmlTextReaderGetAttribute(reader, reinterpret_cast<const xmlChar*>("name"));
+						xmlChar *outp = xmlTextReaderGetAttribute(reader, reinterpret_cast<const xmlChar*>("output"));
+						if (cur_mod || !name || !outp)
+							throw runtime_error("Invalid module tag");
+						output_format outf = strtoof(reinterpret_cast<const char *>(outp));
+						cur_mod = new module_specification(string(reinterpret_cast<const char*>(name)), outf);
+						free(name);
+						free(outp);
+					}
+					else if (xmlStrEqual(tag_name, reinterpret_cast<const xmlChar*>("option")) == 1)
+					{
+						xmlChar *name = xmlTextReaderGetAttribute(reader, reinterpret_cast<const xmlChar*>("name"));
+						if (!cur_mod || !name)
+							throw runtime_error("Invalid option tag");
+						option_name = string(reinterpret_cast<const char*>(name));
+						free(name);
+					}
+					else if (xmlStrEqual(tag_name, reinterpret_cast<const xmlChar*>("item")) == 1)
+					{
+						xmlChar *val = xmlTextReaderGetAttribute(reader, reinterpret_cast<const xmlChar*>("value"));
+						if (!cur_mod || option_name == "" || !val)
+							throw runtime_error("Invalid item tag");
+						items.push_back(string(reinterpret_cast<const char *>(val)));
+						free(val);
+					}
+				}
+			}
+		}
+
+		xmlCleanupParser();
+		xmlFreeTextReader(reader);
 	}
 
 	profile::profile(const profile & rhs):_mod_specs(rhs._mod_specs)

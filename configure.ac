@@ -41,6 +41,8 @@ libseaudit_pyswig_soname=_seaudit.so.4
 libseaudit_jswig_soname=libjseaudit.so.4
 libseaudit_tswig_soname=libtseaudit.so.4
 
+sechecker_version=2.0
+
 setoolsdir='${prefix}/share/setools-3.4'
 javadir='${prefix}/share/java'
 
@@ -731,6 +733,7 @@ AC_DEFINE_UNQUOTED(LIBPOLSEARCH_VERSION_STRING, "${libpolsearch_version}", [libp
 AC_DEFINE_UNQUOTED(LIBSEFS_VERSION_STRING, "${libsefs_version}", [libsefs version])
 AC_DEFINE_UNQUOTED(LIBSEAUDIT_VERSION_STRING, "${libseaudit_version}", [libapol version])
 AC_DEFINE_UNQUOTED(TEST_POLICIES, "${test_policies}", [location of testing policies])
+AC_DEFINE_UNQUOTED(SECHECKER_VERSION, "${sechecker_version}", [sechecker version])
 
 if test ${sepol_new_defines} != "yes" ; then
    AC_DEFINE(SEPOL_ENOMEM, HASHTAB_OVERFLOW, [remap of libsepol 1.x.x define to 2.x.x])
