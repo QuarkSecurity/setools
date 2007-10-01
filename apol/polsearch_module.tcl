@@ -607,6 +607,24 @@ proc Apol_Analysis_polsearch::_line_selected {x y} {
     variable widgets
 
     foreach {old_x old_y} $widgets(line_selected) {break}
+
+    $widgets(bb) itemconfigure 0 -state disabled
+    if {$x >= 0} {
+        # enable continue button only if the current test is continuable
+        if {[polsearch_is_test_continueable $vals(t:$x:test)]} {
+            $widgets(bb) itemconfigure 0 -state normal
+        }
+    }
+    # always enable add button
+    $widgets(bb) itemconfigure 1 -state normal
+
+    # maybe enable remove button under certain circumstances
+    if {$x >= 0 && ($y > 0 || $vals(t:$x:num_childops) == 0)} {
+        $widgets(bb) itemconfigure 2 -state normal
+    } else {
+        $widgets(bb) itemconfigure 2 -state disabled
+    }
+
     if {$old_x == $x && $old_y == $y} {
         return
     }
@@ -622,8 +640,6 @@ proc Apol_Analysis_polsearch::_line_selected {x y} {
         }
     }
 
-    $widgets(bb) itemconfigure 0 -state disabled
-
     if {$x >= 0} {
         $widgets(t:$x:$y:frame) configure -bg [Apol_Prefs::getPref select_bg]
         if {$y == 0} {
@@ -631,21 +647,6 @@ proc Apol_Analysis_polsearch::_line_selected {x y} {
         } else {
             $widgets(t:$x:$y:frame) configure -relief groove
         }
-
-        # enable continue button only if the current test is continuable
-        if {[polsearch_is_test_continueable $vals(t:$x:test)]} {
-            $widgets(bb) itemconfigure 0 -state normal
-        }
-    }
-
-    # always enable add button
-    $widgets(bb) itemconfigure 1 -state normal
-
-    # maybe enable remove button under certain circumstances
-    if {$x >= 0 && ($y > 0 || $vals(t:$x:num_childops) == 0)} {
-        $widgets(bb) itemconfigure 2 -state normal
-    } else {
-        $widgets(bb) itemconfigure 2 -state disabled
     }
 
     set widgets(line_selected) [list $x $y]
