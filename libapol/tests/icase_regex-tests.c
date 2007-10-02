@@ -466,7 +466,7 @@ static void role_test(void)
 	r = apol_role_query_create();
 	apol_role_query_set_type(sp, r, "range_rover_t");
 	apol_role_get_by_query(sp, r, &results);
-	check_vector(&results, 2);
+	check_vector(&results, 3);
 
 	apol_role_query_set_type(sp, r, "rover_t");
 	apol_role_get_by_query(sp, r, &results);
@@ -474,16 +474,16 @@ static void role_test(void)
 
 	apol_role_query_set_icase(sp, r, 1);
 	apol_role_get_by_query(sp, r, &results);
-	check_vector(&results, 2);
+	check_vector(&results, 3);
 
 	apol_role_query_set_icase(sp, r, 0);
 	apol_role_query_set_regex(sp, r, 1);
 	apol_role_get_by_query(sp, r, &results);
-	check_vector(&results, 2);
+	check_vector(&results, 3);
 
 	apol_role_query_set_icase(sp, r, 1);
 	apol_role_get_by_query(sp, r, &results);
-	check_vector(&results, 3);
+	check_vector(&results, 4);
 
 	apol_role_query_destroy(&r);
 }

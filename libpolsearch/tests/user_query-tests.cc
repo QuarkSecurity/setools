@@ -114,6 +114,7 @@ static void create_query(void)
 	{
 		CU_ASSERT(i->proof().size() == 1);
 		CU_ASSERT(i->proof()[0].testCond() == POLSEARCH_TEST_NAME);
+		CU_ASSERT(i->proof()[0].elementType() == POLSEARCH_ELEMENT_STRING);
 		const polsearch_proof *pr = &(i->proof()[0]);
 		string name(static_cast < const char *>(pr->element()));
 		if (name == "pwn_u")
