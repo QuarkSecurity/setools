@@ -46,22 +46,9 @@
 
 #define SOURCE_POLICY TEST_POLICIES "/setools-3.4/apol/icase.conf"
 
-#define DEBUG 0
-
-#if (DEBUG == 1)
-#  define CALLBACK NULL
-#else
-#  define CALLBACK ignore_error_output
-#endif
-
 static int test_num = 0;
 static apol_policy_t *sp = NULL;
 static apol_vector_t *results = NULL;
-
-void ignore_error_output(void *varg, const apol_policy_t * p, int level, const char *fmt, va_list argp)
-{
-	/* do nothing */
-}
 
 static void check_vector(apol_vector_t ** v, size_t expected_num)
 {
@@ -69,8 +56,10 @@ static void check_vector(apol_vector_t ** v, size_t expected_num)
 	bool pass = (actual == expected_num);
 	if (!pass) {
 		printf("TEST #%d FAILURE: Expected %d matches but got %d\n", (int)test_num, (int)expected_num, (int)actual);
+		CU_ASSERT(0);
+	} else {
+		CU_ASSERT_TRUE(pass);
 	}
-	CU_ASSERT_TRUE(pass);
 	apol_vector_destroy(v);
 	test_num++;
 }
@@ -162,9 +151,6 @@ static void avrule_test(void)
 	check_vector(&results, 2);
 
 	apol_avrule_query_destroy(&a);
-
-	/* TODO: bools ? */
-
 }
 
 static void bool_test(void)
@@ -623,7 +609,7 @@ CU_TestInfo icase_regex_tests[] = {
 /* TODO:
 	{"Conditional Search",cond_test}
 	,
-	{"Constraint Search", constraint_test} 
+	{"Constraint Search", constraint_test}
 	,
 */
 	{"MLS Query Search", mls_test}
@@ -634,7 +620,7 @@ CU_TestInfo icase_regex_tests[] = {
 	,
 	{"Role Search", role_test}
 	,
-/* TODO: 
+/* TODO:
 	{"TE Rule Search", terule_test}
 	,
 */
@@ -652,7 +638,7 @@ int icase_regex_init()
 		return 1;
 	}
 
-	if ((sp = apol_policy_create_from_policy_path(ppath, 0, CALLBACK, NULL)) == NULL) {
+	if ((sp = apol_policy_create_from_policy_path(ppath, 0, NULL, NULL)) == NULL) {
 		apol_policy_path_destroy(&ppath);
 		return 1;
 	}

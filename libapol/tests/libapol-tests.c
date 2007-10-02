@@ -32,7 +32,9 @@
 #include "dta-tests.h"
 #include "infoflow-tests.h"
 #include "policy-21-tests.h"
+#include "role-tests.h"
 #include "terule-tests.h"
+#include "user-tests.h"
 #include "icase_regex-tests.h"
 
 int main(void)
@@ -50,7 +52,11 @@ int main(void)
 		,
 		{"Infoflow Analysis", infoflow_init, infoflow_cleanup, infoflow_tests}
 		,
+		{"Role Query", role_init, role_cleanup, role_tests}
+		,
 		{"TE Rule Query", terule_init, terule_cleanup, terule_tests}
+		,
+		{"User Query", user_init, user_cleanup, user_tests}
 		,
 		{"Ignore Case & Regex Queries", icase_regex_init, icase_regex_cleanup, icase_regex_tests}
 		,
