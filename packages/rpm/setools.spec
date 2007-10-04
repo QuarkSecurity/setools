@@ -211,7 +211,7 @@ install -d -m 755 ${RPM_BUILD_ROOT}%{_datadir}/applications
 install -p -m 644 apol/apol.png ${RPM_BUILD_ROOT}%{_datadir}/pixmaps/apol.png
 install -p -m 644 seaudit/seaudit.png ${RPM_BUILD_ROOT}%{_datadir}/pixmaps/seaudit.png
 install -p -m 644 sediff/sediffx.png ${RPM_BUILD_ROOT}%{_datadir}/pixmaps/sediffx.png
-desktop-file-install --dir ${RPM_BUILD_ROOT}%{_datadir}/applications %{setools_desktop1} %{setools_desktop2} %{setools_desktop3}
+desktop-file-install --vendor=Tresys --dir ${RPM_BUILD_ROOT}%{_datadir}/applications %{setools_desktop1} %{setools_desktop2} %{setools_desktop3}
 ln -sf consolehelper ${RPM_BUILD_ROOT}/%{_bindir}/seaudit
 # replace absolute symlinks with relative symlinks
 ln -sf ../setools-%{setools_maj_ver}/qpol.jar ${RPM_BUILD_ROOT}/%{javajardir}/qpol.jar

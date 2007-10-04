@@ -1,6 +1,42 @@
+2007-10-02  J. Tang  <jtang@tresys.com>
+
+	* Fix to libqpol to synthesize object_r.  This was previously
+	(erroneously) handled in libapol.
+
+2007-10-01  J. Tang  <jtang@tresys.com>
+
+	* Creation a new apol analysis module, 'Symbol Search', that
+	utilizes libpolsearch.
+
+2007-09-27  J. Mowery  <jmowery@tresys.com>
+
+	* Creation of a new library, libpolsearch, to find policy
+	components satisfying a list of criteria.  This library is wrapped
+	by SWIG for Python, Java, and Tcl.
+
+2007-09-26  J. Tang  <jtang@tresys.com>
+
+	* Fix to apol where empty levels would throw an error during
+	validation.
+
+2007-09-04  J. Mowery  <jmowery@tresys.com>
+
+	* Fixes to libsefs and apol if an invalid regular expression is
+	given.
+
+2007-08-30  J. Mowery  <jmowery@tresys.com>
+
+	* Do not look for neverallow rules on default avrule query if not
+	available.
+
 2007-08-22  J. Mowery  <jmowery@tresys.com>
 
 	* Added ability to do case insensitive searching to libapol.
+
+2007-08-21  J. Tang  <jtang@tresys.com>
+
+	* Official release of SETools 3.3.1.  This encompasses only bug
+	fixes since 3.3; no new features are present.
 
 2007-08-20  J. Tang  <jtang@tresys.com>
 
