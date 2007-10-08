@@ -1,3 +1,8 @@
+2007-10-08  J. Tang  <jtang@tresys.com>
+
+	* Fix to libqpol when qpol_type_get_alias_iter() could erroneously
+	be set to an initially wrong position for certain primary types.
+
 2007-10-02  J. Tang  <jtang@tresys.com>
 
 	* Fix to libqpol to synthesize object_r.  This was previously
