@@ -37,7 +37,7 @@
 #include <iostream>
 #include <stdexcept>
 
-namespace sechecker
+namespace sechk
 {
 	//forward declarations
 	class requirement;

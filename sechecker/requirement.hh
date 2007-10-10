@@ -32,7 +32,7 @@
 #include <string>
 #include <stdexcept>
 
-namespace sechecker
+namespace sechk
 {
 	//! Values to represent a requirement type.
 	enum require_code

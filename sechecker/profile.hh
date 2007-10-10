@@ -32,7 +32,7 @@
 #include <vector>
 #include <stdexcept>
 
-namespace sechecker
+namespace sechk
 {
 	//forward declaration
 	class sechecker;

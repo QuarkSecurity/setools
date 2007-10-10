@@ -7,18 +7,19 @@ Table of Contents
 2. Format of the Profile
    2.0 <sechecker>
    2.1 <profile>
-   2.2 <module>
-   2.3 <output>
+   2.2 <desc>
+   2.3 <module>
    2.4 <option>
+   2.5 <item>
 3. Example Profile
 
 1. Use of Profiles
 ==========================
 SEChecker has a wide variety of modules which perform various tests
-on the policy and/or system.  To make the management and running of 
+on the policy and/or system.  To make the management and running of
 these modules easier, several profiles are defined.
 
-A profile is used to run a set of modules with options set in a way 
+A profile is used to run a set of modules with options set in a way
 that the resulting report reflects a specific security goal.
 
 To write your own profile, create a new XML file named <profile name>.prof.
@@ -32,111 +33,108 @@ The profile recognizes the following tags
 2.0 <sechecker>
 ===========================
 The sechecker tag should be the first open tag in the file and the final
-tag to be closed.  The tag has a single attribute version, which should 
-be set to the current version of SEChecker you are using. To find your 
+tag to be closed.  The tag has a single attribute version, which should
+be set to the current version of SEChecker you are using. To find your
 version number, run: "sechecker --version".
 
-<sechecker version="1.0">
+<sechecker version="2.0">
 
 Be sure to remember to close this tag at the end of the file.
 
 2.1 <profile>
 ===========================
-The profile tag tells the parser that SEChecker should interpret this 
-file as a profile.  This tag has no attributes.
+The profile tag tells the parser that SEChecker should interpret this
+file as a profile.  This tag has one attribute, the name of the profile.
 
-<profile>
+<profile name "my_profile">
 
 Close this tag just before the sechecker tag is closed at the end of the file
 
-2.2 <module>
+2.2 <desc>
+===========================
+The description tag contains a brief description of what the modules
+specified by the profile check. This tag should be first inside the
+profile tag.
+
+<desc>
+The description goes here.
+</desc>
+
+2.3 <module>
 ===========================
 The module tag tells SEChecker that a particular module should be run for
-this profile.  The only attribute is name.
+this profile.  The two attributes are name and output.  The output attribute
+tells SEChecker to use this output format for the module in which it appears.
 
-<module name="mod_name">
+<module name="mod_name" output="short">
 
-This tag is closed after all other tags related to that module
+This tag is closed after all other tags related to that module.
 
-2.3 <output>
-=========================
-The output tag tells SEChecker to use this output format for the module
-in which it appears. This tag is optional and has one attribute, value.
-
-<output value="short"/>
-
-This tag should close itself.  The valid values are:
-   none     -  do not print anything in the report; only run this module
-               as dependency of another module.
-   quiet    -  print only the stats and header in the report
+The valid output values are:
+   quiet    -  do not print anything in the report; only run this module
+               as dependency of another module. (Used to set options)
    short    -  print the header, stats, and a list of items found by the
                module without any accompanying proof
-   long     -  print the header, stats, and a list of items found by the 
+   verbose  -  print the header, stats, and a list of items found by the
                module with proof of the result following each item
-   verbose  -  print all possible output including the header, stats,
-               a list of items and a list of items with proof
+   default  -  use the module's default output format.
 
-NOTE: any of the above values other than "none" are overridden by the
-      command line output flags.  Setting an output value in a profile
-      overrides the default setting in the configuration file for this
-      profile only.
+NOTE: any of the above values are overridden by the command line output flags.
 
 2.4 <option>
 =======================
 The option tag allows a profile to specify additional options for a module.
-The option tag has two mandatory attributes, "name" and "value".
-The values of these attributes is specific to the module for which the
-option is specified.  Options specified in a profile are used in addition 
-to those in the configuration file.
 
-<option name="option_name" value="some_value"/>
+<option name="option_name">
 
-This tag closes itself.  As its name implies this tag is optional. 
+This tag should be closed after the items are finished.
+As its name implies this tag is optional.
+
+2.5 <item>
+======================
+The item tag specifies values for an option. Each option must have at least
+one item associated with it.  The item tag is self closing.
+
+<item value="val"/>
 
 3. Example Profile
 ======================
-The following is a brief example of a profile 
+The following is a brief example of a profile
 
-<sechecker version="1.0">
-<profile>
+<sechecker version="2.0">
+<profile name="sample">
+<desc>
+A brief description.
+</desc>
 
-   <module name="mod1">
-   </module> 
+<module name="mod1" output="default">
+</module>
 
-   <module name="mod2">
-      <output value="none"/>
-      <option name="attribute" value="my_attrib"/>
-   </module> 
+<module name="mod2" output="short">
+	<option name="attribute">
+		<item value="my_attrib"/>
+		</option>
+</module>
 
-   <module name="mod3">
-      <option name="foo" value="bar"/>
-   </module> 
+<module name="mod3" output="quiet">
+	<option name="foo">
+		<item value="bar"/>
+	</option>
+	<option name="baz">
+		<item value="hello"/>
+		<item value="world"/>
+	</option>
+</module>
 
-   <module name="mod4">
-      <output value="short"/>
-   </module> 
+<module name="mod4" output="short">
+</module>
 
-   <module name="mod5">
-      <output value="quiet"/>
-      <option name="type" value="shadow_t"/>
-   </module> 
+<module name="mod5" output="quiet">
+	<option name="type">
+		<item value="shadow_t"/>
+		<item value="passwd_t"/>
+	</option>
+</module>
 
 </profile>
 </sechecker>
-
-The result of this profile would be:
--  run mod1 with default configuration;
-   print with default settings
--  run mod2 with the additional attribute my_attrib,
-   but don't print its results
--  run mod3 with option foo set to bar (in addition to any other settings);
-   print with default settings
--  run mod4;
-   print in short output 
--  run mod5 with additional type shadow_t;
-   print using quiet output
-
-If there are also modules mod6 and mod7, neither would be run unless 
-one of the other modules (mod1-5) had a dependency on them.
-
-

@@ -40,7 +40,7 @@ using std::invalid_argument;
 using std::make_pair;
 using std::pair;
 
-namespace sechecker
+namespace sechk
 {
 	template < typename T > element::element(T * data_, free_fn free_, dup_fn dup_) throw(std::bad_alloc):_type(typeid(data_))
 	{

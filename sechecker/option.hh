@@ -29,7 +29,7 @@
 #include <vector>
 #include <stdexcept>
 
-namespace sechecker
+namespace sechk
 {
 	//! Optional parameter for a sechecker module.
 	class option

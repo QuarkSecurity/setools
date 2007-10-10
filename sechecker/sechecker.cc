@@ -44,7 +44,7 @@ using std::out_of_range;
 using std::ios_base;
 using std::endl;
 
-namespace sechecker
+namespace sechk
 {
 	sechecker::sechecker():_modules(), _profiles()
 	{

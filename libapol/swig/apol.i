@@ -53,6 +53,7 @@
 #include <apol/user-query.h>
 #include <apol/util.h>
 #include <apol/vector.h>
+#include <errno.h>
 
 /* Provide hooks so that language-specific modules can define the
  * callback function, used by the handler in
@@ -498,7 +499,11 @@ typedef struct apol_policy {} apol_policy_t;
 		apol_policy_t *p;
 		p = apol_policy_create_from_policy_path(path, options, apol_swig_message_callback, apol_swig_message_callback_arg);
 		if (!p) {
-			SWIG_exception(SWIG_MemoryError, "Out of memory");
+			if (errno == ENOMEM) {
+				SWIG_exception(SWIG_MemoryError, "Out of memory");
+			} else {
+				SWIG_exception(SWIG_IOError, "Failed to create policy");
+			}
 		}
 	fail:
 		return p;

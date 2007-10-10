@@ -34,7 +34,7 @@
 #include <iostream>
 #include <stdexcept>
 
-namespace sechecker
+namespace sechk
 {
 	/**
 	 * Function to free an element.

@@ -38,7 +38,7 @@
 /**
  * The sechecker namespace includes all classes used by the sechecker tool.
  */
-namespace sechecker
+namespace sechk
 {
 	//forward declarations
 	class module;

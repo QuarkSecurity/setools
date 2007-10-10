@@ -42,7 +42,7 @@ using std::string;
 using std::map;
 using std::vector;
 
-namespace sechecker
+namespace sechk
 {
 	profile::module_specification::module_specification(const std::string & name_,
 							    output_format output) throw(std::invalid_argument):_options()

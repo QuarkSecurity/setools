@@ -32,7 +32,7 @@ using std::invalid_argument;
 using std::vector;
 using std::string;
 
-namespace sechecker
+namespace sechk
 {
 	option::option(const std::string & name_, const std::string & desc,
 		       const std::vector < std::string > &vals) throw(std::invalid_argument)

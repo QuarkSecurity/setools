@@ -42,7 +42,7 @@ using std::pair;
 using std::string;
 using std::vector;
 
-namespace sechecker
+namespace sechk
 {
 	module::module(const std::string & name_, severity sev, const std::string & summary_,
 		       const std::string & desc) throw(std::invalid_argument):_dependencies(), _requirements(), _recommendations(),

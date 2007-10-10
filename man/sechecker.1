@@ -83,13 +83,17 @@ print verbose output
 .SH PROFILE OPTIONS
 Profiles are used to group modules together, to specify the output format for each module in the report, and to provide the ability to override the modules' default options.  Each profile is a well-formed XML document, as specified by the DTD installed with sechecker.  An example profile follows:
 .PP
-<sechecker version="1.1">
+<sechecker version="2.0">
 .br
-	<profile>
+	<profile name="sample">
 .br
-		<module name="find_domains">
+	<desc>
 .br
-			<output value="quiet"/>
+	A brief description.
+.br
+	</desc>
+.br
+		<module name="find_domains" output="quiet">
 .br
 			<option name="domain_attribute">
 .br
@@ -109,18 +113,18 @@ Profiles are used to group modules together, to specify the output format for ea
 .br
 </sechecker>
 .PP
-The example profile specifies the output property for the find_domains module.
-The example profile also overrides the default value for the "domain_attribute" option in the find_domains module.
+The example profile overrides the output format for the find_domains module.
+The example profile also overrides the default value for the "domain_attribute" option.
 .SS PROFILE OUTPUT OPTIONS
 The valid output values for each module are specified below:
 .IP "verbose"
 Print each result in the report with accompanying proof(s).
 .IP "short"
 Print a list of results with no accompanying proof.
-.IP "none"
-Do not print output from this module in the report; however, module errors will still be printed.
 .IP "quiet"
-Do not print output from this module in the report and do not print errors. This is useful for utility modules for which the calling module handles any errors.
+Do not print output from this module in the report; however, module errors will still be printed.
+.IP "default"
+Use the module's default output format.
 .SS PROFILE MODULE OPTIONS
 Several modules provide one or more options that can be set from a profile.
 Each option has one or more items.

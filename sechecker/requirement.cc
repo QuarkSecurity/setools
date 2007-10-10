@@ -35,7 +35,7 @@
 
 using std::invalid_argument;
 
-namespace sechecker
+namespace sechk
 {
 	requirement::requirement(require_code code) throw(std::invalid_argument)
 	{

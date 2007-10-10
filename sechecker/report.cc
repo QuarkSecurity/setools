@@ -34,7 +34,7 @@ using std::map;
 using std::pair;
 using std::string;
 
-namespace sechecker
+namespace sechk
 {
 	report::report(const sechecker * top, output_format out_mode, severity min_sev) throw(std::invalid_argument):_results(),
 		_top(top)
