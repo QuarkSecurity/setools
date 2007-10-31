@@ -102,6 +102,63 @@ typedef struct qpol_extended_image
 	size_t master_list_sz;
 } qpol_extended_image_t;
 
+struct extend_bogus_alias_struct
+{
+	qpol_policy_t *q;
+	int num_bogus_aliases;
+};
+
+static int extend_find_bogus_alias(hashtab_key_t key __attribute__ ((unused)), hashtab_datum_t datum, void *args)
+{
+	struct extend_bogus_alias_struct *e = (struct extend_bogus_alias_struct *)args;
+	/* within libqpol, qpol_type_t is the same a libsepol's type_datum_t */
+	qpol_type_t *qtype = (qpol_type_t *) datum;
+	type_datum_t *type = (type_datum_t *) datum;
+	unsigned char isalias;
+	qpol_type_get_isalias(e->q, qtype, &isalias);
+	return isalias && type->s.value == 0;
+}
+
+static void extend_remove_bogus_alias(hashtab_key_t key, hashtab_datum_t datum, void *args)
+{
+	struct extend_bogus_alias_struct *e = (struct extend_bogus_alias_struct *)args;
+	free(key);
+	type_datum_t *type = (type_datum_t *) datum;
+	type_datum_destroy(type);
+	free(type);
+	e->num_bogus_aliases++;
+}
+
+/**
+ *  Search the policy for aliases that have a value of 0.  These come
+ *  from modular policies with disabled aliases, but end up being
+ *  written to the policy anyways due to a bug in libsepol.  These
+ *  bogus aliases are removed from the policy.
+ *  @param policy Policy that may contain broken aliases.  This policy
+ *  will be altered by this function.
+ *  @return 0 on success and < 0 on failure; if the call fails, errno
+ *  will be set.  On failure, the policy state may be inconsistent.
+ */
+static int qpol_policy_remove_bogus_aliases(qpol_policy_t * policy)
+{
+	policydb_t *db = NULL;
+
+	if (policy == NULL) {
+		ERR(policy, "%s", strerror(EINVAL));
+		errno = EINVAL;
+		return STATUS_ERR;
+	}
+
+	db = &policy->p->p;
+	struct extend_bogus_alias_struct e = { policy, 0 };
+	hashtab_map_remove_on_error(db->p_types.table, extend_find_bogus_alias, extend_remove_bogus_alias, &e);
+
+	if (e.num_bogus_aliases > 0) {
+		WARN(policy, "%s", "This policy contained disabled aliases; they have been removed.");
+	}
+	return 0;
+}
+
 /**
  *  Builds data for the attributes and inserts them into the policydb.
  *  This function modifies the policydb. Names created for attributes
@@ -962,6 +1019,12 @@ int policy_extend(qpol_policy_t * policy)
 	}
 
 	db = &policy->p->p;
+
+	retv = qpol_policy_remove_bogus_aliases(policy);
+	if (retv) {
+		error = errno;
+		goto err;
+	}
 	if (db->attr_type_map) {
 		retv = qpol_policy_build_attrs_from_map(policy);
 		if (retv) {

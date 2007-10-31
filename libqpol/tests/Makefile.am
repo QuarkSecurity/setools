@@ -4,6 +4,7 @@ check_PROGRAMS = libqpol-tests
 libqpol_tests_SOURCES = \
 	capabilities-tests.c capabilities-tests.h \
 	iterators-tests.c iterators-tests.h \
+	policy-features-tests.c policy-features-tests.h \
 	libqpol-tests.c
 
 AM_CFLAGS = @DEBUGCFLAGS@ @WARNCFLAGS@ @PROFILECFLAGS@ @SELINUX_CFLAGS@ \
