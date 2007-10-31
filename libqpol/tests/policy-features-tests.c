@@ -32,6 +32,7 @@
 
 #define BROKEN_ALIAS_POLICY TEST_POLICIES "/setools-3.3/policy-features/broken-alias-mod.21"
 #define NOT_BROKEN_ALIAS_POLICY TEST_POLICIES "/setools-3.3/policy-features/not-broken-alias-mod.21"
+#define NOGENFS_POLICY TEST_POLICIES "/setools-3.3/policy-features/nogenfscon-policy.21"
 
 static void policy_features_alias_count(void *varg, const qpol_policy_t * policy
 					__attribute__ ((unused)), int level, const char *fmt, va_list va_args)
@@ -97,10 +98,41 @@ static void policy_features_invalid_alias(void)
 	qpol_policy_destroy(&qp);
 }
 
+/** Test that getting an iterator of genfscon statements does not
+ *  fail if there are no genfscon statements. */
+static void policy_features_nogenfscon_iter(void)
+{
+	qpol_policy_t *qp = NULL;
+
+	/* open a policy with no genfscon statements */
+	int policy_type = qpol_policy_open_from_file(NOGENFS_POLICY, &qp, NULL, NULL, QPOL_POLICY_OPTION_NO_RULES);
+	CU_ASSERT_FATAL(policy_type == QPOL_POLICY_KERNEL_BINARY);
+
+	qpol_iterator_t *iter = NULL;
+
+	/* iterator should be safe to request but should be at end */
+	CU_ASSERT_FATAL(qpol_policy_get_genfscon_iter(qp, &iter) == 0);
+	CU_ASSERT(qpol_iterator_end(iter));
+	qpol_iterator_destroy(&iter);
+	qpol_policy_destroy(&qp);
+
+	/* open a policy with genfscon statements */
+	policy_type = qpol_policy_open_from_file(NOT_BROKEN_ALIAS_POLICY, &qp, NULL, NULL, QPOL_POLICY_OPTION_NO_RULES);
+	CU_ASSERT_FATAL(policy_type == QPOL_POLICY_KERNEL_BINARY);
+
+	/* iterator should be safe to request and not at end */
+	CU_ASSERT_FATAL(qpol_policy_get_genfscon_iter(qp, &iter) == 0);
+	CU_ASSERT(!qpol_iterator_end(iter));
+	qpol_iterator_destroy(&iter);
+	qpol_policy_destroy(&qp);
+}
+
 CU_TestInfo policy_features_tests[] = {
 	{"invalid alias", policy_features_invalid_alias}
 	,
-	CU_TEST_INFO_NULL
+	{"No genfscon", policy_features_nogenfscon_iter}
+	,
+ CU_TEST_INFO_NULL
 };
 
 int policy_features_init()

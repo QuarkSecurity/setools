@@ -1,3 +1,10 @@
+2007-10-31  J. Mowery  <jmowery@tresys.com>
+
+	* Fix to libqpol when querying policies with no genfscon statements.
+
+	* Fix to SWIG wrappers to correctly report exceptions in multi-threaded
+	  Java environments.
+
 2007-10-31  J. Tang  <jtang@tresys.com>
 
 	* Modifed libqpol to explicitly ignore disabled aliases.
