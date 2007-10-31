@@ -222,7 +222,7 @@ extern "C"
 
 /**
  *  Set the analysis to return only types having access (via allow
- *  rules) to at this permission. <b>This is only valid for forward
+ *  rules) to this permission. <b>This is only valid for forward
  *  analysis.</b> If more than one permission is appended the
  *  resulting type must have at least one of the appended permissions.
  *  Pass a NULL to clear all previously appended permissions. <b>If

@@ -77,6 +77,7 @@ static struct option const longopts[] = {
 	{"role", optional_argument, NULL, 'r'},
 	{"user", optional_argument, NULL, 'u'},
 	{"bool", optional_argument, NULL, 'b'},
+	{"boolean", optional_argument, NULL, 'b'},
 	{"initialsid", optional_argument, NULL, OPT_INITIALSID},
 	{"fs_use", optional_argument, NULL, OPT_FS_USE},
 	{"genfscon", optional_argument, NULL, OPT_GENFSCON},

@@ -122,21 +122,21 @@ namespace sechk
 
 	void sechecker::loadModule(std::string name_) throw(std::ios_base::failure)
 	{
-		map<string,pair<module *,void * > >::iterator iter = _modules.find(name_);
+		map < string, pair < module *, void * > >::iterator iter = _modules.find(name_);
 		if (iter != _modules.end())
-			return; //already loaded
+			return;	       //already loaded
 		string path = "sechecker/" + name_ + ".so";
-		char * found_path = apol_file_find_path(path.c_str());
+		char *found_path = apol_file_find_path(path.c_str());
 		if (!found_path)
 			throw std::ios_base::failure("Cannot find module " + name_);
-		void * handle = dlopen(found_path, RTLD_NOW|RTLD_GLOBAL);
+		void *handle = dlopen(found_path, RTLD_NOW | RTLD_GLOBAL);
 		free(found_path);
 		if (!handle)
 		{
 			throw std::ios_base::failure("Could not load module " + name_ + ": " + dlerror());
 		}
 		string init_name = name_ + "_init";
-		module_init_fn init_fn = reinterpret_cast<module_init_fn>(dlsym(handle, init_name.c_str()));
+		module_init_fn init_fn = reinterpret_cast < module_init_fn > (dlsym(handle, init_name.c_str()));
 		if (!init_fn)
 		{
 			//grab dlerror message first as dlclose is permitted to change it.
@@ -145,7 +145,7 @@ namespace sechk
 			handle = NULL;
 			throw std::ios_base::failure(message);
 		}
-		module * mod = init_fn();
+		module *mod = init_fn();
 		if (!mod)
 		{
 			//grab dlerror message first as dlclose is permitted to change it.
@@ -155,8 +155,8 @@ namespace sechk
 			throw std::ios_base::failure(message);
 		}
 		//insert it
-		pair<string, pair<module*, void * > > entry = make_pair(name_, make_pair(mod, handle));
-		pair<map<string, pair<module*, void* > >::iterator, bool> retv = _modules.insert(entry);
+		pair < string, pair < module *, void * > >entry = make_pair(name_, make_pair(mod, handle));
+		pair < map < string, pair < module *, void * > >::iterator, bool > retv = _modules.insert(entry);
 		//this is an assertion as we already check for the case of duplicate load; thus the only failure is oom
 		assert(retv.second);
 	}

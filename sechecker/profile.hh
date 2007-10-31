@@ -78,7 +78,7 @@ namespace sechk
 			 * Get the name of the specified module.
 			 * @return The name of the specified module.
 			 */
-			const std::string & name () const;
+			const std::string & name() const;
 
 			/**
  			 * Get the output format for the specified module.
