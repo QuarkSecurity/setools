@@ -46,8 +46,8 @@ SETools.
 License: LGPLv2
 Summary: Policy analysis support libraries for SELinux
 Group: System Environment/Libraries
-Requires: libselinux >= %{selinux_ver} libsepol >= %{sepol_ver} sqlite >= %{sqlite_ver} libstdc++.so.6
-BuildRequires: flex  bison  pkgconfig
+Requires: libselinux >= %{selinux_ver} libsepol >= %{sepol_ver} sqlite >= %{sqlite_ver}
+BuildRequires: flex bison pkgconfig
 BuildRequires: glibc-devel libstdc++-devel gcc gcc-c++
 BuildRequires: libselinux-devel >= %{selinux_ver} libsepol-devel >= %{sepol_ver}
 BuildRequires: sqlite-devel >= %{sqlite_ver} libxml2-devel
@@ -349,8 +349,14 @@ rm -rf ${RPM_BUILD_ROOT}
 %postun libs-tcl -p /sbin/ldconfig
 
 %changelog
-* Fri Aug 24 2007 Chris PeBenito <cpebenito@tresys.com> 3.3.1-6.fc8
+* Thu Oct 18 2007 Chris PeBenito <cpebenito@tresys.com> 3.3.1-7.fc8
+- Rebuild to fix ppc64 issue.
+
+* Wed Oct 17 2007 Chris PeBenito <cpebenito@tresys.com> 3.3.1-6.fc8
 - Update for 3.3.1.
+
+* Tue Aug 28 2007 Fedora Release Engineering <rel-eng at fedoraproject dot org> - 3.2-4
+- Rebuild for selinux ppc32 issue.
 
 * Thu Aug 02 2007 Jason Tang <selinux@tresys.com> 3.3-0
 - update to SETools 3.3 release

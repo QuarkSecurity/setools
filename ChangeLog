@@ -1,3 +1,9 @@
+2007-10-31  J. Tang  <jtang@tresys.com>
+
+	* Modifed libqpol to explicitly ignore disabled aliases.
+
+	* Merged RedHat's spec file changes.
+
 2007-10-08  J. Tang  <jtang@tresys.com>
 
 	* Fix to libqpol when qpol_type_get_alias_iter() could erroneously
