@@ -62,6 +62,7 @@
 %import apol.i
 %import sefs.i
 
+%exception;
 %nodefaultctor;
 
 %include std_string.i
@@ -90,7 +91,14 @@ import com.tresys.setools.sefs.*;
 %}
 %pragma(java) jniclasscode=%{
 	static {
-		System.loadLibrary("jpolsearch");
+		try
+		{
+			libpolsearch_get_version ();
+		}
+		catch (UnsatisfiedLinkError ule)
+		{
+			System.loadLibrary("jpolsearch");
+		}
 	}
 %}
 %pragma(java) moduleimports=%{
@@ -140,23 +148,6 @@ python_enum_vector(polsearch_test_cond);
 
 
 #ifdef SWIGTCL
-
-/* implement a custom non thread-safe error handler */
-%{
-static char *message = NULL;
-static void tcl_clear_error(void)
-{
-        free(message);
-        message = NULL;
-}
-static char *tcl_get_error(void)
-{
-	return message;
-}
-#undef SWIG_exception
-#define SWIG_exception(code, msg) {tcl_throw_error(msg); goto fail;}
-
-%}
 
 %wrapper %{
 /* Tcl module's initialization routine is expected to be named
