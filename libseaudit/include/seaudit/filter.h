@@ -155,6 +155,8 @@ extern "C"
 
 /**
  * Set the name of this filter, overwriting any previous name.
+ * <em>Note that this is not the <tt>name</tt> field from AVC
+ * messages; to set that field call seaudit_filter_set_avcname().</em>
  *
  * @param filter Filter to modify.
  * @param name New name for this filter.  This function will duplicate
@@ -165,7 +167,9 @@ extern "C"
 	extern int seaudit_filter_set_name(seaudit_filter_t * filter, const char *name);
 
 /**
- * Get the name of this filter.
+ * Get the name of this filter.  <em>Note that this is not the
+ * </em>name<em> field from AVC messages; to get that field call
+ * seaudit_filter_get_avcname().</em>
  *
  * @param filter Filter from which to get name.
  *
@@ -534,6 +538,32 @@ extern "C"
  * @return Glob expression for command, or NULL if none set.
  */
 	extern const char *seaudit_filter_get_command(const seaudit_filter_t * filter);
+
+/**
+ * Set the name criterion, as a glob expression.  A message is
+ * accepted if its AVC name field matches this expression.  <em>Note
+ * that this is not the name for this filter; to set that field call
+ * seaudit_filter_set_name().</em>
+ *
+ * @param filter Filter to modify.
+ * @param name Glob expression for AVC name field.  This function will
+ * duplicate the string.  If this is NULL then clear the existing
+ * command.
+ *
+ * @return 0 on success, < 0 on error.
+ */
+	extern int seaudit_filter_set_avcname(seaudit_filter_t * filter, const char *name);
+
+/**
+ * Return the current name criterion for a filter.  Treat this string
+ * as const.  <em>Note that this is not the name for this filter; to
+ * get that field call seaudit_filter_get_name().</em>
+ *
+ * @param filter Filter to get value.
+ *
+ * @return Glob expression for AVC name, or NULL if none set.
+ */
+	extern const char *seaudit_filter_get_avcname(const seaudit_filter_t * filter);
 
 /**
  * Set the IP address criterion, as a glob expression.  A message is

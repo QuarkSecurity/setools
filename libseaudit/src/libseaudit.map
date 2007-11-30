@@ -64,3 +64,9 @@ VERS_4.2{
 		seaudit_sort_by_sport;
 		seaudit_sort_create_from_sort;
 } VERS_4.1;
+
+VERS_4.3{
+	global:
+		seaudit_filter_set_avcname;
+		seaudit_filter_get_avcname;
+} VERS_4.2;

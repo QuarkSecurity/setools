@@ -48,6 +48,7 @@ seaudit_filter_t *seaudit_filter_create(const char *name)
 {
 	seaudit_filter_t *s = calloc(1, sizeof(*s));
 	if (s == NULL) {
+		errno = EINVAL;
 		return NULL;
 	}
 	if (name == NULL) {
@@ -97,6 +98,7 @@ seaudit_filter_t *seaudit_filter_create_from_filter(const seaudit_filter_t * fil
 	    (filter->host != NULL && (f->host = strdup(filter->host)) == NULL) ||
 	    (filter->path != NULL && (f->path = strdup(filter->path)) == NULL) ||
 	    (filter->comm != NULL && (f->comm = strdup(filter->comm)) == NULL) ||
+	    (filter->avcname != NULL && (f->avcname = strdup(filter->avcname)) == NULL) ||
 	    (filter->anyaddr != NULL && (f->anyaddr = strdup(filter->anyaddr)) == NULL) ||
 	    (filter->netif != NULL && (f->netif = strdup(filter->netif)) == NULL)) {
 		error = errno;
@@ -193,6 +195,7 @@ void seaudit_filter_destroy(seaudit_filter_t ** filter)
 		free((*filter)->host);
 		free((*filter)->path);
 		free((*filter)->comm);
+		free((*filter)->avcname);
 		free((*filter)->anyaddr);
 		free((*filter)->laddr);
 		free((*filter)->faddr);
@@ -637,6 +640,24 @@ const char *seaudit_filter_get_command(const seaudit_filter_t * filter)
 		return NULL;
 	}
 	return filter->comm;
+}
+
+int seaudit_filter_set_avcname(seaudit_filter_t * filter, const char *name)
+{
+	if (filter == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+	return filter_set_string(filter, &filter->avcname, name);
+}
+
+const char *seaudit_filter_get_avcname(const seaudit_filter_t * filter)
+{
+	if (filter == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return filter->avcname;
 }
 
 int seaudit_filter_set_anyaddr(seaudit_filter_t * filter, const char *ipaddr)

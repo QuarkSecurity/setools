@@ -17,7 +17,7 @@ libapol_pyswig_soname=_apol.so.4
 libapol_jswig_soname=libjapol.so.4
 libapol_tswig_soname=libtapol.so.4
 
-libpoldiff_version=1.3
+libpoldiff_version=1.3.1
 libpoldiff_soname=libpoldiff.so.1
 libpoldiff_pyswig_soname=_poldiff.so.1
 libpoldiff_jswig_soname=libjpoldiff.so.1
@@ -29,13 +29,13 @@ libpolsearch_pyswig_soname=_polsearch.so.1
 libpolsearch_jswig_soname=libjpolsearch.so.1
 libpolsearch_tswig_soname=libtpolsearch.so.1
 
-libsefs_version=4.0
+libsefs_version=4.0.2
 libsefs_soname=libsefs.so.4
 libsefs_pyswig_soname=_sefs.so.4
 libsefs_jswig_soname=libjsefs.so.4
 libsefs_tswig_soname=libtsefs.so.4
 
-libseaudit_version=4.2
+libseaudit_version=4.3
 libseaudit_soname=libseaudit.so.4
 libseaudit_pyswig_soname=_seaudit.so.4
 libseaudit_jswig_soname=libjseaudit.so.4

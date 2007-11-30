@@ -565,6 +565,31 @@ static void filter_comm_print(const seaudit_filter_t * filter, const char *name,
 	filter_string_print(name, filter->comm, f, tabs);
 }
 
+static bool filter_avcname_is_set(const seaudit_filter_t * filter)
+{
+	return filter->avcname != NULL;
+}
+
+static int filter_avcname_support(const seaudit_message_t * msg)
+{
+	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && msg->data.avc->name != NULL;
+}
+
+static int filter_avcname_accept(const seaudit_filter_t * filter, const seaudit_message_t * msg)
+{
+	return fnmatch(filter->avcname, msg->data.avc->name, 0) == 0;
+}
+
+static int filter_avcname_read(seaudit_filter_t * filter, const xmlChar * ch)
+{
+	return filter_string_read(&filter->avcname, ch);
+}
+
+static void filter_avcname_print(const seaudit_filter_t * filter, const char *name, FILE * f, int tabs)
+{
+	filter_string_print(name, filter->avcname, f, tabs);
+}
+
 static bool filter_anyaddr_is_set(const seaudit_filter_t * filter)
 {
 	return filter->anyaddr != NULL;
@@ -1148,6 +1173,8 @@ static const struct filter_criteria_t filter_criteria[] = {
 	{"inode", filter_inode_is_set, filter_inode_support, filter_inode_accept, filter_inode_read, filter_inode_print},
 	{"pid", filter_pid_is_set, filter_pid_support, filter_pid_accept, filter_pid_read, filter_pid_print},
 	{"comm", filter_comm_is_set, filter_comm_support, filter_comm_accept, filter_comm_read, filter_comm_print},
+	{"avcname", filter_avcname_is_set, filter_avcname_support, filter_avcname_accept, filter_avcname_read,
+	 filter_avcname_print},
 	{"ipaddr", filter_anyaddr_is_set, filter_anyaddr_support, filter_anyaddr_accept, filter_anyaddr_read, filter_anyaddr_print},
 	{"anyport", filter_anyport_is_set, filter_anyport_support, filter_anyport_accept, filter_anyport_read,
 	 filter_anyport_print},

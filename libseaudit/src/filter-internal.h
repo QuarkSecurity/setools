@@ -63,6 +63,8 @@ struct seaudit_filter
 	unsigned int pid;
 	/** criterion for command, glob expression */
 	char *comm;
+	/** criterion for AVC name, glob expression */
+	char *avcname;
 	/** criterion for IP address, glob expression */
 	char *anyaddr;
 	/** criterion for local address, glob expression */

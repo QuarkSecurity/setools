@@ -816,14 +816,29 @@ typedef struct seaudit_filter {} seaudit_filter_t;
 	const char *get_path() {
 		return seaudit_filter_get_path(self);
 	};
-	void set_command(char *name) {
+	void set_command(char *command) {
 		BEGIN_EXCEPTION
-		if (seaudit_filter_set_command(self, name)) {
+		if (seaudit_filter_set_command(self, command)) {
 			SWIG_exception(SWIG_RuntimeError, "Could not set command for filter");
 		}
 		END_EXCEPTION
 	fail:
 		return;
+	};
+	const char *get_command() {
+		return seaudit_filter_get_command(self);
+	};
+	void set_avcname(char *name) {
+		BEGIN_EXCEPTION
+		if (seaudit_filter_set_avcname(self, name)) {
+			SWIG_exception(SWIG_RuntimeError, "Could not set AVC name for filter");
+		}
+		END_EXCEPTION
+	fail:
+		return;
+	};
+	const char *get_avcname() {
+		return seaudit_filter_get_avcname(self);
 	};
 	void set_inode(long inode) {
 		seaudit_filter_set_inode(self, (long) inode);
@@ -836,9 +851,6 @@ typedef struct seaudit_filter {} seaudit_filter_t;
 	};
 	long get_pid() {
 		return (long) seaudit_filter_get_pid(self);
-	};
-	const char *get_command() {
-		return seaudit_filter_get_command(self);
 	};
 	void set_anyaddr(char *name) {
 		BEGIN_EXCEPTION
