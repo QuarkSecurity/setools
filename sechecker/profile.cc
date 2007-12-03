@@ -110,7 +110,7 @@ namespace sechk
 			return SECHK_OUTPUT_NONE;
 	}
 
-      profile::profile(const std::string & path)throw(std::runtime_error):_mod_specs()
+	profile::profile(const std::string & path)throw(std::runtime_error):_mod_specs()
 	{
 		_version = "";
 		_name = "";

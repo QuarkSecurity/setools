@@ -59,7 +59,6 @@ namespace sechk
 		_fclist = rhs._fclist;
 		_policy = rhs._policy;
 	}
-	//! Destructor.
 	sechecker::~sechecker()
 	{
 		//nothing to do
