@@ -633,6 +633,9 @@ typedef struct seaudit_filter {} seaudit_filter_t;
 	~seaudit_filter_t() {
 		seaudit_filter_destroy(&self);
 	};
+	void clear() {
+		seaudit_filter_clear(self);
+	};
 	void save(char *path) {
 		BEGIN_EXCEPTION
 		if (seaudit_filter_save_to_file(self, path)) {
@@ -677,6 +680,12 @@ typedef struct seaudit_filter {} seaudit_filter_t;
 	};
 	const char *get_description() {
 		return seaudit_filter_get_description(self);
+	};
+	void set_enabled(bool is_enabled) {
+		seaudit_filter_set_enabled(self, is_enabled);
+	};
+	bool get_enabled() {
+		return seaudit_filter_get_enabled(self);
 	};
 	void set_strict(bool is_strict) {
 		seaudit_filter_set_strict(self, is_strict);
