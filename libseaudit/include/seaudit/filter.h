@@ -32,7 +32,7 @@ extern "C"
 {
 #endif
 
-#include <seaudit/avc_message.h>
+#include "avc_message.h"
 
 #include <apol/vector.h>
 #include <stdbool.h>
@@ -120,6 +120,19 @@ extern "C"
 	extern void seaudit_filter_destroy(seaudit_filter_t ** filter);
 
 /**
+ * Clear all filter's criteria.  This includes the source context,
+ * date, and so forth.  This does not include the filter's name,
+ * description, enable status, or strictness.  Also, if the filter is
+ * already being associated with a model, that relationship is not
+ * changed.
+ *
+ * @param filter Filter whose criteria to clear.
+ *
+ * @return Always 0.
+ */
+	extern int seaudit_filter_clear(seaudit_filter_t * filter);
+
+/**
  * Save to disk, in XML format, the given filter's values.  This
  * includes the filter's criteria.
  *
@@ -200,6 +213,27 @@ extern "C"
  * been set.  Do not free() or otherwise modify this string.
  */
 	extern const char *seaudit_filter_get_description(const seaudit_filter_t * filter);
+
+/**
+ * Enable or disable a filter.  Only filters that have been enabled
+ * will affect a model.  By default, newly constructed filters are
+ * enabled.
+ *
+ * @param filter Filter to enable or disable.
+ * @param is_enabled If true, enable the filter.
+ *
+ * @return Always 0.
+ */
+	extern int seaudit_filter_set_enabled(seaudit_filter_t * filter, bool is_enabled);
+
+/**
+ * Get the enabled status of a filter.
+ *
+ * @param filter Filter to examine.
+ *
+ * @return True if the filter is enabled, false if not.
+ */
+	extern bool seaudit_filter_get_enabled(const seaudit_filter_t * filter);
 
 /**
  * Set the strictness of this filter.  By default, the filter's

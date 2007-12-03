@@ -133,9 +133,52 @@ static void filters_more(void)
 	CU_ASSERT(seaudit_model_remove_filter(m, f) == 0);
 }
 
+static void filters_enabled(void)
+{
+	seaudit_filter_t *f = seaudit_filter_create("filter 2");
+	CU_ASSERT_PTR_NOT_NULL_FATAL(f);
+	CU_ASSERT(seaudit_filter_get_enabled(f) == true);
+	CU_ASSERT(seaudit_model_append_filter(m, f) == 0);
+
+	apol_vector_t *v = seaudit_model_get_messages(l, m);
+	size_t total_messages = apol_vector_get_size(v);
+	apol_vector_destroy(&v);
+
+	CU_ASSERT(seaudit_filter_set_avcname(f, "etc") == 0);
+	v = seaudit_model_get_messages(l, m);
+	size_t etc_messages = apol_vector_get_size(v);
+	apol_vector_destroy(&v);
+
+	seaudit_filter_set_enabled(f, false);
+	v = seaudit_model_get_messages(l, m);
+	CU_ASSERT(apol_vector_get_size(v) == total_messages);
+	CU_ASSERT(seaudit_filter_get_enabled(f) == false);
+	apol_vector_destroy(&v);
+
+	seaudit_filter_set_enabled(f, true);
+	CU_ASSERT(seaudit_filter_get_enabled(f) == true);
+	v = seaudit_model_get_messages(l, m);
+	CU_ASSERT(apol_vector_get_size(v) == etc_messages);
+	apol_vector_destroy(&v);
+
+	v = apol_str_split("system_u", ":");
+	CU_ASSERT_PTR_NOT_NULL_FATAL(v);
+	CU_ASSERT_FATAL(seaudit_filter_set_source_user(f, v) == 0);
+	apol_vector_destroy(&v);
+	v = seaudit_model_get_messages(l, m);	/* to force a model change */
+	apol_vector_destroy(&v);
+	seaudit_filter_clear(f);       /* should also cause a model change */
+	v = seaudit_model_get_messages(l, m);
+	CU_ASSERT(apol_vector_get_size(v) == total_messages);
+	apol_vector_destroy(&v);
+
+	CU_ASSERT(seaudit_model_remove_filter(m, f) == 0);
+}
+
 CU_TestInfo filters_tests[] = {
 	{"simple filter", filters_simple},
 	{"more filter", filters_more},
+	{"enabling and clearing", filters_enabled},
 	CU_TEST_INFO_NULL
 };
 

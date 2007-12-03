@@ -1203,6 +1203,10 @@ int filter_is_accepted(const seaudit_filter_t * filter, const seaudit_message_t 
 	int acceptval;
 	size_t i;
 
+	/* non-enabled filters accept everything */
+	if (!filter->enabled) {
+		return 1;
+	}
 	for (i = 0; i < sizeof(filter_criteria) / sizeof(filter_criteria[0]); i++) {
 		if (filter_criteria[i].is_set(filter)) {
 			tried_criterion = true;
@@ -1298,6 +1302,7 @@ static void filter_parse_start_element(void *user_data, const xmlChar * name, co
 		char *filter_name = NULL;
 		seaudit_filter_match_e match = SEAUDIT_FILTER_MATCH_ALL;
 		bool strict = false;
+		bool enabled = true;
 		for (i = 0; attrs[i] != NULL && attrs[i + 1] != NULL; i += 2) {
 			if (xmlStrcmp(attrs[i], (xmlChar *) "name") == 0) {
 				free(filter_name);
@@ -1307,6 +1312,12 @@ static void filter_parse_start_element(void *user_data, const xmlChar * name, co
 					match = SEAUDIT_FILTER_MATCH_ALL;
 				} else if (xmlStrcmp(attrs[i + 1], (xmlChar *) "any") == 0) {
 					match = SEAUDIT_FILTER_MATCH_ANY;
+				}
+			} else if (xmlStrcmp(attrs[i], (xmlChar *) "enabled") == 0) {
+				if (xmlStrcmp(attrs[i + 1], (xmlChar *) "true") == 0) {
+					enabled = true;
+				} else if (xmlStrcmp(attrs[i + 1], (xmlChar *) "false") == 0) {
+					enabled = false;
 				}
 			} else if (xmlStrcmp(attrs[i], (xmlChar *) "strict") == 0) {
 				if (xmlStrcmp(attrs[i + 1], (xmlChar *) "true") == 0) {
@@ -1321,6 +1332,7 @@ static void filter_parse_start_element(void *user_data, const xmlChar * name, co
 				seaudit_filter_destroy(&state->cur_filter);
 			} else {
 				seaudit_filter_set_match(state->cur_filter, match);
+				seaudit_filter_set_enabled(state->cur_filter, enabled);
 				seaudit_filter_set_strict(state->cur_filter, strict);
 			}
 		}
@@ -1416,8 +1428,9 @@ void filter_append_to_file(const seaudit_filter_t * filter, FILE * file, int tab
 	escaped = xmlURIEscapeStr(str_xml, NULL);
 	for (i = 0; i < tabs; i++)
 		fprintf(file, "\t");
-	fprintf(file, "<filter name=\"%s\" match=\"%s\" strict=\"%s\">\n", escaped,
-		filter->match == SEAUDIT_FILTER_MATCH_ALL ? "all" : "any", filter->strict ? "true" : "false");
+	fprintf(file, "<filter name=\"%s\" match=\"%s\" enabled=\"%s\" strict=\"%s\">\n", escaped,
+		filter->match == SEAUDIT_FILTER_MATCH_ALL ? "all" : "any",
+		filter->enabled ? "true" : "false", filter->strict ? "true" : "false");
 	free(escaped);
 	free(str_xml);
 

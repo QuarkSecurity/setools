@@ -58,13 +58,12 @@ struct filter_view
 
 	GtkEntry *name_entry;
 	GtkComboBox *match_combo;
+	GtkCheckButton *enabled_check, *strict_check;
 
 	struct context_item suser, srole, stype, tuser, trole, ttype, obj_class;
-	GtkButton *context_clear_button;
 
 	GtkEntry *ipaddr_entry, *port_entry, *netif_entry, *exe_entry, *path_entry, *host_entry, *comm_entry;
 	GtkComboBox *message_combo;
-	GtkButton *other_clear_button;
 
 	GtkRadioButton *date_none_radio, *date_before_radio, *date_after_radio, *date_between_radio;
 	struct date_item dates[2];
@@ -102,9 +101,6 @@ static void filter_view_init_widgets_context(struct filter_view *fv)
 	g_object_set_data(G_OBJECT(fv->trole.entry), "data", &fv->trole);
 	g_object_set_data(G_OBJECT(fv->ttype.entry), "data", &fv->ttype);
 	g_object_set_data(G_OBJECT(fv->obj_class.entry), "data", &fv->obj_class);
-
-	fv->context_clear_button = GTK_BUTTON(glade_xml_get_widget(fv->xml, "FilterViewContextClearButton"));
-	assert(fv->context_clear_button != NULL);
 }
 
 /**
@@ -125,9 +121,6 @@ static void filter_view_init_widgets_other(struct filter_view *fv)
 
 	fv->message_combo = GTK_COMBO_BOX(glade_xml_get_widget(fv->xml, "FilterViewMessageCombo"));
 	assert(fv->message_combo != NULL);
-
-	fv->other_clear_button = GTK_BUTTON(glade_xml_get_widget(fv->xml, "FilterViewOtherClearButton"));
-	assert(fv->other_clear_button != NULL);
 }
 
 /**
@@ -171,7 +164,9 @@ static void filter_view_init_widgets(struct filter_view *fv, GtkWindow * parent)
 
 	fv->name_entry = GTK_ENTRY(glade_xml_get_widget(fv->xml, "FilterViewNameEntry"));
 	fv->match_combo = GTK_COMBO_BOX(glade_xml_get_widget(fv->xml, "FilterViewMatchCombo"));
-	assert(fv->name_entry != NULL && fv->match_combo);
+	fv->enabled_check = GTK_CHECK_BUTTON(glade_xml_get_widget(fv->xml, "enabled checkbutton"));
+	fv->strict_check = GTK_CHECK_BUTTON(glade_xml_get_widget(fv->xml, "strict checkbutton"));
+	assert(fv->name_entry != NULL && fv->match_combo && fv->enabled_check != NULL && fv->strict_check != NULL);
 
 	filter_view_init_widgets_context(fv);
 	filter_view_init_widgets_other(fv);
@@ -355,6 +350,8 @@ static void filter_view_init_dialog(struct filter_view *fv)
 	}
 	gtk_entry_set_text(fv->name_entry, name);
 	gtk_combo_box_set_active(fv->match_combo, seaudit_filter_get_match(fv->filter));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fv->enabled_check), seaudit_filter_get_enabled(fv->filter));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fv->strict_check), seaudit_filter_get_strict(fv->filter));
 
 	filter_view_init_context(fv);
 	filter_view_init_other(fv);
@@ -494,6 +491,12 @@ static void filter_view_apply(struct filter_view *fv)
 		match = SEAUDIT_FILTER_MATCH_ANY;
 	}
 	if (seaudit_filter_set_match(fv->filter, match) < 0) {
+		toplevel_ERR(fv->top, "Error setting filter: %s", strerror(errno));
+	}
+	if (seaudit_filter_set_enabled(fv->filter, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(fv->enabled_check))) < 0) {
+		toplevel_ERR(fv->top, "Error setting filter: %s", strerror(errno));
+	}
+	if (seaudit_filter_set_strict(fv->filter, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(fv->strict_check))) < 0) {
 		toplevel_ERR(fv->top, "Error setting filter: %s", strerror(errno));
 	}
 
@@ -778,24 +781,6 @@ static gboolean filter_view_on_entry_focus_out(GtkWidget * widget, GdkEventFocus
 	return FALSE;
 }
 
-static void filter_view_destroy_context_vectors(struct filter_view *fv)
-{
-	apol_vector_destroy(&fv->suser.items);
-	apol_vector_destroy(&fv->srole.items);
-	apol_vector_destroy(&fv->stype.items);
-	apol_vector_destroy(&fv->tuser.items);
-	apol_vector_destroy(&fv->trole.items);
-	apol_vector_destroy(&fv->ttype.items);
-	apol_vector_destroy(&fv->obj_class.items);
-}
-
-static void filter_view_on_context_clear_click(GtkButton * widget __attribute__ ((unused)), gpointer user_data)
-{
-	struct filter_view *fv = (struct filter_view *)user_data;
-	filter_view_destroy_context_vectors(fv);
-	filter_view_context_items_to_entries(fv);
-}
-
 static void filter_view_init_context_signals(struct filter_view *fv)
 {
 	g_signal_connect(fv->suser.button, "clicked", G_CALLBACK(filter_view_on_suser_context_click), fv);
@@ -812,20 +797,6 @@ static void filter_view_init_context_signals(struct filter_view *fv)
 	g_signal_connect(fv->ttype.entry, "focus_out_event", G_CALLBACK(filter_view_on_entry_focus_out), fv);
 	g_signal_connect(fv->obj_class.button, "clicked", G_CALLBACK(filter_view_on_class_context_click), fv);
 	g_signal_connect(fv->obj_class.entry, "focus_out_event", G_CALLBACK(filter_view_on_entry_focus_out), fv);
-	g_signal_connect(fv->context_clear_button, "clicked", G_CALLBACK(filter_view_on_context_clear_click), fv);
-}
-
-static void filter_view_on_other_clear_click(GtkButton * widget __attribute__ ((unused)), gpointer user_data)
-{
-	struct filter_view *fv = (struct filter_view *)user_data;
-	gtk_entry_set_text(fv->ipaddr_entry, "");
-	gtk_entry_set_text(fv->port_entry, "");
-	gtk_entry_set_text(fv->netif_entry, "");
-	gtk_entry_set_text(fv->exe_entry, "");
-	gtk_entry_set_text(fv->path_entry, "");
-	gtk_entry_set_text(fv->host_entry, "");
-	gtk_entry_set_text(fv->comm_entry, "");
-	gtk_combo_box_set_active(fv->message_combo, 0);
 }
 
 static void filter_view_on_date_toggle(GtkToggleButton * widget, gpointer user_data)
@@ -873,13 +844,23 @@ static void filter_view_on_month1_change(GtkComboBox * widget, gpointer user_dat
 static void filter_view_init_signals(struct filter_view *fv)
 {
 	filter_view_init_context_signals(fv);
-	g_signal_connect(fv->other_clear_button, "clicked", G_CALLBACK(filter_view_on_other_clear_click), fv);
 	g_signal_connect(fv->date_none_radio, "toggled", G_CALLBACK(filter_view_on_date_toggle), fv);
 	g_signal_connect(fv->date_before_radio, "toggled", G_CALLBACK(filter_view_on_date_toggle), fv);
 	g_signal_connect(fv->date_after_radio, "toggled", G_CALLBACK(filter_view_on_date_toggle), fv);
 	g_signal_connect(fv->date_between_radio, "toggled", G_CALLBACK(filter_view_on_date_toggle), fv);
 	g_signal_connect(fv->dates[0].month, "changed", G_CALLBACK(filter_view_on_month0_change), fv);
 	g_signal_connect(fv->dates[1].month, "changed", G_CALLBACK(filter_view_on_month1_change), fv);
+}
+
+static void filter_view_destroy_context_vectors(struct filter_view *fv)
+{
+	apol_vector_destroy(&fv->suser.items);
+	apol_vector_destroy(&fv->srole.items);
+	apol_vector_destroy(&fv->stype.items);
+	apol_vector_destroy(&fv->tuser.items);
+	apol_vector_destroy(&fv->trole.items);
+	apol_vector_destroy(&fv->ttype.items);
+	apol_vector_destroy(&fv->obj_class.items);
 }
 
 /******************** public function below ********************/
@@ -898,6 +879,11 @@ void filter_view_run(seaudit_filter_t * filter, toplevel_t * top, GtkWindow * pa
 	filter_view_init_dialog(&fv);
 	do {
 		response = gtk_dialog_run(fv.dialog);
+		if (response == GTK_RESPONSE_REJECT) {
+			seaudit_filter_clear(fv.filter);
+			filter_view_destroy_context_vectors(&fv);
+			filter_view_init_dialog(&fv);
+		}
 	} while (response != GTK_RESPONSE_CLOSE);
 
 	filter_view_apply(&fv);

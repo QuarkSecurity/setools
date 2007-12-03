@@ -67,6 +67,9 @@ VERS_4.2{
 
 VERS_4.3{
 	global:
+		seaudit_filter_clear;
+		seaudit_filter_set_enable;
+		seaudit_filter_get_enable;
 		seaudit_filter_set_avcname;
 		seaudit_filter_get_avcname;
 } VERS_4.2;

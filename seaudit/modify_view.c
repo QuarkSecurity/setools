@@ -86,7 +86,8 @@ static void modify_view_update_filter_store(struct modify_view *mv)
 	for (i = 0; i < apol_vector_get_size(filters); i++) {
 		seaudit_filter_t *filter = apol_vector_get_element(filters, i);
 		gtk_list_store_append(mv->filter_store, &iter);
-		gtk_list_store_set(mv->filter_store, &iter, 0, filter, 1, seaudit_filter_get_name(filter), -1);
+		gtk_list_store_set(mv->filter_store, &iter, 0, filter, 1, seaudit_filter_get_name(filter), 2,
+				   seaudit_filter_get_enabled(filter), -1);
 	}
 	/* initially select the last thing, then reset selection */
 	if (i > 0) {
@@ -95,6 +96,21 @@ static void modify_view_update_filter_store(struct modify_view *mv)
 	if (selection_existed && gtk_list_store_iter_is_valid(mv->filter_store, &old_iter)) {
 		gtk_tree_selection_select_iter(selection, &old_iter);
 	}
+}
+
+static void modify_view_on_cell_toggle(GtkCellRenderer * cell_renderer __attribute__ ((unused)), gchar * path, gpointer user_data)
+{
+	struct modify_view *mv = (struct modify_view *)user_data;
+	GtkTreeIter iter;
+	if (!gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(mv->filter_store), &iter, path)) {
+		return;
+	}
+	seaudit_filter_t *filter = NULL;
+	gtk_tree_model_get(GTK_TREE_MODEL(mv->filter_store), &iter, 0, &filter, -1);
+	assert(filter != NULL);
+	bool new_enabled = !seaudit_filter_get_enabled(filter);
+	seaudit_filter_set_enabled(filter, new_enabled);
+	gtk_list_store_set(mv->filter_store, &iter, 2, new_enabled, -1);
 }
 
 static void modify_view_on_selection_change(GtkTreeSelection * selection, gpointer user_data)
@@ -214,7 +230,7 @@ static void modify_view_init_widgets(struct modify_view *mv)
 
 	mv->filter_view = GTK_TREE_VIEW(glade_xml_get_widget(mv->xml, "ModifyViewFilterView"));
 	assert(mv->filter_view != NULL);
-	mv->filter_store = gtk_list_store_new(2, G_TYPE_POINTER, G_TYPE_STRING);
+	mv->filter_store = gtk_list_store_new(3, G_TYPE_POINTER, G_TYPE_STRING, G_TYPE_BOOLEAN);
 	gtk_tree_view_set_model(mv->filter_view, GTK_TREE_MODEL(mv->filter_store));
 
 	mv->add_button = GTK_BUTTON(glade_xml_get_widget(mv->xml, "ModifyViewAddButton"));
@@ -232,9 +248,18 @@ static void modify_view_init_signals(struct modify_view *mv)
 	GtkTreeViewColumn *column;
 	GtkTreeSelection *selection;
 
+	renderer = gtk_cell_renderer_toggle_new();
+	column = gtk_tree_view_column_new_with_attributes("Enabled", renderer, "active", 2, NULL);
+	gtk_tree_view_column_set_clickable(column, TRUE);
+	gtk_tree_view_column_set_resizable(column, FALSE);
+	gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_AUTOSIZE);
+	gtk_tree_view_column_set_visible(column, TRUE);
+	gtk_tree_view_append_column(mv->filter_view, column);
+	g_signal_connect(renderer, "toggled", G_CALLBACK(modify_view_on_cell_toggle), mv);
+
 	renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes("Filter names", renderer, "text", 1, NULL);
-	gtk_tree_view_column_set_clickable(column, FALSE);
+	column = gtk_tree_view_column_new_with_attributes("Name", renderer, "text", 1, NULL);
+	gtk_tree_view_column_set_clickable(column, TRUE);
 	gtk_tree_view_column_set_resizable(column, FALSE);
 	gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_AUTOSIZE);
 	gtk_tree_view_column_set_visible(column, TRUE);

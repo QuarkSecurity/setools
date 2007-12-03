@@ -1,3 +1,14 @@
+2007-12-03  J. Tang  <jtang@tresys.com>
+
+	* Added seaudit_filter_set_enabled(),
+	seaudit_filter_get_enabled(), and seaudit_filter_clear() to
+	libseaudit.
+
+	* Added ability to enable/disable on a per-filter basis in
+	seaudit.  Added ability to set strict matching behavior
+	per-filter.  Modified clear button to operate on the entire
+	filter, instead of per tab.
+
 2007-11-30  J. Tang  <jtang@tresys.com>
 
 	* Added seaudit_filter_set_avcname() and

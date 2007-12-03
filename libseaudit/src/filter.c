@@ -9,6 +9,7 @@
  *   <li>update filter constructor, seaudit_filter_create()</li>
  *   <li>update copy-constructor, seaudit_filter_create_from_filter()</li>
  *   <li>update destructor, seaudit_filter_destroy()</li>
+ *   <li>update clear, seaudit_filter_clear()</i>
  *   <li>add accessor(s) and modifier(s) as necessary</li>
  *   <li>add a record to filter_criteria table (in filter-internal.c),
  *       implementing the five necessary functions</li>
@@ -60,6 +61,7 @@ seaudit_filter_t *seaudit_filter_create(const char *name)
 		errno = error;
 		return NULL;
 	}
+	s->enabled = true;
 	return s;
 }
 
@@ -75,6 +77,7 @@ seaudit_filter_t *seaudit_filter_create_from_filter(const seaudit_filter_t * fil
 		error = errno;
 		goto cleanup;
 	}
+	f->enabled = filter->enabled;
 	f->strict = filter->strict;
 	if ((filter->src_users != NULL
 	     && (f->src_users = apol_vector_create_from_vector(filter->src_users, apol_str_strdup, NULL, free)) == NULL)
@@ -178,35 +181,79 @@ apol_vector_t *seaudit_filter_create_from_file(const char *filename)
 	return state.filters;
 }
 
+static void seaudit_filter_destroy_common(seaudit_filter_t * filter)
+{
+	apol_vector_destroy(&filter->src_users);
+	apol_vector_destroy(&filter->src_roles);
+	apol_vector_destroy(&filter->src_types);
+	apol_vector_destroy(&filter->tgt_users);
+	apol_vector_destroy(&filter->tgt_roles);
+	apol_vector_destroy(&filter->tgt_types);
+	apol_vector_destroy(&filter->tgt_classes);
+	free(filter->perm);
+	free(filter->exe);
+	free(filter->host);
+	free(filter->path);
+	free(filter->comm);
+	free(filter->avcname);
+	free(filter->anyaddr);
+	free(filter->laddr);
+	free(filter->faddr);
+	free(filter->saddr);
+	free(filter->daddr);
+	free(filter->netif);
+	free(filter->start);
+	free(filter->end);
+}
+
 void seaudit_filter_destroy(seaudit_filter_t ** filter)
 {
 	if (filter != NULL && *filter != NULL) {
 		free((*filter)->name);
 		free((*filter)->desc);
-		apol_vector_destroy(&(*filter)->src_users);
-		apol_vector_destroy(&(*filter)->src_roles);
-		apol_vector_destroy(&(*filter)->src_types);
-		apol_vector_destroy(&(*filter)->tgt_users);
-		apol_vector_destroy(&(*filter)->tgt_roles);
-		apol_vector_destroy(&(*filter)->tgt_types);
-		apol_vector_destroy(&(*filter)->tgt_classes);
-		free((*filter)->perm);
-		free((*filter)->exe);
-		free((*filter)->host);
-		free((*filter)->path);
-		free((*filter)->comm);
-		free((*filter)->avcname);
-		free((*filter)->anyaddr);
-		free((*filter)->laddr);
-		free((*filter)->faddr);
-		free((*filter)->saddr);
-		free((*filter)->daddr);
-		free((*filter)->netif);
-		free((*filter)->start);
-		free((*filter)->end);
+		seaudit_filter_destroy_common(*filter);
 		free(*filter);
 		*filter = NULL;
 	}
+}
+
+int seaudit_filter_clear(seaudit_filter_t * filter)
+{
+	if (filter == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+	seaudit_filter_destroy_common(filter);
+	filter->perm = NULL;
+	filter->exe = NULL;
+	filter->host = NULL;
+	filter->path = NULL;
+	filter->inode = 0;
+	filter->pid = 0;
+	filter->comm = NULL;
+	filter->avcname = NULL;
+	filter->anyaddr = NULL;
+	filter->laddr = NULL;
+	filter->faddr = NULL;
+	filter->saddr = NULL;
+	filter->daddr = NULL;
+	filter->anyport = 0;
+	filter->lport = 0;
+	filter->fport = 0;
+	filter->sport = 0;
+	filter->dport = 0;
+	filter->port = 0;
+	filter->netif = NULL;
+	filter->key = 0;
+	filter->cap = 0;
+	filter->avc_msg_type = SEAUDIT_AVC_UNKNOWN;
+	filter->start = NULL;
+	filter->end = NULL;
+	filter->date_match = SEAUDIT_FILTER_DATE_MATCH_BEFORE;
+	if (filter->model != NULL) {
+		model_notify_filter_changed(filter->model, filter);
+	}
+	return 0;
 }
 
 int seaudit_filter_set_match(seaudit_filter_t * filter, seaudit_filter_match_e match)
@@ -281,6 +328,30 @@ const char *seaudit_filter_get_description(const seaudit_filter_t * filter)
 		return NULL;
 	}
 	return filter->desc;
+}
+
+int seaudit_filter_set_enabled(seaudit_filter_t * filter, bool is_enabled)
+{
+	if (filter == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+	if (filter->enabled != is_enabled) {
+		filter->enabled = is_enabled;
+		if (filter->model != NULL) {
+			model_notify_filter_changed(filter->model, filter);
+		}
+	}
+	return 0;
+}
+
+bool seaudit_filter_get_enabled(const seaudit_filter_t * filter)
+{
+	if (filter == NULL) {
+		errno = EINVAL;
+		return false;
+	}
+	return filter->enabled;
 }
 
 int seaudit_filter_set_strict(seaudit_filter_t * filter, bool is_strict)
