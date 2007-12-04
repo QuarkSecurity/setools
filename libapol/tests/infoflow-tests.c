@@ -34,7 +34,7 @@
 #include <string.h>
 
 #define BIG_POLICY TEST_POLICIES "/snapshots/fc4_targeted.policy.conf"
-#define PERMMAP TOP_SRCDIR "/apol/perm_maps/apol_perm_mapping_ver19"
+#define PERMMAP TOP_SRCDIR "/libapol/share/apol_perm_mapping_ver19"
 
 static apol_policy_t *p = NULL;
 
