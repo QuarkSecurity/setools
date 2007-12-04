@@ -1,6 +1,6 @@
 %define setools_maj_ver 3.4
 %define setools_min_ver 0
-%define setools_release pre2007110200
+%define setools_release pre2007120100
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 %{!?python_sitearch: %define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")}
 
@@ -184,6 +184,7 @@ This package includes the following graphical tools:
   seaudit       audit log analysis tool
   sediffx       semantic policy difference tool
 
+%define setoolssymdir %{_datadir}/setools
 %define setoolsdir %{_datadir}/setools-%{setools_maj_ver}
 %define pkg_py_lib %{python_sitelib}/setools
 %define pkg_py_arch %{python_sitearch}/setools
@@ -245,6 +246,7 @@ rm -rf ${RPM_BUILD_ROOT}
 %{_libdir}/libseaudit.so.*
 %{_libdir}/libsefs.so.*
 %dir %{setoolsdir}
+%{setoolsdir}/apol_perm_mapping_*
 
 %files libs-python
 %defattr(-,root,root,-)
@@ -315,7 +317,6 @@ rm -rf ${RPM_BUILD_ROOT}
 %{_bindir}/sediffx
 %{tcllibdir}/apol_tcl/
 %{setoolsdir}/apol_help.txt
-%{setoolsdir}/apol_perm_mapping_*
 %{setoolsdir}/domaintrans_help.txt
 %{setoolsdir}/file_relabel_help.txt
 %{setoolsdir}/infoflow_help.txt
@@ -335,7 +336,9 @@ rm -rf ${RPM_BUILD_ROOT}
 %{_datadir}/applications/*
 %attr(0644,root,root) %{_datadir}/pixmaps/*.png
 
-%post libs -p /sbin/ldconfig
+%post libs
+/sbin/ldconfig
+[ ! -f %{setoolssymdir} -o -L %{setoolsymdir} ] && ln -s %{setoolsdir} %{setoolssymdir}
 
 %postun libs -p /sbin/ldconfig
 

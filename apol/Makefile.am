@@ -12,14 +12,6 @@ BUILT_SOURCES = apol_tcl_wrap.cc mkIndex.tcl init.tcl
 
 dist_setools_DATA = apol_help.txt domaintrans_help.txt file_relabel_help.txt \
 	infoflow_help.txt types_relation_help.txt \
-	perm_maps/apol_perm_mapping_ver12 \
-	perm_maps/apol_perm_mapping_ver15 \
-	perm_maps/apol_perm_mapping_ver16 \
-	perm_maps/apol_perm_mapping_ver17 \
-	perm_maps/apol_perm_mapping_ver18 \
-	perm_maps/apol_perm_mapping_ver19 \
-	perm_maps/apol_perm_mapping_ver20 \
-	perm_maps/apol_perm_mapping_ver21 \
 	apol.gif
 
 EXTRA_DIST = \
