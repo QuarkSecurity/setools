@@ -30,18 +30,21 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <iomanip>
 #include <stdexcept>
 #include <dlfcn.h>
 #include <cassert>
 
 using std::map;
 using std::pair;
+using std::make_pair;
 using std::vector;
 using std::string;
 using std::invalid_argument;
 using std::runtime_error;
 using std::out_of_range;
 using std::ios_base;
+using std::setw;
 using std::endl;
 
 namespace sechk
@@ -65,15 +68,21 @@ namespace sechk
 		//Note: this function intentionally does not call close().
 	}
 
-	std::ostream & sechecker::listModules(std::ostream & out)
+	std::ostream & sechecker::listProfiles(std::ostream & out)
 	{
-		//TODO list of modules printing
+		for (map<string, profile>::const_iterator i = _profiles.begin(); i != _profiles.end(); i++)
+		{
+			out << "    " << setw(20) << i->first << setw(56) << i->second.description() << endl;
+		}
 		return out;
 	}
 
-	std::ostream & sechecker::listProfiles(std::ostream & out)
+	std::ostream & sechecker::listModules(std::ostream & out)
 	{
-		//TODO list of profiles printing
+		for (map<string, pair<module*, void*> >::const_iterator i = _modules.begin(); i != _modules.end(); i++)
+		{
+			out << "    " << setw(20) << i->first << setw(56) << i->second.first->description() << endl;
+		}
 		return out;
 	}
 

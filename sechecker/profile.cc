@@ -37,6 +37,7 @@
 
 using std::invalid_argument;
 using std::out_of_range;
+using std::runtime_error;
 using std::pair;
 using std::string;
 using std::map;
@@ -123,7 +124,7 @@ namespace sechk
 		char *dtd_path = apol_file_find_path("sechecker/sechecker.dtd");
 		if (!dtd_path)
 			throw runtime_error("Could not find profile DTD");
-		string dtd_uri = "file:///localhost";
+		string dtd_uri = "file:///";
 		dtd_uri += dtd_path;
 		free(dtd_path);
 
@@ -187,6 +188,7 @@ namespace sechk
 					option_name = "";
 					items.clear();
 				}
+				break;
 			}
 			case XML_ELEMENT_NODE:
 			{
@@ -197,9 +199,8 @@ namespace sechk
 						xmlTextReaderGetAttribute(reader, reinterpret_cast < const xmlChar * >("version"));
 					if (!version)
 						throw runtime_error("Invalid sechecker tag");
-					char *end_pos = NULL;
-					double v = strtod(reinterpret_cast < const char *>(version), &end_pos);
-					if (end_pos)
+					double v = atof(reinterpret_cast < const char *>(version));
+					if (!v)
 						throw runtime_error("Invalid version specified");
 					if (v < 2.00 || v > atof(SECHECKER_VERSION))
 						throw runtime_error("Profile specifies an incompatible version number");
@@ -217,7 +218,10 @@ namespace sechk
 				}
 				else if (xmlStrEqual(tag_name, reinterpret_cast < const xmlChar * >("desc")) == 1)
 				{
-					_description = string(reinterpret_cast < const char *>(xmlTextReaderConstValue(reader)));
+					char * desc = reinterpret_cast < char *>(xmlTextReaderReadString(reader));
+					if (desc)
+						_description += desc;
+					free(desc);
 					if (_description.empty())
 						throw runtime_error("Invalid profile description");
 				}
@@ -252,6 +256,7 @@ namespace sechk
 					items.push_back(string(reinterpret_cast < const char *>(val)));
 					free(val);
 				}
+				break;
 			}
 			}
 		}

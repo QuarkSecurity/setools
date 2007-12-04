@@ -26,6 +26,9 @@
 #include "sechecker.hh"
 
 #include <apol/policy.h>
+#include <sefs/fcfile.hh>
+#include <qpol/policy.h>
+#include <qpol/util.h>
 
 #include <iostream>
 #include <fstream>
@@ -39,6 +42,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <errno.h>
 
 #define COPYRIGHT_INFO "Copyright (C) 2005-2007 Tresys Technology, LLC"
 
@@ -49,8 +53,12 @@ using std::endl;
 using std::ios_base;
 using std::invalid_argument;
 using std::runtime_error;
+using std::bad_alloc;
 using std::ifstream;
 using std::setw;
+using std::map;
+using std::pair;
+using std::vector;
 
 using namespace sechk;
 
@@ -114,7 +122,7 @@ static void print_list(sechecker & top)
 	while (dirent * ent = readdir(profile_dir))
 	{
 		struct stat info;
-		stat(ent->d_name, &info);
+		stat((profile_path + "/" + ent->d_name).c_str(), &info);
 		// skip things that are not regular files
 		if (!S_ISREG(info.st_mode))
 			continue;
@@ -144,15 +152,9 @@ static void print_list(sechecker & top)
 
 	//done loading known profiles and modules; begin printing
 	cout << "Profiles:" << endl;
-	for (map<string, profile>::const_iterator i = top.profiles().begin(); i != top.profiles().end(); i++)
-	{
-		cout << "    " << setw(20) << i->first << setw(56) << i->second.description() << endl;
-	}
+	top.listProfiles(cout);
 	cout << "Modules:" << endl;
-	for (map<string, pair<module*, void*> >::const_iterator i = top.modules().begin(); i != top.modules().end(); i++)
-	{
-		cout << "    " << setw(20) << i->first << setw(56) << i->second.first->description() << endl;
-	}
+	top.listModules(cout);
 }
 
 static severity strtosev(std::string str)
@@ -176,6 +178,7 @@ static severity strtosev(std::string str)
 static const string find_profile(const string & name)
 {
 	string test_path = PROFILE_INSTALL_DIR;
+	test_path += "/";
 	test_path += name;
 	test_path += ".profile";
 	if (access(test_path.c_str(), R_OK))
@@ -387,15 +390,169 @@ int main(int argc, char **argv)
 
 	// load any module dependencies (calling load multiple times for the same module is essentially a no-op)
 	const map<string, pair<module*, void*> > loaded_mods = top.modules();
-	for (map<string, pair<module*, void*> >::const_iterator i = loaded_mods.begin(); i != loaded_mods.end(); i++)
+	try
 	{
-		const vector<string> deps = i->second.first->dependencies();
-		for (vector<string>::const_iterator j = deps.begin(); j != deps.end(); j++)
+		for (map<string, pair<module*, void*> >::const_iterator i = loaded_mods.begin(); i != loaded_mods.end(); i++)
 		{
-			top.loadModule(*j);
+			const vector<string> deps = i->second.first->dependencies();
+			for (vector<string>::const_iterator j = deps.begin(); j != deps.end(); j++)
+			{
+				top.loadModule(*j);
+			}
 		}
 	}
+	catch (ios_base::failure x) // failed loading module
+	{
+		cerr << x.what() << endl;
+		top.close();
+		exit(EXIT_FAILURE);
+	}
 
+	// load the policy
+	apol_policy_t *policy = NULL;
+	try
+	{
+		if (argc - optind)
+		{
+			//parse args for policy (and possibly modules)
+			char * base_path = argv[optind];
+			optind++;
+			apol_policy_path_t * pol_path = NULL;
+			apol_vector_t * policy_mods = NULL;
+			apol_policy_path_type_e path_type = APOL_POLICY_PATH_TYPE_MONOLITHIC;
+			if (argc - optind) {
+				if (!(policy_mods = apol_vector_create(NULL)))
+				{
+					throw bad_alloc();
+				}
+				while (argc - optind)
+				{
+					if (apol_vector_append(policy_mods, argv[optind++]))
+					{
+						throw bad_alloc();
+					}
+					path_type = APOL_POLICY_PATH_TYPE_MODULAR;
+				}
+			} else if (apol_file_is_policy_path_list(base_path) > 0) {
+				pol_path = apol_policy_path_create_from_file(base_path);
+				if (!pol_path) {
+					throw invalid_argument("Invalid policy list file");
+				}
+			}
+			if (!pol_path)
+			{
+				if (!(pol_path = apol_policy_path_create(path_type, base_path, policy_mods)))
+				{
+					throw bad_alloc();
+				}
+			}
+			policy = apol_policy_create_from_policy_path(pol_path, 0, NULL, NULL);
+			apol_policy_path_destroy(&pol_path);
+		}
+		else
+		{
+			//load default policy
+			char * default_path = NULL;
+			int retv = qpol_default_policy_find(&default_path);
+			if (retv < 0)
+			{
+				throw bad_alloc();
+			}
+			else if (retv > 0)
+			{
+				throw runtime_error("Could not load default policy");
+			}
+			apol_policy_path_t * policy_mods = apol_policy_path_create(APOL_POLICY_PATH_TYPE_MONOLITHIC, default_path, NULL);
+			if (!policy_mods)
+			{
+				throw bad_alloc();
+			}
+			policy = apol_policy_create_from_policy_path(policy_mods, 0, NULL, NULL);
+			apol_policy_path_destroy(&policy_mods);
+		}
+		if (!policy)
+		{
+			int error = errno;
+			switch (error)
+			{
+				case ENOMEM:
+				{
+					throw bad_alloc();
+				}
+				case EINVAL:
+				{
+					throw invalid_argument("Invalid policy load options");
+				}
+				case ENOTSUP:
+				case EIO:
+				{
+					throw runtime_error("Unable to load policy");
+				}
+				case EACCES:
+				case EPERM:
+				case ENOENT:
+				{
+					throw ios_base::failure("Unable to open policy");
+				}
+				default:
+				{
+					throw runtime_error("Unknown policy load error");
+				}
+			}
+		}
+		top.policy(policy);
+	}
+	catch (bad_alloc x)
+	{
+		cerr << x.what() << endl;
+		top.close();
+		apol_policy_destroy(&policy);
+		exit(EXIT_FAILURE);
+	}
+	catch (invalid_argument x)
+	{
+		cerr << x.what() << endl;
+		top.close();
+		apol_policy_destroy(&policy);
+		exit(EXIT_FAILURE);
+	}
+	catch (runtime_error x)
+	{
+		cerr << x.what() << endl;
+		top.close();
+		apol_policy_destroy(&policy);
+		exit(EXIT_FAILURE);
+	}
+	catch (ios_base::failure x)
+	{
+		cerr << x.what() << endl;
+		top.close();
+		apol_policy_destroy(&policy);
+		exit(EXIT_FAILURE);
+	}
+
+	// load the fc if specified
+	sefs_fclist *file_contexts = NULL;
+	try
+	{
+		if (fcpath != "")
+		{
+			file_contexts = new sefs_fcfile(NULL, NULL);
+			dynamic_cast<sefs_fcfile*>(file_contexts)->appendFile(fcpath.c_str());
+			top.fclist(file_contexts);
+		}
+	}
+	catch (invalid_argument x)
+	{
+		cerr << x.what() << endl;
+		top.close();
+		apol_policy_destroy(&policy);
+		delete file_contexts;
+		exit(EXIT_FAILURE);
+	}
+
+
+	// run the modules and create the report
 	report* rep = NULL;
 	try
 	{
@@ -415,6 +572,7 @@ int main(int argc, char **argv)
 				rep = top.createReport();
 			}
 		}
+		// if not in quiet mode, print the report now
 		assert(rep || outf == SECHK_OUTPUT_QUIET);
 		if (outf != SECHK_OUTPUT_QUIET)
 		{
@@ -435,10 +593,14 @@ int main(int argc, char **argv)
 		cerr << x.what() << endl;
 		top.close();
 		delete rep;
+		delete file_contexts;
+		apol_policy_destroy(&policy);
 		exit(EXIT_FAILURE);
 	}
 
 	top.close();
 	delete rep;
+	delete file_contexts;
+	apol_policy_destroy(&policy);
 	return 0;
 }

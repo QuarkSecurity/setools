@@ -126,12 +126,13 @@ namespace sechk
 			{
 				if (*j == "")
 					throw invalid_argument("Option " + i->second.name() + " for module " + _name +
-							       "has one or more invalid values");
+							       " has one or more invalid values");
 			}
 		}
 
 		//call module specific run implementation
 		run_internal(pol, list);
+		_run = true;
 	}
 
 	std::ostream & module::help(std::ostream & out) const

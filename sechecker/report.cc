@@ -30,6 +30,7 @@
 #include <stdexcept>
 
 using std::invalid_argument;
+using std::out_of_range;
 using std::map;
 using std::pair;
 using std::string;
