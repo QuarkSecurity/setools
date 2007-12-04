@@ -1,5 +1,8 @@
 2007-12-03  J. Tang  <jtang@tresys.com>
 
+	* Fixed error in apol where searching for type rules ignored the
+	'set source as any' option.
+
 	* Added seaudit_filter_set_enabled(),
 	seaudit_filter_get_enabled(), and seaudit_filter_clear() to
 	libseaudit.

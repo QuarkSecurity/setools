@@ -900,6 +900,7 @@ proc Apol_TE::_search_terules {whichButton} {
     if {$enabled(ta:use_source) && $vals(ta:use_source)} {
         if {$vals(ta:source_which) == "either"} {
             $avq set_source_any $::ApolTop::policy 1
+            $teq set_source_any $::ApolTop::policy 1
         }
         $avq set_source $::ApolTop::policy $vals(ta:source_sym) $vals(ta:source_indirect)
         $avq set_source_component $::ApolTop::policy [expr {$vals(ta:source_sym,types) | $vals(ta:source_sym,attribs)}]
