@@ -1,5 +1,9 @@
 2007-12-03  J. Tang  <jtang@tresys.com>
 
+	* Apol permission map files are now part of libapol rather than
+	apol; this way they can be used if the user installs just
+	the setools-libs RPM package instead of setools-gui.
+
 	* Fixed error in apol where searching for type rules ignored the
 	'set source as any' option.
 

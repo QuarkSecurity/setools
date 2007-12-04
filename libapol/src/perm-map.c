@@ -572,8 +572,11 @@ int apol_policy_save_permmap(const apol_policy_t * p, const char *filename)
 	FILE *outfile = NULL;
 	int retval = -1;
 
-	if (p == NULL || p->pmap == NULL || filename == NULL)
+	if (p == NULL || p->pmap == NULL || filename == NULL) {
+		ERR(p, "%s", strerror(EINVAL));
+		errno = EINVAL;
 		goto cleanup;
+	}
 
 	if ((outfile = fopen(filename, "w")) == NULL) {
 		ERR(p, "Could not open permission map %s for writing: %s", filename, strerror(errno));
