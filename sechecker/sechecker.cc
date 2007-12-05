@@ -72,7 +72,7 @@ namespace sechk
 	{
 		for (map<string, profile>::const_iterator i = _profiles.begin(); i != _profiles.end(); i++)
 		{
-			out << "    " << setw(20) << i->first << setw(56) << i->second.description() << endl;
+			out << setw(20) << i->first << "    " << i->second.description() << endl;
 		}
 		return out;
 	}
@@ -81,7 +81,7 @@ namespace sechk
 	{
 		for (map<string, pair<module*, void*> >::const_iterator i = _modules.begin(); i != _modules.end(); i++)
 		{
-			out << "    " << setw(20) << i->first << setw(56) << i->second.first->description() << endl;
+			out << setw(20) << i->first << "    " << i->second.first->summary() << endl;
 		}
 		return out;
 	}
@@ -137,7 +137,7 @@ namespace sechk
 		char *found_path = apol_file_find_path(path.c_str());
 		if (!found_path)
 			throw std::ios_base::failure("Cannot find module " + name_);
-		void *handle = dlopen(found_path, RTLD_NOW | RTLD_GLOBAL);
+		void *handle = dlopen(found_path, RTLD_LAZY | RTLD_GLOBAL);
 		free(found_path);
 		if (!handle)
 		{
@@ -162,6 +162,8 @@ namespace sechk
 			handle = NULL;
 			throw std::ios_base::failure(message);
 		}
+		//take ownership of the module
+		mod->_owner = this;
 		//insert it
 		pair < string, pair < module *, void * > >entry = make_pair(name_, make_pair(mod, handle));
 		pair < map < string, pair < module *, void * > >::iterator, bool > retv = _modules.insert(entry);
@@ -171,10 +173,11 @@ namespace sechk
 
 	void sechecker::close()
 	{
+		//TODO not the best way to do this
 		for (map < string, pair < module *, void * > >::iterator i = _modules.begin(); i != _modules.end(); i)
 		{
 			dlclose(i->second.second);
-			delete i->second.first;
+			//delete i->second.first;
 			_modules.erase(i);
 			i--;
 		}
@@ -209,14 +212,18 @@ namespace sechk
 			}
 		}
 
-		for (vector < string >::reverse_iterator i = dep_stack.rend(); i != dep_stack.rbegin(); i--)
+		for (vector < string >::reverse_iterator i = dep_stack.rbegin(); i != dep_stack.rend(); i++)
 		{
-			iter = _modules.find(*i);
-			if (iter == _modules.end())
+			module* cur_mod = NULL;
+			try
+			{
+				cur_mod = (_modules.at(*i)).first;
+			}
+			catch (out_of_range)
 			{
 				throw out_of_range("No module with name " + *i + " (dependency of " + mod_name + ") exists");
 			}
-			iter->second.first->run(_policy, _fclist);
+			cur_mod->run(_policy, _fclist);
 		}
 	}
 

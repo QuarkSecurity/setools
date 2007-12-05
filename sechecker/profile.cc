@@ -224,6 +224,11 @@ namespace sechk
 					free(desc);
 					if (_description.empty())
 						throw runtime_error("Invalid profile description");
+					//strip leading and trailing newlines if present
+					if (*(_description.begin()) == '\n')
+						_description.erase(_description.begin());
+					if (*(_description.end() - 1) == '\n')
+						_description.erase(_description.end() - 1);
 				}
 				else if (xmlStrEqual(tag_name, reinterpret_cast < const xmlChar * >("module")) == 1)
 				{

@@ -740,7 +740,7 @@ AM_CONDITIONAL(BUILD_APOL, test ${build_apol} = "yes")
 AM_CONDITIONAL(BUILD_GUI, test ${build_gui} = "yes")
 #AM_CONDITIONAL(DO_FUSE, test ${have_fuse} = "yes")
 
-profile_install_dir='${setoolsdir}/sechecker-profiles'
+profile_install_dir='${setoolsdir}/sechecker'
 
 AC_SUBST(VERSION)
 AC_SUBST(javadir)

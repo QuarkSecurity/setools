@@ -153,7 +153,7 @@ static void print_list(sechecker & top)
 	//done loading known profiles and modules; begin printing
 	cout << "Profiles:" << endl;
 	top.listProfiles(cout);
-	cout << "Modules:" << endl;
+	cout << endl << "Modules:" << endl;
 	top.listModules(cout);
 }
 
@@ -591,15 +591,14 @@ int main(int argc, char **argv)
 	catch (runtime_error x) // error running module or creating report
 	{
 		cerr << x.what() << endl;
-		top.close();
 		delete rep;
+		top.close();
 		delete file_contexts;
 		apol_policy_destroy(&policy);
 		exit(EXIT_FAILURE);
 	}
 
 	top.close();
-	delete rep;
 	delete file_contexts;
 	apol_policy_destroy(&policy);
 	return 0;

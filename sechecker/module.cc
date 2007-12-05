@@ -32,6 +32,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <iomanip>
 #include <stdexcept>
 
 using std::invalid_argument;
@@ -41,6 +42,8 @@ using std::map;
 using std::pair;
 using std::string;
 using std::vector;
+using std::setw;
+using std::endl;
 
 namespace sechk
 {
@@ -138,6 +141,92 @@ namespace sechk
 	std::ostream & module::help(std::ostream & out) const
 	{
 		//TODO improve help printout format
+		out << "Module: " << _name << endl;
+		out << "Severity: ";
+		switch (_sev)
+		{
+			case SECHK_SEV_UTIL:
+			{
+				out << "Utility";
+				break;
+			}
+			case SECHK_SEV_LOW:
+			{
+				out << "Low";
+				break;
+			}
+			case SECHK_SEV_MED:
+			{
+				out << "Medium";
+				break;
+			}
+			case SECHK_SEV_HIGH:
+			{
+				out << "High";
+				break;
+			}
+			case SECHK_SEV_NONE:
+			default:
+			{
+				out << "Error";
+				break;
+			}
+		}
+		out << endl << endl;
+		out << _summary << endl << endl;
+		out << _description << endl << endl;
+		out << "Requirements:" << endl;
+		if (!_requirements.empty())
+		{
+				for (map<string, requirement>::const_iterator i = _requirements.begin(); i != _requirements.end(); i++)
+				{
+					out << setw(24) << i->first << "  " << i->second.description() << endl;
+				}
+		}
+		else
+		{
+			out << setw(24) << "None" << endl;
+		}
+		out << endl;
+		out << "Recommendations:" << endl;
+		if (!_recommendations.empty())
+		{
+			for (map<string, requirement>::const_iterator i = _recommendations.begin(); i != _recommendations.end(); i++)
+			{
+				out << setw(24) << i->first << "  " << i->second.description() << endl;
+			}
+		}
+		else
+		{
+			out << setw(24) << "None" << endl;
+		}
+		out << endl;
+		out << "Module Dependencies:" << endl;
+		if (!_dependencies.empty())
+		{
+			for (vector<string>::const_iterator i = _dependencies.begin(); i != _dependencies.end(); i++)
+			{
+				out << setw(24) << *i << endl;
+			}
+		}
+		else
+		{
+			out << setw(24) << "None" << endl;
+		}
+		out << endl;
+		out << "Options:" << endl;
+		if (!_options.empty())
+		{
+			for (map<string, option>::const_iterator i = _options.begin(); i != _options.end(); i++)
+			{
+				out << setw(24) << i->first << "  " << i->second.description() << endl;
+			}
+		}
+		else
+		{
+			out << setw(24) << "None" << endl;
+		}
+		out << endl;
 		return out;
 	}
 

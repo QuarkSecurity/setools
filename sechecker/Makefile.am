@@ -16,6 +16,9 @@ modulesdir = @profile_install_dir@
 modules_DATA = \
 	modules/find_domains.so
 
+EXTRA_DIST = \
+	modules/find_domains.cc modules/find_domains.hh
+
 dist_noinst_DATA = \
 	modules/template/profiles.readme \
 	modules/template/template.howto \
@@ -24,10 +27,10 @@ dist_noinst_DATA = \
 
 AM_CXXFLAGS = @DEBUGCFLAGS@ @WARNCFLAGS@ @PROFILECFLAGS@ @SELINUX_CFLAGS@ \
 	@QPOL_CFLAGS@ @APOL_CFLAGS@ @SEFS_CFLAGS@ @POLSEARCH_CFLAGS@ @XML_CFLAGS@ \
-	-DPROFILE_INSTALL_DIR='"${profile_install_dir}"'
+	-DPROFILE_INSTALL_DIR='"${profile_install_dir}"' -rdynamic
 AM_LDFLAGS = @DEBUGLDFLAGS@ @WARNLDFLAGS@ @PROFILELDFLAGS@
 
-LDADD = @SELINUX_LIB_FLAG@ @SEFS_LIB_FLAG@ @APOL_LIB_FLAG@ @QPOL_LIB_FLAG@ @XML_LIBS@ -lstdc++
+LDADD = @SELINUX_LIB_FLAG@ @POLSEARCH_LIB_FLAG@ @SEFS_LIB_FLAG@ @APOL_LIB_FLAG@ @QPOL_LIB_FLAG@ @XML_LIBS@ -lstdc++
 sechecker_DEPENDENCIES = \
 	$(top_builddir)/libsefs/src/libsefs.so \
 	$(top_builddir)/libapol/src/libapol.so \
@@ -76,4 +79,4 @@ $(top_builddir)/libsefs/src/libsefs.so:
 	$(MAKE) -C $(top_builddir)/libsefs/src $(notdir $@)
 
 modules/%.so: modules/%.cc modules/%.hh
-	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) $(LDFLAGS) $(AM_LDFLAGS) $(LDADD) --shared -I./modules -I. -fPIC -o $@ $<
+	$(CXX) --shared $(CXXFLAGS) $(AM_CXXFLAGS) $(LDFLAGS) $(AM_LDFLAGS) $(LDADD) -I./modules -I. -fPIC -o $@ $<

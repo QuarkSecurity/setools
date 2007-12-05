@@ -65,7 +65,18 @@ namespace sechk
 		 * copy the pointer address, pass NULL.
 		 * @exception std::bad_alloc Unable to duplicate data_.
 		 */
-		template < typename T > element(T * data_, free_fn free_, dup_fn dup_) throw(std::bad_alloc);
+		template < typename T > element(T * data_, free_fn free_, dup_fn dup_) throw(std::bad_alloc)
+		:_type(typeid(data_))
+		{
+			if (dup_)
+				_data = dup_(reinterpret_cast < void *>(data_));
+			else
+				_data = reinterpret_cast < void *>(data_);
+			if (!_data)
+				throw std::bad_alloc();
+			_free = free_;
+			_dup = dup_;
+		};
 		/**
 		 * Copy an element.
 		 * @param rhs The element to copy.

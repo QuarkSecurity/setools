@@ -42,18 +42,6 @@ using std::pair;
 
 namespace sechk
 {
-	template < typename T > element::element(T * data_, free_fn free_, dup_fn dup_) throw(std::bad_alloc):_type(typeid(data_))
-	{
-		if (dup_)
-			_data = dup_(reinterpret_cast < void *>(data_));
-		else
-			 _data = reinterpret_cast < void *>(data_);
-		if (!_data)
-			throw bad_alloc();
-		_free = free_;
-		_dup = dup_;
-	}
-
 	element::element(const element & rhs) throw(std::bad_alloc):_type(rhs._type)
 	{
 		if (rhs._dup)
