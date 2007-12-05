@@ -2209,12 +2209,9 @@ nodeTextCommand(interp, pNode, objc, objv)
          *     * In the parent node, if this is not an orphan.
          *     * In the orphan node table, if this is an orphan.
          */
-        const char *zCommand;
         const char *zNew;
         int nNew;
-        HtmlTextNode *pNew;
         HtmlTextNode *pOrig;
-        Tcl_CmdInfo info;
 
         pOrig = HtmlNodeAsText(pNode);
         assert(pOrig);

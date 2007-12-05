@@ -299,13 +299,6 @@ if test ${build_apol} = "yes"; then
    TEA_PROG_WISH
 fi
 
-if test "x${enable_debug}" = xyes; then
-   TCL_AUTOPATH='$(top_builddir)/libqpol/swig/tcl $(top_builddir)/libapol/swig/tcl $(top_builddir)/libsefs/swig/tcl $(top_builddir)/libpolsearch/swig/tcl $(top_builddir)/apol'
-else
-   TCL_AUTOPATH='$(libdir)/setools'
-fi
-AC_SUBST(TCL_AUTOPATH)
-
 AC_ARG_ENABLE(bwidget-check,
               AC_HELP_STRING([--disable-bwidget-check],
                              [do not check for BWidget 1.8, assume it exists]),
@@ -313,9 +306,10 @@ AC_ARG_ENABLE(bwidget-check,
               enable_bwidget="yes")
 if test ${build_apol} = "no"; then
     enable_bwidget=no
+else
+    AC_MSG_CHECKING([for BWidget 1.7 or greater])
 fi
 if test "x${enable_bwidget}" = "xyes"; then
-    AC_MSG_CHECKING([for BWidget 1.7 or greater])
     changequote(<<<,>>>)dnl
     cat > ./conftest.tcl <<EOF
 if {[catch {package require Tk}]} {
@@ -361,6 +355,7 @@ EOF
         AC_SUBST(BWIDGET_DESTDIR)
     fi
 else
+    AC_MSG_RESULT([skipped, assuming 1.8+ is installed])
     copy_bwidget=no
     bwidget_ver=1.8
 fi
@@ -372,9 +367,10 @@ AC_ARG_ENABLE(tkhtml-check,
               enable_tkhtml="yes")
 if test ${build_apol} = "no"; then
     enable_tkhtml=no
+else
+    AC_MSG_CHECKING([for Tkhtml 3.0 or greater])
 fi
 if test "x${enable_tkhtml}" = "xyes"; then
-    AC_MSG_CHECKING([for Tkhtml 3.0 or greater])
     changequote(<<<,>>>)dnl
     cat > ./conftest.tcl <<EOF
 if {[catch {package require Tk}]} {
@@ -404,8 +400,19 @@ EOF
             ;;
     esac
 else
+    AC_MSG_RESULT([skipped, assuming 3.0+ is installed])
     install_tkhtml=no
 fi
+
+if test "x${enable_debug}" = xyes; then
+   TCL_AUTOPATH='$(top_builddir)/libqpol/swig/tcl $(top_builddir)/libapol/swig/tcl $(top_builddir)/libsefs/swig/tcl $(top_builddir)/libpolsearch/swig/tcl $(top_builddir)/apol'
+   if test ${install_tkhtml} = yes; then
+      TCL_AUTOPATH+=' $(top_builddir)/packages/tkhtml3/htmlwidget'
+   fi
+else
+   TCL_AUTOPATH='$(libdir)/setools'
+fi
+AC_SUBST(TCL_AUTOPATH)
 
 
 dnl ** look for selinuxfs mount point

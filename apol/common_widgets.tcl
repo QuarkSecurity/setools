@@ -349,7 +349,7 @@ proc Apol_Widget::makeSearchResults {path args} {
     variable vars
     array unset vars $path:*
     set sw [ScrolledWindow $path -scrollbar both -auto both]
-    set tb [eval text $sw.tb $args -bg [Apol_Prefs::getPref active_bg] -wrap none -state disabled -font [Apol_Prefs::getPref text_font]]
+    set tb [eval text $sw.tb $args -bg [Apol_Prefs::getPref active_bg] -wrap none -state disabled -font [lindex [Apol_Prefs::getPref text_font] 0]]
     set vars($path:cursor) [$tb cget -cursor]
     bind $tb <Button-3> [list Apol_Widget::_searchresults_popup %W %x %y]
     $tb tag configure linenum -foreground blue -underline 1
@@ -494,7 +494,7 @@ proc Apol_Widget::showPopupText {title info} {
     raise $infoPopup
 }
 
-# Used to show pre-rendered paragraphs of text.
+# Used to show pre-rendered paragraphs of HTML.
 proc Apol_Widget::showPopupParagraph {title info} {
     variable infoPopup2
     if {![winfo exists $infoPopup2]} {
@@ -503,9 +503,15 @@ proc Apol_Widget::showPopupParagraph {title info} {
         $infoPopup2 add -text "Close" -command [list destroy $infoPopup2]
         set sw [ScrolledWindow [$infoPopup2 getframe].sw -auto both -scrollbar both]
         $sw configure -relief sunken
-        set text [text [$sw getframe].text -font [Apol_Prefs::getPref text_font] \
-                      -wrap none -width 75 -height 25 -bg [Apol_Prefs::getPref active_bg]]
-        $sw setwidget $text
+        set html [html [$sw getframe].html -width 600 -height 500]
+        foreach {family size} [Apol_Prefs::getPref text_font] {break}
+        set stylesheet "html \{"
+        append stylesheet "background: [Apol_Prefs::getPref active_bg];\n"
+        append stylesheet "font-family: $family;\n"
+        append stylesheet "font-size: ${size}px;\n"
+        append stylesheet "\}"
+        $html style $stylesheet
+        $sw setwidget $html
         update
         grid propagate $sw 0
         pack $sw -expand 1 -fill both -padx 4 -pady 4
@@ -513,13 +519,11 @@ proc Apol_Widget::showPopupParagraph {title info} {
     } else {
         raise $infoPopup2
         wm deiconify $infoPopup2
+        set html [[$infoPopup2 getframe].sw getframe].html
+        $html reset
     }
     $infoPopup2 configure -title $title
-    set text [[$infoPopup2 getframe].sw getframe].text
-    $text configure -state normal
-    $text delete 1.0 end
-    $text insert 0.0 $info
-    $text configure -state disabled
+    $html parse -final "<pre>$info</pre>"
 }
 
 proc Apol_Widget::makeTreeResults {path args} {

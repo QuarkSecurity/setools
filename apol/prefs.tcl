@@ -28,7 +28,7 @@ proc Apol_Prefs::create {} {
         show_attrib_warning 1
         dialog_font "Helvetica 10"
         general_font "Helvetica 10"
-        text_font fixed
+        text_font "fixed 12"
         title_font "Helvetica 10 bold italic"
         active_bg white
         active_fg black
@@ -132,6 +132,11 @@ proc Apol_Prefs::openPrefs {} {
             }
             "\[text_font\]" {
                 set prefs(text_font) $value
+                # beginning with apol 3.4, the text_font preference
+                # now has a size value as well
+                if {[llength $prefs(text_font)] == 1} {
+                    lappend prefs(text_font) 12
+                }
             }
             "\[general_font\]" {
                 set prefs(general_font) $value

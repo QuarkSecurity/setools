@@ -96,15 +96,17 @@ init.tcl: Makefile
 	@echo "    global auto_path" >> $@
 	@echo "    lappend auto_path $(TCL_AUTOPATH)" >> $@
 	@echo "    print_init \"Initializing libqpol... \"" >> $@
-	@echo "    package require qpol" >> $@
+	@echo "    package require qpol @libqpol_version@" >> $@
 	@echo "    print_init \"done.\nInitializing libapol... \"" >> $@
-	@echo "    package require apol" >> $@
+	@echo "    package require apol @libapol_version@" >> $@
 	@echo "    print_init \"done.\nInitializing libsefs... \"" >> $@
-	@echo "    package require sefs" >> $@
+	@echo "    package require sefs @libsefs_version@" >> $@
 	@echo "    print_init \"done.\nInitializing libpolsearch... \"" >> $@
-	@echo "    package require polsearch" >> $@
+	@echo "    package require polsearch @libpolsearch_version@" >> $@
 	@echo "    print_init \"done.\nInitializing libapol_tcl... \"" >> $@
-	@echo "    package require apol_tcl" >> $@
+	@echo "    package require apol_tcl @libapol_version@" >> $@
+	@echo "    print_init \"done.\nInitializing Tkhtml... \"" >> $@
+	@echo "    package require Tkhtml 3.0" >> $@
 	@echo "    print_init \"done.\n\"" >> $@
 	@echo "}" >> $@
 	@echo "proc tcl_config_get_install_dir {} {" >> $@

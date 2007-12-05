@@ -914,12 +914,12 @@ proc print_init {s} {
     puts -nonewline $s
 }
 
-if {[catch {tcl_config_init_libraries}]} {
-    puts stderr "The SETools libraries could not be found in one of these subdirectories:\n$auto_path"
-    exit -1
-}
 if {[catch {package require Tk}]} {
     puts stderr "This program requires Tk to run."
+    exit -1
+}
+if {[catch {tcl_config_init_libraries}]} {
+    puts stderr "The SETools libraries could not be found in one of these subdirectories:\n$auto_path"
     exit -1
 }
 set path [handle_args $argv0 $argv]
