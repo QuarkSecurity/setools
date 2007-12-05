@@ -89,15 +89,16 @@ required:
   Java JDK 1.2 or greater
   python-devel 2.3 or greater
 
-Apol requires BWidget 1.7 or greater to run.  The BWidget toolkit is
-part of the tcllib package and is often not present in Linux
-distributions; the toolkit may be freely downloaded at
-http://tcllib.sourceforge.net.  The supplied configure script attempts
-to detect the version of BWidget installed.  If it is not found then
-SETools will use the prepackaged one found within the 'packages'
-subdirectory.  In some situations the toolkit will not be
-automatically found; if you are sure that BWidget is present then
-specify --disable-bwidget-check to the configure script.
+Apol requires BWidget 1.7+ and Tkhtml 3.0+.  The BWidget toolkit is
+part of the tcllib package; the toolkit may be freely downloaded at
+http://tcllib.sourceforge.net.  Tkhtml is an extension that provides
+an HTML rendering widget to Tk; it may be obtained at
+http://tkhtml.tcl.tk.  The supplied configure script attempts to
+detect these packages; if not found then the ones provided in the
+'packages' subdirectory are used.  In some situations they will not be
+autodetected correctly.  If you are sure that your system has them,
+specify --disable-bwidget-check and --disable-tkhtml-check to the
+configure script.
 
 
 2.1. compiling from official distribution
@@ -161,6 +162,12 @@ You can customize your SETools build using the flags given to
       Assume that BWidget 1.8 is installed on the system.  The
       configure script normally tries to launch a Tcl script that
       loads BWidget, which requires a running X session.  You will
+      need this flag if compiling in a non-X environment.
+
+  --disable-tkhtml-check
+      Assume that Tkhtml 3.0 is installed on the system.  The
+      configure script normally tries to launch a Tcl script that
+      loads Tkhtml3, which requires a running X session.  You will
       need this flag if compiling in a non-X environment.
 
   --disable-selinux-check

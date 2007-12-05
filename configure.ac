@@ -294,6 +294,9 @@ if test ${build_apol} = "yes"; then
    else
       AC_MSG_ERROR([setools requires Tk 8.4 or greater])
    fi
+   TEA_PUBLIC_TK_HEADERS
+   TEA_PATH_X
+   TEA_PROG_WISH
 fi
 
 if test "x${enable_debug}" = xyes; then
@@ -361,6 +364,49 @@ else
     copy_bwidget=no
     bwidget_ver=1.8
 fi
+
+AC_ARG_ENABLE(tkhtml-check,
+              AC_HELP_STRING([--disable-tkhtml-check],
+                             [do not check for Tkhtml 3.0, assume it exists]),
+              enable_tkhtml="$enableval",
+              enable_tkhtml="yes")
+if test ${build_apol} = "no"; then
+    enable_tkhtml=no
+fi
+if test "x${enable_tkhtml}" = "xyes"; then
+    AC_MSG_CHECKING([for Tkhtml 3.0 or greater])
+    changequote(<<<,>>>)dnl
+    cat > ./conftest.tcl <<EOF
+if {[catch {package require Tk}]} {
+   puts stderr "Could not load Tk."
+   exit 1
+}
+if {![catch {package require Tkhtml} tkhtml_version]} {
+    if {[package vcompare \$tkhtml_version 3.0] >= 0} {
+        exit 0
+    }
+}
+exit 2
+EOF
+    changequote([,])dnl
+    ${TCLSH_PROG} ./conftest.tcl
+    case $? in
+       0)
+            AC_MSG_RESULT([3.0+])
+            install_tkhtml=no
+            ;;
+       1)
+            AC_MSG_ERROR([failed.  Try using --disable-tkhtml-check flag if compiling in a non-graphical environment.])
+            ;;
+       *)
+            AC_MSG_WARN([not found, using setools's Tkhtml 3.0 instead])
+            install_tkhtml=yes
+            ;;
+    esac
+else
+    install_tkhtml=no
+fi
+
 
 dnl ** look for selinuxfs mount point
 
@@ -682,6 +728,7 @@ AM_CONDITIONAL(DO_SWIGIFY_PYTHON, test ${do_swigify_python} = "yes")
 AM_CONDITIONAL(DO_SWIGIFY_JAVA, test ${do_swigify_java} = "yes")
 AM_CONDITIONAL(DO_SWIGIFY_TCL, test ${do_swigify_tcl} = "yes")
 AM_CONDITIONAL(COPY_BWIDGET, test ${copy_bwidget} = "yes")
+AM_CONDITIONAL(INSTALL_TKHTML, test ${install_tkhtml} = "yes")
 AM_CONDITIONAL(BUILD_APOL, test ${build_apol} = "yes")
 AM_CONDITIONAL(BUILD_GUI, test ${build_gui} = "yes")
 #AM_CONDITIONAL(DO_FUSE, test ${have_fuse} = "yes")
@@ -813,7 +860,7 @@ AC_CONFIG_FILES([Makefile VERSION \
                  seaudit/Makefile \
                  sediff/Makefile \
                  man/Makefile \
-                 packages/Makefile packages/rpm/Makefile \
+                 packages/Makefile packages/tkhtml3/Makefile packages/tkhtml3/htmlwidget/Makefile packages/rpm/Makefile \
                  packages/libqpol.pc packages/libapol.pc packages/libpoldiff.pc packages/libseaudit.pc packages/libsefs.pc packages/libpolsearch.pc])
 
 AC_OUTPUT

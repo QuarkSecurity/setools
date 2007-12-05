@@ -1,0 +1,518 @@
+
+#---------------------------------------------------------------------
+# This file contains automated tests for the Tkhtml stylesheet parser.
+#
+
+# Test script for Tkhtml
+proc sourcefile {file} {
+  set fname [file join [file dirname [info script]] $file] 
+  uplevel #0 [list source $fname]
+}
+sourcefile common.tcl
+
+# Test organization for tests in this file.
+#
+#     style-1.*:   Tests the parsing of 'background-position' property values.
+#     style-2.*:   Tests the parsing of 'background' property values.
+                 
+#     style-5.*:   Tests some intentional stylesheet syntax errors observed 
+#                  in the wild used to mask an @import directive. Apparently
+#                  one of the "IE-hacks".
+#
+#     style-7.*:   Security test. Tests that only a default stylesheet can
+#                  specify "tcl()" property values. If this were not the
+#                  case web pages could cause arbitrary scripts to be 
+#                  executed in the applications interpreter.
+#
+#     style-8.*:   Tests that Tkhtml handles certain types of syntax errors 
+#                  in stylesheets. Specifically, these test cases come
+#                  from the malformed selectors in the "acid2" test.
+#
+
+html .h
+.h handler script style styleHandler 
+proc styleHandler {attr data} {
+  .h style $data
+}
+
+proc property {node prop} {
+  array set properties [$node prop]
+  return $properties($prop)
+}
+
+
+#--------------------------------------------------------------------------
+# Test cases style-1.* test the parsing of the 'background-position' property.
+#
+
+proc background-position {node} {
+    return [list                               \
+        [$node property background-position-x] \
+        [$node property background-position-y] \
+    ]
+}
+
+proc test_background_position {name style value} {
+  .h configure -defaultstyle ""
+  .h reset
+  .h style "div {background-position: $style}"
+
+  tcltest::test $name {} -body {
+    .h parse -final {<html><div></div></html>}
+    set node [lindex [.h search div] 0]
+    background-position $node
+  } -result $value
+
+#  puts [.h styleconfig]
+}
+
+test_background_position style-1.0 "50% 50%"          {50.0% 50.0%}
+test_background_position style-1.1 "center center"    {50.0% 50.0%}
+test_background_position style-1.2 "111 222"          {0px 0px}
+test_background_position style-1.3 "right"            {100.0% 50.0%}
+test_background_position style-1.4 "blah"             {0px 0px}
+
+#--------------------------------------------------------------------------
+# Test cases style-2.* test the parsing of the 'background' property.
+#
+tcltest::test style-2.0 {} -body {
+  .h reset
+  .h parse -final {
+    <html>
+    <style>
+      .one {background: black url(shell-bg.jpg) 0 0 no-repeat fixed;}
+      .two {background: black url(shell-bg.jpg) 50 no-repeat 100 fixed;}
+    </style>
+    <body>
+    <div class="one"/>
+    <div class="two"/>
+    </body>
+    </html>
+  }
+
+  set node [lindex [.h search .one] 0]
+  background-position $node
+} -result {0px 0px}
+
+tcltest::test style-2.1 {} -body {
+  property $node background-color
+} -result {black}
+
+# Note: in quirks mode the result would be {50px 100px}
+tcltest::test style-2.2 {} -body {
+  set node2 [lindex [.h search .two] 0]
+  background-position $node2
+} -result {0px 0px}
+
+tcltest::test style-2.3 {} -body {
+  property $node2 background-repeat
+} -result {no-repeat}
+
+#--------------------------------------------------------------------------
+# Test cases style-3.* test some selectors
+#
+tcltest::test style-3.0 {} -body {
+  .h reset
+  .h parse -final {
+    <html>
+    <style>
+      i {color:red}
+      body>b {color:red}
+    </style>
+    <body>
+    <i>Hello</i>
+    <b>Hello</i>
+    </body>
+    </html>
+  }
+
+  set node [lindex [.h search i] 0]
+  property $node color
+} -result {red}
+tcltest::test style-3.1 {} -body {
+  set node [lindex [.h search b] 0]
+  property $node color
+} -result {red}
+
+#--------------------------------------------------------------------------
+# The following tests (style-4.*) test the parsing of stylesheets.
+#
+proc parse_stylesheet {stylesheet_text} {
+  html .newwidget -defaultstyle ""
+  .newwidget style $stylesheet_text
+  set ret [list]
+  foreach r [.newwidget styleconfig] {
+    lappend ret [lrange $r 0 1]
+  }
+  destroy .newwidget
+  return $ret
+}
+
+#
+# Test 4.1 tests the bug reported by ticket #43. The embedded stylesheet
+# contains an error - a ":" character is missing from a declaration. The
+# correct behaviour is to ignore the broken declaration and resume
+# parsing after the following semi-colon. In other words, the style-sheet
+# specified in the <STYLE> element should parse identically to:
+#
+#     div {
+#         color: red;
+#         background-color: green;
+#     }
+#
+tcltest::test style-4.1.1 {} -body {
+  .h reset
+  .h style {
+      div {
+        color: red;
+        garbage moregarbage;
+        background-color: green;
+      }
+  }
+  .h parse -final {
+    <div>Hello</div>
+    <span>World</span>
+  }
+  set node [lindex [.h search div] 0]
+  list [$node property color] [$node property background-color]
+} -result {red green}
+
+# Test 4.2 tests that semi-colons are treated correctly. 
+tcltest::test style-4.2.1 {} -body {
+  parse_stylesheet {
+      div {
+        color: red;; ; background-color: green
+      }
+  }
+} -result {{div {color:red; background-color:green}}}
+tcltest::test style-4.2.2 {} -body {
+  parse_stylesheet {
+      div {
+        ;color: red;; ; background-color: green; ; ;
+      ;}
+  }
+} -result {{div {color:red; background-color:green}}}
+
+# Test 4.3 tests for parsing errors using the examples given in the CSS 2.1
+# specification, section 4.2. All of the following declarations should
+# be equivalent to "p {color:green}".
+set tn 1
+foreach ss [list \
+  {p { color:green }}                                    \
+  {p { color:green; color }}                             \
+  {p { color:red;   color; color:green }}                \
+  {p { color:green; color: }}                            \
+  {p { color:red;   color:; color:green }}               \
+  {p { color:green; {some more garbage}}}                \
+  {p { some more garbage; color: green}}                 \
+  {p { {some more garbage}; color: green}}               \
+  {p { color:green; color{;color:maroon} }}              \
+  {p { color:red;   color{;color:maroon}; color:green }}  
+] {
+  tcltest::test style-4.3.$tn {} -body {
+    parse_stylesheet $ss
+  } -result {{p color:green}}
+  incr tn
+}
+
+#--------------------------------------------------------------------------
+# Test cases numbered 5.* test that the parser correctly negotiates 
+# @media blocks.
+
+# Given the stylesheet document $style, return the number of @import 
+# directives contained in the document that should be used by Tkhtml.
+proc count_import_directives {style} {
+}
+proc incrvar {varname args} {
+  uplevel #0 [list incr $varname]
+}
+
+# The following block comes from the page at www.theaustralian.com.au.
+# I have no idea what they are trying to achieve, but I do know the 
+# page renders incorrectly if the @import directives are recognised.
+# So the following test cases test that they are ignored.
+set ::style_block "
+/* IE legacy version fixes - leave at end */
+@media tty {
+   i{content:\"\";/*\" \"*/}}@m; @import '/css/ie55/0,20954,,00.css'; /*\";}
+   }/* */
+
+@media tty {
+   i{content:\"\";/*\" \"*/}}; @import '/css/ie50/0,20955,,00.css'; {;}/*\";}
+   }/* */
+"
+tcltest::test style-5.1 {} -body {
+  html .newwidget 
+  set ::import_cnt 0
+  .newwidget style -importcmd [list incrvar ::import_cnt] $::style_block
+  destroy .newwidget
+  set ::import_cnt
+} -result {0}
+
+
+tcltest::test style-6.1 {} -body {
+  parse_stylesheet {
+    #nav-main {background: #fc3 url(/files/theme/nav-main.png) repeat-x 0 100%;}
+  }
+} -result [list [list \
+  {#nav-main}  \
+  {background-image:url(/files/theme/nav-main.png); background-attachment:scrol; background-color:#fc3; background-repeat:repeat-x; background-position-x:0.00; background-position-y:100.00%}
+]]
+
+tcltest::test style-6.2 {} -body {
+  parse_stylesheet {
+    @media print {
+      P {color: green}
+    }
+  }
+} -result [list]
+
+tcltest::test style-6.3 {} -body {
+  parse_stylesheet {
+    @media print {
+      P {
+        color: green
+      }
+      P {
+        color: red
+      }
+    }
+  }
+} -result [list]
+
+tcltest::test style-6.4 {} -body {
+  parse_stylesheet {
+    @page {
+      @bottom-right {
+        font-family: helvetica, sans-serif;
+        content: counter(page);
+        text-align: right;
+        vertical-align: top;
+        padding-top: 2em;
+      }
+    }
+
+    @media print {
+      P {
+        color: red
+      }
+    }
+  }
+} -result [list]
+
+tcltest::test style-6.5 {} -body {
+  parse_stylesheet {
+SUP {
+    vertical-align: super;
+    font-size: 80%
+}
+
+@page {
+  @bottom-right {
+    font-family: helvetica, sans-serif;
+    content: counter(page);
+    text-align: right;
+    vertical-align: top;
+    padding-top: 2em;
+  }
+}
+
+@media print {
+P { margin-top: 0; }
+.dlink { display: none; }
+}
+  }
+} -result [list [list sup {vertical-align:super; font-size:80.00%}]]
+
+# Ensure only the default stylesheet can register Tcl scripts.
+tcltest::test style-7.1 {} -body {
+  parse_stylesheet {
+    p {color:tcl(script)}
+  }
+} -result [list [list p {}]]
+
+#----------------------------------------------------------------------------
+# The following tests - style-8.* - come from the selectors in the acid2 page.
+#
+tcltest::test style-8.1 {} -body {
+  .h reset
+  .h parse -final {
+    <style>
+      [class~=one].first.one {color: red}
+    </style>
+    <div class="first one">
+  }
+  set node [lindex [.h search div] 0]
+  property $node color
+} -result red
+tcltest::test style-8.2 {} -body {
+  .h reset
+  .h configure -defaultstyle ""
+  .h parse -final {
+    <style>
+      [class~=one][class~=first] [class=second\ two][class="second two"] 
+      {color : red}
+    </style>
+    <div class="first one">
+      <div id="1" class="second two">
+  }
+  set node [lindex [.h search {#1}] 0]
+  property $node color
+} -result red
+
+tcltest::test style-8.3 {} -body {
+  .h configure -defaultstyle ""
+  .h reset
+  .h parse -final {
+    <style>
+      div ] .eyes{position:absolute}
+    </style>
+    <div class="eyes">
+  }
+  set node [lindex [.h search .eyes] 0]
+  property $node position
+} -result static
+
+tcltest::test style-8.4 {} -body {
+  .h reset
+  .h configure -defaultstyle ""
+  .h parse -final {
+    <style>
+      /* Note the syntax error in the next line! */
+      [class=second two] { background: red; }
+      .eyes { position: absolute }
+    </style>
+    <div class="eyes">
+  }
+  set node [lindex [.h search .eyes] 0]
+  property $node position
+} -result absolute
+
+tcltest::test style-8.5 {} -body {
+  .h reset
+  .h configure -defaultstyle ""
+  .h parse -final {
+    <style>
+    div {
+background: yellow /* comment */ no-repeat /* comment */ ;
+    }
+    </style>
+    <div>
+  }
+  set node [lindex [.h search div] 0]
+  property $node background-color
+} -result yellow
+
+tcltest::test style-9.1 {} -body {
+  .h reset
+  .h configure -defaultstyle ""
+  .h parse -final {
+    <style>
+.four {color: purple;}
+@import url(imptest2.css);
+P.six {color: green;}
+    </style>
+    <p class=six>
+  }
+  set node [lindex [.h search p] 0]
+  property $node color
+} -result {green}
+
+tcltest::test style-9.2 {} -body {
+  parse_stylesheet {
+    p ! p {color: purple;}
+  }
+} -result {}
+tcltest::test style-9.3 {} -body {
+  parse_stylesheet {
+    p {COLOR: PURPLE;}
+  }
+} -result [list {p color:PURPLE}]
+tcltest::test style-9.4 {} -body {
+  parse_stylesheet {
+    @three-dee {
+      @background-lighting { 
+        azimuth: 30deg; elevation: 190deg; 
+      }
+      P.seven { color: red }
+    }
+    P.eight {COLOR: GREEN;}
+  }
+} -result [list {p.eight color:GREEN}]
+
+
+#----------------------------------------------------------------------------
+# The following tests - style-10.* - test that the 'line-height' property
+# is parsed and applied to elements correctly.
+#
+tcltest::test style-10.1 {} -body {
+  .h reset
+  .h parse -final {
+    <html><head><style>
+
+      .one   { line-height: normal; }
+      .two   { line-height: 50%; font-size:20px; }
+      .three { line-height: 130px;  }
+      .four  { line-height: 2;  }
+      .five  { line-height: -10px; }    /* Negative values are illegal */
+
+    </style></head><body>
+    <div class=one></div>
+    <div class=two></div>
+    <div class=three></div>
+    <div class=four></div>
+    <div class=five></div>
+  }
+
+  set res [list]
+  foreach class [list .one .two .three .four .five] {
+    lappend res [[lindex [.h search $class] 0] property line-height]
+  }
+  set res
+} -result [list normal 10px 130px 2.00 normal]
+
+#----------------------------------------------------------------------------
+# The following tests - style-10.* - test property and override method.
+#
+tcltest::test style-11.1 {} -body {
+    .h reset
+    .h parse -final {
+	<html>
+	<body>
+	<div id="outer">
+	<h2>foo</h2>
+	<div id="inner" style="background: none repeat scroll 0% 0%">bar</div>
+	baz</div>
+	</body>
+	</html>
+    }
+    pack .h
+    set n [.h search {div[id="inner"]}]
+    # wish: ./src/htmlprop.c:3035: HtmlNodeGetProperty:
+    #  Assertion `eProp <= 108' failed.
+    $n property background
+} -result [list none repeat scroll 0% 0%]
+
+tcltest::test style-11.2 {} -body {
+    $n override 
+} -result {}
+
+tcltest::test style-11.3 {} -body {
+    # Missusing of trailing ':'
+    set res [$n override {background-color: red}]
+    after idle [list set ::wait 1]
+    vwait ::wait
+    # wish: ./src/htmlprop.c:300: getPropertyDef:
+    #  Assertion `eProp >= 0' failed.
+    set res
+} -result {background-color: red}
+
+tcltest::test style-11.4 {} -body {
+    set res [$n override {background-color red}]
+} -result {background-color red}
+
+
+#----------------------------------------------------------------------
+
+finish_test
+

@@ -2,13 +2,17 @@ bwidget_destdir = @BWIDGET_DESTDIR@
 dist_noinst_DATA = BWidget-1.8.0.tar.bz2 combobox.tcl mainframe.tcl notebook.tcl \
 	Doxyfile
 
-SUBDIRS = rpm
-
 if COPY_BWIDGET
   copy_bwidget = yes
 else
   copy_bwidget = no
 endif
+
+if INSTALL_TKHTML
+  MAYBE_TKHTML = tkhtml3
+endif
+
+SUBDIRS = rpm $(MAYBE_TKHTML)
 
 pkgconfig_DATA = libqpol.pc libapol.pc libpoldiff.pc libseaudit.pc libsefs.pc libpolsearch.pc
 pkgconfigdir = @libdir@/pkgconfig
