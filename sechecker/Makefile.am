@@ -30,7 +30,7 @@ AM_CXXFLAGS = @DEBUGCFLAGS@ @WARNCFLAGS@ @PROFILECFLAGS@ @SELINUX_CFLAGS@ \
 	-DPROFILE_INSTALL_DIR='"${profile_install_dir}"' -rdynamic
 AM_LDFLAGS = @DEBUGLDFLAGS@ @WARNLDFLAGS@ @PROFILELDFLAGS@
 
-LDADD = @SELINUX_LIB_FLAG@ @POLSEARCH_LIB_FLAG@ @SEFS_LIB_FLAG@ @APOL_LIB_FLAG@ @QPOL_LIB_FLAG@ @XML_LIBS@ -lstdc++
+LDADD = @SELINUX_LIB_FLAG@ @POLSEARCH_LIB_FLAG@ @SEFS_LIB_FLAG@ @APOL_LIB_FLAG@ @QPOL_LIB_FLAG@ @XML_LIBS@
 sechecker_DEPENDENCIES = \
 	$(top_builddir)/libsefs/src/libsefs.so \
 	$(top_builddir)/libapol/src/libapol.so \
@@ -79,4 +79,6 @@ $(top_builddir)/libsefs/src/libsefs.so:
 	$(MAKE) -C $(top_builddir)/libsefs/src $(notdir $@)
 
 modules/%.so: modules/%.cc modules/%.hh
-	$(CXX) --shared $(CXXFLAGS) $(AM_CXXFLAGS) $(LDFLAGS) $(AM_LDFLAGS) $(LDADD) -I./modules -I. -fPIC -o $@ $<
+	$(CXX) --shared $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) $(LDADD) -I$(srcdir) -I$(srcdir)/modules -fPIC -o $@ $<
+
+MOSTLYCLEANFILES = $(modules_DATA)
