@@ -26,14 +26,20 @@
 
 #include <string>
 #include <map>
+#include <vector>
 #include <iostream>
+#include <iomanip>
 #include <stdexcept>
 
 using std::invalid_argument;
 using std::out_of_range;
 using std::map;
 using std::pair;
+using std::vector;
 using std::string;
+using std::setw;
+using std::left;
+using std::endl;
 
 namespace sechk
 {
@@ -63,7 +69,99 @@ namespace sechk
 
 	std::ostream & report::print(std::ostream & out) const
 	{
-		//TODO print report
+		output_format out_mode = _output_mode;
+		for (map<string, const result *>::const_iterator i = _results.begin(); i != _results.end(); i++)
+		{
+			if (_output_mode == SECHK_OUTPUT_DEFAULT)
+				out_mode = i->second->outputMode();
+			if (_results.size() != 1 && _top->modules().at(i->first).first->moduleSeverity() < _min_sev)
+				continue;
+
+			out << setw(30) << left << "Module: " + i->first << "Severity: ";
+			switch (_top->modules().at(i->first).first->moduleSeverity())
+			{
+				case SECHK_SEV_UTIL:
+				{
+					out << "Utility";
+					break;
+				}
+				case SECHK_SEV_LOW:
+				{
+					out << "Low";
+					break;
+				}
+				case SECHK_SEV_MED:
+				{
+					out << "Medium";
+					break;
+				}
+				case SECHK_SEV_HIGH:
+				{
+					out << "High";
+					break;
+				}
+				case SECHK_SEV_NONE:
+				default:
+				{
+					out << "Error";
+					break;
+				}
+			}
+			out << endl << setw(80) << std::setfill('-') << "-" << endl;
+			out << _top->modules().at(i->first).first->summary() << endl;
+			if (out_mode > SECHK_OUTPUT_SHORT)
+			{
+				out << _top->modules().at(i->first).first->description() << endl << endl;
+				if (!_top->modules().at(i->first).first->options().empty())
+				{
+					out << "Options: " << endl;
+					for (map<string, option>::const_iterator j = _top->modules().at(i->first).first->options().begin(); j != _top->modules().at(i->first).first->options().end(); j++)
+					{
+						out << "    " << j->first << ":" << endl << "        ";
+						for (vector<string>::const_iterator k = j->second.values().begin(); k != j->second.values().end(); k++)
+						{
+							out << *k << " ";
+						}
+						out << endl;
+					}
+				}
+			}
+			out << endl;
+			// now that all the heading info has been displayed print the results
+			out << "Found " << i->second->entries().size() << " result" << (i->second->entries().size() == 1 ?":":"s:") << endl;
+			int element_count = 0; // this is for spacing in short output mode
+			for (map<void*,result::entry>::const_iterator j = i->second->entries().begin(); j != i->second->entries().end(); j++)
+			{
+				j->second.Element().print(out, _top->policy());
+				++element_count;
+				element_count %= 4; //change this to change number per line in short mode
+				if (out_mode == SECHK_OUTPUT_VERBOSE)
+				{
+					out << ":" << endl;
+					//print proof
+					for (map<void*,result::entry::proof>::const_iterator k = j->second.Proof().begin(); k != j->second.Proof().end(); k++)
+					{
+						out << "    ";
+						k->second.Element().print(out, _top->policy());
+						out << endl;
+					}
+				}
+				// if count per line reached or some kind of rule, add a newline
+				else if (!element_count || j->second.Element().type() == typeid(qpol_avrule_t*) ||
+				        j->second.Element().type() == typeid(qpol_terule_t*) ||
+				        j->second.Element().type() == typeid(qpol_range_trans_t*) ||
+				        j->second.Element().type() == typeid(qpol_role_allow_t*) ||
+				        j->second.Element().type() == typeid(qpol_role_trans_t*) )
+				{
+					out << endl;
+				}
+				else // in short mode but only need a comma
+				{
+					out << ", ";
+				}
+			}
+		}
+		out << endl;
 		return out;
 	}
 

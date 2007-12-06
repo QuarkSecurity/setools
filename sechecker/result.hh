@@ -188,7 +188,7 @@ namespace sechk
 			 * @return The proof added or, if already it exists, the current proof.
 			 * @exception std::invalid_argument Type of \a elem conflicts with previously added proof.
 			 */
-			const proof & addProof(const element & elem) throw(std::invalid_argument);
+			proof & addProof(const element & elem) throw(std::invalid_argument);
 
 		      private:
 			 std::map < void *, proof > _proof;	//!< The set of proof entries for this result entry.
@@ -235,7 +235,7 @@ namespace sechk
 		 * @return The entry added or, if already it exists, the current entry.
 		 * @exception std::invalid_argument Type of \a elem conflicts with previously added entry.
 		 */
-		const entry & addEntry(element elem) throw(std::invalid_argument);
+		entry & addEntry(element elem) throw(std::invalid_argument);
 
 	      private:
 		std::map < void *, entry > _entries;	//! Set of entries.

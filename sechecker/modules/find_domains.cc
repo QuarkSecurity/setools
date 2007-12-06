@@ -112,6 +112,10 @@ namespace sechk
 
 		//"   2) it is the source of an AV rule for object class other than filesystem\n"
 		polsearch_test & av_test = tq.addTest(POLSEARCH_TEST_AVRULE);
+		//do not include neverallow rules
+		polsearch_criterion & av_type = av_test.addCriterion(POLSEARCH_OP_RULE_TYPE, true);
+		polsearch_number_parameter * av_type_val = new polsearch_number_parameter(QPOL_RULE_NEVERALLOW);
+		av_type.param(av_type_val);
 		polsearch_criterion & av_src = av_test.addCriterion(POLSEARCH_OP_SOURCE);
 		polsearch_string_expression_parameter * av_src_name = new polsearch_string_expression_parameter("X");
 		av_src.param(av_src_name);
@@ -172,7 +176,7 @@ namespace sechk
 		for (vector<polsearch_result>::iterator i = tq_res.begin(); i != tq_res.end(); i++)
 		{
 			element res_type(static_cast<qpol_type_t*>(const_cast<void*>(i->element())), NULL, NULL);
-			result::entry cur_entry = _results.addEntry(res_type);
+			result::entry & cur_entry = _results.addEntry(res_type);
 			for (vector<polsearch_proof>::const_iterator j = i->proof().begin(); j != i->proof().end(); j++)
 			{
 				element *proof_elem = NULL;

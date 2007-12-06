@@ -173,13 +173,11 @@ namespace sechk
 
 	void sechecker::close()
 	{
-		//TODO not the best way to do this
-		for (map < string, pair < module *, void * > >::iterator i = _modules.begin(); i != _modules.end(); i)
+		while (!_modules.empty())
 		{
-			dlclose(i->second.second);
-			//delete i->second.first;
-			_modules.erase(i);
-			i--;
+			delete _modules.begin()->second.first;
+			dlclose(_modules.begin()->second.second);
+			_modules.erase(_modules.begin());
 		}
 	}
 

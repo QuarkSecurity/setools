@@ -30,7 +30,9 @@
 #include <map>
 #include <typeinfo>
 #include <iostream>
+#include <iomanip>
 #include <stdexcept>
+#include <cstdlib>
 
 using std::bad_alloc;
 using std::map;
@@ -84,6 +86,31 @@ namespace sechk
 	std::ostream & element::print(std::ostream & out, apol_policy_t * pol) const
 	{
 		//TODO print stuff.
+		const char *name = NULL;
+		char *rule = NULL;
+		if (_type == typeid(qpol_type_t*))
+		{
+			qpol_type_get_name(apol_policy_get_qpol(pol), static_cast<qpol_type_t*>(_data), &name);
+			out << name;
+		}
+		else if (_type == typeid(qpol_role_t*))
+		{
+			qpol_role_get_name(apol_policy_get_qpol(pol), static_cast<qpol_role_t*>(_data), &name);
+			out << name;
+		}
+		else if (_type == typeid(qpol_avrule_t*))
+		{
+			out << (rule = apol_avrule_render(pol, static_cast<qpol_avrule_t*>(_data)));
+		}
+		else if (_type == typeid(qpol_terule_t*))
+		{
+			out << (rule = apol_terule_render(pol, static_cast<qpol_terule_t*>(_data)));
+		}
+		else
+		{
+			out << _type.name() << ":" << std::showbase << std::setbase(16) << _data;
+		}
+		free(rule);
 		return out;
 	}
 
@@ -132,7 +159,7 @@ namespace sechk
 		return _proof;
 	}
 
-	const result::entry::proof & result::entry::addProof(const element & elem) throw(std::invalid_argument)
+	result::entry::proof & result::entry::addProof(const element & elem) throw(std::invalid_argument)
 	{
 		proof newproof(elem);
 
@@ -190,7 +217,7 @@ namespace sechk
 		return _entries;
 	}
 
-	const result::entry & result::addEntry(element elem) throw(std::invalid_argument)
+	result::entry & result::addEntry(element elem) throw(std::invalid_argument)
 	{
 		entry newentry(elem);
 
