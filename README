@@ -89,10 +89,11 @@ required:
   Java JDK 1.2 or greater
   python-devel 2.3 or greater
 
-Apol requires BWidget 1.7+ and Tkhtml 3.0+.  The BWidget toolkit is
-part of the tcllib package; the toolkit may be freely downloaded at
-http://tcllib.sourceforge.net.  Tkhtml is an extension that provides
-an HTML rendering widget to Tk; it may be obtained at
+Apol requires BWidget 1.7+, Snit 1.0+, and Tkhtml 3.0+.  The BWidget
+toolkit may be freely downloaded at http://tcllib.sourceforge.net.
+Snit is normally included in the tcllib package; it too can be found
+at http://tcllib.sourceforge.net.  Tkhtml is an extension that
+provides HTML rendering to Tk; it may be obtained at
 http://tkhtml.tcl.tk.  The supplied configure script attempts to
 detect these packages; if not found then the ones provided in the
 'packages' subdirectory are used.  In some situations they will not be

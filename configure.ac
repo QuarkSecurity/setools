@@ -360,6 +360,34 @@ else
     bwidget_ver=1.8
 fi
 
+# h3v requires Snit 1.0
+if test ${build_apol} = "yes"; then
+    AC_MSG_CHECKING([for Snit 1.0 or greater])
+    changequote(<<<,>>>)dnl
+    cat > ./conftest.tcl <<EOF
+if {![catch {package require snit} snit_version]} {
+    if {[package vcompare \$snit_version 1.0] >= 0} {
+        exit 0
+    }
+}
+exit 1
+EOF
+    changequote([,])dnl
+    ${TCLSH_PROG} ./conftest.tcl
+    case $? in
+       0)
+            AC_MSG_RESULT([1.0+])
+            install_snit=no
+            ;;
+       *)
+            AC_MSG_WARN([not found, using setools's Snit 1.0 instead])
+            install_snit=yes
+            ;;
+    esac
+else
+    install_snit=no
+fi
+
 AC_ARG_ENABLE(tkhtml-check,
               AC_HELP_STRING([--disable-tkhtml-check],
                              [do not check for Tkhtml 3.0, assume it exists]),
@@ -735,6 +763,7 @@ AM_CONDITIONAL(DO_SWIGIFY_PYTHON, test ${do_swigify_python} = "yes")
 AM_CONDITIONAL(DO_SWIGIFY_JAVA, test ${do_swigify_java} = "yes")
 AM_CONDITIONAL(DO_SWIGIFY_TCL, test ${do_swigify_tcl} = "yes")
 AM_CONDITIONAL(COPY_BWIDGET, test ${copy_bwidget} = "yes")
+AM_CONDITIONAL(INSTALL_SNIT, test ${install_snit} = "yes")
 AM_CONDITIONAL(INSTALL_TKHTML, test ${install_tkhtml} = "yes")
 AM_CONDITIONAL(BUILD_APOL, test ${build_apol} = "yes")
 AM_CONDITIONAL(BUILD_GUI, test ${build_gui} = "yes")
@@ -867,7 +896,7 @@ AC_CONFIG_FILES([Makefile VERSION \
                  seaudit/Makefile \
                  sediff/Makefile \
                  man/Makefile \
-                 packages/Makefile packages/tkhtml3/Makefile packages/tkhtml3/htmlwidget/Makefile packages/rpm/Makefile \
+                 packages/Makefile packages/tkhtml3/Makefile packages/tkhtml3/htmlwidget/Makefile packages/tkhtml3/htmlwidget/hv/Makefile packages/rpm/Makefile \
                  packages/libqpol.pc packages/libapol.pc packages/libpoldiff.pc packages/libseaudit.pc packages/libsefs.pc packages/libpolsearch.pc])
 
 AC_OUTPUT

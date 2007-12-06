@@ -8,11 +8,7 @@ else
   copy_bwidget = no
 endif
 
-if INSTALL_TKHTML
-  MAYBE_TKHTML = tkhtml3
-endif
-
-SUBDIRS = rpm $(MAYBE_TKHTML)
+SUBDIRS = rpm tkhtml3
 
 pkgconfig_DATA = libqpol.pc libapol.pc libpoldiff.pc libseaudit.pc libsefs.pc libpolsearch.pc
 pkgconfigdir = @libdir@/pkgconfig

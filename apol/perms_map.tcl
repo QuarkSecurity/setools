@@ -68,10 +68,10 @@ proc Apol_Perms_Map::openDefaultPermMap {} {
         # try policy-specific file
         set policy_version [apol_tcl_get_policy_version $::ApolTop::policy]
         set pmap_name [apol_file_find_path "apol_perm_mapping_ver${policy_version}"]
-        if {$pmap_name == {}} {
+        if {$pmap_name == {} || $pmap_name == "NULL"} {
             # finally try fallback one
             set pmap_name [apol_file_find_path apol_perm_mapping]
-            if {$pmap_name == {}} {
+            if {$pmap_name == {} || $pmap_name == "NULL"} {
                 set message "Could not locate system default permission map.  You must explicitly load a permission map from file."
                 if {[Apol_Progress_Dialog::is_waiting]} {
                     error $message

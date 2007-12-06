@@ -1,6 +1,13 @@
-lib_LIBRARIES = libTkhtml3.a
+SUBDIRS = hv
 
-libTkhtml3so_DATA = libTkhtml3.so.3.0
+if INSTALL_TKHTML
+  MAYBE_LIBTKHTML = libTkhtml3.a
+  MAYBE_LIBTKHTMLSO = libTkhtml3.so.3.0
+endif
+
+lib_LIBRARIES = $(MAYBE_LIBTKHTML)
+
+libTkhtml3so_DATA = $(MAYBE_LIBTKHTMLSO)
 libTkhtml3so_SONAME = libTkhtml3.so.3
 short_name = libTkhtml3.so
 libTkhtml3sodir = $(libdir)/setools/libTkhtml3

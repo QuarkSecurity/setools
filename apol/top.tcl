@@ -912,6 +912,7 @@ proc print_version_info {} {
 
 proc print_init {s} {
     puts -nonewline $s
+    flush stdout
 }
 
 if {[catch {package require Tk}]} {
@@ -919,9 +920,26 @@ if {[catch {package require Tk}]} {
     exit -1
 }
 if {[catch {tcl_config_init_libraries}]} {
-    puts stderr "The SETools libraries could not be found in one of these subdirectories:\n$auto_path"
+    puts stderr "The SETools libraries could not be found in one of these subdirectories:\n\y[join $auto_path "\n\t"]"
     exit -1
 }
+
+set hv3_name [apol_file_find_path hv3-wrapped.tcl]
+if {$hv3_name == {} || $hv3_name == "NULL"} {
+    puts stderr "The hv3 HTML viewer could not be found."
+    exit -1
+}
+# disable the [source] commands in hv3, because all of those files
+# have been rolled into the single file hv3-wrapped.tcl
+rename ::source ::orig_source
+proc source {args} {}
+if {[catch {::orig_source $hv3_name} retval]} {
+    puts stderr "The hv3 HTML viewer could not be initialized."
+    exit -1
+}
+rename ::source {}
+rename ::orig_source ::source
+
 set path [handle_args $argv0 $argv]
 ApolTop::main
 if {$path != {}} {
