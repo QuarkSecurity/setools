@@ -44,7 +44,7 @@ libTkhtml3_a_SOURCES = \
 
 dist_noinst_DATA = \
 	src/cssprop.tcl \
-	src/html.css src/mkdefaultstyle.tcl \
+	src/html.css src/mkdefaultstyle.tcl src/quirks.css \
 	src/tkhtml.tcl src/tokenlist.txt
 
 nodist_libTkhtml3_a_SOURCES = \
