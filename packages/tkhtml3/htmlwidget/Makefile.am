@@ -82,8 +82,13 @@ $(libTkhtml3so_DATA): $(libTkhtml3so_OBJS)
 	$(CC) -shared -o $@ $^ $(AM_LDFLAGS) $(LDFLAGS) -Wl,-soname,$(libTkhtml3so_SONAME) -Ltk
 	$(LN_S) -f $@ $(libTkhtml3so_SONAME)
 
+# Create the pkgIndex by hand.  As that libTkhtml makes calls to Tk,
+# autogeneration via pkg_mkIndex would necessitate a graphical
+# environment.  This causes problems if libTkhtml were to be built
+# from a console.
+# echo "pkg_mkIndex -load Tk . $^ ; exit" | $(WISH_PROG)
 $(package_SCRIPTS): $(libTkhtml3so_DATA)
-	echo "pkg_mkIndex -load Tk . $^ ; exit" | $(WISH_PROG)
+	echo "package ifneeded Tkhtml 3.0 [list load [file join \$$dir libTkhtml3.so.3.0]]" > $@
 	chmod 644 $@
 	$(mkdir_p) libTkhtml3
 	cp $^ $@ libTkhtml3
