@@ -902,7 +902,7 @@ AC_CONFIG_FILES([Makefile VERSION \
                  libseaudit/swig/Makefile libseaudit/swig/python/Makefile libseaudit/swig/java/Makefile libseaudit/swig/java/MANIFEST.MF libseaudit/swig/tcl/Makefile \
                  secmds/Makefile \
                  apol/Makefile \
-                 sechecker/Makefile \
+                 sechecker/Makefile sechecker/modules/Makefile \
                  seaudit/Makefile \
                  sediff/Makefile \
                  man/Makefile \
