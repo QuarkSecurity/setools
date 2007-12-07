@@ -141,7 +141,7 @@ namespace sechk
 					//print proof
 					for (map<void*,result::entry::proof>::const_iterator k = j->second.Proof().begin(); k != j->second.Proof().end(); k++)
 					{
-						out << "    ";
+						out << "    " << k->second.prefix();
 						k->second.Element().print(out, _top->policy());
 						out << endl;
 					}
