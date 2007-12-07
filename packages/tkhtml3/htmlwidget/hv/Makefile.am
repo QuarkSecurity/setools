@@ -15,6 +15,7 @@ EXTRA_DIST = \
 	hv3_file.tcl \
 	hv3_form.tcl \
 	hv3_frameset.tcl \
+	hv3_history.tcl \
 	hv3_home.tcl \
 	hv3_http.tcl \
 	hv3_object.tcl \

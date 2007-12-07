@@ -1,157 +1,211 @@
-SELinux Policy Analysis Tool Help File
+<html>
+<head>
+<title>SELinux Policy Analysis Tool Help File</title>
+</head>
 
+<body>
 
-Overview
---------
+<h1>Overview</h1>
+
+<p>
 This file contains basic help information for using apol, a graphical
 policy analysis tool for Security Enhanced (SELinux) policies.  The
 tool provides the ability to:
+</p>
 
-  + Examine, search, and relate policy components (types, type
+<ul>
+<li>Examine, search, and relate policy components (types, type
     attributes, object classes, object permissions, roles, users,
     initials SIDs, MLS components, network and file system contexts,
     and booleans), and policy rules (allow, neverallow, auditallow,
     dontaudit, type_transition, type_change, role allow,
-    role_transition, and range_transition).
+    role_transition, and range_transition).</li>
 
-  + Create and query an on-disk database that contains SELinux
-    context information about the filesystem.
+<li>Create and query an on-disk database that contains SELinux
+    context information about the filesystem.</li>
 
-  + Perform some automated analysis of policies, including forward and
+<li>Perform some automated analysis of policies, including forward and
     reverse domain transition analyses, direct information flow
     analysis, as well as transitive (indirect) information flow
-    analysis, direct relabel analysis, and type relationship analysis.
+    analysis, direct relabel analysis, and type relationship analysis.</li>
+</ul>
 
+<p>
 The tool supports source, monolithic binary, and modular binary
 policies.  Certain apol features may be disabled if the underlying
 policy does not support the action.  For example, rule searches will
 not report line numbers when searching monolithic binary polices.
+</p>
 
+<p>
 Apol provides compatibility with the current and previous policy
 syntax.  It supports analysis of monolithic policy versions 12 to the
 current version 21 and modular policy versions 5 and 6.
-
-See setools/ChangeLog for a list of new features in this release.  See
-setools/KNOWN_BUGS for a list of current bugs.
+</p>
 
 
-Menus
------
-Use 'Open' from the File menu to open a valid policy.  The policy may
-be monolithic or be composed of a base linked with multiple modules.
-Only one policy can be open at a time; opening a second policy will
-result in the first being closed.
+<h1>Menus</h1>
 
-The Query menu allows the user to save or load a query for a TE Rules
-search or for an analysis module listed on the Analysis tab.  Saving a
-query writes the appropriate parameters and settings to a '.qf' file:
-for TE Rules queries, the required query parameters are saved; for
-analysis queries, the required query parameters as well as the
-specified advanced settings are saved.  When loading a query, apol
-parses the specified query (.qf) file, raises the correct tab and
-configures the query options with the specified query parameters and
-advanced settings.  The Load Query menu item is enabled across all
-tabs, but the save query menu item is only enabled when the Analysis
-tab or the TE Rules tab (see the Policy Rules tab description below)
-is raised.  Choose 'Policy Summary' from the Query menu to display
-statistics about the currently loaded policy.  A shorthand version of
-these statistics is always displayed on the status bar when a policy
-is opened.
+<p>
+Use <tt>Open</tt> from the <tt>File</tt> menu to open a valid policy.
+The policy may be monolithic or be composed of a base linked with
+multiple modules.  Only one policy can be open at a time; opening a
+second policy will result in the first being closed.
+</p>
 
-Permission mappings are managed through the Tools menu.  The mappings
-are used by apol's direct and transitive information flow analyses.
-Mappings may be viewed with the View Perm Map menu item.  Although the
-ensuing dialog is not required to perform an information flow
-analysis, the user may fine tune those mappings.  See the separate
-help file on information flow for more information about permission
-mappings and their management.
+<p>
+The <tt>Query</tt> menu allows the user to save or load a query for a
+<tt>TE Rules</tt> search or for an analysis module listed on the
+<tt>Analysis</tt> tab.  Saving a query writes the appropriate
+parameters and settings to a <tt>.qf</tt> file:  for TE Rules queries,
+the required query parameters are saved; for analysis queries, the
+required query parameters as well as the specified advanced settings
+are saved.  When loading a query, apol parses the specified query
+(<tt>.qf</tt>) file, raises the correct tab and configures the query
+options with the specified query parameters and advanced settings.
+The <tt>Load Query</tt> menu item is enabled across all tabs, but the
+<tt>Save Query</tt> menu item is only enabled when the Analysis tab or
+the TE Rules tab (see the <a href="#policy_rules">Policy Rules tab
+description</a> below) is raised.  Choose <tt>Policy Summary</tt> from
+the <tt>Query</tt> menu to display statistics about the currently
+loaded policy.  A shorthand version of these statistics is always
+displayed on the status bar when a policy is opened.
+</p>
+
+<p>
+Permission mappings are managed through the <tt>Tools</tt> menu.  The
+mappings are used by apol's direct and transitive information flow
+analyses.  Mappings may be viewed with the <tt>View Perm Map</tt> menu
+item.  Although the ensuing dialog is not required to perform an
+information flow analysis, the user may fine tune those mappings.  See
+the separate <a href="infoflow_help.html">help file on information
+flow</a> for more information about permission mappings and their
+management.
+</p>
 
 
-Policy Components tabs
-----------------------
+<h1>Policy Components tabs</h1>
+
+<p>
 The policy components tabs provide the means to examine, search, and
 relate the core components of an SELinux policy.
+</p>
 
-  Types tab
-  ---------
-  Use the Types tab to search through types and attributes.  Double
-  click or right click on any type or attribute in the list boxes to
-  see full details for that type or attribute.  If a file index has
-  been loaded (see File Contexts tab description below), details will
-  include files labeled with that particular type or attribute.
 
-  Use the search options and hit the OK button to perform searches for
-  types.  Alternately, use the "Search using regular expression" box
-  to search for types and/or attributes using a POSIX-style regular
-  expression.
+<h2>Types tab</h2>
 
-  Classes/Perms tab
-  -----------------
-  Use the Classes/Perms tab to view and search object classes, common
-  permissions, and permissions defined in a policy.  Double clicking
-  on any name from the three list boxes gives a brief summary of the
-  class, permission, or common permission. Use the search options to
-  view more detailed aspects of classes and permissions.
+<p>
+  Use the <tt>Types</tt> tab to search through types and attributes.
+  Double click or right click on any type or attribute in the list
+  boxes to see full details for that type or attribute.  If a file
+  index has been loaded (see <a href="#file_contexts">File Contexts
+  tab description</a> below), details will include files labeled with
+  that particular type or attribute.
+</p>
 
-  For example, to display the objects that use the permission getattr,
-  select "Permissions", and the button "Object Classes" directly below
-  it.  Then select "Search using regular expression" and type
-  "^getattr$" in the box.  Press OK and a list of object classes that
-  use that permission displays (a * will mean that the class uses that
-  permission via a common permission).
+<p>
+  Use the search options and hit the <tt>OK</tt> button to perform
+  searches for types.  Alternately, use the <em>Search using regular
+  expression</em> box to search for types and/or attributes using a
+  POSIX-style regular expression.
+</p>
 
+<h2>Classes/Perms tab</h2>
+
+<p>
+  Use the <tt>Classes/Perms</tt> tab to view and search object
+  classes, common permissions, and permissions defined in a policy.
+  Double clicking on any name from the three list boxes gives a brief
+  summary of the class, permission, or common permission. Use the
+  search options to view more detailed aspects of classes and
+  permissions.
+</p>
+
+<p>
+  For example, to display the objects that use the permission
+  <sample>getattr</sample>, select <em>Permissions</em>, and the
+  button <em>Object Classes</em> directly below it.  Then select
+  <em>Search using regular expression</em> and type
+  <kbd>^getattr$</kbd> in the box.  Press <tt>OK</tt> and a list of
+  object classes that use that permission displays.  A
+  <sample>*</sample> will mean that the class uses that permission via
+  a common permission.
+</p>
+
+<p>
   Regular expressions can be used to constrain the search.  For
   example, to find all the permissions that start with the string
-  "set", use the regular expression "^set".
+  <sample>set</sample>, use the regular expression <kbd>^set</kbd>.
+</p>
 
-  Roles tab
-  ----------
-  Use the Roles tab to search roles and their allowed types.
-  Functionality for this tab is essentially the same as the Types tab
-  (e.g., double click on a role for details about that role).
+<h2>Roles tab</h2>
 
+<p>
+  Use the <tt>Roles</tt> tab to search roles and their allowed types.
+  Functionality for this tab is essentially the same as the
+  <tt>Types</tt> tab (e.g., double click on a role for details about
+  that role).
+</p>
+
+<p>
   The primary search option provides the means to find all roles that
   include a given type.
+</p>
 
-  Users tab
-  ---------
-  Select the Users tab to search users defined in the policy and to
-  view the roles allowed for that user, the default MLS level and
-  allowed MLS range for users (if a MLS policy is loaded).
+<h2>Users tab</h2>
 
-  Booleans tab
-  ------------
-  Select the Booleans tab to search the boolean variables defined in
-  the policy, as well as to view the current state and/or policy
-  default state of the variable.  This tab also provides the interface
-  to change the state of the boolean variable to TRUE or FALSE.  This
-  boolean state change will be applied in memory and but will not
-  change the state within the actual policy.
+<p>
+  Select the <tt>Users</tt> tab to search users defined in the policy
+  and to view the roles allowed for that user, the default MLS level
+  and allowed MLS range for users (if a MLS policy is loaded).
+</p>
 
-  MLS tab
-  -------
-  Select the MLS tab to search sensitivities and categories in the
-  policy, as well as to display the level statements for sensitivities
-  and which sensitivites can be associated with a category.
+<h2>Booleans tab</h2>
 
-  Initial SIDS tab
-  ----------------
-  Select the Initial SIDS tab to search initial sids defined in the
-  policy, as well as to view the context for each initial sid.
+<p>
+  Select the <tt>Booleans</tt> tab to search the boolean variables
+  defined in the policy, as well as to view the current state and/or
+  policy default state of the variable.  This tab also provides the
+  interface to change the state of the boolean variable to
+  <code>TRUE</code> or <code>FALSE</code>.  This boolean state change
+  will be applied in memory and but will not change the state within
+  the actual policy.
+</p>
 
-  Net Contexts tab
-  ----------------
-  Select the Net Contexts tab to search network-based contexts
-  (portcon, netifcon, and nodecon statements) defined in the policy.
+<h2>MLS tab</h2>
 
-  FS Contexts tab
-  ---------------
-  Select the FS Contexts tab to search filesystem-based contexts
-  (fs_use_ and genfscon statements) defined in the policy.
+<p>
+  Select the <tt>MLS</tt> tab to search sensitivities and categories
+  in the policy, as well as to display the level statements for
+  sensitivities and which sensitivites can be associated with a
+  category.
+</p>
 
+<h2>Initial SIDS tab</h2>
 
-Policy Rules tabs
------------------
+<p>
+  Select the <tt>Initial SIDS</tt> tab to search initial sids defined
+  in the policy, as well as to view the context for each initial sid.
+</p>
+
+<h2>Net Contexts tab</h2>
+
+<p>
+  Select the <tt>Net Contexts</tt> tab to search network-based
+  contexts (<code>portcon</code>, <code>netifcon</code>, and
+  <code>nodecon</code> statements) defined in the policy.
+</p>
+
+<h2>FS Contexts tab</h2>
+
+<p>
+  Select the <tt>FS Contexts</tt> tab to search filesystem-based
+  contexts (<code>fs_use_</code> and <code>genfscon</code> statements)
+  defined in the policy.
+</p>
+
+<a name="policy_rules"><h1>Policy Rules tabs</h1></a>
+
 The Policy Rules tabs allow more advanced analysis of an SELinux
 policy.  They provide the means to search and select from the many
 rules in a policy based on selected search criteria.
@@ -161,15 +215,15 @@ rules in a policy based on selected search criteria.
   Select the TE Rules tab to search through the Type Enforcement
   rules.  This is the most extensively used tab, as well as the most
   complicated.
-	
+
   Three different types of search criteria exist for TE Rules:
-	
+
     1. RULE SELECTION: provides options to limit the scope of search;
        only those rules selected will be included in the search.  At
        least one must be selected.  NOTE: If no additional search
        criteria is specified, apol will search for all of the selected
        rules.
-		
+
     2. TYPE/ATTRIBUTES SUBTAB: provides options to refine a search
        based on types and/or type attributes used by a rule.  There
        are three general type search options: source, target, and
@@ -195,7 +249,7 @@ rules in a policy based on selected search criteria.
        will include all rules that meet the search criteria, INCLUDING
        those rules that have been disabled by a conditional
        expression.
-		
+
        Typically a search for a particular type also returns rules
        that employ any of that type's attributes.  Likewise, a search
        for an attribute returns rules that use any of that attribute's
@@ -251,14 +305,14 @@ rules in a policy based on selected search criteria.
   expressions within the policy, as well as to view the rules within
   these conditional expressions.  Note that conditional expressions
   are displayed in Reverse Polish Notation.
-			
+
   By default, all conditionals are displayed; however they can be
   limited to expressions that use particular boolean variables.  The
   current state of each rule is provided by means of a tag within the
   results:
-	
+
       [Enabled] - indicates the rule is enabled
-      [Disabled] - indicates the rule is disabled	
+      [Disabled] - indicates the rule is disabled
 
   RBAC Rules tab
   --------------
@@ -275,12 +329,12 @@ rules in a policy based on selected search criteria.
   range_transition rules by source and target types and by the MLS
   range.  There are three options when searching for ranges; find
   exact matches to the entered range, find rules that have ranges
-  that contain the entered range, or find rules that have ranges 
+  that contain the entered range, or find rules that have ranges
   within the entered range.
 
-  
-File Contexts tab
------------------
+
+<a name="file_contexts"><h2>File Contexts tab</h2></a>
+
 The File Contexts tab is only available if apol has been built with
 libselinux support (see the setools INSTALL file for details on
 building apol with/without libselinux support).  The tab provides the
@@ -351,7 +405,7 @@ Menus section above).
 	       query.  Selecting an object class from the listbox
 	       widget will display all permissions for that object
 	       class.
-		
+
                A specific example where this advanced feature would be
                useful is when one is seeking to find transitions from
                'user_t' to domains with write access to files in the
@@ -361,7 +415,7 @@ Menus section above).
                  - Using the Access Filters dialog, select the
 		   'shadow_t' object type, 'file' object class, and
 		   'write' permission.
-	
+
       REVERSE: As its name implies, the Reverse Domain Transition
                (RDT) analysis is the reverse of the FDT analysis. The
                RDT takes a starting TARGET domain and presents a tree
@@ -480,3 +534,5 @@ source file.  If a modular policy was loaded, this tab shows only the
 base policy's source.  Various search results will hyperlink to lines
 within this tab.  If the loaded policy is not source then this tab
 will be disabled.
+</body>
+</html>

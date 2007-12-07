@@ -10,8 +10,11 @@ bin_SCRIPTS = apol
 dist_noinst_DATA = apol_tcl.i apol_tcl.cc apol.png foo_module.tcl
 BUILT_SOURCES = apol_tcl_wrap.cc mkIndex.tcl init.tcl
 
-dist_setools_DATA = apol_help.txt domaintrans_help.txt file_relabel_help.txt \
-	infoflow_help.txt types_relation_help.txt \
+dist_setools_DATA = apol_help.html \
+	domaintrans_help.html \
+	file_relabel_help.html \
+	infoflow_help.html \
+	types_relation_help.html \
 	apol.gif
 
 EXTRA_DIST = \

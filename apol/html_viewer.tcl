@@ -20,6 +20,7 @@
 
 namespace eval Apol_HTML {
     variable viewer {}
+    variable widgets
 }
 
 proc Apol_HTML::init {} {
@@ -31,8 +32,7 @@ proc Apol_HTML::init {} {
 
     # Suppress the [source] command while loading hv3, because those
     # files have already been concatenated into hv3-wrapped.tcl.  Also
-    # suppress the requirement of sqlite3, for the history feature is
-    # implemented below.
+    # suppress the requirement of sqlite3, for bookmarks do not exist.
     rename ::source ::real_source
     proc ::source {f} {}
     rename ::package ::real_package
@@ -41,7 +41,7 @@ proc Apol_HTML::init {} {
             eval ::real_package $args
         }
     }
-    uplevel 1 ::real_source /tmp/setools-install/share/setools-3.4/hv3-wrapped.tcl
+    uplevel \#0 ::real_source /tmp/setools-install/share/setools-3.4/hv3-wrapped.tcl
     rename ::source {}
     rename ::real_source ::source
     rename ::package {}
@@ -63,7 +63,7 @@ proc Apol_HTML::view_file {f} {
 
 #### private stuff below ####
 
-# Suppress the superfluous functions that are shipped with hv3.
+# Suppress / override hv3 functions so that it works with apol.
 namespace eval hv3 {
     namespace eval profile {
         proc instrument {args} {}
@@ -71,8 +71,6 @@ namespace eval hv3 {
     proc dbinit {args} {}
     proc the_visited_db {args} {}
     proc cookies_scheme_init {args} {}
-    proc history {args} { return ::hv3::do_nothing }
-    proc do_nothing {args} {}
     proc the_cookie_manager {args} {}
     proc cookiemanager {args} {}
 }
@@ -82,37 +80,47 @@ proc Apol_HTML::_create_viewer {} {
     variable widgets
     set viewer [Dialog .apol_html_viewer -modal none -parent . \
                     -transient false -cancel 0 -default 0 -separator 1]
-    $viewer add -text "Close" -command [list destroy $viewer]
 
     set f [$viewer getframe]
     frame $f.toolbar
     pack $f.toolbar -fill x -side top
     set widgets(back) [::hv3::toolbutton $f.toolbar.back -text Back \
-                           -tooltip "Go Back" -relief raised]
+                           -relief raised -state disabled]
     set widgets(forward) [::hv3::toolbutton $f.toolbar.forward -text Forward \
-                              -tooltip "Go Forward" -relief raised]
-    set widgets(search) [::hv3::toolbutton $f.toolbar.search -text Search \
-                             -tooltip "Search for Text" -relief raised]
-    pack $widgets(back) $widgets(forward) $widgets(search) -side left
+                              -relief raised -state disabled]
+    set search [::hv3::toolbutton $f.toolbar.search -text Search \
+                    -relief raised -command Apol_HTML::_searchButton]
+    set close [::hv3::toolbutton $f.toolbar.close -text Close \
+                   -relief raised -command [list destroy $viewer]]
+    pack $widgets(back) $widgets(forward) $search $close -side left
 
     Separator $f.sep
     pack $f.sep -fill x -side top
 
     set widgets(browser) [::hv3::browser $f.browser]
     pack $widgets(browser) -fill both -expand 1
+    $widgets(browser) configure -backbutton $widgets(back)
+    $widgets(browser) configure -forwardbutton $widgets(forward)
+    [$widgets(browser) hv3] configure -isvisitedcmd Apol_HTML::_isLinkVisited
+    trace add variable [$widgets(browser) titlevar] write Apol_HTML::_titleChanged
 }
 
-#foreach {family size} [list fixed 12] {break}
-#        set stylesheet "html \{"
-#        append stylesheet "background: white;\n"
-#        append stylesheet "font-family: $family;\n"
-#        append stylesheet "font-size: ${size}px;\n"
-#        append stylesheet "\}"
-#        $html style $stylesheet
-#        $sw setwidget $html
-#        update
-#        grid propagate $sw 0
-#        pack $sw -expand 1 -fill both -padx 4 -pady 4
-#        $infoPopup2 draw
-#    $infoPopup2 configure -title stuff
-#    $html goto file://$helpfile
+proc Apol_HTML::_goto {args} {
+    puts "got a goto: |$args|"
+}
+
+proc Apol_HTML::_searchButton {} {
+    # FIX ME
+}
+
+# TODO: add right-click select/all commands
+
+proc Apol_HTML::_isLinkVisited {uri} {
+    return 0
+}
+
+proc Apol_HTML::_titleChanged {name1 name2 op} {
+    variable viewer
+    variable widgets
+    wm title $viewer [set [$widgets(browser) titlevar]]
+}

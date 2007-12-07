@@ -238,11 +238,11 @@ proc ApolTop::_create_toplevel {} {
             {command "&View Perm Map..." {tag_policy_open tag_perm_map_open} "Edit currently loaded permission map" {} -command Apol_Perms_Map::showPermMappings}
         }
 	"&Help" {} helpmenu 0 {
-	    {command "&General Help" {} "Show help on using apol" {} -command {ApolTop::_show_file Help apol_help.txt}}
-	    {command "&Domain Transition Analysis" {} "Show help on domain transitions" {} -command {ApolTop::_show_file "Domain Transition Analysis Help" domaintrans_help.txt}}
-	    {command "&Information Flow Analysis" {} "Show help on information flows" {} -command {ApolTop::_show_file "Information Flow Analysis Help" infoflow_help.txt}}
-	    {command "Direct &Relabel Analysis" {} "Show help on file relabeling" {} -command {ApolTop::_show_file "Relabel Analysis Help" file_relabel_help.txt}}
-	    {command "&Types Relationship Summary Analysis" {} "Show help on types relationships" {} -command {ApolTop::_show_file "Types Relationship Summary Analysis Help" types_relation_help.txt}}
+	    {command "&General Help" {} "Show help on using apol" {} -command {ApolTop::_show_file Help apol_help.html}}
+	    {command "&Domain Transition Analysis" {} "Show help on domain transitions" {} -command {ApolTop::_show_file "Domain Transition Analysis Help" domaintrans_help.html}}
+	    {command "&Information Flow Analysis" {} "Show help on information flows" {} -command {ApolTop::_show_file "Information Flow Analysis Help" infoflow_help.html}}
+	    {command "Direct &Relabel Analysis" {} "Show help on file relabeling" {} -command {ApolTop::_show_file "Relabel Analysis Help" file_relabel_help.html}}
+	    {command "&Types Relationship Summary Analysis" {} "Show help on types relationships" {} -command {ApolTop::_show_file "Types Relationship Summary Analysis Help" types_relation_help.html}}
 	    {separator}
 	    {command "&About apol" {} "Show copyright information" {} -command ApolTop::_about}
 	}
