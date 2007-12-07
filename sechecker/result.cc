@@ -60,6 +60,7 @@ namespace sechk
 	{
 		//The following is done because std::type_info::operator=() and std::type_info(const std::type_info&) are private.
 		*this = element(rhs);
+		return *this;
 	}
 
 	element::~element()
@@ -85,26 +86,92 @@ namespace sechk
 
 	std::ostream & element::print(std::ostream & out, apol_policy_t * pol) const
 	{
-		//TODO print stuff.
 		const char *name = NULL;
 		char *rule = NULL;
-		if (_type == typeid(qpol_type_t*))
+		if (_type == typeid(qpol_avrule_t*))
 		{
-			qpol_type_get_name(apol_policy_get_qpol(pol), static_cast<qpol_type_t*>(_data), &name);
+			out << (rule = apol_avrule_render(pol, static_cast<qpol_avrule_t*>(_data)));
+		}
+		else if (_type == typeid(qpol_bool_t*))
+		{
+			qpol_bool_get_name(apol_policy_get_qpol(pol), static_cast<qpol_bool_t*>(_data), &name);
 			out << name;
+		}
+		else if (_type == typeid(qpol_cat_t*))
+		{
+			qpol_cat_get_name(apol_policy_get_qpol(pol), static_cast<qpol_cat_t*>(_data), &name);
+			out << name;
+		}
+		else if (_type == typeid(qpol_class_t*))
+		{
+			qpol_class_get_name(apol_policy_get_qpol(pol), static_cast<qpol_class_t*>(_data), &name);
+			out << name;
+		}
+		else if (_type == typeid(qpol_common_t*))
+		{
+			qpol_common_get_name(apol_policy_get_qpol(pol), static_cast<qpol_common_t*>(_data), &name);
+			out << name;
+		}
+		else if (_type == typeid(qpol_fs_use_t*))
+		{
+			out << (rule = apol_fs_use_render(pol, static_cast<qpol_fs_use_t*>(_data)));
+		}
+		else if (_type == typeid(qpol_genfscon_t*))
+		{
+			out << (rule = apol_genfscon_render(pol, static_cast<qpol_genfscon_t*>(_data)));
+		}
+		else if (_type == typeid(qpol_isid_t*))
+		{
+			qpol_isid_get_name(apol_policy_get_qpol(pol), static_cast<qpol_isid_t*>(_data), &name);
+			out << name;
+		}
+		else if (_type == typeid(qpol_level_t*))
+		{
+			qpol_level_get_name(apol_policy_get_qpol(pol), static_cast<qpol_level_t*>(_data), &name);
+			out << name;
+		}
+		else if (_type == typeid(qpol_netifcon_t*))
+		{
+			out << (rule = apol_netifcon_render(pol, static_cast<qpol_netifcon_t*>(_data)));
+		}
+		else if (_type == typeid(qpol_nodecon_t*))
+		{
+			out << (rule = apol_nodecon_render(pol, static_cast<qpol_nodecon_t*>(_data)));
+		}
+		else if (_type == typeid(qpol_portcon_t*))
+		{
+			out << (rule = apol_portcon_render(pol, static_cast<qpol_portcon_t*>(_data)));
+		}
+		else if (_type == typeid(qpol_range_trans_t*))
+		{
+			out << (rule = apol_range_trans_render(pol, static_cast<qpol_range_trans_t*>(_data)));
+		}
+		else if (_type == typeid(qpol_role_allow_t*))
+		{
+			out << (rule = apol_role_allow_render(pol, static_cast<qpol_role_allow_t*>(_data)));
 		}
 		else if (_type == typeid(qpol_role_t*))
 		{
 			qpol_role_get_name(apol_policy_get_qpol(pol), static_cast<qpol_role_t*>(_data), &name);
 			out << name;
 		}
-		else if (_type == typeid(qpol_avrule_t*))
+		else if (_type == typeid(qpol_role_trans_t*))
 		{
-			out << (rule = apol_avrule_render(pol, static_cast<qpol_avrule_t*>(_data)));
+			out << (rule = apol_role_trans_render(pol, static_cast<qpol_role_trans_t*>(_data)));
 		}
 		else if (_type == typeid(qpol_terule_t*))
 		{
 			out << (rule = apol_terule_render(pol, static_cast<qpol_terule_t*>(_data)));
+		}
+		else if (_type == typeid(qpol_type_t*))
+		{
+			qpol_type_get_name(apol_policy_get_qpol(pol), static_cast<qpol_type_t*>(_data), &name);
+			out << name;
+		}
+		else if (_type == typeid(qpol_user_t*))
+		{
+			qpol_user_get_name(apol_policy_get_qpol(pol), static_cast<qpol_user_t*>(_data), &name);
+			out << name;
 		}
 		else
 		{

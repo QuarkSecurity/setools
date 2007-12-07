@@ -125,7 +125,6 @@ namespace sechk
 		}
 		case SECHK_REQUIRE_SELINUX_SYSTEM:	// Require a selinux system to run.
 		{
-			struct stat stat_buf;
 			_satisfied = is_selinux_enabled();
 			break;
 		}
