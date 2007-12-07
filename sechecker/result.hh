@@ -139,8 +139,9 @@ namespace sechk
 				/**
 				 * Create a proof for a result entry.
 				 * @param elem The element representing the proof.
+				 * @param prefix_ String to prefix to the element when prining the report.
 				 */
-				proof(const element & elem);
+				proof(const element & elem, const std::string prefix_ = "");
 				/**
 				 * Copy a proof.
 				 * @param rhs The proof to copy
@@ -155,8 +156,15 @@ namespace sechk
 				 */
 				const element & Element() const;
 
+				/**
+				 * Get the prefix string to print before the element.
+				 * @return The prefix string.
+				 */
+				const std::string & prefix() const;
+
 			      private:
 				 element _element;	//!< Policy element representing the proof.
+				 std::string _prefix; //!< Prefix to print before the element in the report; it should explain why the element is proof of a result.
 			};
 
 			/**
@@ -185,10 +193,11 @@ namespace sechk
 			/**
 			 * Add proof for an entry.
 			 * @param elem Policy element that provides proof that the entry should be part of the results.
+			 * @param prefix_ String to prefix to the element when prining the report.
 			 * @return The proof added or, if already it exists, the current proof.
 			 * @exception std::invalid_argument Type of \a elem conflicts with previously added proof.
 			 */
-			proof & addProof(const element & elem) throw(std::invalid_argument);
+			proof & addProof(const element & elem, const std::string prefix_) throw(std::invalid_argument);
 
 		      private:
 			 std::map < void *, proof > _proof;	//!< The set of proof entries for this result entry.

@@ -181,12 +181,12 @@ namespace sechk
 		return out;
 	}
 
-	result::entry::proof::proof(const element & elem):_element(elem)
+	result::entry::proof::proof(const element & elem, const std::string prefix_):_element(elem), _prefix(prefix_)
 	{
 		//nothing more to do
 	}
 
-	result::entry::proof::proof(const proof & rhs):_element(rhs._element)
+	result::entry::proof::proof(const proof & rhs):_element(rhs._element), _prefix(rhs._prefix)
 	{
 		//nothing more to do
 	}
@@ -199,6 +199,11 @@ namespace sechk
 	const element & result::entry::proof::Element() const
 	{
 		return _element;
+	}
+
+	const std::string & result::entry::proof::prefix() const
+	{
+		return _prefix;
 	}
 
 	result::entry::entry(const element & elem):_element(elem)
@@ -226,9 +231,9 @@ namespace sechk
 		return _proof;
 	}
 
-	result::entry::proof & result::entry::addProof(const element & elem) throw(std::invalid_argument)
+	result::entry::proof & result::entry::addProof(const element & elem, const std::string prefix_) throw(std::invalid_argument)
 	{
-		proof newproof(elem);
+		proof newproof(elem, prefix_);
 
 		pair < map < void *, proof >::iterator, bool > retv =
 			_proof.insert(make_pair(const_cast < void *>(newproof.Element().data()), newproof));

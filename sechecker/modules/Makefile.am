@@ -5,11 +5,11 @@ modules_DATA = \
 EXTRA_DIST = \
 	find_domains.cc find_domains.hh
 
-dist_noinst_DATA = \
-	template/profiles.readme \
-	template/template.howto \
-	template/xx.c \
-	template/xx.h
+#dist_noinst_DATA = \
+#	template/profiles.readme \
+#	template/template.howto \
+#	template/xx.c \
+#	template/xx.h
 
 AM_CXXFLAGS = @DEBUGCFLAGS@ @WARNCFLAGS@ @PROFILECFLAGS@ @SELINUX_CFLAGS@ \
 	@QPOL_CFLAGS@ @APOL_CFLAGS@ @SEFS_CFLAGS@ @POLSEARCH_CFLAGS@ @XML_CFLAGS@ \

@@ -180,16 +180,19 @@ namespace sechk
 			for (vector<polsearch_proof>::const_iterator j = i->proof().begin(); j != i->proof().end(); j++)
 			{
 				element *proof_elem = NULL;
+				string prefix = "";
 				switch(j->elementType())
 				{
 					case POLSEARCH_ELEMENT_ATTRIBUTE:
 					{
 						proof_elem = new element(static_cast<qpol_type_t*>(const_cast<void*>(j->element())), NULL, NULL);
+						prefix = "has attribute ";
 						break;
 					}
 					case POLSEARCH_ELEMENT_ROLE:
 					{
 						proof_elem = new element(static_cast<qpol_role_t*>(const_cast<void*>(j->element())), NULL, NULL);
+						prefix = "is assigned to role ";
 						break;
 					}
 					case POLSEARCH_ELEMENT_AVRULE:
@@ -207,7 +210,7 @@ namespace sechk
 						throw runtime_error("Unexpected proof type from query");
 					}
 				}
-				cur_entry.addProof(*proof_elem);
+				cur_entry.addProof(*proof_elem, prefix);
 				delete proof_elem;
 			}
 		}
