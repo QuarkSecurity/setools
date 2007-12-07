@@ -767,13 +767,7 @@ proc ApolTop::_save_perm_map_default {} {
 
 proc ApolTop::_show_file {title file_name} {
     set helpfile [file join [tcl_config_get_install_dir] $file_name]
-    if {[catch {::open $helpfile} f]} {
-        set info $f
-    } else {
-        set info [read $f]
-        close $f
-    }
-    Apol_Widget::showPopupParagraph $title $info
+    Apol_HTML::view_file $helpfile
 }
 
 proc ApolTop::_about {} {
@@ -923,22 +917,10 @@ if {[catch {tcl_config_init_libraries}]} {
     puts stderr "The SETools libraries could not be found in one of these subdirectories:\n\y[join $auto_path "\n\t"]"
     exit -1
 }
-
-set hv3_name [apol_file_find_path hv3-wrapped.tcl]
-if {$hv3_name == {} || $hv3_name == "NULL"} {
-    puts stderr "The hv3 HTML viewer could not be found."
+if {[catch {Apol_HTML::init} err]} {
+    puts stderr "Could not initialize HTML viewer: $err"
     exit -1
 }
-# disable the [source] commands in hv3, because all of those files
-# have been rolled into the single file hv3-wrapped.tcl
-rename ::source ::orig_source
-proc source {args} {}
-if {[catch {::orig_source $hv3_name} retval]} {
-    puts stderr "The hv3 HTML viewer could not be initialized."
-    exit -1
-}
-rename ::source {}
-rename ::orig_source ::source
 
 set path [handle_args $argv0 $argv]
 ApolTop::main

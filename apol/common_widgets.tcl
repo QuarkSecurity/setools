@@ -494,7 +494,8 @@ proc Apol_Widget::showPopupText {title info} {
     raise $infoPopup
 }
 
-# Used to show pre-rendered paragraphs of HTML.
+# Used to show pre-rendered paragraphs of text.
+# FIX ME: convert this into an HTML string buffer, then send to html viewer.
 proc Apol_Widget::showPopupParagraph {title info} {
     variable infoPopup2
     if {![winfo exists $infoPopup2]} {
@@ -503,15 +504,9 @@ proc Apol_Widget::showPopupParagraph {title info} {
         $infoPopup2 add -text "Close" -command [list destroy $infoPopup2]
         set sw [ScrolledWindow [$infoPopup2 getframe].sw -auto both -scrollbar both]
         $sw configure -relief sunken
-        set html [html [$sw getframe].html -width 600 -height 500]
-        foreach {family size} [Apol_Prefs::getPref text_font] {break}
-        set stylesheet "html \{"
-        append stylesheet "background: [Apol_Prefs::getPref active_bg];\n"
-        append stylesheet "font-family: $family;\n"
-        append stylesheet "font-size: ${size}px;\n"
-        append stylesheet "\}"
-        $html style $stylesheet
-        $sw setwidget $html
+        set text [text [$sw getframe].text -font $ApolTop::text_font \
+                      -wrap none -width 75 -height 25 -bg white]
+        $sw setwidget $text
         update
         grid propagate $sw 0
         pack $sw -expand 1 -fill both -padx 4 -pady 4
@@ -519,11 +514,13 @@ proc Apol_Widget::showPopupParagraph {title info} {
     } else {
         raise $infoPopup2
         wm deiconify $infoPopup2
-        set html [[$infoPopup2 getframe].sw getframe].html
-        $html reset
     }
     $infoPopup2 configure -title $title
-    $html parse -final "<pre>$info</pre>"
+    set text [[$infoPopup2 getframe].sw getframe].text
+    $text configure -state normal
+    $text delete 1.0 end
+    $text insert 0.0 $info
+    $text configure -state disabled
 }
 
 proc Apol_Widget::makeTreeResults {path args} {

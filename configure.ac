@@ -361,8 +361,17 @@ else
 fi
 
 # h3v requires Snit 1.0
-if test ${build_apol} = "yes"; then
+AC_ARG_ENABLE(snit-check,
+              AC_HELP_STRING([--disable-snit-check],
+                             [do not check for Snit 1.0, assume it exists]),
+              enable_snit="$enableval",
+              enable_snit="yes")
+if test ${build_apol} = "no"; then
+    enable_snit=no
+else
     AC_MSG_CHECKING([for Snit 1.0 or greater])
+fi
+if test "x${enable_snit}" = "xyes"; then
     changequote(<<<,>>>)dnl
     cat > ./conftest.tcl <<EOF
 if {![catch {package require snit} snit_version]} {
@@ -385,6 +394,7 @@ EOF
             ;;
     esac
 else
+    AC_MSG_RESULT([skipped, assuming 1.0+ is installed])
     install_snit=no
 fi
 

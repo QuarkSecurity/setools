@@ -1,3 +1,10 @@
+2007-12-06  J. Tang  <jtang@tresys.com>
+
+	* Added Tkhtml 3.0 requirement to apol.  This is used to render
+	the help files and dynamically generated reports.  If the user
+	does not have Tkhtml installed, the one provided in the packages
+	subdirectory will be used instead.
+
 2007-12-03  J. Tang  <jtang@tresys.com>
 
 	* Apol permission map files are now part of libapol rather than

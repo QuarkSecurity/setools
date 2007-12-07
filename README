@@ -98,8 +98,8 @@ http://tkhtml.tcl.tk.  The supplied configure script attempts to
 detect these packages; if not found then the ones provided in the
 'packages' subdirectory are used.  In some situations they will not be
 autodetected correctly.  If you are sure that your system has them,
-specify --disable-bwidget-check and --disable-tkhtml-check to the
-configure script.
+specify --disable-bwidget-check, --disable-snit-check, and
+--disable-tkhtml-check to the configure script.
 
 
 2.1. compiling from official distribution
@@ -164,6 +164,11 @@ You can customize your SETools build using the flags given to
       configure script normally tries to launch a Tcl script that
       loads BWidget, which requires a running X session.  You will
       need this flag if compiling in a non-X environment.
+
+  --disable-snit-check
+      Assume that Snit 1.0 is installed on the system.  This flag
+      may be needed if the build system is not the same as the target
+      system.
 
   --disable-tkhtml-check
       Assume that Tkhtml 3.0 is installed on the system.  The

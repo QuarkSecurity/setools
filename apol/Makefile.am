@@ -29,6 +29,7 @@ EXTRA_DIST = \
 	fscontexts_tab.tcl \
 	goto.tcl \
 	head.tcl \
+	html_viewer.tcl \
 	initial_sids_tab.tcl \
 	level_dialog.tcl \
 	mls_tab.tcl \
