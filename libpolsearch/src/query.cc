@@ -23,12 +23,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <polsearch/query.hh>
 #include <polsearch/polsearch.hh>
-#include <polsearch/criterion.hh>
-#include <polsearch/test.hh>
-#include <polsearch/result.hh>
-#include <polsearch/proof.hh>
 #include "polsearch_internal.hh"
 
 #include <sefs/fclist.hh>

@@ -27,7 +27,6 @@
 #define POLSEARCH_RESULT_HH
 
 #include <polsearch/polsearch.hh>
-#include <polsearch/test.hh>
 
 #include <sefs/fclist.hh>
 
@@ -36,6 +35,8 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+class polsearch_proof;
 
 /**
  * The results of a query including all proof for each criterion matched.
@@ -131,5 +132,7 @@ class polsearch_result
 	const apol_policy_t *_policy;  /*!< The policy associated with \a _element. */
 	sefs_fclist *_fclist;	       /*!< The fclist associated with \a _element. */
 };
+
+#include <polsearch/proof.hh>
 
 #endif				       /* POLSEARCH_RESULT_HH */

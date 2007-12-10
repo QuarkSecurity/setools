@@ -30,7 +30,7 @@
 #include <stdint.h>
 #include <cassert>
 
-#include <polsearch/parameter.hh>
+#include <polsearch/polsearch.hh>
 
 #include <apol/policy.h>
 #include <apol/policy-query.h>

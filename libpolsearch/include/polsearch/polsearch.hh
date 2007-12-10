@@ -131,14 +131,27 @@ enum polsearch_param_type
  */
 typedef void (*polsearch_proof_element_free_fn) (void *elem);
 
-//forward declaration of classes
-class polsearch_query;
-class polsearch_bool_query;
-class polsearch_symbol_query;
-class polsearch_test;
-class polsearch_criterion;
-class polsearch_parameter;
-class polsearch_result;
-class polsearch_proof;
+#include <polsearch/query.hh>
+#include <polsearch/test.hh>
+#include <polsearch/criterion.hh>
+#include <polsearch/parameter.hh>
+#include <polsearch/result.hh>
+#include <polsearch/proof.hh>
+#include <polsearch/util.hh>
+#include <polsearch/bool_parameter.hh>
+#include <polsearch/level_parameter.hh>
+#include <polsearch/number_parameter.hh>
+#include <polsearch/range_parameter.hh>
+#include <polsearch/regex_parameter.hh>
+#include <polsearch/string_expression_parameter.hh>
+#include <polsearch/attribute_query.hh>
+#include <polsearch/bool_query.hh>
+#include <polsearch/cat_query.hh>
+#include <polsearch/class_query.hh>
+#include <polsearch/common_query.hh>
+#include <polsearch/level_query.hh>
+#include <polsearch/role_query.hh>
+#include <polsearch/type_query.hh>
+#include <polsearch/user_query.hh>
 
 #endif				       /* POLSEARCH_HH */

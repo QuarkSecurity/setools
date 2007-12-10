@@ -36,6 +36,9 @@
 #include <vector>
 #include <string>
 
+class polsearch_test;
+class polsearch_result;
+
 /**
  * Abstract query class for multiple test queries for policy elements.
  */
@@ -139,5 +142,8 @@ class polsearch_query
  * @return A vector containing all valid tests for the specified element type.
  */
 std::vector < polsearch_test_cond > polsearch_get_valid_tests(polsearch_element elem_type);
+
+#include <polsearch/test.hh>
+#include <polsearch/result.hh>
 
 #endif				       /* POLSEARCH_QUERY_HH */

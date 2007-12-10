@@ -27,7 +27,6 @@
 #define POLSEARCH_ATTRIBUTE_QUERY_HH
 
 #include <polsearch/polsearch.hh>
-#include <polsearch/query.hh>
 
 #include <sefs/fclist.hh>
 

@@ -24,12 +24,6 @@
  */
 
 #include <polsearch/polsearch.hh>
-#include <polsearch/criterion.hh>
-#include <polsearch/parameter.hh>
-#include <polsearch/test.hh>
-#include <polsearch/result.hh>
-#include <polsearch/proof.hh>
-#include <polsearch/query.hh>
 #include "polsearch_internal.hh"
 
 #include <stdexcept>

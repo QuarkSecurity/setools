@@ -34,14 +34,13 @@
 #include <assert.h>
 
 #include <polsearch/polsearch.hh>
-#include <polsearch/test.hh>
 
 #include <sefs/fclist.hh>
 
 #include <apol/policy.h>
 
 // forward declaration
-class polsearch_test;
+class polsearch_parameter;
 
 class polsearch_criterion
 {
@@ -171,5 +170,7 @@ class polsearch_criterion
  * @return The valid type of parameter the criterion can check.
  */
 polsearch_param_type polsearch_get_valid_param_type(polsearch_element elem_type, polsearch_test_cond cond, polsearch_op opr);
+
+#include <polsearch/parameter.hh>
 
 #endif				       /* POLSEARCH_CRITERION_HH */

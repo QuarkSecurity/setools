@@ -27,7 +27,6 @@
 #define POLSEARCH_TEST_HH
 
 #include <polsearch/polsearch.hh>
-#include <polsearch/query.hh>
 
 #include <sefs/fclist.hh>
 
@@ -36,6 +35,9 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+class polsearch_criterion;
+class polsearch_result;
 
 /**
  * Individual test to be run by a query. This test will check for a single
@@ -160,5 +162,8 @@ std::vector < polsearch_op > polsearch_get_valid_operators(polsearch_element ele
  * return \a false.
  */
 bool polsearch_is_test_continueable(polsearch_test_cond cond);
+
+#include <polsearch/criterion.hh>
+#include <polsearch/result.hh>
 
 #endif				       /* POLSEARCH_TEST_HH */

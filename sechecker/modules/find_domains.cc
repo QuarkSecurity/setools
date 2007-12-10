@@ -27,18 +27,9 @@
 #include "module.hh"
 #include "result.hh"
 
-#include <polsearch/type_query.hh>
 #include <polsearch/polsearch.hh>
-#include <polsearch/query.hh>
-#include <polsearch/test.hh>
-#include <polsearch/criterion.hh>
-#include <polsearch/string_expression_parameter.hh>
-#include <polsearch/number_parameter.hh>
-#include <polsearch/result.hh>
-#include <polsearch/proof.hh>
 
 #include <apol/policy.h>
-#include <apol/role-query.h>
 
 #include <vector>
 #include <string>

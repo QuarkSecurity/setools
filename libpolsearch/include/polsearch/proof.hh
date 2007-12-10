@@ -27,7 +27,6 @@
 #define POLSEARCH_PROOF_HH
 
 #include <polsearch/polsearch.hh>
-#include <polsearch/result.hh>
 
 #include <sefs/fclist.hh>
 

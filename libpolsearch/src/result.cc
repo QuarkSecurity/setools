@@ -24,9 +24,6 @@
  */
 
 #include <polsearch/polsearch.hh>
-#include <polsearch/result.hh>
-#include <polsearch/test.hh>
-#include <polsearch/proof.hh>
 #include "polsearch_internal.hh"
 
 #include <sefs/fclist.hh>

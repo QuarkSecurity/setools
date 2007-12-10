@@ -32,8 +32,6 @@
 #include <stdint.h>
 
 #include <polsearch/polsearch.hh>
-#include <polsearch/parameter.hh>
-#include <polsearch/string_expression_parameter.hh>
 
 #include <apol/policy.h>
 #include <apol/policy-query.h>

@@ -25,13 +25,6 @@
 
 #include <polsearch/polsearch.hh>
 #include "polsearch_internal.hh"
-#include <polsearch/parameter.hh>
-#include <polsearch/bool_parameter.hh>
-#include <polsearch/level_parameter.hh>
-#include <polsearch/number_parameter.hh>
-#include <polsearch/range_parameter.hh>
-#include <polsearch/regex_parameter.hh>
-#include <polsearch/string_expression_parameter.hh>
 
 #include <sefs/entry.hh>
 

@@ -25,7 +25,7 @@
 
 #include <config.h>
 
-#include <polsearch/util.hh>
+#include <polsearch/polsearch.hh>
 
 const char *libpolsearch_get_version(void)
 {

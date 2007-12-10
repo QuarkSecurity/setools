@@ -33,8 +33,6 @@
 #include <regex.h>
 
 #include <polsearch/polsearch.hh>
-#include <polsearch/regex_parameter.hh>
-#include <polsearch/parameter.hh>
 
 #include <apol/policy.h>
 #include <apol/policy-query.h>

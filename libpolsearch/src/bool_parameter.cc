@@ -31,8 +31,6 @@
 #include <stdint.h>
 
 #include <polsearch/polsearch.hh>
-#include <polsearch/parameter.hh>
-#include <polsearch/bool_parameter.hh>
 
 #include <apol/policy.h>
 #include <apol/policy-query.h>
