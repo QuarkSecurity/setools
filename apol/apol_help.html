@@ -54,22 +54,23 @@ second policy will result in the first being closed.
 </p>
 
 <p>
-The <tt>Query</tt> menu allows the user to save or load a query for a
-<tt>TE Rules</tt> search or for an analysis module listed on the
-<tt>Analysis</tt> tab.  Saving a query writes the appropriate
-parameters and settings to a <tt>.qf</tt> file:  for TE Rules queries,
-the required query parameters are saved; for analysis queries, the
-required query parameters as well as the specified advanced settings
-are saved.  When loading a query, apol parses the specified query
-(<tt>.qf</tt>) file, raises the correct tab and configures the query
-options with the specified query parameters and advanced settings.
-The <tt>Load Query</tt> menu item is enabled across all tabs, but the
-<tt>Save Query</tt> menu item is only enabled when the Analysis tab or
-the TE Rules tab (see the <a href="#policy_rules">Policy Rules tab
-description</a> below) is raised.  Choose <tt>Policy Summary</tt> from
-the <tt>Query</tt> menu to display statistics about the currently
-loaded policy.  A shorthand version of these statistics is always
-displayed on the status bar when a policy is opened.
+<a name="query_menu">The</a> <tt>Query</tt> menu allows the user to
+save or load a query for a <tt>TE Rules</tt> search or for an analysis
+module listed on the <tt>Analysis</tt> tab.  Saving a query writes the
+appropriate parameters and settings to a <tt>.qf</tt> file:  for TE
+Rules queries, the required query parameters are saved; for analysis
+queries, the required query parameters as well as the specified
+advanced settings are saved.  When loading a query, apol parses the
+specified query (<tt>.qf</tt>) file, raises the correct tab and
+configures the query options with the specified query parameters and
+advanced settings.  The <tt>Load Query</tt> menu item is enabled
+across all tabs, but the <tt>Save Query</tt> menu item is only enabled
+when the Analysis tab or the TE Rules tab (see the <a
+href="#policy_rules">Policy Rules tab description</a> below) is
+raised.  Choose <tt>Policy Summary</tt> from the <tt>Query</tt> menu
+to display statistics about the currently loaded policy.  A shorthand
+version of these statistics is always displayed on the status bar when
+a policy is opened.
 </p>
 
 <p>
@@ -87,8 +88,8 @@ management.
 <h1>Policy Components tabs</h1>
 
 <p>
-The policy components tabs provide the means to examine, search, and
-relate the core components of an SELinux policy.
+The <tt>Policy Components</tt> tabs provide the means to examine,
+search, and relate the core components of an SELinux policy.
 </p>
 
 
@@ -105,8 +106,8 @@ relate the core components of an SELinux policy.
 
 <p>
   Use the search options and hit the <tt>OK</tt> button to perform
-  searches for types.  Alternately, use the <em>Search using regular
-  expression</em> box to search for types and/or attributes using a
+  searches for types.  Alternately, use the <tt>Search using regular
+  expression</tt> box to search for types and/or attributes using a
   POSIX-style regular expression.
 </p>
 
@@ -123,9 +124,9 @@ relate the core components of an SELinux policy.
 
 <p>
   For example, to display the objects that use the permission
-  <sample>getattr</sample>, select <em>Permissions</em>, and the
-  button <em>Object Classes</em> directly below it.  Then select
-  <em>Search using regular expression</em> and type
+  <sample>getattr</sample>, select <tt>Permissions</tt>, and the
+  button <tt>Object Classes</tt> directly below it.  Then select
+  <tt>Search using regular expression</tt> and type
   <kbd>^getattr$</kbd> in the box.  Press <tt>OK</tt> and a list of
   object classes that use that permission displays.  A
   <sample>*</sample> will mean that the class uses that permission via
@@ -206,182 +207,276 @@ relate the core components of an SELinux policy.
 
 <a name="policy_rules"><h1>Policy Rules tabs</h1></a>
 
-The Policy Rules tabs allow more advanced analysis of an SELinux
-policy.  They provide the means to search and select from the many
-rules in a policy based on selected search criteria.
+The <tt>Policy Rules</tt> tabs allow more advanced analysis of an
+SELinux policy.  They provide the means to search and select from the
+many rules in a policy based on selected search criteria.
 
-  TE Rules tab
-  ------------
-  Select the TE Rules tab to search through the Type Enforcement
+<h2>TE Rules tab</h2>
+
+<p>
+  Select the <tt>TE Rules</tt> tab to search through type enforcement
   rules.  This is the most extensively used tab, as well as the most
   complicated.
+</p>
 
+<p>
   Three different types of search criteria exist for TE Rules:
+<p>
 
-    1. RULE SELECTION: provides options to limit the scope of search;
-       only those rules selected will be included in the search.  At
-       least one must be selected.  NOTE: If no additional search
-       criteria is specified, apol will search for all of the selected
-       rules.
+<ol>
+   <li>
+       <p>
+       <tt>RULE SELECTION</tt>: provides options to limit the scope of
+       search; only those rules selected will be included in the
+       search.  At least one must be selected.  NOTE: If no additional
+       search criteria is specified, apol will search for all of the
+       selected rules.
+       </p>
+   </li>
 
-    2. TYPE/ATTRIBUTES SUBTAB: provides options to refine a search
-       based on types and/or type attributes used by a rule.  There
-       are three general type search options: source, target, and
-       default.  Default is useful only if one or more of type
+   <li>
+       <p>
+       <tt>TYPE/ATTRIBUTES SUBTAB</tt>: provides options to refine a
+       search based on types and/or type attributes used by a rule.
+       There are three general type search options: source, target,
+       and default.  Default is useful only if one or more of type
        transition/member/change rules are selected; other rules do not
        use the default field.  The source field also can be used as an
-       "any" field.  In this case, the other two options will not be
-       available, and the search will look for the selected
+       <tt>any</tt> field.  In this case, the other two options will
+       not be available, and the search will look for the selected
        type/attribute in any field of the selected rules.
-
+       </p>
+       
+       <p>
        Use drop down boxes to select a type or attribute. If the
-       "Search using regular expression" box is checked, enter a
-       regular expression in any type/attrib box.  If regular
+       <tt>Search using regular expression</tt> box is checked, enter
+       a regular expression in any type/attrib box.  If regular
        expressions are disabled, apol currently supports only one
        type/attribute in each box.  This type/attrib must be a
-       complete, valid type or attrib string.  The Default field can
-       only be a type (not an attribute).
+       complete, valid type or attribute string.  The <tt>Default</tt>
+       field can only be a type, not an attribute.
+       </p>
 
-       If the "Search only enabled rules" checkbox is selected, query
-       results will include all rules that meet the search criteria,
-       EXCLUDING any rules that have been disbled by a conditional
-       expression.  If the checkbox is not selected, query results
-       will include all rules that meet the search criteria, INCLUDING
-       those rules that have been disabled by a conditional
-       expression.
+       <p>
+       If the <tt>Search only enabled rules</tt> checkbox is selected,
+       query results will include all rules that meet the search
+       criteria, <strong>excluding</strong> any rules that have been
+       disbled by a conditional expression.  If the checkbox is not
+       selected, query results will include all rules that meet the
+       search criteria, <strong>including</strong> those rules that
+       have been disabled by a conditional expression.
+       </p>
 
+       <p>
        Typically a search for a particular type also returns rules
-       that employ any of that type's attributes.  Likewise, a search
-       for an attribute returns rules that use any of that attribute's
-       types.  This "indirect" searching is enabled by default.  The
-       "Only direct matches" checkbox alters the meaning of the search
-       field such that it performs literal searches upon the
-       identifier.
+       that employ some of that type's attributes.  Likewise, a search
+       for an attribute returns rules that use some of that
+       attribute's types.  This <em>indirect</em> searching is enabled
+       by default.  The <tt>Only direct matches</tt> checkbox alters
+       the meaning of the search field such that it performs literal
+       searches upon the identifier.
+       </p>
+    </li>
 
-    3. CLASSES/PERMISSIONS SUBTAB: provides options to refine a search
-       using object classes and/or permissions.  Only rules that
-       contain the selected object classes and selected permissions
-       will be returned.  Each of these boxes allow multiple
-       selections.  In the case of multiple select, apol treats them
-       using an "or" semantic (e.g., if two object classes, such as
-       'dir' and 'file', are selected, rules that apply to file OR
-       directory object classes are selected).
+    <li>
+       <p>
+       <tt>CLASSES/PERMISSIONS SUBTAB</tt>: provides options to refine
+       a search using object classes and/or permissions.  Only rules
+       that contain the selected object classes and selected
+       permissions will be returned.  Each of these boxes allow
+       multiple selections.  In the case of multiple select, apol
+       treats them using an <em>or</em> semantic (e.g., if two object
+       classes, such as <sample>dir</sample> and
+       <sample>file</sample>, are selected, rules that apply to file
+       <stronge>or</strong> directory object classes are selected).
+       </p>
 
-       This tab also includes a section for AV Rule Permissions, as a
-       means to prune the list of permissions based on the object
-       classes selected.  However, if none of the AV rules have been
-       selected the permissions section will be disabled.  If "All for
-       selected classes" is selected, only permissions related to
-       selected objects are shown.  "Common to selected classes"
-       instead only shows permissions that all selected classes have.
-       Below is a checkbox that changes permission matching behavior.
-       If more than one permission is selected, the default behavior
-       is to return rules that contain any of those selections.  When
-       the checkbox is enabled, returned rules instead will contain
-       all of them.
+       <p>
+       This tab also includes a section for <tt>AV Rule
+       Permissions</tt> as a means to prune the list of permissions
+       based on the object classes selected.  However, if none of the
+       AV rules have been selected the permissions section will be
+       disabled.  If <tt>All for selected classes</tt> is selected,
+       only permissions related to selected objects are shown.  The
+       <tt>Common to selected classes</tt> option instead only shows
+       permissions that all selected classes have.  Below is a
+       checkbox that changes permission matching behavior.  If more
+       than one permission is selected, the default behavior is to
+       return rules that contain any of those selections.  When the
+       checkbox is enabled, returned rules instead will contain all of
+       them.
+       </p>
+    </li>
+</ol>
 
-  In the Results Tab for a given search, all rules that meet the
-  search criteria are displayed.  In addition, if the policy that is
-  opened is capable of showing line numbers, a hyperlink for each rule
-  is shown.  Clicking on this link will raise the Policy Source tab
-  and highlight the exact line in the source file where the rule was
-  found.  This traces the rule back to the ultimate source code.  If
-  the policy cannot show line numbers then there will be no
-  hyperlinks.
+<p>
+  In the <tt>Results</tt> section for a given search, all rules that meet
+  the search criteria are displayed.  In addition, if the policy that
+  is opened is capable of showing line numbers, a hyperlink for each
+  rule is shown.  Clicking on this link will raise the <tt>Policy
+  Source</tt> tab and highlight the exact line in the source file
+  where the rule was found.  This traces the rule back to the ultimate
+  source code.  If the policy cannot show line numbers then there will
+  be no hyperlinks.
+</p>
 
-  The TE Rules Tab also supports multiple results windows.  Each
-  active window remembers the search options used for it, and will set
-  all the options accordingly when selected.  Use the "Update Search"
-  button to change the results displayed for the current window based
-  on the current search option.  "New Search" creates a new results
-  window based on the current search options.  Use the "Close Tab" bar
-  at the bottom to destroy a results window.  Also, the TE Rules tab
-  provides the means to save/load search criteria to a file (see Menus
-  section above).
+<p>
+  The <tt>TE Rules</tt> tab also supports multiple results displayes.
+  Each active window remembers the search options used for it, and
+  will set all the options accordingly when selected.  Use the
+  <tt>Update Search</tt> button to change the results displayed for
+  the current window based on the current search option.  <tt>New
+  Search</tt> creates a new results window based on the current search
+  options.  Use the <tt>Close Tab</tt> bar at the bottom to destroy a
+  results window.  Also, the <tt>TE Rules</tt> tab provides the means
+  to save and load search criteria to a file (see <a
+  href="#query_menu">Menus section</a> above).
+</p>
 
-  Conditional Expressions tab
-  ---------------------------
-  Select the Conditional Expressions tab to search conditional
-  expressions within the policy, as well as to view the rules within
-  these conditional expressions.  Note that conditional expressions
-  are displayed in Reverse Polish Notation.
+<h2>Conditional Expressions tab</h2>
 
+<p>
+  Select the <tt>Conditional Expressions</tt> tab to search
+  conditional expressions within the policy, as well as to view the
+  rules within these conditional expressions.  Note that conditional
+  expressions are displayed in Reverse Polish Notation.
+</p>
+
+<p>
   By default, all conditionals are displayed; however they can be
   limited to expressions that use particular boolean variables.  The
   current state of each rule is provided by means of a tag within the
   results:
+</p>
 
-      [Enabled] - indicates the rule is enabled
-      [Disabled] - indicates the rule is disabled
+<dl>
+  <dt><tt>[Enabled]</tt></dt>
+  <dd>indicates the rule is enabled</dd>
 
-  RBAC Rules tab
-  --------------
-  Select the RBAC Rules tab to search role-based access control rules.
-  It is similar in nature to the TE Rules tab, but somewhat simpler.
-  It supports searches of both role allow and role_transition rules.
+  <dt><tt>[Disabled]</tt></dt>
+  <dd>indicates the rule is disabled</dd>
+</dl>
 
-  As with TE Rules, the Source role can also be used in an "any"
-  search.
+<h2>RBAC Rules tab</h2>
 
-  Range Transition Rules tab
-  --------------------------
-  Select the Range Transition Rules tab to search to search
-  range_transition rules by source and target types and by the MLS
-  range.  There are three options when searching for ranges; find
-  exact matches to the entered range, find rules that have ranges
-  that contain the entered range, or find rules that have ranges
-  within the entered range.
+<p>
+  Select the <tt>RBAC Rules</tt> tab to search role-based access
+  control rules.  Much like the <tt>TE Rules tab</tt>, enter a source,
+  target, and default to find rules that match the query.  The search
+  options box changes based upon the type of rule being searched, role
+  <code>allow</code>, <code>role_transition</code>, or both.
+</p>
 
+<p>
+  As with <tt>TE Rules</tt>, the <tt>Source</tt> role can also be used
+  in an <tt>any</tt> search.
+</p>
 
-<a name="file_contexts"><h2>File Contexts tab</h2></a>
+<h2>Range Transition Rules tab</h2>
 
-The File Contexts tab is only available if apol has been built with
-libselinux support (see the setools INSTALL file for details on
-building apol with/without libselinux support).  The tab provides the
-following features:
+<p>
+  Select the <tt>Range Transition Rules</tt> tab to search
+  <code>range_transition</code> rules by source and target types and
+  by the MLS range.  There are three options when searching for
+  ranges: find exact matches to the entered range, find rules that
+  have ranges that contain the entered range, or find rules that have
+  ranges within the entered range.
+</p>
 
-  Creating/Loading an Index File
-  ------------------------------
+<a name="file_contexts"><h1>File Contexts tab</h1></a>
+
+<p>
+The <tt>File Contexts</tt> tab provides the following features:
+</p>
+
+<h2>Creating/Loading an Index File</h2>
+
+<p>
   An index file is an on-disk database that contains SELinux context
   information about the filesystem, including SELinux users and types
-  associated with file paths and object classes.  This tab provides
-  the option of creating an index file or loading an existing one.  If
-  an index file is not loaded, all search items will be grayed out and
-  a red label indicating that an index file is not loaded is displayed
-  at the top.  Buttons are presented for creating and loading an index
-  file.  Selecting the 'Load' button displays a file selection dialog
-  for choosing saved index file to load.  Selecting the 'Create and
-  Load' button will display a dialog to specify the save file and the
-  directory from which to start the indexing.  Here, add multiple
-  directories from which to index by using the 'Add' button or simply
-  input a colon-delimited list of directory path strings within the
-  entrybox.  Upon selecting the 'Create' button, an index file will be
-  created and then loaded into apol.
+  associated with file paths and object classes.  The user may create
+  a new index file or load an existing one by clicking the appropriate
+  button.  Select the <tt>Load</tt> button to display a file selection
+  dialog.  Choose <tt>Create and Load</tt> button to specify the save
+  file and the directory from which to start the indexing.  Upon
+  clicking <tt>OK</tt>, an index file will be created and then loaded
+  into apol.
+</p>
 
-  Searching an Index File
-  -----------------------
-  Searches on the index file can be done by specifying the user, type,
-  object class, or path search criteria to search for using the
-  widgets provided.  Drop down lists and entryboxes are presented for
-  specifying the search criteria, of which the drop down lists contain
-  items from the index file.  Regular expressions can be specified for
-  all fields except the object class field.  To perform a search,
-  click the 'OK' button.  Once the search is finished, list of files
-  that matched the criteria displays, along with the files' context
-  and/or object type, if specified.
+<h2>Searching an Index File</h2>
 
+<p>
+  Specify the user, role, type, MLS range, object class, or path, then
+  click <tt>OK</tt> to perform the query.  Regular expressions can be
+  specified for all fields except the <tt>Object class</tt> field.
+  Once the search is finished, apol displays a list of files that
+  matched the criteria, along with those files' context and/or object
+  type, if specified.
+</p>
 
-Analysis tab
-------------
-The Analysis tab provides automated analysis capabilities.  The "Info"
-button provides a description for the selected analysis type.  Also,
-this tab supports saving/loading any query criteria to a file (see
-Menus section above).
+<h1>Analysis tab</h1>
 
-  Domain Transition Analysis
-  --------------------------
-  Use the Domain Transition analysis module to specify a transition
-  direction for the analysis.  The 2 directions provided are:
+<p>
+The <tt>Analysis,/tt> tab provides automated analysis capabilities.
+The <tt>Info</tt> button provides a description for the selected
+analysis type.  Also, this tab supports saving/loading any query
+criteria to a file (see <a href="#query_menu">Menus section</a>
+above).
+</p>
+
+<h2>Direct Information Flow Analysis</h2>
+
+<p>
+  The <tt>Direct Information Flow</tt> analysis takes a starting type
+  and an information flow direction (<tt>In</tt>, <tt>Out</tt>,
+  <tt>Either</tt>, or <tt>Both</tt>), and presents a tree with the
+  starting type as the root node.  The child nodes represent other
+  types in the policy where information flow can occur
+  <strong>directly</strong> between its parent node and itself.  If
+  the flow direction is <tt>In</tt>, information in the child node
+  types can flow to the parent node type.  If the flow direction is
+  <tt>Out</tt>, information in the parent node can
+  <strong>directly</strong> flow to the child node.  If the direction
+  is <tt>Both</tt>, information flow is bidirectional, from child to
+  parent and also from parent to child.  If <tt>Either</tt> is
+  selected, flow direction will be in any direction.
+</p>
+
+<p>
+  Select a child node to show all the rules that permit the
+  information flow to occur.  Results are sorted by object class.
+</p>
+
+<p>
+  Results can be filtered by selecting one or more object classes.
+  This will ensure that only those flows that are allowed for the
+  selected object class will be shown (e.g., selecting
+  <sample>file</sample> will prevent flows allowed for
+  <sample>sockets</sample> from being presented).  Use a regular
+  expression to limit the results by end type.  Only those end types
+  that match the provided regular expression will be presented.
+</pp>
+
+<p>
+  See the separate <a href="infoflow_help.html">help file on
+  information flow</a> for more information about direct information
+  flow.
+<p>
+
+<h2>Direct Relabel Analysis</h2>
+
+<p>
+  See the separate help file on direct file relabel analysis, which can
+  be accessed from the help menu in apol.
+</p>
+
+<h2>Domain Transition Analysis</h2>
+
+<p>
+  Use the <tt>Domain Transition</tt> analysis module to specify a
+  transition direction for the analysis.  The two directions provided
+  are:
+</p>
 
       FORWARD: The Forward Domain Transition (FDT) analysis takes a
 	       starting SOURCE domain and presents a tree of all the
@@ -438,43 +533,16 @@ Menus section above).
   See the separate help file for an overview of the criteria that
   constitute a valid domain transition.
 
-  Direct Information Flow Analysis
-  --------------------------------
-  The Direct Information Flow (DIF) analysis takes a starting type and
-  an information flow direction (IN, OUT, EITHER, or BOTH), and
-  presents a tree with the starting type as the root node.  The child
-  nodes represent other types in the policy where information flow can
-  occur DIRECTLY between its parent node and itself.  If the flow
-  direction is IN, information in the child node types can flow to the
-  parent node type.  If the flow direction is OUT, information in the
-  parent node can DIRECTLY flow to the child node.  If the direction
-  is BOTH, information can flow from child to parent and from parent
-  to child. If EITHER is selected, flow direction will be IN, OUT, or
-  BOTH.
-
-  Selecting a child node will show all the rules that permit the
-  information flow to occur.  Results are sorted by object class.
-
-  Results can be filtered by selecting one or more object classes.
-  This will ensure that only those flows that are allowed for the
-  selected object class will be shown (e.g., selecting file will
-  prevent flows allowed for sockets from being presented).  Use a
-  regular expression to limit the results by end type.  Only those end
-  types that match the provided regular expression will be presented.
-
-  See the separate help file on information flow for more information
-  about direct information flow.
-
   Transitive Information Flow Analysis
-  ------------------------------------
-  Whereas the DIF analysis identifies information flows that are
+
+  Whereas the Direct Information Flow analysis identifies information flows that are
   directly allowed by one or more explicit rule, the Transitive
-  Information Flow (TIF) analysis attempts a much more extensive
-  analysis.  Specifically the TIF identifies indirect paths between
+  Information Flow analysis attempts a much more extensive
+  analysis.  Specifically, transitive flow identifies indirect paths between
   two types.  Since such paths can be circuitous or over many hops,
   this analysis is quite difficult to achieve.
 
-  TIF takes a starting type and an information flow direction (To or
+  Transitive flow takes a starting type and an information flow direction (To or
   From) and presents a tree with the starting type as the root node.
   The child nodes represent other types in the policy where
   information flow can occur (directly or transitively) between the
@@ -490,10 +558,10 @@ Menus section above).
   specify a time limit for the search and/or limit the number of flows
   to find in the search.
 
-  As with the DIF analysis, results can be filtered using end type
+  As with the direct flow analysis, results can be filtered using end type
   regular expression.
 
-  Additionally, the TIF analysis provides the Advanced Filters dialog
+  Additionally, the transitive flow analysis provides the Advanced Filters dialog
   for filtering results by object class permissions and/or types.
   Selecting an object class in the Advanced Filters dialog will
   display a list of permissions for that object class, whereby certain
@@ -516,23 +584,21 @@ Menus section above).
   See the separate help file on information flow for more information
   about transitive information flow.
 
-  Direct Relabel Analysis
-  -----------------------
-  See the separate help file on direct file relabel analysis, which can
-  be accessed from the help menu in apol.
-
   Types Relationship Summary Analysis
   -----------------------------------
   See the separate help file on types relationship summary analysis,
   which can be accessed from the help menu in apol.
 
 
-Policy Source tab
------------------
-The Policy Source tab provides a convenient display of the raw policy
-source file.  If a modular policy was loaded, this tab shows only the
-base policy's source.  Various search results will hyperlink to lines
-within this tab.  If the loaded policy is not source then this tab
-will be disabled.
+<h1>Policy Source tab</h1>
+
+<p>
+The <tt>Policy Source</tt> tab provides a convenient display of the
+raw policy source file.  If a modular policy was loaded, this tab
+shows only the base policy's source.  Various search results will
+hyperlink to lines within this tab.  If the loaded policy is not
+source then this tab will be disabled.
+</p>
+
 </body>
 </html>

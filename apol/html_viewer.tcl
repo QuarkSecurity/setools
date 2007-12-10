@@ -41,7 +41,7 @@ proc Apol_HTML::init {} {
             eval ::real_package $args
         }
     }
-    uplevel \#0 ::real_source /tmp/setools-install/share/setools-3.4/hv3-wrapped.tcl
+    uplevel \#0 ::real_source [file join [tcl_config_get_install_dir] hv3-wrapped.tcl]
     rename ::source {}
     rename ::real_source ::source
     rename ::package {}
