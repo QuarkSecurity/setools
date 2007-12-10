@@ -240,8 +240,8 @@ proc ApolTop::_create_toplevel {} {
 	"&Help" {} helpmenu 0 {
 	    {command "&General Help" {} "Show help on using apol" {} -command {ApolTop::_show_file Help apol_help.html}}
 	    {command "&Domain Transition Analysis" {} "Show help on domain transitions" {} -command {ApolTop::_show_file "Domain Transition Analysis Help" domaintrans_help.html}}
+	    {command "&File Relabel Analysis" {} "Show help on file relabeling" {} -command {ApolTop::_show_file "File Relabel Analysis Help" file_relabel_help.html}}
 	    {command "&Information Flow Analysis" {} "Show help on information flows" {} -command {ApolTop::_show_file "Information Flow Analysis Help" infoflow_help.html}}
-	    {command "Direct &Relabel Analysis" {} "Show help on file relabeling" {} -command {ApolTop::_show_file "Relabel Analysis Help" file_relabel_help.html}}
 	    {command "&Types Relationship Summary Analysis" {} "Show help on types relationships" {} -command {ApolTop::_show_file "Types Relationship Summary Analysis Help" types_relation_help.html}}
 	    {separator}
 	    {command "&About apol" {} "Show copyright information" {} -command ApolTop::_about}
@@ -488,7 +488,7 @@ proc ApolTop::_toplevel_update_stats {} {
     if {![is_capable "neverallow"]} {
         append num_te_rules "+"
     }
-    append policy_stats_summary "TE rules: $num_te_rules   "
+    append policy_stats_summary "AV + TE rules: $num_te_rules   "
     append policy_stats_summary "Roles: $policy_stats(roles)   "
     append policy_stats_summary "Users: $policy_stats(users)"
 }

@@ -1,3 +1,8 @@
+2007-12-10  J. Tang  <jtang@tresys.com>
+
+	* Renamed relabel_module.tcl to file_relabel_module.tcl.  Changed
+	the name with apol from "Direct Relabel" to "File Relabel".
+
 2007-12-06  J. Tang  <jtang@tresys.com>
 
 	* Added Tkhtml 3.0 requirement to apol.  This is used to render

@@ -16,7 +16,7 @@
 namespace eval Apol_Analysis_relabel {
     variable vals
     variable widgets
-    Apol_Analysis::registerAnalysis "Apol_Analysis_relabel" "Direct Relabel"
+    Apol_Analysis::registerAnalysis "Apol_Analysis_relabel" "File Relabel"
 }
 
 proc Apol_Analysis_relabel::create {options_frame} {

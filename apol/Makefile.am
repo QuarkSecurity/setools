@@ -28,6 +28,7 @@ EXTRA_DIST = \
 	directflow_module.tcl \
 	domaintrans_module.tcl \
 	file_contexts_tab.tcl \
+	file_relabel_module.tcl \
 	find.tcl \
 	fscontexts_tab.tcl \
 	goto.tcl \
@@ -47,7 +48,6 @@ EXTRA_DIST = \
 	range_selector.tcl \
 	range_trans.tcl \
 	rbac_tab.tcl \
-	relabel_module.tcl \
 	roles_tab.tcl \
 	terules_tab.tcl \
 	transflow_module.tcl \

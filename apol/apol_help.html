@@ -205,6 +205,7 @@ search, and relate the core components of an SELinux policy.
   defined in the policy.
 </p>
 
+
 <a name="policy_rules"><h1>Policy Rules tabs</h1></a>
 
 The <tt>Policy Rules</tt> tabs allow more advanced analysis of an
@@ -246,7 +247,7 @@ many rules in a policy based on selected search criteria.
        not be available, and the search will look for the selected
        type/attribute in any field of the selected rules.
        </p>
-       
+
        <p>
        Use drop down boxes to select a type or attribute. If the
        <tt>Search using regular expression</tt> box is checked, enter
@@ -383,6 +384,7 @@ many rules in a policy based on selected search criteria.
   ranges within the entered range.
 </p>
 
+
 <a name="file_contexts"><h1>File Contexts tab</h1></a>
 
 <p>
@@ -414,10 +416,11 @@ The <tt>File Contexts</tt> tab provides the following features:
   type, if specified.
 </p>
 
+
 <h1>Analysis tab</h1>
 
 <p>
-The <tt>Analysis,/tt> tab provides automated analysis capabilities.
+The <tt>Analysis</tt> tab provides automated analysis capabilities.
 The <tt>Info</tt> button provides a description for the selected
 analysis type.  Also, this tab supports saving/loading any query
 criteria to a file (see <a href="#query_menu">Menus section</a>
@@ -463,14 +466,7 @@ above).
   flow.
 <p>
 
-<h2>Direct Relabel Analysis</h2>
-
-<p>
-  See the separate help file on direct file relabel analysis, which can
-  be accessed from the help menu in apol.
-</p>
-
-<h2>Domain Transition Analysis</h2>
+<a name="domain_transition"><h2>Domain Transition Analysis</h2></a>
 
 <p>
   Use the <tt>Domain Transition</tt> analysis module to specify a
@@ -478,116 +474,145 @@ above).
   are:
 </p>
 
-      FORWARD: The Forward Domain Transition (FDT) analysis takes a
-	       starting SOURCE domain and presents a tree of all the
-	       resulting TARGET domains that can be transitioned into
-	       from that starting domain.  The tree can be walked to
-	       follow the FDT tree to any depth.  The only restriction
-	       is that a subtree will not expand if its parent is the
-	       same as the node. Each node in the FDT tree represents
-	       a TARGET domain to which the parent domain can directly
-	       transition.
+<dl>
+<dt><tt>Forward</tt>:</dt>
+<dd>
+<p>
+  The forward domain transition analysis takes a starting <em>source
+  domain</em>, calculates all possible transitions from that domain,
+  then presents a tree of all resulting <em>target domains</em>.  The
+  tree can be walked to follow further transitions.  The only
+  restriction is that a subtree will not expand if its parent is the
+  same as the node.  Each node in the transition tree represents a
+  target domain to which the parent domain can directly transition.
+</p>
 
-               The Forward Domain Transition (FDT) analysis also
-	       provides the means to limit the query to find
-	       transitions only to domains that are granted specific
-	       object class permissions and/or are granted access to a
-	       particular object type(s).  Use the 'Access Filters'
-	       dialog to select object types object classes, and
-	       permissions in order to limit the query to this
-	       constrained analysis.  By default, all object types,
-	       object classes and permissions are included in the
-	       query.  Selecting an object class from the listbox
-	       widget will display all permissions for that object
-	       class.
+<p>
+  The forward transition analysis can limit the query to find
+  transitions only to domains that are granted specific object class
+  permissions and/or are granted access to a particular object
+  type(s).  Use the <tt>Access Filters</tt> dialog to select object
+  types, object classes, and permissions in order to constrain this
+  query.  By default, all object types, object classes and permissions
+  are included in the query.
+</p>
 
-               A specific example where this advanced feature would be
-               useful is when one is seeking to find transitions from
-               'user_t' to domains with write access to files in the
-               'shadow_t' domain. In this case:
+<p>
+  As an example where this advanced feature would be useful is when
+  one is seeking to find transitions from <code>user_t</code> to
+  domains with <code>write</code> access to files in the
+  <code>shadow_t</code> domain.  In this case:
+</p>
 
-                 - Specify 'user_t' as the source domain.
-                 - Using the Access Filters dialog, select the
-		   'shadow_t' object type, 'file' object class, and
-		   'write' permission.
+  <ol>
+  <li>Specify <kbd>user_t</kbd> as the source domain, then
+  <li>Using the <tt>Access Filters</tt> dialog, select the
+      <kbd>shadow_t</kbd> object type, <kbd>file</kbd> object class, and
+      <kbd>write</kbd> permission.
+  </ol>
+</dd>
 
-      REVERSE: As its name implies, the Reverse Domain Transition
-               (RDT) analysis is the reverse of the FDT analysis. The
-               RDT takes a starting TARGET domain and presents a tree
-               of all the resulting SOURCE domains that can directly
-               transition to that TARGET domain.  The tree can be
-               walked to follow the RDT tree to any depth.  The only
-               restriction is that a subtree will not expand if its
-               parent is the same as the node.  Each node in the RDT
-               tree represents a SOURCE domain that can transition to
-               its parent node.  This analysis does not provide the
-               meands to constrain the query using the 'Access
-               Filters' dialog, as is possible in Forward Domain
-               Transition analysis.
+<dt><tt>Reverse</tt>:</dt>
+<dd>
+<p>
+  As its name implies, a reverse domain transition analysis takes a
+  starting <em>target domain</em> and presents a tree of all the
+  resulting <em>source domains</em> that can directly transition to
+  that target domain.  As with a forward analysis, the result tree can
+  be walked to any depth; the only restriction is that a subtree will
+  not expand if its parent is the same as the node.  Each node in the
+  result tree represents a source domain.  This analysis does not
+  provide the means to constrain the query using the <tt>Access
+  Filters</tt> dialog, as is possible in forward domain transition
+  analysis.
+</p>
 
-  Selecting a child node will show all the rules that permit the
-  transition to occur.  In the case of a Forward Domain Transition
-  analysis, access granted to this target domain will also be appended
-  to the results.
+<p>
+  See the separate <a href="domaintrans_help.html">help file for an
+  overview of the criteria</a> that constitute a valid domain
+  transition.
+</p>
 
-  See the separate help file for an overview of the criteria that
-  constitute a valid domain transition.
+</dd>
+</dl>
 
-  Transitive Information Flow Analysis
+<h2>File Relabel Analysis</h2>
 
-  Whereas the Direct Information Flow analysis identifies information flows that are
-  directly allowed by one or more explicit rule, the Transitive
-  Information Flow analysis attempts a much more extensive
-  analysis.  Specifically, transitive flow identifies indirect paths between
+<p>
+  See the separate <a href="file_relabel_help.html">help file on file
+  relabel</a> analysis, which can be accessed from the <tt>Help</tt>
+  menu in apol.
+</p>
+
+<h2>Transitive Information Flow Analysis</h2>
+
+<p>
+  Whereas the <tt>Direct Information Flow</tt> analysis identifies
+  information flows that are directly allowed by one or more explicit
+  rule, the <tt>Transitive Information Flow</tt> analysis attempts a
+  much more extensive analysis.  This analysis finds paths between any
   two types.  Since such paths can be circuitous or over many hops,
   this analysis is quite difficult to achieve.
+</p>
 
-  Transitive flow takes a starting type and an information flow direction (To or
-  From) and presents a tree with the starting type as the root node.
-  The child nodes represent other types in the policy where
-  information flow can occur (directly or transitively) between the
-  parent node and itself.  If the flow direction is To, the
-  information flow is to the parent node.  If the flow direction is
-  From, the information flow is to the child node.
+<p>
+  Transitive flow takes a starting type and an information flow
+  direction (<tt>To</tt> or <tt>From</tt>) and presents a tree with
+  the starting type as the root node.  The child nodes represent other
+  types in the policy where information flow can occur (directly or
+  transitively) between the parent node and itself.  If the flow
+  direction is <tt>To</tt>, the information flow is to the parent
+  node.  If the flow direction is </tt>From</tt>, the information flow
+  is to the child node.
+</p>
 
-  Selecting a child node shows each step in the flow chain between the
-  starting node and the child node, along with the rules that allow
-  that step to occur.  Additionally, embedded in the text of the
-  results is a hyperlink for finding more flows between the starting
-  node and the selected child node.  This link displays a dialog to
-  specify a time limit for the search and/or limit the number of flows
-  to find in the search.
+<p>
+  Select a child node to view the steps in the flow chain, along with
+  the rules that allow those steps to occur.  Click on the <tt>Find
+  more flows</tt> link to search for additional flows between the
+  starting node and the selected child node.  This link displays a
+  dialog to specify a time limit for the search and/or limit the
+  number of flows to find in the search.
+</p>
 
-  As with the direct flow analysis, results can be filtered using end type
-  regular expression.
+<p>
+  As with the direct flow analysis, results can be filtered using an
+  end type regular expression.  Additionally, the transitive flow
+  analysis provides the <tt>Advanced Filters</tt> dialog for filtering
+  results by object class permissions and/or types.  Select an object
+  class to display a list of permissions for that object class,
+  whereby individual permissions can be included or excluded from the
+  search.  By default, all permissions for an object class are
+  included.  Excluding all permissions will also exclude the object
+  class from the query.
+</p>
 
-  Additionally, the transitive flow analysis provides the Advanced Filters dialog
-  for filtering results by object class permissions and/or types.
-  Selecting an object class in the Advanced Filters dialog will
-  display a list of permissions for that object class, whereby certain
-  permissions can be included or excluded.  By default, all
-  permissions for an object class are included in the query, unless a
-  permission's 'Exclude' radiobutton is selected.  Configuring all
-  permissions for an object class to be excluded will exclude the
-  object class itself from the query. When an object class becomes
-  excluded, its label will change to indicate that the object class is
-  to be excluded from the analysis query.
+<p>
+  An alternative to excluding individual permissions is to set a
+  minimum permission weight value.  Permission weights are provided by
+  the loaded permission map file.  See the separate <a
+  href="infoflow_help.html#permission_weight">help file on information
+  flow</a> for more information about managing permission mappings.
+</p>
 
-  Additionally, the Advanced Filters dialog displays the weight value
-  of a permission, as specified in the loaded permission map.  See the
-  separate help file on information flow for more information about
-  managing permission mappings.  Specify a weight threshold in order
-  to exclude permissions from the results that have weights below a
-  certain threshold.  Query results can also be filtered by including
-  or excluding intermediate types.
+<p>
+  Query results can also be filtered by including or excluding
+  intermediate types.  The analysis will never return flows that
+  contain excluded types somewhere along the path.
+</p>
 
-  See the separate help file on information flow for more information
-  about transitive information flow.
+<p>
+  See the separate <a href="infoflow_help.html">help file on
+  information flow</a> for more information about transitive
+  information flow.
+</p>
 
-  Types Relationship Summary Analysis
-  -----------------------------------
+<h2>Types Relationship Summary Analysis</h2>
+
+<p>
   See the separate help file on types relationship summary analysis,
   which can be accessed from the help menu in apol.
+</p>
 
 
 <h1>Policy Source tab</h1>
