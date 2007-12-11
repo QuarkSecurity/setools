@@ -20,6 +20,7 @@
 
 namespace eval Apol_HTML {
     variable viewer {}
+    variable popup {}
     variable widgets
 }
 
@@ -77,6 +78,7 @@ proc Apol_HTML::_create_viewer {} {
     variable viewer
     variable widgets
     set viewer [toplevel .apol_html_viewer -width 600 -height 500]
+    wm group $viewer .
 
     set f $viewer
     frame $f.toolbar
@@ -100,17 +102,13 @@ proc Apol_HTML::_create_viewer {} {
     $widgets(browser) configure -forwardbutton $widgets(forward)
     [$widgets(browser) hv3] configure -isvisitedcmd Apol_HTML::_isLinkVisited
     trace add variable [$widgets(browser) titlevar] write Apol_HTML::_titleChanged
-}
-
-proc Apol_HTML::_goto {args} {
-    puts "got a goto: |$args|"
+    bind $widgets(browser) <Button-3> [list Apol_HTML::_popup %W %x %y]
 }
 
 proc Apol_HTML::_searchButton {} {
-    # FIX ME
+    variable widgets
+    $widgets(browser) Find
 }
-
-# TODO: add right-click select/all commands
 
 proc Apol_HTML::_isLinkVisited {uri} {
     return 0
@@ -120,4 +118,40 @@ proc Apol_HTML::_titleChanged {name1 name2 op} {
     variable viewer
     variable widgets
     wm title $viewer [set [$widgets(browser) titlevar]]
+}
+
+proc Apol_HTML::_popup {path x y} {
+    focus $path
+    # create a global popup menu widget if one does not already exist
+    variable popup
+    if {![winfo exists $popup]} {
+        set popup [menu .apol_html_popup -tearoff 0]
+    }
+    set callbacks {
+        {"Copy" Apol_HTML::_copy}
+        {"Select All" Apol_HTML::_selectAll}
+    }
+    ApolTop::popup $path $x $y $popup $callbacks $path
+}
+
+proc Apol_HTML::_copy {path} {
+    variable widgets
+    set hv3 [$widgets(browser) hv3]
+    set data [$hv3 selected]
+    if {$data != {}} {
+        clipboard clear
+        clipboard append -- $data
+    }
+}
+
+proc Apol_HTML::_selectAll {path} {
+    variable widgets
+    set hv3 [$widgets(browser) hv3]
+    $hv3 selectall
+}
+
+# Callback invoked from hv3_browser when the escape key is pressed.
+# Note the lack of Apol_HTML namespace.
+proc gui_escape {} {
+    $Apol_HTML::widgets(browser) escape
 }

@@ -534,7 +534,8 @@
 		[SQ pathName text text] to a node/index pair that can be
 		used with the [SQ pathName tag] commands. The return value
 		is a list of two elements, the node-handle followed by the
-		index.
+		index.  If no node exists at the offset then an empty
+		string is returned.
 
 		Command [SQ pathName text offset] is the reverse of 
 		[SQ pathName text index]. Given a node-handle and index of the

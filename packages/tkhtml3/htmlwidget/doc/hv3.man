@@ -118,6 +118,17 @@
 		uses to return downloaded data to the widget.
 }]
 
+[Subcommand {
+	pathName selected
+		Return the currently selected text, or an empty string
+		if no text is currently selected.
+}]
+
+[Subcommand {
+	pathName selectall
+		Select all text.
+}]
+
 [Section Download Handle]
 	A download handle is passed to a protocol-handler script. It's 
 	job is to retrieve the data for a specified URI and pass it on

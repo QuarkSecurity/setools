@@ -634,7 +634,7 @@ Rt_Free(p)
         memset(z, 0x55, n);
         ckfree((char *)&z[-2]);
         ResFree(RES_ALLOC, &z[-2]);
-        freeMallocHash(z, n);
+        freeMallocHash((char *) z, n);
     }
 }
 

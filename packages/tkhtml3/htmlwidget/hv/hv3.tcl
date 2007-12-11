@@ -72,6 +72,9 @@
 #     location        
 #         Return the location URI of the widget.
 #
+#     selectall
+#         Select all text in the underlying html widget.
+#
 #     selected        
 #         Return the currently selected text, or an empty string if no
 #         text is currently selected.
@@ -620,6 +623,25 @@ snit::type ::hv3::hv3::selectionmanager {
     # (now invalid) node-handle value in $myFromNode.
     set myFromNode ""
     set myToNode ""
+  }
+
+  method selectall {} {
+      $self clear
+      # start selection from the first text node
+      set textlen [string length [$myHv3 text text]]
+      for {set i 0} {$i < $textlen} {incr i} {
+          foreach {myFromNode myFromIdx} [$myHv3 text index $i] {break}
+          if {$myFromNode != {}} {
+              break
+          }
+      }
+      if {$myFromNode == {}} {
+          # nothing to select
+          return
+      }
+      foreach {myToNode myToIdx} [$myHv3 text index [expr {$textlen - 1}]] {break}
+      $myHv3 tag add selection $myFromNode $myFromIdx $myToNode $myToIdx
+      selection own $myHv3
   }
 
   method motion {N x y} {
@@ -2103,6 +2125,7 @@ snit::widget ::hv3::hv3 {
 
   # Delegated public methods
   delegate method selected          to mySelectionManager
+  delegate method selectall         to mySelectionManager
   delegate method *                 to myHtml
 
   # Standard scrollbar and geometry stuff is delegated to the html widget

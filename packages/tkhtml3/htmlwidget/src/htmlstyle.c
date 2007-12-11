@@ -586,7 +586,7 @@ styleApply(pTree, pNode, p)
     }
 
     if (p->doStyle) {
-        redrawmode = styleNode(pTree, pNode, p->isRoot);
+        redrawmode = styleNode(pTree, pNode, (ClientData) ((size_t) p->isRoot));
 
         /* If there has been a style-callback configured (-stylecmd option to
          * the [nodeHandle replace] command) for this node, invoke it now.

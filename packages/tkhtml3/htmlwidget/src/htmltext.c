@@ -1479,7 +1479,8 @@ HtmlTextTextCmd(clientData, interp, objc, objv)
  *     The argument $OFFSET is an offset into the string returned
  *     by [$html text text]. This Tcl command returns a list of two
  *     elements - the node and node index corresponding to the 
- *     equivalent point in the document tree.
+ *     equivalent point in the document tree. If there is no node
+ *     at $OFFSET then an empty string is returned.
  *
  * Results:
  *     None.
@@ -1514,12 +1515,19 @@ HtmlTextIndexCmd(clientData, interp, objc, objv)
         if (Tcl_GetIntFromObj(interp, objv[ii], &iIndex)) {
             return TCL_ERROR;
         }
+        if (iIndex < 0) {
+            Tcl_SetResult(interp, "Offsets must be non-negative.", TCL_STATIC);
+            return TCL_ERROR;
+        }
         if (pMap == 0 || iIndex > iPrev) {
             pMap = pTree->pText->pMapping;
         }
         for ( ; pMap; pMap = pMap->pNext) {
             assert(!pMap->pNext || pMap->iStrIndex >= pMap->pNext->iStrIndex);
-            if (pMap->iStrIndex <= iIndex || !pMap->pNext) {
+            /* check if user's offset part of this mapping and is not
+               beyond this string */
+            if (pMap->iStrIndex <= iIndex &&
+                iIndex - pMap->iStrIndex < Tcl_NumUtfChars(pMap->pTextNode->zText, -1)) {
                 int iNodeIdx = pMap->iNodeIndex; 
                 Tcl_Obj *apObj[2];
 
