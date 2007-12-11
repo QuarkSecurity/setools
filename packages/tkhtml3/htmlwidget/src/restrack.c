@@ -61,7 +61,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  */
-static const char rcsid[] = "$Id: restrack.c,v 1.11 2007/01/27 12:53:15 danielk1977 Exp $";
+static const char rcsid[] = "$Id: restrack.c,v 1.12 2007/12/08 15:33:00 danielk1977 Exp $";
 
 #ifdef HTML_RES_DEBUG
 #define RES_DEBUG

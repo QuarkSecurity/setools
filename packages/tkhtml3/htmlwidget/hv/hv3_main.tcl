@@ -1,4 +1,4 @@
-namespace eval hv3 { set {version($Id: hv3_main.tcl,v 1.176 2007/11/17 11:24:21 danielk1977 Exp $)} 1 }
+namespace eval hv3 { set {version($Id: hv3_main.tcl,v 1.178 2007/12/09 10:10:07 danielk1977 Exp $)} 1 }
 
 catch {memory init on}
 
