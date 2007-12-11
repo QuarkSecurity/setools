@@ -42,7 +42,6 @@
 #include <sefs/fcfile.hh>
 %}
 
-/* implement a custom non thread-safe error handler */
 %{
 /* Note that these must be placed in a different file rather than
  * being inlined directly into this SWIG interface file.  The reason
@@ -277,6 +276,10 @@ static char *tcl_get_error(void)
 	fail:
 		return 0;
 	}
+
+	char *apol_tcl_get_error_string(void) {
+		return tcl_get_error();
+	}
 %}
 
 %rename(apol_tcl_rule_render) apol_tcl_avrule_render;
@@ -327,6 +330,7 @@ char *apol_tcl_syn_terule_render(apol_policy_t *policy, qpol_syn_terule_t *rule)
 void apol_tcl_avrule_sort(apol_policy_t *policy, apol_vector_t *v);
 void apol_tcl_terule_sort(apol_policy_t *policy, apol_vector_t *v);
 unsigned int apol_tcl_get_policy_version(apol_policy_t *policy);
+char *apol_tcl_get_error_string(void);
 
 %{
 	/**
@@ -429,7 +433,7 @@ sefs_db *apol_tcl_open_database(const char * filename, Tcl_Interp * interp);
 sefs_db *apol_tcl_open_database_from_dir(const char * filename, Tcl_Interp * interp);
 %newobject apol_tcl_open_database(const char*, Tcl_Interp*);
 %newobject apol_tcl_open_database_from_dir(const char*, Tcl_Interp*);
-int apol_tcl_query_database(sefs_fclist *fclist, sefs_query *query, Tcl_Interp * interp);
+int apol_tcl_query_database(sefs_fclist *fclist, sefs_query *query, Tcl_Interp * interp) throw (std::invalid_argument, std::runtime_error);
 void apol_tcl_entry_do_nothing(sefs_entry *e);
 
 // disable the exception handler, otherwise it will delete the error
