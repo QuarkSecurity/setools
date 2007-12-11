@@ -1,53 +1,83 @@
-An overview of types relationship summary analysis
+<html>
+<head>
+<title>Types Relationship Analysis</title>
+</head>
 
+<body>
 
-Understanding types relationship summary analysis
--------------------------------------------------
+<h1>Understanding types relationship summary analysis</h1>
+
+<p>
 The types relationship summary analysis in apol is a convenience
 mechanism to allow a user to quickly do several queries and analyses
 already in present in apol to understand the relationship between two
 types.  It is meant to quickly display the relationship between two
 types and therefore does not include all of the options present in the
 standard queries and analyses.  The analyses are grouped into two
-categories: Basic and Analysis.
+categories: <em>Basic</em> and <em>Analysis</em>.
+</p>
 
 
-Basic
------
+<h2>Basic</h2>
+
+<p>
 The basic group includes several rule searches that can be performed
-using the Policy Rules tab.
+using the <tt>Components</tt> and <tt>Policy Rules</tt> tabs.
+</p>
 
-  Common Attributes: the attributes common to both types.
+<dl>
 
-  Common Roles: the roles to which both types are assigned.
+<dt><tt>Common Attributes</tt>:</dt>
+<dd>The attributes common to both types.</dd>
 
-  Common Users: the users allowed associate with roles to which both
-  types are assigned.
+<dt><tt>Common Roles</tt>:</dt>
+<dd>The roles to which both types are assigned.</dd>
 
-  Similar Access to Resources: object types to which both types have
-  some access.
+<dt><tt>Common Users</tt>:</dt>
+<dd>The users allowed associate with roles to which both types are
+assigned.</dd>
 
-  Dissimilar Access to Resources: object types to which one type has
-  some access but the other type has none.
+<dt><tt>Similar Access to Resources</tt>:</dt>
+<dd>Object types to which both types have some access.</dd>
 
-  TE Allow Rules: rules that provide direct access between both types.
+<dt><tt>Dissimilar Access to Resources</tt>:</dt>
+<dd>Object types to which one type has some access but the other type
+has none.</dd>
 
-  Type Transition / Change Rules: type_* rules that allow transitions
-  between both types.
+<dt><tt>TE Allow Rules</tt>:</dt>
+<dd>Rules that provide direct access between both types.</dd>
 
+<dt><tt>Type Transition / Change Rules</tt>:</dt>
+<dd><code>type_transition</code> and <code>type_change</code> rules
+that allow transitions between both types.</dd>
 
-Analysis
---------
+</dl>
+
+<h2>Analysis</h2>
+
+<p>
 The analysis group includes several other analyses that can be
-performed using the Analysis tab.
+performed using the <tt>Analysis</tt> tab.
+</p>
 
-  Direct Flows Between A and B: direct information flow analysis between
-  the two types.
+<dl>
 
-  Transitive Flows A->B: transitive information flows from type A to B.
+<dt><tt>Direct Flows Between A and B</tt>:</dt>
+<dd>Direct information flow analysis between the two types.</dd>
 
-  Transitive Flows B->A: transitive information flows from type B to A.
+<dt><tt>Transitive Flows A-&gt;B</tt>:</dt>
+<dd>Transitive information flows from type A to B.</dd>
 
-  Domain Transitions A->B: domain transitions allowed from type A to B.
+<dt><tt>Transitive Flows B-&gt;A</tt>:</dt>
+<dd>Transitive information flows from type B to A.</dd>
 
-  Domain Transitions B->A: domain transitions allowed from type B to A.
+<dt><tt>Domain Transitions A-&gt;B</tt>:</dt>
+<dd>Domain transitions allowed from type A to B.</dd>
+
+<dt><tt>Domain Transitions B-&gt;A</tt>:</dt>
+<dd>Domain transitions allowed from type B to A.</dd>
+
+</dl>
+
+</body>
+</html>

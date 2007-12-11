@@ -124,19 +124,18 @@ search, and relate the core components of an SELinux policy.
 
 <p>
   For example, to display the objects that use the permission
-  <sample>getattr</sample>, select <tt>Permissions</tt>, and the
-  button <tt>Object Classes</tt> directly below it.  Then select
-  <tt>Search using regular expression</tt> and type
-  <kbd>^getattr$</kbd> in the box.  Press <tt>OK</tt> and a list of
-  object classes that use that permission displays.  A
-  <sample>*</sample> will mean that the class uses that permission via
-  a common permission.
+  <samp>getattr</samp>, select <tt>Permissions</tt>, and the button
+  <tt>Object Classes</tt> directly below it.  Then select <tt>Search
+  using regular expression</tt> and type <kbd>^getattr$</kbd> in the
+  box.  Press <tt>OK</tt> and a list of object classes that use that
+  permission displays.  A <samp>*</samp> will mean that the class uses
+  that permission via a common permission.
 </p>
 
 <p>
   Regular expressions can be used to constrain the search.  For
   example, to find all the permissions that start with the string
-  <sample>set</sample>, use the regular expression <kbd>^set</kbd>.
+  <samp>set</samp>, use the regular expression <kbd>^set</kbd>.
 </p>
 
 <h2>Roles tab</h2>
@@ -287,9 +286,9 @@ many rules in a policy based on selected search criteria.
        permissions will be returned.  Each of these boxes allow
        multiple selections.  In the case of multiple select, apol
        treats them using an <em>or</em> semantic (e.g., if two object
-       classes, such as <sample>dir</sample> and
-       <sample>file</sample>, are selected, rules that apply to file
-       <stronge>or</strong> directory object classes are selected).
+       classes, such as <samp>dir</samp> and <samp>file</samp>, are
+       selected, rules that apply to file <stronge>or</strong>
+       directory object classes are selected).
        </p>
 
        <p>
@@ -454,11 +453,11 @@ above).
   Results can be filtered by selecting one or more object classes.
   This will ensure that only those flows that are allowed for the
   selected object class will be shown (e.g., selecting
-  <sample>file</sample> will prevent flows allowed for
-  <sample>sockets</sample> from being presented).  Use a regular
+  <samp>file</samp> will prevent flows allowed for
+  <samp>sockets</samp> from being presented).  Use a regular
   expression to limit the results by end type.  Only those end types
   that match the provided regular expression will be presented.
-</pp>
+</p>
 
 <p>
   See the separate <a href="infoflow_help.html">help file on

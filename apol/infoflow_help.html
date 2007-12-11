@@ -1,228 +1,318 @@
-An overview of information flow analysis
+<html>
+<head>
+<title>Information Flow Analysis</title>
+</head>
 
+<body>
 
+<h1>An overview of information flow analysis</h1>
+
+<p>
 Apol supports the ability to automate the search for overt information
 flows between two types.  The purpose of this analysis is to identify
 undesirable or unexpected flows of information allowed by a Type
-Enforcement (TE) policy.  For example, imagine that the type shadow_t
-is assigned to the shadow password file /etc/shadow.  To determine all
-the types to which information can flow from the shadow_t type (e.g,
-indicating possible paths for encrypted passwords to be
-unintentionally leaked), do a "flow from" analysis on the shadow_t
-type.  Another example might be a firewall application where the
-intent is to understand all flows allowed between two network
-interfaces.
+Enforcement (TE) policy.  For example, imagine that the type
+<samp>shadow_t</samp> is assigned to the shadow password file
+<tt>/etc/shadow</tt>.  To determine all the types to which information
+can flow from the <samp>shadow_t</samp> type (e.g, indicating possible
+paths for encrypted passwords to be unintentionally leaked), the user
+would perform a <em>flow from</em> analysis on the
+<samp>shadow_t</samp> type.  Another example might be a firewall
+application where the intent is to understand all flows allowed
+between two network interfaces.
+</p>
 
+<p>
 Information flow analysis in SELinux is challenging for several
 reasons, including:
+</p>
 
-  + The TE policy mechanism is extremely flexible, allowing for good
+<ul>
+<li>The TE policy mechanism is extremely flexible, allowing for good
     and bad flows to be easily specified, not necessarily by the
-    policy writer's intent.
-    
-  + TE policies tend to be complex, with possibly tens of thousands of
-    rules and hundreds of types, making it difficult for a policy
-    writer to know all that is allowed.
-  
-  + SELinux currently supports over 50 object classes and hundreds of
+    policy writer's intent.</li>
+
+<li>TE policies tend to be complex, typically with thousands of rules
+    and types, making it difficult for a policy writer to know all
+    that is allowed.</li>
+
+<li>SELinux currently supports over 50 object classes and hundreds of
     object permissions, each of which must be examined with their
     ability to allow information flow from/to its associated object
-    class.
-    
+    class.</li>
+</ul>
+
+<p>
 The remainder of this file provides an overview on how apol performs
 information flow analysis.
+</p>
 
 
-What Is Overt Information Flow In SELinux?
-------------------------------------------
-Information flow is defined in terms of access allowed (not
+<h1>What Is Overt Information Flow In SELinux?</h1>
+
+<p>
+Information flow is defined in terms of access allowed (but not
 necessarily whether that access is actually used).  In SELinux, all
 objects and subjects have an associated type.  Generally speaking,
 subjects can read or write objects, and thereby cause information to
 flow into and out of objects, and into and out of themselves.  For
-example, given two types (say subject_t and object_t) and a subject
-(with subject_t type) able to read, but not write, an object (with
-object_t type), a rule that would allow this access might look like
-the following:
+example, given two types (say <samp>subject_t</samp> and
+<samp>object_t</samp>) and a subject (with <samp>subject_t</samp>
+type) able to read, but not write, an object (with
+<samp>object_t</samp> type), a rule that would allow this access might
+look like the following:
+</p>
 
-        allow subject_t object_t : {file link_file} read;
+<blockquote>
+  <samp>allow subject_t object_t : {file link_file} read;</samp>
+</blockquote>
 
+<p>
 This case would have the following direct information flows for the
-types subject_t and object_t:
+types <samp>subject_t</samp> and <samp>object_t</samp>:
+<p>
 
-        subject_t: FROM object_t
-        
-        object_t:  TO subject_t
-        
+<ul>
+<li><samp>subject_t</samp>: <strong>FROM</strong> <samp>object_t</samp></li>
+<li><samp>object_t</samp>: <strong>TO</strong> <samp>subject_t</samp></li>
+</ul>
+
+<p>
 If this were the only rule relating to these two types, there would be
 no other direct information flows from or to either.
+</p>
 
+<p>
 An information flow can only occur when a subject is involved; a flow
 directly between two objects cannot exist since a subject is required
 to cause action.  In SELinux, processes are generally the subject.
-There are currently 58 object classes (including processes, which are
-both subjects and objects).
+</p>
 
+<p>
 In apol, the subject is easy to recognize; any type that is used in
-the 'source' field of an allow rule is presumed to be associated with
-a subject, usually as the domain type of some process.  The object
-type is the type used in the 'target' field of an allow rule.
+the <tt>source</tt> field of an <code>allow</code> rule is presumed to
+be associated with a subject, usually as the domain type of some
+process.  The object type is the type used in the <tt>target</tt>
+field of an <code>allow</code> rule.
+</p>
 
+<p>
 In the case of objects, the allow rule also explicitly identifies the
 object classes for which the rule applies.  This fact results in a
 complication for analyzing information flows; specifically that flows
 between types are restricted by object classes.  A flow between types
 is typically not allowed for all object classes, but for only those
 classes identified.  So to be more precise, the direct information
-flows allowed by the object rules for object_t in the example above
-are:
+flows allowed by the object rules for <samp>object_t</samp> in the
+example above are:
+</p>
 
-        object_t [file, link_file]:  TO subject_t 
-        
+<ul>
+<li><samp>object_t</samp> [<samp>file</samp>, <samp>link_file</samp>]:
+<strong>TO</strong> <samp>subject_t</samp></li>
+</ul>
+
+<p>
 A perspective difference exists between source (subject) types and
 target (object) types.  A read permission between a source type and a
 target type is a flow out of the target (which is being read) and flow
 into the source (which, being a process, is receiving the data being
 read into its memory).
+</p>
 
 
-Object permission mappings
---------------------------
-The above examples used 'read' permission, but described flows as 'in'
-or 'out' or 'from' and 'to'.  In general, for information flow
-analysis, the only access between subjects and objects that are of
-interest, are read and write.  Remembering the perspective difference
-mentioned above, read and write access results in the following flow
-for subjects (sources) and objects (targets):
+<h1>Object permission mappings</h1>
 
-        SUBJECT: READ:  IN flow
-                 WRITE: OUT flow
-                  
-        OBJECT:  READ:  OUT flow
-                 WRITE: IN flow
-                
-   NOTE: A process can be either a subject or an object, so when the
-   process object class is specified in the allow rule, the target
-   type is associated with process object class and the object flow
-   rules apply.
-        
+<p>
+The above examples used <em>read</em> permission, but described flows
+as <em>in</em> or <em>out</em> or <em>from</em> and <em>to</em>.  In
+general, for information flow analysis, the only access between
+subjects and objects that are of interest are read and write.
+Remembering the perspective difference mentioned above, read and write
+access results in the following flow for subjects (sources) and
+objects (targets):
+</p>
+
+<dl>
+<dt><em>Subject</em>:</dt>
+<dd>Read: in flow, Write: out flow</dd>
+<dt><em>Object</em>:</dt>
+<dd>Read: out flow, Write: in flow</dd>
+</dl>
+
+<blockquote>
+   <strong>NOTE</strong>: A process can be either a subject or an
+   object, so when the process object class is specified in the
+   <code>allow</code> rule, the target type is associated with
+   <code>process</code> object class and the object flow rules apply.
+</blockquote>
+
+<p>
 Although read and write access are the only access rights of interest
-for an information flow analysis, 'read' and 'write' permissions are
-not the only SELinux permissions of interest.  The name of a
-permission does not necessarily imply whether it allows read or write
-access.  Indeed, to perform an information flow analysis requires
-mapping all defined permissions for all object classes to read and
-write access.
+for an information flow analysis, <code>read</code> and
+<code>write</code> permissions are not the only SELinux permissions of
+interest.  The name of a permission does not necessarily imply whether
+it allows read or write access.  Indeed, to perform an information
+flow analysis requires mapping all defined permissions for all object
+classes to read and write access.
+</p>
 
+<p>
 This mapping can be a difficult chore, and certainly requires
 extensive understanding of the access allowed by each of the hundreds
-of permissions currently defined.  For example, the file object class
-has the 'getattr' permission defined that allows the ability to
-determine information about a file (such as date created and size).
-One could consider this a read access since the subject is reading
-information about the file.  Then again this begins to feel like
-COVERT information flow analysis, where one is concerned about illicit
-signaling of information through non-traditional means (e.g.,
-signaling the critical data by varying the size of file is a covert
-flow, writing the data directly in the file so it can be read is an
-overt flow).  This type of decision must be made for each defined
-object permission for each defined object class.
+of permissions currently defined.  For example, the <code>file</code>
+object class has the <code>getattr</code> permission defined that
+allows the ability to determine information about a file (such as date
+created and size).  One could consider this a read access since the
+subject is reading information about the file.  Then again this begins
+to feel like <em>covert</em> information flow analysis, where one is
+concerned about illicit signaling of information through
+non-traditional means.  For example, signaling the critical data by
+varying the size of file is a covert flow; writing the data directly
+in the file so it can be read is an overt flow.  This type of decision
+must be made for each defined object permission for each defined
+object class.
+</p>
 
+<p>
 The permission mapping mechanism in apol allows each permission to be
 mapped to read, write, both or none.  In addition, the tool attempts
-to 'fix' a permission map to fit the needs of the currently opened
-policy.  So, for example, if a permission map file does not map a set
-of permissions, or skips an entire object class, apol will label the
-missing permissions to "unmapped" and treat them as if they were
-mapped to 'none.'  Likewise, if a map has permissions that are
-undefined in the current policy, it will ignore those mappings.  In
-this way, apol continues its tradition of supporting old and new
-versions of policies (see below for more on managing permission maps).
+to <em>fix</em> a permission map to fit the needs of the currently
+opened policy.  So, for example, if a permission map file does not map
+a set of permissions, or skips an entire object class, apol will label
+the missing permissions to <em>unmapped</em> and treat them as if they
+were mapped to <em>none</em>.  Likewise, if a map has permissions that
+are undefined in the current policy, it will ignore those mappings.
+In this way, apol continues its tradition of supporting old and new
+versions of policies (see below for more on <a
+href="#permission_maps">managing permission maps</a>).
+</p>
 
+<p>
 Apol provides mechanisms to manage and customize permission mappings
-that best suit the analyst's needs.  Use the Tools menu (see below) to
-modify permission mappings.
+that best suit the analyst's needs.  Use the <a
+href="#tools_menu"><tt>Tools</tt></a> menu (see below) to modify
+permission mappings.
+</p>
 
 <a name="permission_weight"><h1>Permission weighting</h1></a>
 
+<p>
 In addition to mapping each permission to read, write, both, or none,
 it is possible to assign the permission a weight between 1 and 10 (the
 default is 10).  Apol uses this weight to rate the importance of the
 information flow this permission represents and allows the user to
 make fine-grained distinctions between high-bandwidth, overt
 information flows and low-bandwidth, or difficult to exploit, covert
-information flows.  For example, the permissions "read" and "write" on
-the file object could be given a weight of 10 because they are very
-high-bandwidth information flows.  Additionally, the "use" permission
-on the fd object (file descriptor) would probably be given a weight of
-1 as it is a very low-bandwidth covert flow at best.  Note that a
-permission might be important for access control, like fd use, but be
+information flows.  For example, the permissions <code>read</code> and
+<code>write</code> on the <code>file</code> object could be given a
+weight of 10 because they are very high-bandwidth information flows.
+However, the <code>use</code> permission on the <code>fd</code> object
+(file descriptor) would probably be given a weight of 1 as it is a
+very low-bandwidth covert flow at best.  Note that a permission might
+be important for access control, like <code>fd use</code>, but be
 given a low weight for information flow because it cannot be used to
 pass large amounts of information.
+</p>
 
+<p>
 The default permission maps that are installed with apol have weights
 assigned for all of the permissions. The weights are in four general
 categories as follows:
+</p>
 
-  1 - 2     difficult to exploit covert flows (example: fd:use)
-  3 - 5     less difficult to exploit covert flows
-            (example: process:signal)
-  6 - 7     difficult to use, noisy, or low-bandwidth overt flows
-            (example: file:setattr)
-  8 - 10    high-bandwidth overt flows (example: file:write)
+<dl>
 
+<dt>1 - 2</dt>
+<dd>difficult to exploit covert flows (example:
+<code>fd:use</code>)</dd>
+
+<dt>3 - 5</dt>
+<dd>less difficult to exploit covert flows (example:
+<code>process:signal</code>)</dd>
+
+<dt>6 - 7</dt>
+<dd>difficult to use, noisy, or low-bandwidth overt flows (example:
+<code>file:setattr</code>)</dd>
+
+<dt>8 - 10</dt>
+<dd>high-bandwidth overt flows (example: <code>file:write</code>)</dd>
+
+</dl>
+
+<p>
 These categories are loosely defined and the placement of permissions
 into these categories is subjective.  Additional work needs to be done
 to verify the accuracy of both the mappings of the permissions and the
 assigned weights.
+</p>
 
+<p>
 These weights are used in transitive information flow analysis to rank
 the results and to make certain that important paths between types are
 presented first.  For example, consider a policy with the following
 information flows:
+</p>
 
-        allow one_t two_t : file write;
-        allow three_t two_t : file read;
-        allow one_t three_t : fd use;
+<blockquote>
+  <samp>allow one_t two_t : file write;</samp><br>
+  <samp>allow three_t two_t : file read;</samp><br>
+  <samp>allow one_t three_t : fd use;</samp>
+</blockquote>
 
+<p>
 If the permissions were mapped as described above and an analysis of
-the transitive flows from one_t to three_t were done, the analysis
-would return the path one_t->two_t->three_t first because the read and
-write permissions have a much higher weight.  The direct flow between
-one_t and three_t would still be returned by the find more flows, but
-it would appear later in the list of flows.
+the transitive flows from <samp>one_t</samp> to <samp>three_t</samp>
+were done, the analysis would return the path
+<tt>one_t-&gt;two_t-&gt;three_t</tt> first because the
+<samp>read</samp> and <samp>write</samp> permissions have a much
+higher weight.  The direct flow between <samp>one_t</samp> and
+<samp>three_t</samp> would still be returned by the <tt>Find more
+flows</tt> feature, but it would appear later in the list of flows.
+</p>
 
 
-Types of information flow analysis
-----------------------------------
-The examples so far have only looked at 'direct' information flows.
-As its name implies, direct information flow analysis examines a
-policy for information flows that are directly permitted by one or
-more allow rules.  In essence, every allow rule defines a direct
-information flow between the source and target types (for those
-allowed permissions that map to read, write, or both).  The direct
-information flow analysis automates the search for these direct flows.
+<h1>Types of information flow analysis</h1>
 
+<p>
+Most of the examples so far have only looked at <em>direct</em>
+information flows.  As its name implies, direct information flow
+analysis examines a policy for information flows that are directly
+permitted by one or more <code>allow</code> rules.  In essence, every
+<code>allow</code> rule defines a direct information flow between the
+source and target types (for those allowed permissions that map to
+read, write, or both).  The direct information flow analysis automates
+the search for these direct flows.
+</p>
+
+<p>
 Transitive information flow analysis attempts to link together a
 series of direct information flows to find an indirect path in which
 information can flow between two types.  The results for a transitive
-closure will show one or more steps in the chain required for
-information to flow between the start and end types.  Currently, the
-results will only show one such path for each end type; specifically
-the shortest path.
+query will show one or more steps in the chain required for
+information to flow between the start and end types.
+</p>
 
+<p>
 For example, given the following rules:
+</p>
 
-        allow one_t two_t : file write;
-        allow three_t two_t: file read;
-        
-A direct flow analysis between one_t and three_t would not show any
-flows since no rule explicitly allows access between them.  However, a
-two-step flow exists that would allow flow between these two types,
-namely one_t writing information into a file type (two_t) that three_t
-can read.  These are the types of flows that the transitive analysis
-attempts to find.
+<blockquote>
+  <samp>allow one_t two_t : file write;</samp><br>
+  <samp>allow three_t two_t: file read;</samp>
+</blockquote>
 
+<p>
+A direct flow analysis between <samp>one_t</samp> and
+<samp>three_t</samp> would not show any flows since no rule explicitly
+allows access between them.  However, a two-step flow exists that
+would allow flow between these two types, namely <samp>one_t</samp>
+writing information into a file type (<samp>two_t</samp>) that
+<samp>three_t</samp> can read.  These are the types of flows that the
+transitive analysis attempts to find.
+</p>
+
+<p>
 For both analyses, the results are presented in a less-than-desirable
 tree form (a more natural form might be a graph presentation;
 presently we are not prepared for that type of investment into the
@@ -230,91 +320,117 @@ GUI).  Each node in the tree represents a flow (in the direction
 selected) between the type of the parent node and the type of the
 node.  The results window shows each step of the flow including the
 contributing access rule(s).
+</p>
 
 
-Managing permission mappings
-----------------------------
-The ability to directly manage permission maps is important for the 
-following reasons: 
+<a name="permission_maps"><h1>Managing permission mappings</h1></a>
 
-  + Permission maps are central to analyzing information flows, and
+<p>
+The ability to directly manage permission maps is important for the
+following reasons:
+</p>
+
+<ul>
+<li>Permission maps are central to analyzing information flows, and
     the correctness of the map has a direct influence on the value of
-    the results.
+    the results.</li>
 
-  + The mapping for individual permissions and object classes are
+<li>The mapping for individual permissions and object classes are
     subjective, and changing permissions to alter the analysis might
     be necessary (e.g., by unmapping certain object classes to remove
-    them from the analysis).
+    them from the analysis).</li>
 
-  + The analyst may be working with several different policies each
-    with different definitions of object classes and permissions.
+<li>The analyst may be working with several different policies each
+    with different definitions of object classes and permissions.</li>
+</ul>
 
-    
-Because of these reasons, apol was designed to provide great latitude
-in managing permission mappings using Tools menu.  A user need not
-manage permission maps directly; apol is installed with default
-permission maps (typically in /usr/local/share/setools-<version>/)
-that will be loaded automatically when an information flow analysis is
-performed.
+<p>
+<a name="tools_menu">Because</a> of these reasons, apol was designed
+to provide great latitude in managing permission mappings using
+<tt>Tools</tt> menu.  A user need not manage permission maps directly;
+apol is installed with default permission maps (typically in
+<tt>/usr/local/share/setools-&lt;version&gt;/</tt>) that will be
+loaded automatically when an information flow analysis is performed.
+</p>
 
-Use the Tools menu to manually load a permission map from an arbitrary
-file.  This capability allows the user to keep several versions of
-permission map files, loading the correct one for a given analysis.
+<p>
+Use the <tt>Tools</tt> menu to manually load a permission map from an
+arbitrary file.  This capability allows the user to keep several
+versions of permission map files, loading the correct one for a given
+analysis.
+</p>
 
+<p>
 Although the user could view and modify mappings by editing a map file
 directly, an easier (and less error-prone) approach is apol's perm map
-viewer.  Select View Perm Map from the Tools menu to display all
-object classes and permissions currently mapped (or unmapped) in the
-currently loaded policy.  In addition, each permission's weight value
-is shown.  These values tell apol the importance of each permission to
-the analysis.  The user can configure these weight values according to
-the analysis goals.  For example, the user may consider any read or
-write permissions of highest importance to the analysis, whereas
-permission to use a file descriptor may be of least importance.  A
-permission will default to a weight of 10 if a weight value is not
-provided for the permission in the permission map.
+viewer.  Select <tt>View Perm Map</tt> from the <tt>Tools</tt> menu to
+display all object classes and permissions in the currently loaded
+policy.  The state of each permission (direction of flow or unmapped)
+along with its weight value is shown.  These weights tell apol the
+importance of each permission to the analysis.  The user can configure
+these weight values according to the analysis goals.  For example, the
+user may consider any read or write permissions of highest importance
+to the analysis, whereas permission to use a file descriptor may be of
+least importance.  A permission will default to a weight of 10 if a
+weight value is not provided in the permission map.
+</p>
 
-A user has access to the "default" permission file.  If there exists a
-file named .apol_perm_mapping in his home directory (i.e.,
-$HOME/.apol_perm_mapping), then it is used when opening the default
-file.  Otherwise the default file will be read from SETools's
-installed location, typically /usr/local/share/setools-<version>.  The
-file .apol_perm_mapping is always used as the destination when saving
-to the default permission file.
+<p>
+A user has access to the <em>default</em> permission file.  If there
+exists a file named <tt>.apol_perm_mapping</tt> in his home directory,
+then it is used when opening the default file.  Otherwise the default
+file will be read from SETools's installed location, typically
+<tt>/usr/local/share/setools-&lt;version&gt;</tt>.  The file
+</tt>.apol_perm_mapping</tt> is always used as the destination when
+saving to the default permission file.
+</p>
 
-   NOTE: Only one permission map may be opened at a time, and only
-   when a policy is already opened.  If apol has performed an
-   information flow analysis, the default permission map will be
-   loaded automatically unless a permission map was previously loaded.
-   Closing the policy will also close any existing permission mapping.
-   Unsaved changes will be lost.
+<blockquote>
+   <strong>NOTE</strong>: Only one permission map may be opened at a
+   time, and only when a policy is already opened.  If apol has
+   performed an information flow analysis, the default permission map
+   will be loaded automatically unless a permission map was previously
+   loaded.  Closing the policy will also close any existing permission
+   mapping.  Unsaved changes will be lost.
+</blockquote>
 
 
-Finding more flows
-------------------
+<h1>Finding more flows</h1>
+
+<p>
 For a transitive information flow, there might be many different
 information flows between two types.  For example, given the
 following policy:
+</p>
 
-        allow one_t two_t : file write;
-        allow three_t two_t: file read;
-        allow four_t two_t: file read;
-        allow four_t three_t: file write;
+<blockquote>
+  <samp>allow one_t two_t : file write;</samp><br>
+  <samp>allow three_t two_t: file read;</samp><br>
+  <samp>allow four_t two_t: file read;</samp><br>
+  <samp>allow four_t three_t: file write;</samp>
+</blockquote>
 
-In this policy, two ways exist that information can flow between one_t
-and three_t: through three_t and through three_t and four_t. In
-complicated policies, many information flows between two types can
-exist, but the initial transitive information flow analysis might not
-find all of them.  For example, apol might only find the flow through
-three_t and four_t initially in the policy above.  Apol provides the
-means to find more information flows between two types after the
+<p>
+In this policy, two ways exist that information can flow between
+<samp>one_t</samp> and <samp>three_t</samp>: through
+<samp>three_t</samp> and through <samp>three_t</samp> and
+<samp>four_t</samp>. In complicated policies, many information flows
+between two types can exist, but the initial transitive information
+flow analysis might not find all of them.  For example, apol might
+only find the flow through <samp>three_t</samp> and
+<samp>four_t</samp> initially in the policy above.  The user may have
+apol try to find more information flows between two types after the
 inital analysis is completed.  In the results display for an end type,
-there is a link labeled "Find More Flows."  Clicking on the link will
-bring up a dialog box that allows the user to set a maximum time
-duration and a maximum number of flows.  Finding all of the paths
+there is a link labeled <tt>Find More Flows</tt>.  Clicking on the
+link will bring up a dialog box that allows the user to set a maximum
+time duration and a maximum number of flows.  Finding all of the paths
 between two types could take a significant amount of time for a
-complicated policy, so this dialog provides the means to set limits on
-the search. The search will stop when either of the limits are met.
-After the search completes, the additional paths will be displayed in
-the same results tab.  Note that if a large number of flows are found
-it may take the display several seconds to render the text.
+complex policy, so this dialog provides to limit the search.  The
+search will stop when either of limits are met.  After the search
+completes, the additional paths will be displayed in the same results
+tab.  Note that if a large number of flows are found it may take the
+display some time to render the text.
+</p>
+
+</body>
+</html>

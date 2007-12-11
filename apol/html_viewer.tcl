@@ -53,12 +53,10 @@ proc Apol_HTML::view_file {f} {
     variable widgets
     if {![winfo exists $viewer]} {
         _create_viewer
-        $widgets(browser) goto "file://$f"
-        $viewer draw {} 0 600x500
     } else {
         raise $viewer
-        $widgets(browser) goto "file://$f"
     }
+    $widgets(browser) goto "file://$f"
 }
 
 #### private stuff below ####
@@ -78,10 +76,9 @@ namespace eval hv3 {
 proc Apol_HTML::_create_viewer {} {
     variable viewer
     variable widgets
-    set viewer [Dialog .apol_html_viewer -modal none -parent . \
-                    -transient false -cancel 0 -default 0 -separator 1]
+    set viewer [toplevel .apol_html_viewer -width 600 -height 500]
 
-    set f [$viewer getframe]
+    set f $viewer
     frame $f.toolbar
     pack $f.toolbar -fill x -side top
     set widgets(back) [::hv3::toolbutton $f.toolbar.back -text Back \

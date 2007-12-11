@@ -504,7 +504,7 @@ proc Apol_Widget::showPopupParagraph {title info} {
         $infoPopup2 add -text "Close" -command [list destroy $infoPopup2]
         set sw [ScrolledWindow [$infoPopup2 getframe].sw -auto both -scrollbar both]
         $sw configure -relief sunken
-        set text [text [$sw getframe].text -font $ApolTop::text_font \
+        set text [text [$sw getframe].text -font [Apol_Prefs::getPref text_font] \
                       -wrap none -width 75 -height 25 -bg white]
         $sw setwidget $text
         update

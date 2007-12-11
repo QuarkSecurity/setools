@@ -1,5 +1,8 @@
 2007-12-10  J. Tang  <jtang@tresys.com>
 
+	* Apol help files are now formatted using HTML instead of plain
+	text files.
+
 	* Renamed relabel_module.tcl to file_relabel_module.tcl.  Changed
 	the name with apol from "Direct Relabel" to "File Relabel".
 

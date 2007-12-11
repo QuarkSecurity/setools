@@ -76,9 +76,9 @@ transitions.
 <p>
 Given an understanding of the three types of interest in a domain
 transition, the criteria for an allowed domain transition are as
-follows.  In the examples below, assume <sample>user_t</sample> is the
-source type, <sample>passwd_t</sample> is the target type, and
-<sample>passwd_exec_t</sample> is the file entry point type.
+follows.  In the examples below, assume <samp>user_t</samp> is the
+source type, <samp>passwd_t</samp> is the target type, and
+<samp>passwd_exec_t</samp> is the file entry point type.
 </p>
 
 <ol>
@@ -90,7 +90,7 @@ source type, <sample>passwd_t</sample> is the target type, and
 </p>
 
 <blockquote>
-   <sample>allow user_t passwd_t : process transition;</sample>
+   <samp>allow user_t passwd_t : process transition;</samp>
 </blockquote>
 
 <p>meets this criterion by allowing the source type (<tt>user_t</tt>)
@@ -106,7 +106,7 @@ source type, <sample>passwd_t</sample> is the target type, and
 </p>
 
 <blockquote>
-   <sample>allow user_t passwd_exec_t : file {read getattr execute};</sample>
+   <samp>allow user_t passwd_exec_t : file {read getattr execute};</samp>
 </blockquote>
 
 <p>meets the criterion by allowing the source type (<tt>user_t</tt>)
@@ -122,12 +122,12 @@ source type, <sample>passwd_t</sample> is the target type, and
 </p>
 
 <blockquote>
-   <sample>allow passwd_t passwd_exec_t : file entrypoint;</sample>
+   <samp>allow passwd_t passwd_exec_t : file entrypoint;</samp>
 </blockquote>
 
 <p>meets this criterion by allowing the target type
-    (<tt>passwd_t</tt>) <tt>file entrypoint</tt> access to the file
-    entrypoint type (<tt>passwd_exec_t</tt>).
+   (<tt>passwd_t</tt>) <tt>file entrypoint</tt> access to the file
+   entrypoint type (<tt>passwd_exec_t</tt>).
 </p>
 </li>
 
@@ -139,8 +139,8 @@ source type, <sample>passwd_t</sample> is the target type, and
 </p>
 
 <blockquote>
-  <sample>type_transition user_t password_exec_t : process
-  passwd_t;</sample>
+  <samp>type_transition user_t password_exec_t : process
+  passwd_t;</samp>
 </blockquote>
 
 <p>meets this criterion by specifying that when <tt>user_t</tt>
@@ -153,7 +153,7 @@ source type, <sample>passwd_t</sample> is the target type, and
 </p>
 
 <blockquote>
-   <sample>allow user_t self : process setexec;</sample>
+   <samp>allow user_t self : process setexec;</samp>
 </blockquote>
 
 <p>allows the source type (<tt>user_t</tt>) to specify the type of new
@@ -197,10 +197,10 @@ This dialog shows lists of included object types, object classes, and
 permissions.  An access filter may be particulary useful to a user
 searching for transitions to domains that have specific access to an
 object type and/or class.  For example, one could determine whether
-the type <sample>user_t</sample> is allowed to transition to a domain
-that can write a file of type <sample>shadow_t</sample>.  To run this
-query from apol, specify the starting type as <kbd>user_t</kbd>, go to
-the Access Filters dialog, set <kbd>shadow_t</kbd> as the onlyincluded
+the type <samp>user_t</samp> is allowed to transition to a domain that
+can write a file of type <samp>shadow_t</samp>.  To run this query
+from apol, specify the starting type as <kbd>user_t</kbd>, go to the
+Access Filters dialog, set <kbd>shadow_t</kbd> as the onlyincluded
 object type, select <kbd>file</kbd> as the object classes, and then
 select the <kbd>write</kbd> permission.  If multiple types, classes,
 or permissions are selected, the results will include all transitions
