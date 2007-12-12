@@ -639,7 +639,18 @@ snit::type ::hv3::hv3::selectionmanager {
           # nothing to select
           return
       }
-      foreach {myToNode myToIdx} [$myHv3 text index [expr {$textlen - 1}]] {break}
+      # end selection at the last text node
+      set myToNode {}
+      for {set j [expr {$textlen - 1}]} {$j > $i} {incr j -1} {
+          foreach {myToNode myToIdx} [$myHv3 text index $j] {break}
+          if {$myToNode != {}} {
+              break
+          }
+      }
+      if {$myToNode == {}} {
+          # shouldn't get here, but just in case
+          return
+      }
       $myHv3 tag add selection $myFromNode $myFromIdx $myToNode $myToIdx
       selection own $myHv3
   }
@@ -2124,8 +2135,8 @@ snit::widget ::hv3::hv3 {
   delegate option -targetcmd        to myHyperlinkManager
 
   # Delegated public methods
-  delegate method selected          to mySelectionManager
   delegate method selectall         to mySelectionManager
+  delegate method selected          to mySelectionManager
   delegate method *                 to myHtml
 
   # Standard scrollbar and geometry stuff is delegated to the html widget

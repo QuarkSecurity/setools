@@ -1524,7 +1524,7 @@ HtmlTextIndexCmd(clientData, interp, objc, objv)
         }
         for ( ; pMap; pMap = pMap->pNext) {
             assert(!pMap->pNext || pMap->iStrIndex >= pMap->pNext->iStrIndex);
-            /* check if user's offset part of this mapping and is not
+            /* check if offset is part of this mapping and is not
                beyond this string */
             if (pMap->iStrIndex <= iIndex &&
                 iIndex - pMap->iStrIndex < Tcl_NumUtfChars(pMap->pTextNode->zText, -1)) {

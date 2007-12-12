@@ -3,6 +3,7 @@ SUBDIRS = hv
 if INSTALL_TKHTML
   MAYBE_LIBTKHTML = libTkhtml3.a
   MAYBE_LIBTKHTMLSO = libTkhtml3.so.3.0
+  MAYBE_PKGINDEX = pkgIndex.tcl
 endif
 
 lib_LIBRARIES = $(MAYBE_LIBTKHTML)
@@ -12,7 +13,7 @@ libTkhtml3so_SONAME = libTkhtml3.so.3
 short_name = libTkhtml3.so
 libTkhtml3sodir = $(libdir)/setools/libTkhtml3
 
-package_SCRIPTS = pkgIndex.tcl
+package_SCRIPTS = $(MAYBE_PKGINDEX)
 packagedir = $(libTkhtml3sodir)
 
 libTkhtml3_a_SOURCES = \
@@ -93,14 +94,18 @@ $(package_SCRIPTS): $(libTkhtml3so_DATA)
 	$(mkdir_p) libTkhtml3
 	cp $^ $@ libTkhtml3
 
+if INSTALL_TKHTML
+
 install-data-hook:
 	cd $(DESTDIR)$(libTkhtml3sodir) && $(LN_S) -f $(libTkhtml3so_DATA) $(libTkhtml3so_SONAME)
 
-mostlyclean-local:
-	-rm -rf *.gcno *.gcda *.gprof *.gcov $(libTkhtml3so_DATA) $(libTkhtml3so_SONAME)
-
 uninstall-local:
 	-rm -rf $(DESTDIR)$(libTkhtml3sodir)/$(libTkhtml3so_DATA) $(DESTDIR)$(libTkhtml3sodir)/$(libTkhtml3so_SONAME)
+
+endif
+
+mostlyclean-local:
+	-rm -rf *.gcno *.gcda *.gprof *.gcov $(libTkhtml3so_DATA) $(libTkhtml3so_SONAME)
 
 MOSTLYCLEANFILES = $(BUILT_SOURCES) $(libTkhtml3so_DATA) $(libTkhtml3so_SONAME) \
 	libTkhtml3/$(libTkhtml3so_DATA) libTkhtml3/$(package_SCRIPTS)
