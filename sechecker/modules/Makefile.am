@@ -1,9 +1,11 @@
 modulesdir = @profile_install_dir@
 modules_DATA = \
-	find_domains.so
+	find_domains.so \
+	find_file_types.so
 
 EXTRA_DIST = \
-	find_domains.cc find_domains.hh
+	find_domains.cc find_domains.hh \
+	find_file_types.cc find_file_types.hh
 
 #dist_noinst_DATA = \
 #	template/profiles.readme \

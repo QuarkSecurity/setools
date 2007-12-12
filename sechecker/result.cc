@@ -173,6 +173,14 @@ namespace sechk
 			qpol_user_get_name(apol_policy_get_qpol(pol), static_cast<qpol_user_t*>(_data), &name);
 			out << name;
 		}
+		else if (_type == typeid(std::string*))
+		{
+			out << static_cast<string*>(_data);
+		}
+		else if (_type == typeid(sefs_entry*))
+		{
+			out << (rule = static_cast<sefs_entry*>(_data)->toString());
+		}
 		else
 		{
 			out << _type.name() << ":" << std::showbase << std::setbase(16) << _data;

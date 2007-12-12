@@ -146,14 +146,19 @@ namespace sechk
 						out << endl;
 					}
 				}
-				// if count per line reached or some kind of rule, add a newline
-				else if (!element_count || j->second.Element().type() == typeid(qpol_avrule_t*) ||
+				// if some kind of rule, add a newline
+				else if (j->second.Element().type() == typeid(qpol_avrule_t*) ||
 				        j->second.Element().type() == typeid(qpol_terule_t*) ||
 				        j->second.Element().type() == typeid(qpol_range_trans_t*) ||
 				        j->second.Element().type() == typeid(qpol_role_allow_t*) ||
 				        j->second.Element().type() == typeid(qpol_role_trans_t*) )
 				{
 					out << endl;
+				}
+				// if count per line reached
+				else if (!element_count)
+				{
+					out << "," << endl;
 				}
 				else // in short mode but only need a comma
 				{

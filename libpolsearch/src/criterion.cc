@@ -611,8 +611,15 @@ enum match_type determine_match_type(const apol_policy_t * policy, const void *c
 			const qpol_user_t *user;
 			const apol_context_t *ctx = static_cast < const sefs_entry * >(candidate)->context();
 			const char *name = apol_context_get_user(ctx);
-			qpol_policy_get_user_by_name(qp, name, &user);
-			input.list = new vector < string > (get_all_names(user, POLSEARCH_ELEMENT_USER, policy));
+			if (string("") != name)
+			{
+				qpol_policy_get_user_by_name(qp, name, &user);
+				input.list = new vector < string > (get_all_names(user, POLSEARCH_ELEMENT_USER, policy));
+			}
+			else // only possible if context was "<<none>>"
+			{
+				input.list = new vector < string > ();
+			}
 		}
 		else
 		{
@@ -627,8 +634,15 @@ enum match_type determine_match_type(const apol_policy_t * policy, const void *c
 			const qpol_role_t *role;
 			const apol_context_t *ctx = static_cast < const sefs_entry * >(candidate)->context();
 			const char *name = apol_context_get_role(ctx);
-			qpol_policy_get_role_by_name(qp, name, &role);
-			input.list = new vector < string > (get_all_names(role, POLSEARCH_ELEMENT_ROLE, policy));
+			if (string("") != name)
+			{
+				qpol_policy_get_role_by_name(qp, name, &role);
+				input.list = new vector < string > (get_all_names(role, POLSEARCH_ELEMENT_ROLE, policy));
+			}
+			else // only possible if context was "<<none>>"
+			{
+				input.list = new vector < string > ();
+			}
 		}
 		else
 		{
@@ -643,8 +657,15 @@ enum match_type determine_match_type(const apol_policy_t * policy, const void *c
 			const qpol_type_t *type;
 			const apol_context_t *ctx = static_cast < const sefs_entry * >(candidate)->context();
 			const char *name = apol_context_get_type(ctx);
-			qpol_policy_get_type_by_name(qp, name, &type);
-			input.list = new vector < string > (get_all_names(type, POLSEARCH_ELEMENT_TYPE, policy));
+			if (string("") != name)
+			{
+				qpol_policy_get_type_by_name(qp, name, &type);
+				input.list = new vector < string > (get_all_names(type, POLSEARCH_ELEMENT_TYPE, policy));
+			}
+			else // only possible if context was "<<none>>"
+			{
+				input.list = new vector < string > ();
+			}
 		}
 		else
 		{
