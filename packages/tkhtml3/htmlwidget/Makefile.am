@@ -11,7 +11,7 @@ lib_LIBRARIES = $(MAYBE_LIBTKHTML)
 libTkhtml3so_DATA = $(MAYBE_LIBTKHTMLSO)
 libTkhtml3so_SONAME = libTkhtml3.so.3
 short_name = libTkhtml3.so
-libTkhtml3sodir = $(libdir)/setools/libTkhtml3
+libTkhtml3sodir = $(libdir)/setools/Tkhtml3
 
 package_SCRIPTS = $(MAYBE_PKGINDEX)
 packagedir = $(libTkhtml3sodir)

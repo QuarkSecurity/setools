@@ -430,7 +430,8 @@ EOF
             install_tkhtml=no
             ;;
        1)
-            AC_MSG_ERROR([failed.  Try using --disable-tkhtml-check flag if compiling in a non-graphical environment.])
+            AC_MSG_WARN([failed, assuming Tkhtml not installed.  (If Tkhtml really exists, use --disable-tkhtml-check flag.)])
+            install_tkhtml=yes
             ;;
        *)
             AC_MSG_WARN([not found, using setools's Tkhtml 3.0 instead])

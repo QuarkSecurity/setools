@@ -174,7 +174,8 @@ You can customize your SETools build using the flags given to
       Assume that Tkhtml 3.0 is installed on the system.  The
       configure script normally tries to launch a Tcl script that
       loads Tkhtml3, which requires a running X session.  You will
-      need this flag if compiling in a non-X environment.
+      need this flag if compiling in a non-X environment and you are
+      certain you have Tkhtml installed on your system.
 
   --disable-selinux-check
       Disable the build-time check for SELinux.  In rare

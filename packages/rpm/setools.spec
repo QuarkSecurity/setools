@@ -26,7 +26,6 @@ Requires: setools-libs = %{version}-%{release} setools-libs-tcl = %{version}-%{r
 %define sqlite_ver 3.2.0
 %define swig_ver 1.3.28
 %define tcltk_ver 8.4.9
-%define tkhtml_ver 3.0
 
 # auxillary files
 %define seaudit_pam packages/rpm/seaudit.pam
@@ -170,7 +169,7 @@ This package includes the following console tools:
 Summary: Policy analysis graphical tools for SELinux
 Group: System Environment/Base
 Requires: tcl >= %{tcltk_ver} tk >= %{tcltk_ver} bwidget >= %{bwidget_ver}
-Requires: tcllib Tkhtml >= %{tkhtml_ver}
+Requires: tcllib
 Requires: setools-libs = %{version}-%{release} setools-libs-tcl = %{version}-%{release}
 Requires: glib2 gtk2 >= %{gtk_ver} usermode
 BuildRequires: tcllib
@@ -199,7 +198,7 @@ This package includes the following graphical tools:
 
 %build
 %configure --libdir=%{_libdir} \
-	--disable-bwidget-check --disable-selinux-check --disable-tkhtml-check \
+	--disable-bwidget-check --disable-selinux-check \
 	--enable-swig-python --enable-swig-java --enable-swig-tcl 
 make %{?_smp_mflags}
 
@@ -321,6 +320,7 @@ rm -rf ${RPM_BUILD_ROOT}
 %{_bindir}/seaudit
 %{_bindir}/sediffx
 %{tcllibdir}/apol_tcl/
+%{tcllibdir}/Tkhtml3/
 %{setoolsdir}/apol_help.html
 %{setoolsdir}/domaintrans_help.html
 %{setoolsdir}/file_relabel_help.html
