@@ -22,6 +22,7 @@ namespace eval Apol_HTML {
     variable viewer {}
     variable popup {}
     variable widgets
+    variable prev_save {}
 }
 
 proc Apol_HTML::init {} {
@@ -54,6 +55,7 @@ proc Apol_HTML::view_file {f} {
     variable widgets
     if {![winfo exists $viewer]} {
         _create_viewer
+        _locationChanged - - -
     } else {
         raise $viewer
     }
@@ -83,25 +85,32 @@ proc Apol_HTML::_create_viewer {} {
     set f $viewer
     frame $f.toolbar
     pack $f.toolbar -fill x -side top
-    set widgets(back) [::hv3::toolbutton $f.toolbar.back -text Back \
-                           -relief raised -state disabled]
-    set widgets(forward) [::hv3::toolbutton $f.toolbar.forward -text Forward \
-                              -relief raised -state disabled]
+    set back [::hv3::toolbutton $f.toolbar.back -text Back \
+                  -relief raised -state disabled]
+    set forward [::hv3::toolbutton $f.toolbar.forward -text Forward \
+                     -relief raised -state disabled]
+    set widgets(copy) [::hv3::toolbutton $f.toolbar.copy -text Copy \
+                           -relief raised -state disabled \
+                           -command Apol_HTML::_copy]
     set search [::hv3::toolbutton $f.toolbar.search -text Search \
                     -relief raised -command Apol_HTML::_searchButton]
+    set widgets(save) [::hv3::toolbutton $f.toolbar.save -text Save \
+                           -relief raised -command Apol_HTML::_save]
     set close [::hv3::toolbutton $f.toolbar.close -text Close \
                    -relief raised -command [list destroy $viewer]]
-    pack $widgets(back) $widgets(forward) $search $close -side left
+    pack $back $forward $widgets(copy) $search $widgets(save) $close -side left
 
     Separator $f.sep
     pack $f.sep -fill x -side top
 
-    set widgets(browser) [::hv3::browser $f.browser]
+    set widgets(browser) [::hv3::browser $f.browser -zoom 1.33]
     pack $widgets(browser) -fill both -expand 1
-    $widgets(browser) configure -backbutton $widgets(back)
-    $widgets(browser) configure -forwardbutton $widgets(forward)
+    $widgets(browser) configure -backbutton $back
+    $widgets(browser) configure -forwardbutton $forward
     [$widgets(browser) hv3] configure -isvisitedcmd Apol_HTML::_isLinkVisited
     trace add variable [$widgets(browser) titlevar] write Apol_HTML::_titleChanged
+    trace add variable [$widgets(browser) locationvar] write Apol_HTML::_locationChanged
+    bind $widgets(browser) <ButtonRelease-1> +Apol_HTML::_updateCopyButton
     bind $widgets(browser) <Button-3> [list Apol_HTML::_popup %W %x %y]
 }
 
@@ -118,6 +127,45 @@ proc Apol_HTML::_titleChanged {name1 name2 op} {
     variable viewer
     variable widgets
     wm title $viewer [set [$widgets(browser) titlevar]]
+}
+
+# Returns a list of three values: the protocol, path (everything
+# following the '://'), and a 1 if the path represents a file from the
+# SETools install location.
+proc Apol_HTML::uri_split {uri} {
+    if {[regexp -- {^([^:]+):\/\/(.*)} $uri -> protocol path]} {
+        set setoolsdir [tcl_config_get_install_dir]
+        if {$protocol == "file" &&
+            [string compare -length [string length $setoolsdir] $path $setoolsdir] == 0} {
+            list $protocol $path 1
+        } else {
+            list $protocol $path 0
+        }
+    } else {
+        return {{} {} 0}
+    }
+}
+
+proc Apol_HTML::_locationChanged {name1 name2 op} {
+    variable viewer
+    variable widgets
+    set uri [set [$widgets(browser) locationvar]]
+    foreach {protocol path is_install_file} [uri_split $uri] {break}
+    if {$is_install_file} {
+        $widgets(save) configure -state disabled
+    } else {
+        $widgets(save) configure -state normal
+    }
+}
+
+proc Apol_HTML::_updateCopyButton {} {
+    variable widgets
+    set hv3 [$widgets(browser) hv3]
+    if {[$hv3 selected] != {}} {
+        $widgets(copy) configure -state normal
+    } else {
+        $widgets(copy) configure -state disabled
+    }
 }
 
 proc Apol_HTML::_popup {path x y} {
@@ -148,6 +196,18 @@ proc Apol_HTML::_selectAll {path} {
     variable widgets
     set hv3 [$widgets(browser) hv3]
     $hv3 selectall
+    $widgets(copy) configure -state normal
+}
+
+proc Apol_HTML::_save {} {
+    variable viewer
+    variable widgets
+    variable prev_save
+    set name [tk_getSaveFile -title "Save Page" -parent $viewer -initialfile $prev_save]
+    if {$name != {}} {
+        set uri [set [$widgets(browser) locationvar]]
+        puts "would save $uri"
+    }
 }
 
 # Callback invoked from hv3_browser when the escape key is pressed.
