@@ -43,7 +43,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-char *unchanged_users_mls[] = {
+static char *unchanged_users_mls[] = {
 	/* 13.0 */
 	"placeholder_u",
 	"reyna_u",
@@ -51,8 +51,8 @@ char *unchanged_users_mls[] = {
 };
 
 /* these aren't real tests, but the arrays must be declared anyways */
-char *added_users_mls[] = { NULL };
-char *removed_users_mls[] = { NULL };
+static char *added_users_mls[] = { NULL };
+static char *removed_users_mls[] = { NULL };
 
 /* These strings are always in the same order: added, removed, modified
  *
@@ -61,7 +61,7 @@ char *removed_users_mls[] = { NULL };
  * range[...]
  * roles[...]
  */
-char *modified_users_mls[] = {
+static char *modified_users_mls[] = {
 	/* 13.3.03 */
 	"su_u: d[+s2 -s1]",
 	/* 13.3.04 */
@@ -98,13 +98,13 @@ char *modified_users_mls[] = {
 	NULL
 };
 
-char *unchanged_rangetrans[] = {
+static char *unchanged_rangetrans[] = {
 /* 07.0  */
 	"range_transition placeholder_t oak_t : file s2",
 	NULL
 };
 
-char *added_rangetrans[] = {
+static char *added_rangetrans[] = {
 /* 07.1 */
 	"range_transition bear_t stone_t : gc s1",
 	"range_transition log_t bear_t : ipc s2",
@@ -112,7 +112,8 @@ char *added_rangetrans[] = {
 	"range_transition rock_t stone_t : dir s3",
 	NULL
 };
-char *removed_rangetrans[] = {
+
+static char *removed_rangetrans[] = {
 
 /* 07.2 */
 	"range_transition potato_t daikon_t : dir s0:c2",
@@ -125,7 +126,7 @@ char *removed_rangetrans[] = {
 
 /* m{...} represents a change in the minimum set of the transition and is always first,
  * the rest of string is in the same order: added, removed, modified*/
-char *modified_rangetrans[] = {
+static char *modified_rangetrans[] = {
 /* 07.3.0 */
 	"range_transition file_t system_t : process +{s2:c1} ",
 /* 07.3.1 */
@@ -169,7 +170,8 @@ char *added_rangetrans_type[] = {
 	"range_transition trout_t hippo_t : pax s1",
 	NULL
 };
-char *removed_rangetrans_type[] = {
+
+static char *removed_rangetrans_type[] = {
 /* 07.5.0 */
 	"range_transition koala_t stone_t : gc s1",
 /* 07.5.1 */
@@ -190,22 +192,25 @@ char *removed_rangetrans_type[] = {
 	NULL
 };
 
-char *unchanged_levels[] = {
+static char *unchanged_levels[] = {
 /* 06.0 */
 	"s4",
 	NULL
 };
-char *added_levels[] = {
+
+static char *added_levels[] = {
 /* 06.1 */
 	"s6",
 	NULL
 };
-char *removed_levels[] = {
+
+static char *removed_levels[] = {
 /* 06.2 */
 	"s0",
 	NULL
 };
-char *modified_levels[] = {
+
+static char *modified_levels[] = {
 /* 06.3.0 */
 	"s3 +c6",
 /* 06.3.1 */
@@ -217,32 +222,25 @@ char *modified_levels[] = {
 	NULL
 };
 
-char *unchanged_categories[] = {
+static char *unchanged_categories[] = {
 	/* 03.0 */
 	"c1", "c2", "c3", "c4", "c5",
 	NULL
 };
-char *added_categories[] = {
+
+static char *added_categories[] = {
 	/* 03.1 */
 	"c6",
 	NULL
 };
-char *removed_categories[] = {
+
+static char *removed_categories[] = {
 	/* 03.2 */
 	"c0",
 	NULL
 };
 
-char *modified_categories[] = { NULL };
-
-int mls_test_init()
-{
-	if (!(diff = init_poldiff(MLS_ORIG_POLICY, MLS_MOD_POLICY))) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
+static char *modified_categories[] = { NULL };
 
 void build_category_vecs()
 {
@@ -271,7 +269,7 @@ void build_category_vecs()
 	}
 }
 
-char *level_to_string(const void *arg, poldiff_form_e form, int show_changes)
+static char *level_to_string(const void *arg, poldiff_form_e form, int show_changes)
 {
 	poldiff_level_t *level = (poldiff_level_t *) arg;
 	char *str = NULL, *cat = NULL;
@@ -299,7 +297,7 @@ char *level_to_string(const void *arg, poldiff_form_e form, int show_changes)
 	return str;
 }
 
-char *modified_mls_range_to_string(const poldiff_range_t * range)
+static char *modified_mls_range_to_string(const poldiff_range_t * range)
 {
 	char *str = NULL;
 	apol_vector_t *levels = NULL;
@@ -380,7 +378,7 @@ char *modified_mls_range_to_string(const poldiff_range_t * range)
 	return NULL;
 }
 
-char *rangetrans_to_string(const void *arg, poldiff_form_e form, int show_changes)
+static char *rangetrans_to_string(const void *arg, poldiff_form_e form, int show_changes)
 {
 	char *str = NULL;
 	size_t str_len = 0;
@@ -513,7 +511,7 @@ void build_level_vecs()
 	}
 }
 
-char *mls_user_to_string(const void *arg, poldiff_form_e form, int show_changes)
+static char *mls_user_to_string(const void *arg, poldiff_form_e form, int show_changes)
 {
 	poldiff_user_t *u = (poldiff_user_t *) arg;
 	char *str = NULL, *dlevel_str = NULL, *range_str = NULL, *roles_str = NULL;
@@ -599,7 +597,7 @@ void build_user_vecs()
 	}
 }
 
-void mls_category_tests()
+static void mls_category_tests()
 {
 	test_numbers_e test_num = MLS_CATEGORY;
 	poldiff_test_answers_t *answers =
@@ -608,7 +606,7 @@ void mls_category_tests()
 	cleanup_test(answers);
 }
 
-void mls_rangetrans_tests()
+static void mls_rangetrans_tests()
 {
 	test_numbers_e test_num = MLS_RANGETRANS;
 	poldiff_test_answers_t *answers =
@@ -617,7 +615,7 @@ void mls_rangetrans_tests()
 	cleanup_test(answers);
 }
 
-void mls_level_tests()
+static void mls_level_tests()
 {
 	test_numbers_e test_num = MLS_LEVEL;
 	poldiff_test_answers_t *answers = init_answer_vectors(added_levels, removed_levels, unchanged_levels, modified_levels);
@@ -625,7 +623,7 @@ void mls_level_tests()
 	cleanup_test(answers);
 }
 
-void mls_user_tests()
+static void mls_user_tests()
 {
 	test_numbers_e test_num = MLS_USER;
 	poldiff_test_answers_t *answers =
@@ -633,3 +631,29 @@ void mls_user_tests()
 	run_test(NULL, answers, test_num);
 	cleanup_test(answers);
 }
+
+int mls_test_init(void)
+{
+	if (!(diff = init_poldiff(MLS_ORIG_POLICY, MLS_MOD_POLICY))) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+int mls_test_cleanup(void)
+{
+	return poldiff_cleanup();
+}
+
+CU_TestInfo mls_tests[] = {
+	{"Categories", mls_category_tests}
+	,
+	{"Levels", mls_level_tests}
+	,
+	{"Range Transitions", mls_rangetrans_tests}
+	,
+	{"Users (MLS)", mls_user_tests}
+	,
+	CU_TEST_INFO_NULL
+};

@@ -24,10 +24,11 @@
 
 #ifndef NOMLS_TEST
 #define NOMLS_TEST
-int nomls_test_init();
-int nomls_test_cleanup();
 
-void nomls_tests();
-void nomls_unchanged_test();
+#include <CUnit/CUnit.h>
+
+extern CU_TestInfo nomls_tests[];
+extern int nomls_test_init(void);
+extern int nomls_test_cleanup(void);
 
 #endif

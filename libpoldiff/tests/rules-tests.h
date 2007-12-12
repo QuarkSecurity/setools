@@ -24,17 +24,16 @@
 
 #ifndef RULES_TEST
 #define RULES_TEST
-int rules_test_init();
-int rules_test_cleanup();
 
-void rules_avrules_tests();
-void rules_roleallow_tests();
-void rules_roletrans_tests();
-void rules_terules_tests();
+#include <CUnit/CUnit.h>
 
-void build_avrule_vecs();
-void build_terule_vecs();
-void build_roletrans_vecs();
-void build_roleallow_vecs();
+extern CU_TestInfo rules_tests[];
+extern int rules_test_init(void);
+extern int rules_test_cleanup(void);
+
+extern void build_avrule_vecs(void);
+extern void build_roleallow_vecs(void);
+extern void build_roletrans_vecs(void);
+extern void build_terule_vecs(void);
 
 #endif

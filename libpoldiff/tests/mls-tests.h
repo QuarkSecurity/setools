@@ -24,13 +24,13 @@
 
 #ifndef MLS_TEST
 #define MLS_TEST
-int mls_test_init();
-int mls_test_cleanup();
 
-void mls_category_tests();
-void mls_user_tests();
-void mls_rangetrans_tests();
-void mls_level_tests();
+#include <CUnit/CUnit.h>
+
+extern CU_TestInfo mls_tests[];
+extern int mls_test_init(void);
+extern int mls_test_cleanup(void);
+
 void build_category_vecs();
 void build_rangetrans_vecs();
 void build_level_vecs();

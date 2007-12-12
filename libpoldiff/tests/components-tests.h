@@ -25,25 +25,12 @@
 #ifndef COMPONENTS_TEST
 #define COMPONENTS_TEST
 
-#define WRAP_NAME_FUNC(component) const char *poldiff_##component##_get_name_w(const void *arg) { \
-	const poldiff_##component##_t *cls = (const poldiff_##component##_t *)arg; \
-	return poldiff_##component##_get_name(cls); }
+#include <CUnit/CUnit.h>
 
-#define WRAP_MOD_FUNC(component,mod_component,mod_type) const apol_vector_t* poldiff_##component##_get_##mod_type##_##mod_component##_w(const void* arg) { \
-	const poldiff_##component##_t *cls = (const poldiff_##component##_t *)arg; \
-	return poldiff_##component##_get_##mod_type##_##mod_component(cls); }
+extern CU_TestInfo components_tests[];
+extern int components_test_init(void);
+extern int components_test_cleanup(void);
 
-void build_component_vecs(component_funcs_t *);
-
-int components_test_init();
-int components_test_cleanup();
-
-void components_attributes_tests();
-void components_bools_tests();
-void components_commons_tests();
-void components_roles_tests();
-void components_users_tests();
-void components_class_tests();
-void components_types_tests();
+extern void build_component_vecs(component_funcs_t * component_funcs);
 
 #endif

@@ -40,7 +40,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-char *nomls_unchanged_users[] = {
+static char *nomls_unchanged_users[] = {
 /* 13.3.17 */
 	"placeholder_u",
 	"su_u",
@@ -58,25 +58,16 @@ char *nomls_unchanged_users[] = {
 	"reyna_u",
 	NULL
 };
-apol_vector_t *unchanged_users_v;
-apol_vector_t *changed_users_v;
+static apol_vector_t *unchanged_users_v;
+static apol_vector_t *changed_users_v;
 
-char *nomls_changed_users[] = {
+static char *nomls_changed_users[] = {
 /* 13.3.18 */
 	"timera_u -admin_r",
 	"sheena_u +user_r",
 	"jamei_u -aquarium_r",
 	NULL
 };
-
-int nomls_test_init()
-{
-	if (!(diff = init_poldiff(NOMLS_ORIG_POLICY, NOMLS_MOD_POLICY))) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
 
 static void build_nomls_vecs()
 {
@@ -106,7 +97,8 @@ static void build_nomls_vecs()
 		}
 	}
 }
-void nomls_tests()
+
+static void unchanged_test(void)
 {
 	size_t first_diff = 0;
 	int test_result;
@@ -137,3 +129,23 @@ void nomls_tests()
 	apol_vector_destroy(&correct_changed_users_v);
 
 }
+
+int nomls_test_init(void)
+{
+	if (!(diff = init_poldiff(NOMLS_ORIG_POLICY, NOMLS_MOD_POLICY))) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+int nomls_test_cleanup(void)
+{
+	return poldiff_cleanup();
+}
+
+CU_TestInfo nomls_tests[] = {
+	{"Changed & Unchanged Users", unchanged_test}
+	,
+	CU_TEST_INFO_NULL
+};

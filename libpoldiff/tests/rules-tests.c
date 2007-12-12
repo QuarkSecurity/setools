@@ -48,13 +48,13 @@ static apol_vector_t *removed_type_rules_v;
 static apol_vector_t *correct_added_type_rules_v;
 static apol_vector_t *correct_removed_type_rules_v;
 
-char *unchanged_avrules[] = {
+static char *unchanged_avrules[] = {
 /* 01.0 */
 	"allow placeholder_t placeholder_t : file read",
 	"auditallow potato_t pine_t : dir setattr",
 	NULL
 };
-char *added_avrules[] = {
+static char *added_avrules[] = {
 /* 01.1 */
 	"allow bear_t oak_t : fifo_file write",
 	"allow rock_t log_t : file getattr",
@@ -63,7 +63,7 @@ char *added_avrules[] = {
 	"neverallow lion_t bear_t : file execute",
 	NULL
 };
-char *removed_avrules[] = {
+static char *removed_avrules[] = {
 /* 01.2 */
 	"allow rock_t log_t : dir search",
 	"auditallow system_t log_t : node udp_recv",
@@ -78,7 +78,7 @@ char *removed_avrules[] = {
 	NULL
 };
 
-char *modified_avrules[] = {
+static char *modified_avrules[] = {
 /*01.3.0*/
 	"allow firefly_t file_t : file execute +lock",
 /*01.3.1*/
@@ -89,7 +89,7 @@ char *modified_avrules[] = {
 	NULL
 };
 
-char *added_type_avrules[] = {
+static char *added_type_avrules[] = {
 /* 01.4.00 */
 	"auditallow pipe_t bear_t : blk_file ioctl",
 /* 01.4.01 */
@@ -161,7 +161,6 @@ char *added_type_avrules[] = {
 /* 01.4.12 */
 	"neverallow placeholder_t hippo_t : fd use",
 	"neverallow placeholder_t pipe_t : fd use",
-/*********** NEED TO BE ADDED TO DOCUMENT *******/
 	"neverallow bass_t pipe_t : process transition",
 	"neverallow finch_t pipe_t : process transition",
 	"neverallow firefly_t pipe_t : process transition",
@@ -170,7 +169,7 @@ char *added_type_avrules[] = {
 	"neverallow trout_t pipe_t : process transition",
 	NULL
 };
-char *removed_type_avrules[] = {
+static char *removed_type_avrules[] = {
 /* 01.5.00 */
 	"allow koala_t oak_t : fifo_file write",
 /* 01.5.01 */
@@ -261,7 +260,7 @@ BEAR_T IS NO LONGER MAMMAL, THIS RULE DOESNT APPLY*/
 	NULL
 };
 
-char *unchanged_roleallowrules[] = {
+static char *unchanged_roleallowrules[] = {
 /* 09.0*/
 	"allow admin_r staff_r user_r",
 	"allow deity_r { admin_r aquarium_r garden_r guest_r intern_r lumberjack_r mammal_r placeholder_r staff_r user_r zoo_r }",
@@ -269,17 +268,20 @@ char *unchanged_roleallowrules[] = {
 	"allow placeholder_r staff_r",
 	NULL
 };
-char *added_roleallowrules[] = {
+
+static char *added_roleallowrules[] = {
 /* 09.1 */
 	"allow intern_r user_r",
 	NULL
 };
-char *removed_roleallowrules[] = {
+
+static char *removed_roleallowrules[] = {
 /* 09.2 */
 	"allow guest_r user_r",
 	NULL
 };
-char *modified_roleallowrules[] = {
+
+static char *modified_roleallowrules[] = {
 /* 09.3.0 */
 	"allow aquarium_r { guest_r staff_r +admin_r }",
 	"allow user_r { placeholder_r +guest_r }",
@@ -292,7 +294,7 @@ char *modified_roleallowrules[] = {
 	NULL
 };
 
-char *unchanged_roletrans_rules[] = {
+static char *unchanged_roletrans_rules[] = {
 /* 10.0*/
 	"role_transition garden_r birch_t lumberjack_r",
 	"role_transition garden_r oak_t lumberjack_r",
@@ -300,25 +302,29 @@ char *unchanged_roletrans_rules[] = {
 	"role_transition staff_r holly_t garden_r",
 	NULL
 };
-char *added_roletrans_rules[] = {
+
+static char *added_roletrans_rules[] = {
 /* 10.1 */
 	"role_transition guest_r bear_t staff_r",
 	"role_transition intern_r file_t staff_r",
 	NULL
 };
-char *removed_roletrans_rules[] = {
+
+static char *removed_roletrans_rules[] = {
 /* 10.2 */
 	"role_transition zoo_r bass_t aquarium_r",
 	"role_transition zoo_r bear_t mammal_r",
 	"role_transition zoo_r trout_t aquarium_r",
 	NULL
 };
-char *modified_roletrans_rules[] = {
+
+static char *modified_roletrans_rules[] = {
 /* 10.3.0 */
 	"role_transition guest_r dirt_t { +admin_r -intern_r }",
 	NULL
 };
-char *added_roletrans_type[] = {
+
+static char *added_roletrans_type[] = {
 /* 10.4.0 */
 	"role_transition guest_r pipe_t staff_r",
 /* 10.4.1 */
@@ -328,7 +334,7 @@ char *added_roletrans_type[] = {
 	NULL
 };
 
-char *removed_roletrans_type[] = {
+static char *removed_roletrans_type[] = {
 /* 10.5.0 */
 	"role_transition guest_r koala_t staff_r",
 /* 10.5.1 */
@@ -336,18 +342,20 @@ char *removed_roletrans_type[] = {
 	NULL
 };
 
-char *unchanged_terules[] = {
+static char *unchanged_terules[] = {
 /* 11.0 */
 	"type_transition system_t dirt_t : process daikon_t",
 	NULL
 };
-char *added_terules[] = {
+
+static char *added_terules[] = {
 /* 11.1 */
 	"type_member log_t file_t : netif rock_t",
 	"type_transition holly_t bear_t : dir oak_t",
 	NULL
 };
-char *removed_terules[] = {
+
+static char *removed_terules[] = {
 /* 11.2 */
 	"type_transition potato_t pine_t : fd log_t",
 	"type_change file_t bear_t : passwd daikon_t",
@@ -355,7 +363,8 @@ char *removed_terules[] = {
 	"type_change log_t bear_t : passwd daikon_t",
 	NULL
 };
-char *added_type_terules[] = {
+
+static char *added_type_terules[] = {
 /*11.4.0 */
 	"type_transition hippo_t log_t : file system_t",
 /*11.4.1 */
@@ -380,7 +389,8 @@ char *added_type_terules[] = {
 	"type_member hippo_t potato_t : chr_file file_t",
 	NULL
 };
-char *removed_type_terules[] = {
+
+static char *removed_type_terules[] = {
 /* 11.5.0 */
 	"type_change turnip_t glass_t : dir stone_t",
 /* 11.5.1 */
@@ -425,7 +435,7 @@ char *removed_type_terules[] = {
 	NULL
 };
 
-char *modified_terules[] = {
+static char *modified_terules[] = {
 	"type_transition lion_t tiger_t : file +bear_t -koala_t",
 	NULL
 };
@@ -624,7 +634,77 @@ static char *roleallow_to_string(const void *arg, poldiff_form_e form, int show_
 	return str;
 }
 
-void build_roleallow_vecs()
+void build_avrule_vecs(void)
+{
+	added_type_rules_v = apol_vector_create(free);
+	removed_type_rules_v = apol_vector_create(free);
+	correct_added_type_rules_v = string_array_to_vector(added_type_avrules);
+	correct_removed_type_rules_v = string_array_to_vector(removed_type_avrules);
+
+	size_t i;
+	char *str = NULL, *name_only = NULL;
+	const void *item = NULL;
+	const apol_vector_t *allow_v = NULL, *neverallow_v = NULL, *auditallow_v = NULL, *dontaudit_v = NULL;
+	apol_vector_t *all_avrules_v = apol_vector_create(NULL);
+
+	allow_v = poldiff_get_avrule_vector_allow(diff);
+	neverallow_v = poldiff_get_avrule_vector_neverallow(diff);
+	auditallow_v = poldiff_get_avrule_vector_auditallow(diff);
+	dontaudit_v = poldiff_get_avrule_vector_dontaudit(diff);
+
+	apol_vector_cat(all_avrules_v, allow_v);
+	apol_vector_cat(all_avrules_v, neverallow_v);
+	apol_vector_cat(all_avrules_v, auditallow_v);
+	apol_vector_cat(all_avrules_v, dontaudit_v);
+
+	for (i = 0; i < apol_vector_get_size(all_avrules_v); i++) {
+		item = apol_vector_get_element(all_avrules_v, i);
+		if (!item)
+			return;
+		poldiff_form_e form = poldiff_avrule_get_form(item);
+		str = avrule_to_string(item, form, 1);
+		if (!str)
+			break;
+		switch (form) {
+		case POLDIFF_FORM_ADDED:
+			apol_vector_append(added_v, str);
+			break;
+		case POLDIFF_FORM_REMOVED:
+			apol_vector_append(removed_v, str);
+			break;
+		case POLDIFF_FORM_ADD_TYPE:
+			apol_vector_append(added_type_rules_v, str);
+			break;
+		case POLDIFF_FORM_REMOVE_TYPE:
+			apol_vector_append(removed_type_rules_v, str);
+			break;
+		case POLDIFF_FORM_MODIFIED:
+			name_only = avrule_to_string(item, form, 0);
+			apol_vector_append(modified_name_only_v, name_only);
+			apol_vector_append(modified_v, str);
+			break;
+		default:
+			// should never get here
+			assert(0);
+		}
+	}
+	size_t first_diff = 0;
+	apol_vector_sort(added_type_rules_v, compare_str, NULL);
+	apol_vector_sort(correct_added_type_rules_v, compare_str, NULL);
+	CU_ASSERT_FALSE(apol_vector_compare(added_type_rules_v, correct_added_type_rules_v, compare_str, NULL, &first_diff));
+
+	apol_vector_sort(removed_type_rules_v, compare_str, NULL);
+	apol_vector_sort(correct_removed_type_rules_v, compare_str, NULL);
+	CU_ASSERT_FALSE(apol_vector_compare(removed_type_rules_v, correct_removed_type_rules_v, compare_str, NULL, &first_diff));
+
+	apol_vector_destroy(&removed_type_rules_v);
+	apol_vector_destroy(&correct_removed_type_rules_v);
+	apol_vector_destroy(&added_type_rules_v);
+	apol_vector_destroy(&correct_added_type_rules_v);
+	apol_vector_destroy(&all_avrules_v);
+}
+
+void build_roleallow_vecs(void)
 {
 	char *str = NULL, *name_only = NULL;
 	size_t i;
@@ -658,7 +738,7 @@ void build_roleallow_vecs()
 	}
 }
 
-void build_roletrans_vecs()
+void build_roletrans_vecs(void)
 {
 	added_type_rules_v = apol_vector_create(free);
 	removed_type_rules_v = apol_vector_create(free);
@@ -723,7 +803,7 @@ void build_roletrans_vecs()
 	apol_vector_destroy(&correct_removed_type_rules_v);
 }
 
-void build_terule_vecs()
+void build_terule_vecs(void)
 {
 	added_type_rules_v = apol_vector_create(free);
 	removed_type_rules_v = apol_vector_create(free);
@@ -798,77 +878,7 @@ void build_terule_vecs()
 	apol_vector_destroy(&correct_removed_type_rules_v);
 }
 
-void build_avrule_vecs()
-{
-	added_type_rules_v = apol_vector_create(free);
-	removed_type_rules_v = apol_vector_create(free);
-	correct_added_type_rules_v = string_array_to_vector(added_type_avrules);
-	correct_removed_type_rules_v = string_array_to_vector(removed_type_avrules);
-
-	size_t i;
-	char *str = NULL, *name_only = NULL;
-	const void *item = NULL;
-	const apol_vector_t *allow_v = NULL, *neverallow_v = NULL, *auditallow_v = NULL, *dontaudit_v = NULL;
-	apol_vector_t *all_avrules_v = apol_vector_create(NULL);
-
-	allow_v = poldiff_get_avrule_vector_allow(diff);
-	neverallow_v = poldiff_get_avrule_vector_neverallow(diff);
-	auditallow_v = poldiff_get_avrule_vector_auditallow(diff);
-	dontaudit_v = poldiff_get_avrule_vector_dontaudit(diff);
-
-	apol_vector_cat(all_avrules_v, allow_v);
-	apol_vector_cat(all_avrules_v, neverallow_v);
-	apol_vector_cat(all_avrules_v, auditallow_v);
-	apol_vector_cat(all_avrules_v, dontaudit_v);
-
-	for (i = 0; i < apol_vector_get_size(all_avrules_v); i++) {
-		item = apol_vector_get_element(all_avrules_v, i);
-		if (!item)
-			return;
-		poldiff_form_e form = poldiff_avrule_get_form(item);
-		str = avrule_to_string(item, form, 1);
-		if (!str)
-			break;
-		switch (form) {
-		case POLDIFF_FORM_ADDED:
-			apol_vector_append(added_v, str);
-			break;
-		case POLDIFF_FORM_REMOVED:
-			apol_vector_append(removed_v, str);
-			break;
-		case POLDIFF_FORM_ADD_TYPE:
-			apol_vector_append(added_type_rules_v, str);
-			break;
-		case POLDIFF_FORM_REMOVE_TYPE:
-			apol_vector_append(removed_type_rules_v, str);
-			break;
-		case POLDIFF_FORM_MODIFIED:
-			name_only = avrule_to_string(item, form, 0);
-			apol_vector_append(modified_name_only_v, name_only);
-			apol_vector_append(modified_v, str);
-			break;
-		default:
-			// should never get here
-			assert(0);
-		}
-	}
-	size_t first_diff = 0;
-	apol_vector_sort(added_type_rules_v, compare_str, NULL);
-	apol_vector_sort(correct_added_type_rules_v, compare_str, NULL);
-	CU_ASSERT_FALSE(apol_vector_compare(added_type_rules_v, correct_added_type_rules_v, compare_str, NULL, &first_diff));
-
-	apol_vector_sort(removed_type_rules_v, compare_str, NULL);
-	apol_vector_sort(correct_removed_type_rules_v, compare_str, NULL);
-	CU_ASSERT_FALSE(apol_vector_compare(removed_type_rules_v, correct_removed_type_rules_v, compare_str, NULL, &first_diff));
-
-	apol_vector_destroy(&removed_type_rules_v);
-	apol_vector_destroy(&correct_removed_type_rules_v);
-	apol_vector_destroy(&added_type_rules_v);
-	apol_vector_destroy(&correct_added_type_rules_v);
-	apol_vector_destroy(&all_avrules_v);
-}
-
-void rules_avrules_tests()
+static void rules_avrules_tests()
 {
 	test_numbers_e test_num = RULES_AVRULE;
 	poldiff_test_answers_t *answers = init_answer_vectors(added_avrules, removed_avrules, unchanged_avrules, modified_avrules);
@@ -876,7 +886,7 @@ void rules_avrules_tests()
 	cleanup_test(answers);
 }
 
-void rules_terules_tests()
+static void rules_terules_tests()
 {
 	test_numbers_e test_num = RULES_TERULE;
 	poldiff_test_answers_t *answers = init_answer_vectors(added_terules, removed_terules, unchanged_terules, modified_terules);
@@ -884,7 +894,7 @@ void rules_terules_tests()
 	cleanup_test(answers);
 }
 
-void rules_roleallow_tests()
+static void rules_roleallow_tests()
 {
 	test_numbers_e test_num = RULES_ROLEALLOW;
 	poldiff_test_answers_t *answers =
@@ -894,7 +904,7 @@ void rules_roleallow_tests()
 	cleanup_test(answers);
 }
 
-void rules_roletrans_tests()
+static void rules_roletrans_tests()
 {
 	test_numbers_e test_num = RULES_ROLETRANS;
 	poldiff_test_answers_t *answers =
@@ -904,7 +914,7 @@ void rules_roletrans_tests()
 	cleanup_test(answers);
 }
 
-int rules_test_init()
+int rules_test_init(void)
 {
 	if (!(diff = init_poldiff(RULES_ORIG_POLICY, RULES_MOD_POLICY))) {
 		return 1;
@@ -912,3 +922,20 @@ int rules_test_init()
 		return 0;
 	}
 }
+
+int rules_test_cleanup(void)
+{
+	return poldiff_cleanup();
+}
+
+CU_TestInfo rules_tests[] = {
+	{"AV Rules", rules_avrules_tests}
+	,
+	{"TE Rules", rules_terules_tests}
+	,
+	{"Role Allow Rules", rules_roleallow_tests}
+	,
+	{"Role Transition Rules", rules_roletrans_tests}
+	,
+	CU_TEST_INFO_NULL
+};

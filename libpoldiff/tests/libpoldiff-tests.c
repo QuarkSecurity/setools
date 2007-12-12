@@ -42,6 +42,14 @@
 #include "mls-tests.h"
 #include "nomls-tests.h"
 
+poldiff_t *diff;
+apol_policy_t *orig_policy;
+apol_policy_t *mod_policy;
+apol_vector_t *added_v;
+apol_vector_t *removed_v;
+apol_vector_t *modified_v;
+apol_vector_t *modified_name_only_v;
+
 apol_vector_t *string_array_to_vector(char *arr[])
 {
 	apol_vector_t *v = apol_vector_create(free);
@@ -284,73 +292,26 @@ void cleanup_test(poldiff_test_answers_t * answers)
 	}
 }
 
-int poldiff_cleanup()
+int poldiff_cleanup(void)
 {
 	poldiff_destroy(&diff);
 	return 0;
 }
 
-int main()
+int main(void)
 {
 	if (CU_initialize_registry() != CUE_SUCCESS) {
 		return CU_get_error();
 	}
 
-	CU_TestInfo components_tests_arr[] = {
-		{"Attributes", components_attributes_tests}
-		,
-		{"Classes", components_class_tests}
-		,
-		{"Commons", components_commons_tests}
-		,
-		{"Roles", components_roles_tests}
-		,
-		{"Users", components_users_tests}
-		,
-		{"Bools", components_bools_tests}
-		,
-		{"Types", components_types_tests}
-		,
-		CU_TEST_INFO_NULL
-	};
-
-	CU_TestInfo rules_tests_arr[] = {
-		{"AV Rules", rules_avrules_tests}
-		,
-		{"TE Rules", rules_terules_tests}
-		,
-		{"Role Allow Rules", rules_roleallow_tests}
-		,
-		{"Role Transition Rules", rules_roletrans_tests}
-		,
-		CU_TEST_INFO_NULL
-	};
-
-	CU_TestInfo mls_tests_arr[] = {
-		{"Categories", mls_category_tests}
-		,
-		{"Levels", mls_level_tests}
-		,
-		{"Range Transitions", mls_rangetrans_tests}
-		,
-		{"Users (MLS)", mls_user_tests}
-		,
-		CU_TEST_INFO_NULL
-	};
-	CU_TestInfo nomls_tests_arr[] = {
-		{"Changed & Unchanged Users", nomls_tests}
-		,
-		CU_TEST_INFO_NULL
-	};
-
 	CU_SuiteInfo suites[] = {
-		{"Components", components_test_init, poldiff_cleanup, components_tests_arr}
+		{"Components", components_test_init, components_test_cleanup, components_tests}
 		,
-		{"Rules", rules_test_init, poldiff_cleanup, rules_tests_arr}
+		{"Rules", rules_test_init, rules_test_cleanup, rules_tests}
 		,
-		{"MLS", mls_test_init, poldiff_cleanup, mls_tests_arr}
+		{"MLS", mls_test_init, mls_test_cleanup, mls_tests}
 		,
-		{"Non-MLS vs. MLS Users", nomls_test_init, poldiff_cleanup, nomls_tests_arr}
+		{"Non-MLS vs. MLS Users", nomls_test_init, nomls_test_cleanup, nomls_tests}
 		,
 		CU_SUITE_INFO_NULL
 	};

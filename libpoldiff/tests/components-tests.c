@@ -25,7 +25,6 @@
 #include <config.h>
 
 #include "libpoldiff-tests.h"
-#include "components-tests.h"
 #include "policy-defs.h"
 #include <CUnit/Basic.h>
 #include <CUnit/TestDB.h>
@@ -39,22 +38,30 @@
 #include <stdlib.h>
 #include <string.h>
 
-char *unchanged_attributes[] = {
+#define WRAP_NAME_FUNC(component) const char *poldiff_##component##_get_name_w(const void *arg) { \
+	const poldiff_##component##_t *cls = (const poldiff_##component##_t *)arg; \
+	return poldiff_##component##_get_name(cls); }
+
+#define WRAP_MOD_FUNC(component,mod_component,mod_type) const apol_vector_t* poldiff_##component##_get_##mod_type##_##mod_component##_w(const void* arg) { \
+	const poldiff_##component##_t *cls = (const poldiff_##component##_t *)arg; \
+	return poldiff_##component##_get_##mod_type##_##mod_component(cls); }
+
+static char *unchanged_attributes[] = {
 /* 00.0 */
 	"data",
 	NULL
 };
-char *added_attributes[] = {
+static char *added_attributes[] = {
 /* 00.1 */
 	"mineral",
 	NULL
 };
-char *removed_attributes[] = {
+static char *removed_attributes[] = {
 /* 00.2 */
 	"other",
 	NULL
 };
-char *modified_attributes[] = {
+static char *modified_attributes[] = {
 /* 00.3.0 */
 	"tree +holly_t",
 /* 00.3.1 */
@@ -68,27 +75,27 @@ char *modified_attributes[] = {
 	"mammal -bear_t",
 	NULL
 };
-char *unchanged_bools[] = {
+static char *unchanged_bools[] = {
 /* 02.0 */
 	"frog",
 	NULL
 };
-char *added_bools[] = {
+static char *added_bools[] = {
 /* 02.1 */
 	"shark",
 	NULL
 };
-char *removed_bools[] = {
+static char *removed_bools[] = {
 /* 02.2 */
 	"dog",
 	NULL
 };
-char *modified_bools[] = {
+static char *modified_bools[] = {
 /* 02.3 */
 	"wark",
 	NULL
 };
-char *unchanged_classes[] = {
+static char *unchanged_classes[] = {
 /* 04.0 */
 	"filesystem", "dir", "blk_file", "sock_file", "fifo_file", "netif",
 	"process", "msg", "security", "system", "capability", "passwd",
@@ -96,17 +103,17 @@ char *unchanged_classes[] = {
 	"xinput", "xserver", "xextension", "pax", "dbus", "ncsd",
 	"association", "context", NULL
 };
-char *added_classes[] = {
+static char *added_classes[] = {
 /* 04.1 */
 	"thing",
 	NULL
 };
-char *removed_classes[] = {
+static char *removed_classes[] = {
 /* 04.2 */
 	"key",
 	NULL
 };
-char *modified_classes[] = {
+static char *modified_classes[] = {
 /* 04.3.00 */
 	"fd +be",
 /* 04.3.01 */
@@ -160,22 +167,22 @@ char *modified_classes[] = {
 	NULL
 };
 
-char *unchanged_commons[] = {
+static char *unchanged_commons[] = {
 /* 05.0 */
 	"file",
 	NULL
 };
-char *added_commons[] = {
+static char *added_commons[] = {
 /* 05.1 */
 	"new",
 	NULL
 };
-char *removed_commons[] = {
+static char *removed_commons[] = {
 /* 05.2 */
 	"old",
 	NULL
 };
-char *modified_commons[] = {
+static char *modified_commons[] = {
 /* 05.3.0 */
 	"ipc +unix_exec",
 /* 05.3.1 */
@@ -186,22 +193,22 @@ char *modified_commons[] = {
 	NULL
 };
 
-char *unchanged_roles[] = {
+static char *unchanged_roles[] = {
 /* 08.0 */
 	"placeholder_r", "admin_r", "intern_r",
 	NULL
 };
-char *added_roles[] = {
+static char *added_roles[] = {
 /* 08.1 */
 	"strange_r",
 	NULL
 };
-char *removed_roles[] = {
+static char *removed_roles[] = {
 /* 08.2 */
 	"guest_r",
 	NULL
 };
-char *modified_roles[] = {
+static char *modified_roles[] = {
 /* 08.3.0 */
 	"user_r +hippo_t",
 /* 08.3.1 */
@@ -230,7 +237,7 @@ char *modified_roles[] = {
 	NULL
 };
 
-char *unchanged_types[] = {
+static char *unchanged_types[] = {
 /* 12.0.0 */
 	"placeholder_t", "finch_t", "trout_t",
 	"birch_t", "oak_t", "potato_t", "tiger_t",
@@ -242,7 +249,7 @@ char *unchanged_types[] = {
 	NULL
 };
 
-char *added_types[] = {
+static char *added_types[] = {
 /* 12.1.0 */
 	"hippo_t",
 	"acorn_t",
@@ -250,7 +257,7 @@ char *added_types[] = {
 };
 
 /* 12.1.1 */
-char *removed_types[] = {
+static char *removed_types[] = {
 /* 12.2.0 */
 	"bass_t",
 /* 12.2.1 */
@@ -258,7 +265,7 @@ char *removed_types[] = {
 	NULL
 };
 
-char *modified_types[] = {
+static char *modified_types[] = {
 /* 12.3.0 */
 	"holly_t +tree",
 /* 12.3.1 */
@@ -275,28 +282,28 @@ char *modified_types[] = {
 	"system_t -other",
 	NULL
 };
-char *aliased_types[] = {
+static char *aliased_types[] = {
 	/* 12.2.1 */
 	"bear_t -> koala_t",
 	NULL
 };
 
-char *unchanged_users[] = {
+static char *unchanged_users[] = {
 /* 13.0 */
 	"placeholder_u", "su_u", "cyn_u", "danika_u",
 	NULL
 };
-char *added_users[] = {
+static char *added_users[] = {
 /* 13.1 */
 	"gai_u",
 	NULL
 };
-char *removed_users[] = {
+static char *removed_users[] = {
 /* 13.2 */
 	"mehnlo_u",
 	NULL
 };
-char *modified_users[] = {
+static char *modified_users[] = {
 /* 13.3.0 */
 	"devona_u +aquarium_r",
 	"eve_u +strange_r",
@@ -334,55 +341,7 @@ WRAP_NAME_FUNC(attrib)
 	WRAP_MOD_FUNC(type, attribs, added)
 	WRAP_MOD_FUNC(type, attribs, removed)
 
-void build_component_vecs(component_funcs_t * component_funcs)
-{
-	size_t i;
-	const void *item = NULL;
-	const apol_vector_t *v = NULL;
-	v = component_funcs->get_diff_vector(diff);
-	for (i = 0; i < apol_vector_get_size(v); i++) {
-		item = apol_vector_get_element(v, i);
-		const char *name_only = NULL;
-		name_only = component_funcs->get_name(item);
-		if (component_funcs->get_form(item) == POLDIFF_FORM_ADDED) {
-			apol_vector_append(added_v, strdup(name_only));
-		} else if (component_funcs->get_form(item) == POLDIFF_FORM_REMOVED) {
-			apol_vector_append(removed_v, strdup(name_only));
-		} else if (component_funcs->get_form(item) == POLDIFF_FORM_MODIFIED) {
-			apol_vector_append(modified_name_only_v, strdup(name_only));
-			size_t j;
-			if (component_funcs->get_added) {
-				const apol_vector_t *added_elements = component_funcs->get_added(item);
-				for (j = 0; j < apol_vector_get_size(added_elements); ++j) {
-					char *added_element;
-					added_element = apol_vector_get_element(added_elements, j);
-					char *modification_str = NULL;
-					size_t modification_str_len = 0;
-					apol_str_appendf(&modification_str, &modification_str_len, "%s %s%s", name_only, "+",
-							 added_element);
-					apol_vector_append(modified_v, modification_str);
-				}
-			}
-			if (component_funcs->get_removed) {
-				const apol_vector_t *removed_elements = component_funcs->get_removed(item);
-				for (j = 0; j < apol_vector_get_size(removed_elements); ++j) {
-					char *removed_element;
-					removed_element = apol_vector_get_element(removed_elements, j);
-					char *modification_str = NULL;
-					size_t modification_str_len = 0;
-					apol_str_appendf(&modification_str, &modification_str_len, "%s %s%s", name_only, "-",
-							 removed_element);
-					apol_vector_append(modified_v, modification_str);
-				}
-			}
-			if (!(component_funcs->get_added && component_funcs)) {
-				apol_vector_append(modified_v, strdup(name_only));
-			}
-		}
-	}
-}
-
-void components_types_tests()
+static void components_types_tests(void)
 {
 	poldiff_test_answers_t *answers = init_answer_vectors(added_types, removed_types, unchanged_types, modified_types);
 	component_funcs_t *funcs = init_test_funcs(poldiff_get_type_vector, poldiff_type_get_name_w,
@@ -469,7 +428,7 @@ void components_types_tests()
 	cleanup_test(answers);
 }
 
-void components_bools_tests()
+static void components_bools_tests(void)
 {
 	poldiff_test_answers_t *answers = init_answer_vectors(added_bools, removed_bools, unchanged_bools, modified_bools);
 	component_funcs_t *funcs = init_test_funcs(poldiff_get_bool_vector, poldiff_bool_get_name_w,
@@ -479,7 +438,7 @@ void components_bools_tests()
 	cleanup_test(answers);
 }
 
-void components_users_tests()
+static void components_users_tests(void)
 {
 	poldiff_test_answers_t *answers = init_answer_vectors(added_users, removed_users, unchanged_users, modified_users);
 	component_funcs_t *funcs = init_test_funcs(poldiff_get_user_vector, poldiff_user_get_name_w,
@@ -490,7 +449,7 @@ void components_users_tests()
 	cleanup_test(answers);
 }
 
-void components_roles_tests()
+static void components_roles_tests(void)
 {
 	poldiff_test_answers_t *answers = init_answer_vectors(added_roles, removed_roles, unchanged_roles, modified_roles);
 	component_funcs_t *funcs = init_test_funcs(poldiff_get_role_vector, poldiff_role_get_name_w, poldiff_role_get_form,
@@ -500,7 +459,7 @@ void components_roles_tests()
 	cleanup_test(answers);
 }
 
-void components_commons_tests()
+static void components_commons_tests(void)
 {
 	poldiff_test_answers_t *answers = init_answer_vectors(added_commons, removed_commons, unchanged_commons, modified_commons);
 	component_funcs_t *funcs = init_test_funcs(poldiff_get_common_vector, poldiff_common_get_name_w, poldiff_common_get_form,
@@ -510,7 +469,7 @@ void components_commons_tests()
 	cleanup_test(answers);
 }
 
-void components_attributes_tests()
+static void components_attributes_tests(void)
 {
 	poldiff_test_answers_t *answers =
 		init_answer_vectors(added_attributes, removed_attributes, unchanged_attributes, modified_attributes);
@@ -523,7 +482,7 @@ void components_attributes_tests()
 	cleanup_test(answers);
 }
 
-void components_class_tests()
+static void components_class_tests(void)
 {
 	poldiff_test_answers_t *answers = init_answer_vectors(added_classes, removed_classes, unchanged_classes, modified_classes);
 	component_funcs_t *funcs = init_test_funcs(poldiff_get_class_vector, poldiff_class_get_name_w,
@@ -534,7 +493,7 @@ void components_class_tests()
 	cleanup_test(answers);
 }
 
-int components_test_init()
+int components_test_init(void)
 {
 	if (!(diff = init_poldiff(COMPONENTS_ORIG_POLICY, COMPONENTS_MOD_POLICY))) {
 		return 1;
@@ -542,3 +501,74 @@ int components_test_init()
 		return 0;
 	}
 }
+
+void build_component_vecs(component_funcs_t * component_funcs)
+{
+	size_t i;
+	const void *item = NULL;
+	const apol_vector_t *v = NULL;
+	v = component_funcs->get_diff_vector(diff);
+	for (i = 0; i < apol_vector_get_size(v); i++) {
+		item = apol_vector_get_element(v, i);
+		const char *name_only = NULL;
+		name_only = component_funcs->get_name(item);
+		if (component_funcs->get_form(item) == POLDIFF_FORM_ADDED) {
+			apol_vector_append(added_v, strdup(name_only));
+		} else if (component_funcs->get_form(item) == POLDIFF_FORM_REMOVED) {
+			apol_vector_append(removed_v, strdup(name_only));
+		} else if (component_funcs->get_form(item) == POLDIFF_FORM_MODIFIED) {
+			apol_vector_append(modified_name_only_v, strdup(name_only));
+			size_t j;
+			if (component_funcs->get_added) {
+				const apol_vector_t *added_elements = component_funcs->get_added(item);
+				for (j = 0; j < apol_vector_get_size(added_elements); ++j) {
+					char *added_element;
+					added_element = apol_vector_get_element(added_elements, j);
+					char *modification_str = NULL;
+					size_t modification_str_len = 0;
+					apol_str_appendf(&modification_str, &modification_str_len, "%s %s%s", name_only, "+",
+							 added_element);
+					apol_vector_append(modified_v, modification_str);
+				}
+			}
+			if (component_funcs->get_removed) {
+				const apol_vector_t *removed_elements = component_funcs->get_removed(item);
+				for (j = 0; j < apol_vector_get_size(removed_elements); ++j) {
+					char *removed_element;
+					removed_element = apol_vector_get_element(removed_elements, j);
+					char *modification_str = NULL;
+					size_t modification_str_len = 0;
+					apol_str_appendf(&modification_str, &modification_str_len, "%s %s%s", name_only, "-",
+							 removed_element);
+					apol_vector_append(modified_v, modification_str);
+				}
+			}
+			if (!(component_funcs->get_added && component_funcs)) {
+				apol_vector_append(modified_v, strdup(name_only));
+			}
+		}
+	}
+}
+
+int components_test_cleanup(void)
+{
+	return poldiff_cleanup();
+}
+
+CU_TestInfo components_tests[] = {
+	{"Attributes", components_attributes_tests}
+	,
+	{"Classes", components_class_tests}
+	,
+	{"Commons", components_commons_tests}
+	,
+	{"Roles", components_roles_tests}
+	,
+	{"Users", components_users_tests}
+	,
+	{"Bools", components_bools_tests}
+	,
+	{"Types", components_types_tests}
+	,
+	CU_TEST_INFO_NULL
+};
