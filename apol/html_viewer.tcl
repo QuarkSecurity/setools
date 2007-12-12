@@ -22,7 +22,7 @@ namespace eval Apol_HTML {
     variable viewer {}
     variable popup {}
     variable widgets
-    variable prev_save {}
+    variable prev_dir {}
 }
 
 proc Apol_HTML::init {} {
@@ -103,7 +103,7 @@ proc Apol_HTML::_create_viewer {} {
     Separator $f.sep
     pack $f.sep -fill x -side top
 
-    set widgets(browser) [::hv3::browser $f.browser -zoom 1.33]
+    set widgets(browser) [::hv3::browser $f.browser -zoom [Apol_Prefs::getPref html_zoom]]
     pack $widgets(browser) -fill both -expand 1
     $widgets(browser) configure -backbutton $back
     $widgets(browser) configure -forwardbutton $forward
@@ -202,11 +202,19 @@ proc Apol_HTML::_selectAll {path} {
 proc Apol_HTML::_save {} {
     variable viewer
     variable widgets
-    variable prev_save
-    set name [tk_getSaveFile -title "Save Page" -parent $viewer -initialfile $prev_save]
-    if {$name != {}} {
+    variable prev_dir
+    set new_path [tk_getSaveFile -title "Save Page" -parent $viewer -initialdir $prev_dir]
+    if {$new_path != {}} {
         set uri [set [$widgets(browser) locationvar]]
-        puts "would save $uri"
+        foreach {protocol path is_install_file} [uri_split $uri] {break}
+        if {[catch {file copy -force $path $new_path} f]} {
+            tk_messageBox -icon error -type ok -title "Save Page" \
+                -message "Could not open $new_path for writing: $f"
+            raise $viewer
+            focus $viewer
+        } else {
+            set prev_dir [file dirname $new_path]
+        }
     }
 }
 

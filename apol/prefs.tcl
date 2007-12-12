@@ -30,6 +30,7 @@ proc Apol_Prefs::create {} {
         general_font "Helvetica 10"
         text_font "fixed 12"
         title_font "Helvetica 10 bold italic"
+        html_zoom 1.33
         active_bg white
         active_fg black
         select_bg lightblue
