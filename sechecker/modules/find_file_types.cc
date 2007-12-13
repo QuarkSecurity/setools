@@ -165,7 +165,7 @@ namespace sechk
 					}
 					case POLSEARCH_ELEMENT_FC_ENTRY:
 					{
-						proof_elem = new element(static_cast<sefs_entry*>(const_cast<void*>(j->element())), NULL, NULL);
+						proof_elem = new element(new sefs_entry(static_cast<sefs_entry*>(const_cast<void*>(j->element()))), NULL, NULL);
 						prefix = "is in the file_contexts entry ";
 						break;
 					}
