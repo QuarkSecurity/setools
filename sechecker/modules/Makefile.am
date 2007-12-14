@@ -1,9 +1,11 @@
 modulesdir = @profile_install_dir@
 modules_DATA = \
+	domain_and_file.so \
 	find_domains.so \
 	find_file_types.so
 
 EXTRA_DIST = \
+	domain_and_file.cc domain_and_file.hh \
 	find_domains.cc find_domains.hh \
 	find_file_types.cc find_file_types.hh
 

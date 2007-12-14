@@ -55,7 +55,7 @@ void * find_file_types_init( void )
 namespace sechk
 {
 	find_file_types_module::find_file_types_module() throw(std::invalid_argument, std::out_of_range)
-	:module("find_file_types", SECHK_SEV_UTIL, "Find all types treated as a file type" ,
+	:module("find_file_types", SECHK_SEV_UTIL, "Find all types treated as a file type." ,
 	"A type is considered a file type if any of the following is true:"
 	"\n"
 	"   1) it has an attribute associated with file types\n"
@@ -95,7 +95,6 @@ namespace sechk
 
 	void find_file_types_module::run_internal(apol_policy_t * pol, sefs_fclist * list) throw (std::runtime_error)
 	{
-		// TODO the analysis
 		polsearch_type_query tq(POLSEARCH_MATCH_ANY);
 		//"   1) it has an attribute associated with file types\n"
 		if (_recommendations.at(require_code_name(SECHK_REQUIRE_POLICY_CAPABILITY_ATTRIBUTE_NAMES)).check(pol, list))

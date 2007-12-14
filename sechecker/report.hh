@@ -77,6 +77,11 @@ namespace sechk
 		 * @exception std::invalid_argument Results for \a mod_name have already been added.
 		 */
 		void addResults(std::string mod_name) throw(std::out_of_range, std::runtime_error, std::invalid_argument);
+		/**
+		 * Get the set of results to be reported.
+		 * @return The set of results.
+		 */
+		const std::map<std::string, const result * > & results() const;
 
 		/**
 		 * Get the preferred level of output for the report.

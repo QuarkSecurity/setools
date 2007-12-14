@@ -182,6 +182,11 @@ namespace sechk
 			throw invalid_argument("Results for " + mod_name + " have already been added");
 	}
 
+	const std::map<std::string, const result *> & report::results() const
+	{
+		return _results;
+	}
+
 	output_format report::outputMode() const
 	{
 		return _output_mode;

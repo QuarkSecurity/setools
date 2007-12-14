@@ -551,7 +551,7 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-
+	int return_code = 0;
 	// run the modules and create the report
 	report* rep = NULL;
 	try
@@ -559,21 +559,15 @@ int main(int argc, char **argv)
 		if (single_mod != "")
 		{
 			top.runModules(single_mod);
-			if (outf != SECHK_OUTPUT_QUIET)
-			{
-				rep = top.createReport(single_mod);
-			}
+			rep = top.createReport(single_mod);
 		}
 		else
 		{
 			top.runModules();
-			if (outf != SECHK_OUTPUT_QUIET)
-			{
-				rep = top.createReport();
-			}
+			rep = top.createReport();
 		}
 		// if not in quiet mode, print the report now
-		assert(rep || outf == SECHK_OUTPUT_QUIET);
+		assert(rep);
 		if (outf != SECHK_OUTPUT_QUIET)
 		{
 			if (min_sev != SECHK_SEV_NONE)
@@ -585,8 +579,19 @@ int main(int argc, char **argv)
 				rep->outputMode(outf);
 			}
 			rep->print(cout);
-			delete rep;
 		}
+		for (map<string,const result*>::const_iterator i = rep->results().begin(); i != rep->results().end(); i++)
+		{
+			if ((min_sev != SECHK_SEV_NONE && top.modules().at(i->first).first->moduleSeverity() < min_sev) ||
+						  top.modules().at(i->first).first->moduleSeverity() == SECHK_SEV_UTIL)
+				continue;
+			if (i->second->entries().size())
+			{
+				return_code = 1;
+				break;
+			}
+		}
+		delete rep;
 	}
 	catch (runtime_error x) // error running module or creating report
 	{
@@ -601,5 +606,5 @@ int main(int argc, char **argv)
 	top.close();
 	delete file_contexts;
 	apol_policy_destroy(&policy);
-	return 0;
+	return return_code;
 }
