@@ -25,14 +25,8 @@
 #include <config.h>
 
 #include "libpoldiff-tests.h"
-#include "rules-tests.h"
-#include "policy-defs.h"
-#include <CUnit/Basic.h>
-#include <CUnit/TestDB.h>
 
-#include <poldiff/poldiff.h>
-#include <apol/policy.h>
-#include <apol/vector.h>
+#include <CUnit/CUnit.h>
 #include <apol/util.h>
 
 #include <assert.h>
@@ -42,6 +36,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define POLICY_ROOT TEST_POLICIES "/setools-3.2/sediff"
+
+#define RULES_ORIG_POLICY (POLICY_ROOT "/testing-rules-orig.conf")
+#define RULES_MOD_POLICY (POLICY_ROOT "/testing-rules-mod.conf")
+
+static poldiff_test_structs_t *t = NULL;
 
 static apol_vector_t *added_type_rules_v;
 static apol_vector_t *removed_type_rules_v;
@@ -647,10 +648,10 @@ void build_avrule_vecs(void)
 	const apol_vector_t *allow_v = NULL, *neverallow_v = NULL, *auditallow_v = NULL, *dontaudit_v = NULL;
 	apol_vector_t *all_avrules_v = apol_vector_create(NULL);
 
-	allow_v = poldiff_get_avrule_vector_allow(diff);
-	neverallow_v = poldiff_get_avrule_vector_neverallow(diff);
-	auditallow_v = poldiff_get_avrule_vector_auditallow(diff);
-	dontaudit_v = poldiff_get_avrule_vector_dontaudit(diff);
+	allow_v = poldiff_get_avrule_vector_allow(t->diff);
+	neverallow_v = poldiff_get_avrule_vector_neverallow(t->diff);
+	auditallow_v = poldiff_get_avrule_vector_auditallow(t->diff);
+	dontaudit_v = poldiff_get_avrule_vector_dontaudit(t->diff);
 
 	apol_vector_cat(all_avrules_v, allow_v);
 	apol_vector_cat(all_avrules_v, neverallow_v);
@@ -710,7 +711,7 @@ void build_roleallow_vecs(void)
 	size_t i;
 	const void *item = NULL;
 	const apol_vector_t *v = NULL;
-	v = poldiff_get_role_allow_vector(diff);
+	v = poldiff_get_role_allow_vector(t->diff);
 	for (i = 0; i < apol_vector_get_size(v); i++) {
 		item = apol_vector_get_element(v, i);
 		if (!item)
@@ -749,7 +750,7 @@ void build_roletrans_vecs(void)
 	size_t i;
 	const void *item = NULL;
 	const apol_vector_t *v = NULL;
-	v = poldiff_get_role_trans_vector(diff);
+	v = poldiff_get_role_trans_vector(t->diff);
 	for (i = 0; i < apol_vector_get_size(v); i++) {
 		item = apol_vector_get_element(v, i);
 		if (!item)
@@ -814,9 +815,9 @@ void build_terule_vecs(void)
 	char *str = NULL;
 	const void *item = NULL;
 	const apol_vector_t *member_v = NULL, *change_v = NULL, *trans_v = NULL;
-	member_v = poldiff_get_terule_vector_member(diff);
-	change_v = poldiff_get_terule_vector_change(diff);
-	trans_v = poldiff_get_terule_vector_trans(diff);
+	member_v = poldiff_get_terule_vector_member(t->diff);
+	change_v = poldiff_get_terule_vector_change(t->diff);
+	trans_v = poldiff_get_terule_vector_trans(t->diff);
 	apol_vector_t *all_terules = apol_vector_create(NULL);
 	apol_vector_cat(all_terules, member_v);
 	apol_vector_cat(all_terules, change_v);
@@ -914,20 +915,6 @@ static void rules_roletrans_tests()
 	cleanup_test(answers);
 }
 
-int rules_test_init(void)
-{
-	if (!(diff = init_poldiff(RULES_ORIG_POLICY, RULES_MOD_POLICY))) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-int rules_test_cleanup(void)
-{
-	return poldiff_cleanup();
-}
-
 CU_TestInfo rules_tests[] = {
 	{"AV Rules", rules_avrules_tests}
 	,
@@ -939,3 +926,24 @@ CU_TestInfo rules_tests[] = {
 	,
 	CU_TEST_INFO_NULL
 };
+
+int rules_test_init(void)
+{
+	uint32_t run_flags = POLDIFF_DIFF_AVRULES | POLDIFF_DIFF_AVAUDITALLOW |
+		POLDIFF_DIFF_AVDONTAUDIT | POLDIFF_DIFF_AVNEVERALLOW |
+		POLDIFF_DIFF_TECHANGE | POLDIFF_DIFF_TEMEMBER |
+		POLDIFF_DIFF_TETRANS | POLDIFF_DIFF_ROLE_ALLOWS | POLDIFF_DIFF_ROLE_TRANS;
+	if (!(t = poldiff_test_structs_create(RULES_ORIG_POLICY, RULES_MOD_POLICY))) {
+		return 1;
+	}
+	if (poldiff_run(t->diff, run_flags)) {
+		return 1;
+	}
+	return 0;
+}
+
+int rules_test_cleanup(void)
+{
+	poldiff_test_structs_destroy(&t);
+	return 0;
+}

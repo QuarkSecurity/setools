@@ -3,10 +3,10 @@ check_PROGRAMS = libpoldiff-tests
 
 libpoldiff_tests_SOURCES = \
 	components-tests.c components-tests.h \
+	conditionals.c conditionals.h \
 	libpoldiff-tests.c libpoldiff-tests.h \
 	mls-tests.c mls-tests.h \
 	nomls-tests.c nomls-tests.h \
-	policy-defs.h \
 	rules-tests.c rules-tests.h
 
 AM_CFLAGS = @DEBUGCFLAGS@ @WARNCFLAGS@ @PROFILECFLAGS@ @SELINUX_CFLAGS@ \

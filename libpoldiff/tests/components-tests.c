@@ -25,10 +25,8 @@
 #include <config.h>
 
 #include "libpoldiff-tests.h"
-#include "policy-defs.h"
-#include <CUnit/Basic.h>
-#include <CUnit/TestDB.h>
 
+#include <CUnit/CUnit.h>
 #include <apol/util.h>
 
 #include <stdio.h>
@@ -37,6 +35,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define POLICY_ROOT TEST_POLICIES "/setools-3.2/sediff"
+
+#define COMPONENTS_ORIG_POLICY (POLICY_ROOT "/testing-component-orig.conf")
+#define COMPONENTS_MOD_POLICY (POLICY_ROOT "/testing-component-mod.conf")
 
 #define WRAP_NAME_FUNC(component) const char *poldiff_##component##_get_name_w(const void *arg) { \
 	const poldiff_##component##_t *cls = (const poldiff_##component##_t *)arg; \
@@ -341,6 +344,8 @@ WRAP_NAME_FUNC(attrib)
 	WRAP_MOD_FUNC(type, attribs, added)
 	WRAP_MOD_FUNC(type, attribs, removed)
 
+static poldiff_test_structs_t *t = NULL;
+
 static void components_types_tests(void)
 {
 	poldiff_test_answers_t *answers = init_answer_vectors(added_types, removed_types, unchanged_types, modified_types);
@@ -357,8 +362,8 @@ static void components_types_tests(void)
 	apol_vector_t *correct_final_aliases_v = string_array_to_vector(aliased_types);
 	apol_vector_t *changed_aliases_v;
 
-	qpol_policy_t *orig_qpolicy = apol_policy_get_qpol(orig_policy);
-	qpol_policy_t *mod_qpolicy = apol_policy_get_qpol(mod_policy);
+	qpol_policy_t *orig_qpolicy = apol_policy_get_qpol(t->orig_pol);
+	qpol_policy_t *mod_qpolicy = apol_policy_get_qpol(t->mod_pol);
 
 	qpol_iterator_t *orig_types;
 	qpol_iterator_t *mod_types;
@@ -493,21 +498,12 @@ static void components_class_tests(void)
 	cleanup_test(answers);
 }
 
-int components_test_init(void)
-{
-	if (!(diff = init_poldiff(COMPONENTS_ORIG_POLICY, COMPONENTS_MOD_POLICY))) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
 void build_component_vecs(component_funcs_t * component_funcs)
 {
 	size_t i;
 	const void *item = NULL;
 	const apol_vector_t *v = NULL;
-	v = component_funcs->get_diff_vector(diff);
+	v = component_funcs->get_diff_vector(t->diff);
 	for (i = 0; i < apol_vector_get_size(v); i++) {
 		item = apol_vector_get_element(v, i);
 		const char *name_only = NULL;
@@ -550,13 +546,10 @@ void build_component_vecs(component_funcs_t * component_funcs)
 	}
 }
 
-int components_test_cleanup(void)
-{
-	return poldiff_cleanup();
-}
-
 CU_TestInfo components_tests[] = {
 	{"Attributes", components_attributes_tests}
+	,
+	{"Bools", components_bools_tests}
 	,
 	{"Classes", components_class_tests}
 	,
@@ -564,11 +557,28 @@ CU_TestInfo components_tests[] = {
 	,
 	{"Roles", components_roles_tests}
 	,
-	{"Users", components_users_tests}
-	,
-	{"Bools", components_bools_tests}
-	,
 	{"Types", components_types_tests}
+	,
+	{"Users", components_users_tests}
 	,
 	CU_TEST_INFO_NULL
 };
+
+int components_test_init(void)
+{
+	uint32_t run_flags = POLDIFF_DIFF_ATTRIBS | POLDIFF_DIFF_BOOLS |
+		POLDIFF_DIFF_CLASSES | POLDIFF_DIFF_COMMONS | POLDIFF_DIFF_ROLES | POLDIFF_DIFF_TYPES | POLDIFF_DIFF_USERS;
+	if (!(t = poldiff_test_structs_create(COMPONENTS_ORIG_POLICY, COMPONENTS_MOD_POLICY))) {
+		return 1;
+	}
+	if (poldiff_run(t->diff, run_flags)) {
+		return 1;
+	}
+	return 0;
+}
+
+int components_test_cleanup(void)
+{
+	poldiff_test_structs_destroy(&t);
+	return 0;
+}

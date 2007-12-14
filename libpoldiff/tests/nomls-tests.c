@@ -25,13 +25,10 @@
 #include <config.h>
 
 #include "libpoldiff-tests.h"
-#include "nomls-tests.h"
-#include "policy-defs.h"
-#include <CUnit/Basic.h>
-#include <CUnit/TestDB.h>
 
-#include <poldiff/poldiff.h>
+#include <CUnit/CUnit.h>
 #include <apol/util.h>
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <errno.h>
@@ -39,6 +36,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define POLICY_ROOT TEST_POLICIES "/setools-3.2/sediff"
+
+#define NOMLS_ORIG_POLICY (POLICY_ROOT "/testing-mls-orig.conf")
+#define NOMLS_MOD_POLICY (POLICY_ROOT "/testing-mls-mod-nomls.conf")
+
+static poldiff_test_structs_t *t = NULL;
 
 static char *nomls_unchanged_users[] = {
 /* 13.3.17 */
@@ -75,7 +79,7 @@ static void build_nomls_vecs()
 	const apol_vector_t *v = NULL;
 	size_t i, str_len = 0;
 	char *str = NULL;
-	v = poldiff_get_user_vector(diff);
+	v = poldiff_get_user_vector(t->diff);
 	for (i = 0; i < apol_vector_get_size(v); ++i) {
 		item = apol_vector_get_element(v, i);
 		poldiff_user_t *u = (poldiff_user_t *) item;
@@ -130,22 +134,26 @@ static void unchanged_test(void)
 
 }
 
-int nomls_test_init(void)
-{
-	if (!(diff = init_poldiff(NOMLS_ORIG_POLICY, NOMLS_MOD_POLICY))) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-int nomls_test_cleanup(void)
-{
-	return poldiff_cleanup();
-}
-
 CU_TestInfo nomls_tests[] = {
 	{"Changed & Unchanged Users", unchanged_test}
 	,
 	CU_TEST_INFO_NULL
 };
+
+int nomls_test_init(void)
+{
+	uint32_t run_flags = POLDIFF_DIFF_USERS;
+	if (!(t = poldiff_test_structs_create(NOMLS_ORIG_POLICY, NOMLS_MOD_POLICY))) {
+		return 1;
+	}
+	if (poldiff_run(t->diff, run_flags)) {
+		return 1;
+	}
+	return 0;
+}
+
+int nomls_test_cleanup(void)
+{
+	poldiff_test_structs_destroy(&t);
+	return 0;
+}

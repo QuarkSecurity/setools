@@ -1,9 +1,10 @@
 /**
  *  @file
  *
- *  Header file defining location of test policies.
+ *  Declarations of libpoldiff tests for conditional equivalencies.
  *
- *  @author Paul Rosenfeld prosenfeld@tresys.com
+ *  @author Jeremy A. Mowery jmowery@tresys.com
+ *  @author Jason Tang jtang@tresys.com
  *
  *  Copyright (C) 2007 Tresys Technology, LLC
  *
@@ -22,23 +23,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef POLICY_DEFS
-#define POLICY_DEFS
+#ifndef CONDITIONALS_H
+#define CONDITIONALS_H
 
-#include <config.h>
+#include <CUnit/CUnit.h>
 
-#define POLICY_ROOT TEST_POLICIES "/setools-3.2/sediff"
-
-#define COMPONENTS_ORIG_POLICY (POLICY_ROOT "/testing-component-orig.conf")
-#define COMPONENTS_MOD_POLICY (POLICY_ROOT "/testing-component-mod.conf")
-
-#define RULES_ORIG_POLICY (POLICY_ROOT "/testing-rules-orig.conf")
-#define RULES_MOD_POLICY (POLICY_ROOT "/testing-rules-mod.conf")
-
-#define MLS_ORIG_POLICY (POLICY_ROOT "/testing-mls-orig.conf")
-#define MLS_MOD_POLICY (POLICY_ROOT "/testing-mls-mod.conf")
-
-#define NOMLS_ORIG_POLICY (POLICY_ROOT "/testing-mls-orig.conf")
-#define NOMLS_MOD_POLICY (POLICY_ROOT "/testing-mls-mod-nomls.conf")
+extern CU_TestInfo conditionals_tests[];
+extern int conditionals_init(void);
+extern int conditionals_cleanup(void);
 
 #endif

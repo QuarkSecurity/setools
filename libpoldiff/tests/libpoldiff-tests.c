@@ -41,14 +41,77 @@
 #include "rules-tests.h"
 #include "mls-tests.h"
 #include "nomls-tests.h"
+#include "conditionals.h"
 
-poldiff_t *diff;
-apol_policy_t *orig_policy;
-apol_policy_t *mod_policy;
 apol_vector_t *added_v;
 apol_vector_t *removed_v;
 apol_vector_t *modified_v;
 apol_vector_t *modified_name_only_v;
+
+poldiff_test_structs_t *poldiff_test_structs_create(const char *orig_base_path, const char *mod_base_path)
+{
+	poldiff_test_structs_t *t = NULL;
+	apol_policy_path_t *mod_pol_path = NULL;
+	apol_policy_path_t *orig_pol_path = NULL;
+
+	orig_pol_path = apol_policy_path_create(APOL_POLICY_PATH_TYPE_MONOLITHIC, orig_base_path, NULL);
+	if (!orig_pol_path) {
+		ERR(NULL, "%s", strerror(errno));
+		goto err;
+	}
+
+	mod_pol_path = apol_policy_path_create(APOL_POLICY_PATH_TYPE_MONOLITHIC, mod_base_path, NULL);
+	if (!mod_pol_path) {
+		ERR(NULL, "%s", strerror(errno));
+		goto err;
+	}
+
+	if ((t = calloc(1, sizeof(*t))) == NULL) {
+		ERR(NULL, "%s", strerror(errno));
+		goto err;
+	}
+
+	t->orig_pol = apol_policy_create_from_policy_path(orig_pol_path, 0, NULL, NULL);
+	if (!t->orig_pol) {
+		ERR(NULL, "%s", strerror(errno));
+		goto err;
+	}
+
+	t->mod_pol = apol_policy_create_from_policy_path(mod_pol_path, 0, NULL, NULL);
+	if (!t->mod_pol) {
+		ERR(NULL, "%s", strerror(errno));
+		goto err;
+	}
+
+	if (!(t->diff = poldiff_create(t->orig_pol, t->mod_pol, NULL, NULL))) {
+		ERR(NULL, "%s", strerror(errno));
+		goto err;
+	}
+	apol_policy_path_destroy(&orig_pol_path);
+	apol_policy_path_destroy(&mod_pol_path);
+	return t;
+      err:
+	apol_policy_path_destroy(&orig_pol_path);
+	apol_policy_path_destroy(&mod_pol_path);
+	poldiff_test_structs_destroy(&t);
+	return NULL;
+}
+
+void poldiff_test_structs_destroy(poldiff_test_structs_t ** t)
+{
+	if (t != NULL) {
+		if ((*t)->diff == NULL) {
+			/* poldiff has not yet taken ownership of the policies */
+			apol_policy_destroy(&((*t)->orig_pol));
+			apol_policy_destroy(&((*t)->mod_pol));
+		} else {
+			/* poldiff owns the policies */
+			poldiff_destroy(&((*t)->diff));
+		}
+		free(*t);
+		*t = NULL;
+	}
+}
 
 apol_vector_t *string_array_to_vector(char *arr[])
 {
@@ -231,56 +294,6 @@ component_funcs_t *init_test_funcs(poldiff_get_diff_vector get_diff_vector, pold
 	return funcs;
 }
 
-poldiff_t *init_poldiff(char *orig_base_path, char *mod_base_path)
-{
-	poldiff_t *return_diff = NULL;
-	uint32_t flags = POLDIFF_DIFF_ALL;
-	apol_policy_path_t *mod_pol_path = NULL;
-	apol_policy_path_t *orig_pol_path = NULL;
-
-	orig_pol_path = apol_policy_path_create(APOL_POLICY_PATH_TYPE_MONOLITHIC, orig_base_path, NULL);
-	if (!orig_pol_path) {
-		ERR(NULL, "%s", strerror(errno));
-		goto err;
-	}
-
-	mod_pol_path = apol_policy_path_create(APOL_POLICY_PATH_TYPE_MONOLITHIC, mod_base_path, NULL);
-	if (!mod_pol_path) {
-		ERR(NULL, "%s", strerror(errno));
-		goto err;
-	}
-
-	orig_policy = apol_policy_create_from_policy_path(orig_pol_path, 0, NULL, NULL);
-	if (!orig_policy) {
-		ERR(NULL, "%s", strerror(errno));
-		goto err;
-	}
-
-	mod_policy = apol_policy_create_from_policy_path(mod_pol_path, 0, NULL, NULL);
-	if (!mod_policy) {
-		ERR(NULL, "%s", strerror(errno));
-		goto err;
-	}
-
-	if (!(return_diff = poldiff_create(orig_policy, mod_policy, NULL, NULL))) {
-		ERR(NULL, "%s", strerror(errno));
-		goto err;
-	}
-	if (poldiff_run(return_diff, flags)) {
-		goto err;
-	}
-	apol_policy_path_destroy(&orig_pol_path);
-	apol_policy_path_destroy(&mod_pol_path);
-	return return_diff;
-      err:
-	apol_policy_destroy(&orig_policy);
-	apol_policy_destroy(&mod_policy);
-	apol_policy_path_destroy(&orig_pol_path);
-	apol_policy_path_destroy(&mod_pol_path);
-	poldiff_destroy(&return_diff);
-	return NULL;
-}
-
 void cleanup_test(poldiff_test_answers_t * answers)
 {
 	if (answers != NULL) {
@@ -290,12 +303,6 @@ void cleanup_test(poldiff_test_answers_t * answers)
 		apol_vector_destroy(&answers->correct_modified_v);
 		free(answers);
 	}
-}
-
-int poldiff_cleanup(void)
-{
-	poldiff_destroy(&diff);
-	return 0;
 }
 
 int main(void)
@@ -312,6 +319,8 @@ int main(void)
 		{"MLS", mls_test_init, mls_test_cleanup, mls_tests}
 		,
 		{"Non-MLS vs. MLS Users", nomls_test_init, nomls_test_cleanup, nomls_tests}
+		,
+		{"Conditionals", conditionals_init, conditionals_cleanup, conditionals_tests}
 		,
 		CU_SUITE_INFO_NULL
 	};

@@ -34,6 +34,13 @@ typedef poldiff_form_e(*poldiff_get_form) (const void *);
 typedef const apol_vector_t *(*poldiff_get_added) (const void *);
 typedef const apol_vector_t *(*poldiff_get_removed) (const void *);
 
+typedef struct _poldiff_test_structs
+{
+	poldiff_t *diff;
+	apol_policy_t *orig_pol;
+	apol_policy_t *mod_pol;
+} poldiff_test_structs_t;
+
 typedef struct _test_answers
 {
 	apol_vector_t *correct_added_v;
@@ -57,7 +64,9 @@ typedef enum _test_numbers
 	MLS_CATEGORY, MLS_LEVEL, MLS_RANGETRANS, MLS_USER
 } test_numbers_e;
 
-poldiff_t *init_poldiff(char *orig_base_path, char *mod_base_path);
+extern poldiff_test_structs_t *poldiff_test_structs_create(const char *orig_base_path, const char *mod_base_path);
+extern void poldiff_test_structs_destroy(poldiff_test_structs_t ** t);
+
 component_funcs_t *init_test_funcs(poldiff_get_diff_vector, poldiff_get_name, poldiff_get_form, poldiff_get_added,
 				   poldiff_get_removed);
 void run_test(component_funcs_t *, poldiff_test_answers_t *, test_numbers_e);
@@ -65,7 +74,6 @@ void run_test(component_funcs_t *, poldiff_test_answers_t *, test_numbers_e);
 apol_vector_t *string_array_to_vector(char *[]);
 void cleanup_test(poldiff_test_answers_t *);
 char *vector_to_string(const apol_vector_t *, const char *, const char *);
-extern int poldiff_cleanup(void);
 
 int compare_str(const void *s1, const void *s2, void *debug);
 poldiff_test_answers_t *init_answer_vectors(char *[], char *[], char *[], char *[]);
@@ -74,9 +82,6 @@ void print_test_failure(apol_vector_t *, apol_vector_t *, size_t, const char *);
 extern apol_vector_t *shallow_copy_str_vec_and_sort(const apol_vector_t * v);
 
 /* these are defined in libpoldiff-tests.c */
-extern poldiff_t *diff;
-extern apol_policy_t *orig_policy;
-extern apol_policy_t *mod_policy;
 extern apol_vector_t *added_v;
 extern apol_vector_t *removed_v;
 extern apol_vector_t *modified_v;

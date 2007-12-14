@@ -25,8 +25,7 @@
 #include <config.h>
 
 #include "libpoldiff-tests.h"
-#include "mls-tests.h"
-#include "policy-defs.h"
+
 #include <CUnit/Basic.h>
 #include <CUnit/TestDB.h>
 
@@ -42,6 +41,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define POLICY_ROOT TEST_POLICIES "/setools-3.2/sediff"
+
+#define MLS_ORIG_POLICY (POLICY_ROOT "/testing-mls-orig.conf")
+#define MLS_MOD_POLICY (POLICY_ROOT "/testing-mls-mod.conf")
 
 static char *unchanged_users_mls[] = {
 	/* 13.0 */
@@ -240,6 +244,7 @@ static char *removed_categories[] = {
 	NULL
 };
 
+static poldiff_test_structs_t *t = NULL;
 static char *modified_categories[] = { NULL };
 
 void build_category_vecs()
@@ -248,7 +253,7 @@ void build_category_vecs()
 	size_t i;
 	const void *item = NULL;
 	const apol_vector_t *v = NULL;
-	v = poldiff_get_cat_vector(diff);
+	v = poldiff_get_cat_vector(t->diff);
 	for (i = 0; i < apol_vector_get_size(v); ++i) {
 		item = apol_vector_get_element(v, i);
 		const char *name = poldiff_cat_get_name(item);
@@ -390,11 +395,11 @@ static char *rangetrans_to_string(const void *arg, poldiff_form_e form, int show
 	switch (form) {
 	case POLDIFF_FORM_ADDED:
 	case POLDIFF_FORM_ADD_TYPE:
-		range_str = apol_mls_range_render(mod_policy, mod_range);
+		range_str = apol_mls_range_render(t->mod_pol, mod_range);
 		break;
 	case POLDIFF_FORM_REMOVED:
 	case POLDIFF_FORM_REMOVE_TYPE:
-		range_str = apol_mls_range_render(orig_policy, orig_range);
+		range_str = apol_mls_range_render(t->orig_pol, orig_range);
 		break;
 	case POLDIFF_FORM_MODIFIED:
 		range_str = modified_mls_range_to_string(range);
@@ -427,7 +432,7 @@ void build_rangetrans_vecs()
 	size_t i;
 	const void *item = NULL;
 	const apol_vector_t *v = NULL;
-	v = poldiff_get_range_trans_vector(diff);
+	v = poldiff_get_range_trans_vector(t->diff);
 	for (i = 0; i < apol_vector_get_size(v); ++i) {
 		item = apol_vector_get_element(v, i);
 		poldiff_form_e form = poldiff_range_trans_get_form(item);
@@ -487,7 +492,7 @@ void build_level_vecs()
 	size_t i;
 	const void *item = NULL;
 	const apol_vector_t *v = NULL;
-	v = poldiff_get_level_vector(diff);
+	v = poldiff_get_level_vector(t->diff);
 	for (i = 0; i < apol_vector_get_size(v); ++i) {
 		item = apol_vector_get_element(v, i);
 		poldiff_form_e form = poldiff_cat_get_form(item);
@@ -572,7 +577,7 @@ void build_user_vecs()
 	size_t i;
 	const void *item = NULL;
 	const apol_vector_t *v = NULL;
-	v = poldiff_get_user_vector(diff);
+	v = poldiff_get_user_vector(t->diff);
 	for (i = 0; i < apol_vector_get_size(v); ++i) {
 		item = apol_vector_get_element(v, i);
 		poldiff_form_e form = poldiff_cat_get_form(item);
@@ -632,20 +637,6 @@ static void mls_user_tests()
 	cleanup_test(answers);
 }
 
-int mls_test_init(void)
-{
-	if (!(diff = init_poldiff(MLS_ORIG_POLICY, MLS_MOD_POLICY))) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-int mls_test_cleanup(void)
-{
-	return poldiff_cleanup();
-}
-
 CU_TestInfo mls_tests[] = {
 	{"Categories", mls_category_tests}
 	,
@@ -657,3 +648,21 @@ CU_TestInfo mls_tests[] = {
 	,
 	CU_TEST_INFO_NULL
 };
+
+int mls_test_init(void)
+{
+	uint32_t run_flags = POLDIFF_DIFF_CATS | POLDIFF_DIFF_LEVELS | POLDIFF_DIFF_RANGE_TRANS | POLDIFF_DIFF_USERS;
+	if (!(t = poldiff_test_structs_create(MLS_ORIG_POLICY, MLS_MOD_POLICY))) {
+		return 1;
+	}
+	if (poldiff_run(t->diff, run_flags)) {
+		return 1;
+	}
+	return 0;
+}
+
+int mls_test_cleanup(void)
+{
+	poldiff_test_structs_destroy(&t);
+	return 0;
+}
