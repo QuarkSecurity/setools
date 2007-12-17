@@ -55,7 +55,7 @@ void * attribs_wo_types_init( void )
 namespace sechk
 {
 	attribs_wo_types_module::attribs_wo_types_module() throw(std::invalid_argument, std::out_of_range)
-	:module("attribs_wo_types",SECHK_SEV_LOW,"Fnd attributes without assigned types.",
+	:module("attribs_wo_types",SECHK_SEV_LOW,"Find attributes without assigned types.",
 	"Attributes without types can cause type fields in rules to expand to empty\n"
 	"sets and thus become unreachable. This makes for misleading policy source files.")
 	{
