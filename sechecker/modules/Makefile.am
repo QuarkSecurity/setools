@@ -2,6 +2,7 @@ modulesdir = @profile_install_dir@
 modules_DATA = \
 	attribs_wo_types.so \
 	domain_and_file.so \
+	domains_wo_roles.so \
 	find_domains.so \
 	find_file_types.so \
 	roles_wo_types.so \
@@ -11,6 +12,7 @@ modules_DATA = \
 EXTRA_DIST = \
 	attribs_wo_types.cc attribs_wo_types.hh \
 	domain_and_file.cc domain_and_file.hh \
+	domains_wo_roles.cc domains_wo_roles.hh \
 	find_domains.cc find_domains.hh \
 	find_file_types.cc find_file_types.hh \
 	roles_wo_types.cc roles_wo_types.hh \
