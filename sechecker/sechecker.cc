@@ -181,13 +181,13 @@ namespace sechk
 		}
 	}
 
-	void sechecker::runModules(const std::vector < std::string > &mod_names) throw(std::out_of_range, std::runtime_error)
+	void sechecker::runModules(const std::vector < std::string > &mod_names) throw(std::out_of_range, std::runtime_error, std::invalid_argument)
 	{
 		for (vector < string >::const_iterator i = mod_names.begin(); i != mod_names.end(); i++)
 			runModules(*i);
 	}
 
-	void sechecker::runModules(const std::string & mod_name) throw(std::out_of_range, std::runtime_error)
+	void sechecker::runModules(const std::string & mod_name) throw(std::out_of_range, std::runtime_error, std::invalid_argument)
 	{
 		map < string, pair < module *, void * > >::iterator iter = _modules.find(mod_name);
 		if (iter == _modules.end())
@@ -225,7 +225,7 @@ namespace sechk
 		}
 	}
 
-	void sechecker::runModules() throw(std::out_of_range, std::runtime_error)
+	void sechecker::runModules() throw(std::out_of_range, std::runtime_error, std::invalid_argument)
 	{
 		if (_active_profile == "")
 			throw runtime_error("No profile is active");

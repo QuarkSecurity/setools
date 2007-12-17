@@ -138,8 +138,10 @@ namespace sechk
 		 * @post All modules listed in \a mod_names have a valid and complete result.
 		 * @exception std::out_of_range A module in the list does not exist.
 		 * @exception std::runtime_error Could not complete running of all listed modules.
+		 * @exception std::invalid_argument Requirements not met for a module in the list
+		 * or invalid options given.
 		 */
-		void runModules(const std::vector < std::string > &mod_names) throw(std::out_of_range, std::runtime_error);
+		void runModules(const std::vector < std::string > &mod_names) throw(std::out_of_range, std::runtime_error, std::invalid_argument);
 		/**
 		 * Run a single module (and any of its dependencies).
 		 * This function will only run a module once including any previous calls
@@ -149,8 +151,10 @@ namespace sechk
 		 * @exception std::out_of_range No module with name \a mod_name exists.
 		 * @exception std::runtime_error Could not complete running of module \a mod_name
 		 * or one of its dependencies.
+		 * @exception std::invalid_argument Requirements not met for \a mod_names or invalid
+		 * options given.
 		 */
-		void runModules(const std::string & mod_name) throw(std::out_of_range, std::runtime_error);
+		void runModules(const std::string & mod_name) throw(std::out_of_range, std::runtime_error, std::invalid_argument);
 		/**
 		 * Run all modules in the currently active profile. All modules specified
 		 * in the profile will be run only once including any previous calls to runModules().
@@ -159,8 +163,10 @@ namespace sechk
 		 * profile does not exist.
 		 * @exception std::runtime_error Could not complete running of all specified modules.
 		 * This exception is also thrown if there is no active profile.
+		 * @exception std::invalid_argument Requirements not met for one or more modules
+		 * specified in the currently active profile or invalid options given.
 		 */
-		void runModules() throw(std::out_of_range, std::runtime_error);
+		void runModules() throw(std::out_of_range, std::runtime_error, std::invalid_argument);
 
 		/**
 		 * Create a report object for the listed modules.

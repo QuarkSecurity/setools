@@ -50,7 +50,7 @@ namespace sechk
 			_data = rhs._dup(rhs._data);
 		else
 			_data = rhs._data;
-		if (!_data)
+		if (!_data && _type != typeid(void*))
 			throw bad_alloc();
 		_free = rhs._free;
 		_dup = rhs._dup;
@@ -180,6 +180,11 @@ namespace sechk
 		else if (_type == typeid(sefs_entry*))
 		{
 			out << (rule = static_cast<sefs_entry*>(_data)->toString());
+		}
+		//special case for nothing to print
+		else if (_type == typeid(void*) && _data == NULL)
+		{
+			return out;
 		}
 		else
 		{

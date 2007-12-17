@@ -602,6 +602,15 @@ int main(int argc, char **argv)
 		apol_policy_destroy(&policy);
 		exit(EXIT_FAILURE);
 	}
+	catch (invalid_argument x)
+	{
+		cerr << x.what() << endl;
+		delete rep;
+		top.close();
+		delete file_contexts;
+		apol_policy_destroy(&policy);
+		exit(EXIT_FAILURE);
+	}
 
 	top.close();
 	delete file_contexts;

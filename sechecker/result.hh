@@ -58,7 +58,8 @@ namespace sechk
 		 * Create an element. This will create an element form any type of
 		 * policy element, file context entry or apol result.
 		 * @param T The type of element.
-		 * @param data_ The pointer to the data.
+		 * @param data_ The pointer to the data.  as a special case, if a NULL
+		 * pointer to void is given, the element is treated as representing an empty set.
 		 * @param free_ Function to call to free memory associated with \a data_;
 		 * if \a data_ does not need to be freed, pass NULL.
 		 * @param dup_ Function to call to copy \a data_; if it is safe to only
@@ -72,7 +73,7 @@ namespace sechk
 				_data = dup_(reinterpret_cast < void *>(data_));
 			else
 				_data = reinterpret_cast < void *>(data_);
-			if (!_data)
+			if (!_data && _type != typeid(void*))
 				throw std::bad_alloc();
 			_free = free_;
 			_dup = dup_;
