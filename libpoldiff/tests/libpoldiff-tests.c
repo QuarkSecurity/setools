@@ -4,6 +4,8 @@
  *  CUnit testing framework for libpoldiff's correctness.
  *
  *  @author Paul Rosenfeld prosenfeld@tresys.com
+ *  @author Jeremy A. Mowery jmowery@tresys.com
+ *  @author Jason Tang jtang@tresys.com
  *
  *  Copyright (C) 2007 Tresys Technology, LLC
  *
@@ -47,6 +49,165 @@ apol_vector_t *added_v;
 apol_vector_t *removed_v;
 apol_vector_t *modified_v;
 apol_vector_t *modified_name_only_v;
+
+static int test_string_compare(const void *a, const void *b, void *data)
+{
+	const char *intended = (const char *)a;
+	const char *actual = (const char *)b;
+	const char *key = (const char *)data;
+	/* check if the intended string begins with the key character */
+	if (*intended != *key) {
+		return -1;
+	}
+	return strcmp(intended + 1, actual);
+}
+
+bool poldiff_test_avrule_check(const poldiff_t * diff, const poldiff_avrule_t * actual,
+			       const struct poldiff_test_rule_answer * intended)
+{
+	if (poldiff_avrule_get_form(actual) != intended->form) {
+		return false;
+	}
+	if (poldiff_avrule_get_rule_type(actual) != intended->rule_type) {
+		return false;
+	}
+	if (strcmp(poldiff_avrule_get_source_type(actual), intended->source_type) != 0) {
+		return false;
+	}
+	if (strcmp(poldiff_avrule_get_target_type(actual), intended->target_type) != 0) {
+		return false;
+	}
+	if (strcmp(poldiff_avrule_get_object_class(actual), intended->object_class) != 0) {
+		return false;
+	}
+
+	apol_vector_t *v = apol_str_split(intended->perm_default, " ");
+	size_t perms_found = 0, i, j;
+	const apol_vector_t *av = poldiff_avrule_get_unmodified_perms(actual);
+	for (i = 0; i < apol_vector_get_size(av); i++) {
+		const char *s = (const char *)apol_vector_get_element(av, i);
+		if (apol_vector_get_index(v, s, apol_str_strcmp, NULL, &j) < 0) {
+			apol_vector_destroy(&v);
+			return false;
+		}
+		perms_found++;
+	}
+	av = poldiff_avrule_get_added_perms(actual);
+	for (i = 0; i < apol_vector_get_size(av); i++) {
+		const char *s = (const char *)apol_vector_get_element(av, i);
+		if (apol_vector_get_index(v, s, test_string_compare, "+", &j) < 0) {
+			apol_vector_destroy(&v);
+			return false;
+		}
+		perms_found++;
+	}
+	av = poldiff_avrule_get_removed_perms(actual);
+	for (i = 0; i < apol_vector_get_size(av); i++) {
+		const char *s = (const char *)apol_vector_get_element(av, i);
+		if (apol_vector_get_index(v, s, test_string_compare, "-", &j) < 0) {
+			apol_vector_destroy(&v);
+			return false;
+		}
+		perms_found++;
+	}
+	if (perms_found != apol_vector_get_size(v)) {
+		apol_vector_destroy(&v);
+		return false;
+	}
+	apol_vector_destroy(&v);
+
+	const qpol_cond_t *cond;
+	uint32_t which_list;
+	const apol_policy_t *p;
+	poldiff_avrule_get_cond(diff, actual, &cond, &which_list, &p);
+	if (which_list != intended->which_list) {
+		return false;
+	}
+	if ((cond == NULL && intended->cond_expr != NULL) || (cond != NULL && intended->cond_expr == NULL)) {
+		return false;
+	}
+	if (cond == NULL) {
+		/* both actual and intended are not conditional expressions */
+		return true;
+	}
+
+	char *cond_expr = apol_cond_expr_render(p, cond);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(cond_expr);
+	if (strcmp(cond_expr, intended->cond_expr) != 0) {
+		free(cond_expr);
+		return false;
+	}
+	free(cond_expr);
+	return true;
+}
+
+bool poldiff_test_terule_check(const poldiff_t * diff, const poldiff_terule_t * actual,
+			       const struct poldiff_test_rule_answer * intended)
+{
+	if (poldiff_terule_get_form(actual) != intended->form) {
+		return false;
+	}
+	if (poldiff_terule_get_rule_type(actual) != intended->rule_type) {
+		return false;
+	}
+	if (strcmp(poldiff_terule_get_source_type(actual), intended->source_type) != 0) {
+		return false;
+	}
+	if (strcmp(poldiff_terule_get_target_type(actual), intended->target_type) != 0) {
+		return false;
+	}
+	if (strcmp(poldiff_terule_get_object_class(actual), intended->object_class) != 0) {
+		return false;
+	}
+
+	if (intended->form == POLDIFF_FORM_ADDED || intended->form == POLDIFF_FORM_ADD_TYPE) {
+		if (strcmp(poldiff_terule_get_modified_default(actual), intended->perm_default + 1) != 0) {
+			return false;
+		}
+	} else if (intended->form == POLDIFF_FORM_REMOVED || intended->form == POLDIFF_FORM_REMOVE_TYPE) {
+		if (strcmp(poldiff_terule_get_original_default(actual), intended->perm_default + 1) != 0) {
+			return false;
+		}
+	} else {
+		apol_vector_t *v = apol_str_split(intended->perm_default, " ");
+		size_t i;
+		const char *d = poldiff_terule_get_original_default(actual);
+		if (apol_vector_get_index(v, d, test_string_compare, "-", &i) < 0) {
+			apol_vector_destroy(&v);
+			return false;
+		}
+		d = poldiff_terule_get_modified_default(actual);
+		if (apol_vector_get_index(v, d, test_string_compare, "+", &i) < 0) {
+			apol_vector_destroy(&v);
+			return false;
+		}
+		apol_vector_destroy(&v);
+	}
+
+	const qpol_cond_t *cond;
+	uint32_t which_list;
+	const apol_policy_t *p;
+	poldiff_terule_get_cond(diff, actual, &cond, &which_list, &p);
+	if (which_list != intended->which_list) {
+		return false;
+	}
+	if ((cond == NULL && intended->cond_expr != NULL) || (cond != NULL && intended->cond_expr == NULL)) {
+		return false;
+	}
+	if (cond == NULL) {
+		/* both actual and intended are not conditional expressions */
+		return true;
+	}
+
+	char *cond_expr = apol_cond_expr_render(p, cond);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(cond_expr);
+	if (strcmp(cond_expr, intended->cond_expr) != 0) {
+		free(cond_expr);
+		return false;
+	}
+	free(cond_expr);
+	return true;
+}
 
 poldiff_test_structs_t *poldiff_test_structs_create(const char *orig_base_path, const char *mod_base_path)
 {

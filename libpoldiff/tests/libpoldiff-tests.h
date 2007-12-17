@@ -27,6 +27,46 @@
 
 #include <poldiff/poldiff.h>
 #include <apol/vector.h>
+#include <stdbool.h>
+
+struct poldiff_test_symbol_answer
+{
+	const poldiff_form_e form;
+	const char *name;
+	bool found;
+};
+
+struct poldiff_test_rule_answer
+{
+	const poldiff_form_e form;
+	const uint32_t rule_type;
+	const char *source_type;
+	const char *target_type;
+	const char *object_class;
+	const char *perm_default;
+	const char *cond_expr;
+	const uint32_t which_list;
+	bool found;
+};
+
+/**
+ * Compare an \a actual avrule result with an \a intended one.  If the
+ * two match (including conditional expression), then return true;
+ * otherwise return false.
+ */
+extern bool poldiff_test_avrule_check(const poldiff_t * diff, const poldiff_avrule_t * actual,
+				      const struct poldiff_test_rule_answer *intended);
+
+/**
+ * Compare an \a actual terule result with an \a intended one.  If the
+ * two match (including conditional expression), then return true;
+ * otherwise return false.
+ */
+extern bool poldiff_test_terule_check(const poldiff_t * diff, const poldiff_terule_t * actual,
+				      const struct poldiff_test_rule_answer *intended);
+
+/* below is the older way to handle diff results, before component
+   records were added to libpoldiff */
 
 typedef const apol_vector_t *(*poldiff_get_diff_vector) (const poldiff_t *);
 typedef const char *(*poldiff_get_name) (const void *);
