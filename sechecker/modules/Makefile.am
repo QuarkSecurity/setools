@@ -16,7 +16,7 @@ EXTRA_DIST = \
 	find_domains.cc find_domains.hh \
 	find_file_types.cc find_file_types.hh \
 	roles_wo_types.cc roles_wo_types.hh \
-	roles_wo_users.cc roles_wo_userss.hh \
+	roles_wo_users.cc roles_wo_users.hh \
 	users_wo_roles.cc users_wo_roles.hh
 
 #dist_noinst_DATA = \
