@@ -5,6 +5,7 @@ modules_DATA = \
 	domains_wo_roles.so \
 	find_domains.so \
 	find_file_types.so \
+	find_port_types.so \
 	roles_wo_types.so \
 	roles_wo_users.so \
 	types_wo_allow.so \
@@ -16,6 +17,7 @@ EXTRA_DIST = \
 	domains_wo_roles.cc domains_wo_roles.hh \
 	find_domains.cc find_domains.hh \
 	find_file_types.cc find_file_types.hh \
+	find_port_types.cc find_port_types.hh \
 	roles_wo_types.cc roles_wo_types.hh \
 	roles_wo_users.cc roles_wo_users.hh \
 	types_wo_allow.cc types_wo_allow.hh \

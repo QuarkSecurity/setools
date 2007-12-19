@@ -123,7 +123,12 @@ namespace sechk
 		else if (_type == typeid(qpol_isid_t *))
 		{
 			qpol_isid_get_name(apol_policy_get_qpol(pol), static_cast < qpol_isid_t * >(_data), &name);
-			out << name;
+			const qpol_context_t *qctx = NULL;
+			qpol_isid_get_context(apol_policy_get_qpol(pol), static_cast < qpol_isid_t * >(_data), &qctx);
+			apol_context_t *ctx = apol_context_create_from_qpol_context(pol, qctx);
+			rule = apol_context_render(pol, ctx);
+			apol_context_destroy(&ctx);
+			out << "sid" << name << " " << rule;
 		}
 		else if (_type == typeid(qpol_level_t *))
 		{
@@ -306,11 +311,14 @@ namespace sechk
 	{
 		entry newentry(elem);
 
+		if (_entries.find(elem.data()) != _entries.end())
+			return _entries.find(elem.data())->second;
+
 		pair < map < void *, entry >::iterator, bool > retv =
 			_entries.insert(make_pair(const_cast < void *>(newentry.Element().data()), newentry));
 		if (!retv.second)
 		{
-			throw invalid_argument("Cannot insert duplicate result entry");
+			throw invalid_argument("Invalid attempt to insert duplicate result entry");
 		}
 
 		return (*retv.first).second;
