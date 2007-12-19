@@ -1,12 +1,12 @@
 /**
- *  @file
+ * @file
  *
- *  Declarations for libapol case insensitive and regex searching tests.
+ * Declarations for performing conditional expression simplification.
  *
- *  @author Jeremy A. Mowery jmowery@tresys.com
- *  @author Jason Tang jtang@tresys.com
+ * @author Jeremy A. Mowery jmowery@tresys.com
+ * @author Jason Tang  jtang@tresys.com
  *
- *  Copyright (C) 2007 Tresys Technology, LLC
+ * Copyright (C) 2001-2007 Tresys Technology, LLC
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -23,13 +23,27 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef ICASE_REGEX_TESTS_H
-#define ICASE_REGEX_TESTS_H
+#ifndef APOL_COND_SIMPLIFY_H
+#define APOL_COND_SIMPLIFY_H
 
-#include <CUnit/CUnit.h>
+#ifdef	__cplusplus
+extern "C"
+{
+#endif
 
-extern CU_TestInfo icase_regex_tests[];
-extern int icase_regex_init();
-extern int icase_regex_cleanup();
+#include <qpol/policy.h>
+#include "policy.h"
+#include "vector.h"
+
+    typedef struct apol_cond_term {
+        apol_vector_t *included;
+        apol_vector_t *excluded;
+    } apol_cond_term_t;
+
+	extern apol_vector_t *apol_cond_simplify(const apol_policy_t * p, const qpol_cond_t * cond);
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif

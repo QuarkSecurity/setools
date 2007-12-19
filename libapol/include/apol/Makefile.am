@@ -5,6 +5,7 @@ apol_HEADERS = \
 	bool-query.h \
 	bst.h \
 	class-perm-query.h \
+	cond-simplify.h \
 	condrule-query.h \
 	constraint-query.h \
 	context-query.h \

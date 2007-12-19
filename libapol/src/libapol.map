@@ -83,4 +83,5 @@ VERS_4.1{
 VERS_4.2{
 	global:
 		apol_*_set_icase;
+		apol_cond_simplify;
 } VERS_4.1;

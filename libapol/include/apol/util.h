@@ -227,9 +227,8 @@ extern "C"
  *
  * @return A newly allocated vector of strings containing the
  * variable's values, or NULL if not found or error.  Note that the
- * vector could be empty if the config var does not exist or has an
- * empty value.  The caller must call apol_vector_destroy()
- * afterwards.
+ * vector could be empty if the string is empty.  The caller must call
+ * apol_vector_destroy() afterwards.
  */
 	extern apol_vector_t *apol_str_split(const char *s, const char *delim);
 

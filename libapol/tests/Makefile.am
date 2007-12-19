@@ -10,6 +10,7 @@ libapol_tests_SOURCES = \
 	terule-tests.c terule-tests.h \
 	user-tests.c user-tests.h \
 	icase_regex-tests.c icase_regex-tests.h \
+	cond-simplify-tests.c cond-simplify-tests.h \
 	libapol-tests.c
 
 AM_CFLAGS = @DEBUGCFLAGS@ @WARNCFLAGS@ @PROFILECFLAGS@ @SELINUX_CFLAGS@ \

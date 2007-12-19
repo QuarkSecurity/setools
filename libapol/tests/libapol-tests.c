@@ -27,6 +27,7 @@
 
 #include <CUnit/CUnit.h>
 #include <CUnit/Basic.h>
+#include <CUnit/Console.h>
 
 #include "avrule-tests.h"
 #include "dta-tests.h"
@@ -36,8 +37,9 @@
 #include "terule-tests.h"
 #include "user-tests.h"
 #include "icase_regex-tests.h"
+#include "cond-simplify-tests.h"
 
-int main(void)
+int main(int argc, char *argv[])
 {
 	if (CU_initialize_registry() != CUE_SUCCESS) {
 		return CU_get_error();
@@ -60,12 +62,20 @@ int main(void)
 		,
 		{"Ignore Case & Regex Queries", icase_regex_init, icase_regex_cleanup, icase_regex_tests}
 		,
+		{"Conditional Expression Simplification", cond_simplify_init, cond_simplify_cleanup, cond_simplify_tests}
+		,
 		CU_SUITE_INFO_NULL
 	};
 
 	CU_register_suites(suites);
 	CU_basic_set_mode(CU_BRM_VERBOSE);
-	CU_basic_run_tests();
+	if (argc == 1) {
+		CU_basic_run_tests();
+	} else {
+		CU_pTestRegistry r = CU_get_registry();
+		CU_pSuite s = CU_get_suite_by_name("Conditional Expression Simplification", r);
+		CU_basic_run_suite(s);
+	}
 	unsigned int num_failures = CU_get_number_of_failure_records();
 	CU_cleanup_registry();
 	return (int)num_failures;

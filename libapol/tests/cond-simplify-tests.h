@@ -1,7 +1,7 @@
 /**
  *  @file
  *
- *  Declarations for libapol case insensitive and regex searching tests.
+ *  Declarations for libapol conditional simplification tests.
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
@@ -23,13 +23,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef ICASE_REGEX_TESTS_H
-#define ICASE_REGEX_TESTS_H
+#ifndef COND_SIMPLIFY_TESTS_H
+#define COND_SIMPLIFY_TESTS_H
 
 #include <CUnit/CUnit.h>
 
-extern CU_TestInfo icase_regex_tests[];
-extern int icase_regex_init();
-extern int icase_regex_cleanup();
+extern CU_TestInfo cond_simplify_tests[];
+extern int cond_simplify_init();
+extern int cond_simplify_cleanup();
 
 #endif

@@ -16,6 +16,7 @@ libapol_a_SOURCES = \
 	bool-query.c \
 	bst.c \
 	class-perm-query.c \
+	cond-simplify.c \
 	condrule-query.c \
 	constraint-query.c \
 	context-query.c \
