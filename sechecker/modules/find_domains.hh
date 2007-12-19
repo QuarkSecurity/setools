@@ -39,14 +39,14 @@ extern "C"
 	 * This is exported as a C function so dlsym can find it.
 	 * @return A fully initialized module object.
 	 */
-	void * find_domains_init( void );
+	void *find_domains_init(void);
 }
 
 namespace sechk
 {
-	class find_domains_module: public module
+	class find_domains_module:public module
 	{
-		public:
+	      public:
 		/**
 		 * Create a find domains module.
 		 * Module will be initialized with default options.
@@ -62,7 +62,7 @@ namespace sechk
 		find_domains_module(const find_domains_module & rhs);
 
 		//! Destructor.
-		virtual ~find_domains_module();
+		 virtual ~find_domains_module();
 
 		/**
 		 * Function called by run() to perform module specific checking.
@@ -73,4 +73,4 @@ namespace sechk
 	};
 }
 
-#endif /* SECHECKER_MODULE_FIND_DOMAINS */
+#endif				       /* SECHECKER_MODULE_FIND_DOMAINS */

@@ -36,7 +36,6 @@
 #include <map>
 #include <stdexcept>
 
-
 using std::vector;
 using std::string;
 using std::map;
@@ -47,17 +46,18 @@ using std::runtime_error;
 using std::out_of_range;
 using std::bad_alloc;
 
-void * attribs_wo_types_init( void )
+void *attribs_wo_types_init(void)
 {
-	return static_cast<void*>(new sechk::attribs_wo_types_module());
+	return static_cast < void *>(new sechk::attribs_wo_types_module());
 }
 
 namespace sechk
 {
-	attribs_wo_types_module::attribs_wo_types_module() throw(std::invalid_argument, std::out_of_range)
-	:module("attribs_wo_types",SECHK_SEV_LOW,"Find attributes without assigned types.",
-	"Attributes without types can cause type fields in rules to expand to empty\n"
-	"sets and thus become unreachable. This makes for misleading policy source files.")
+	attribs_wo_types_module::attribs_wo_types_module() throw(std::invalid_argument,
+								 std::out_of_range):module("attribs_wo_types", SECHK_SEV_LOW,
+											   "Find attributes without assigned types.",
+											   "Attributes without types can cause type fields in rules to expand to empty\n"
+											   "sets and thus become unreachable. This makes for misleading policy source files.")
 	{
 		requirement req_attr_names(SECHK_REQUIRE_POLICY_CAPABILITY_ATTRIBUTE_NAMES);
 		if (_requirements.insert(make_pair(req_attr_names.name(), req_attr_names)).second == false)
@@ -66,8 +66,7 @@ namespace sechk
 		}
 	}
 
-	attribs_wo_types_module::attribs_wo_types_module(const attribs_wo_types_module & rhs)
-	:module(rhs)
+	attribs_wo_types_module::attribs_wo_types_module(const attribs_wo_types_module & rhs):module(rhs)
 	{
 		// nothing more to do
 	}
@@ -83,10 +82,10 @@ namespace sechk
 		if (qpol_policy_get_type_iter(apol_policy_get_qpol(pol), &type_iter))
 			throw bad_alloc();
 
-		for (/* already initialized */; !qpol_iterator_end(type_iter); qpol_iterator_next(type_iter))
+		for ( /* already initialized */ ; !qpol_iterator_end(type_iter); qpol_iterator_next(type_iter))
 		{
 			qpol_type_t *cur_type = NULL;
-			if (qpol_iterator_get_item(type_iter, reinterpret_cast<void**>(&cur_type)))
+			if (qpol_iterator_get_item(type_iter, reinterpret_cast < void **>(&cur_type)))
 				throw runtime_error("Error accessing policy types");
 			unsigned char isattr = 0;
 			qpol_type_get_isattr(apol_policy_get_qpol(pol), cur_type, &isattr);

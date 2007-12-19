@@ -580,7 +580,7 @@ static void cond_simplify_find_essential_primes(apol_vector_t * minterms, apol_v
 static void cond_term_free(void *elem)
 {
 	if (elem != NULL) {
-            apol_cond_term_t *a = (apol_cond_term_t *) elem;
+		apol_cond_term_t *a = (apol_cond_term_t *) elem;
 		apol_vector_destroy(&(a->included));
 		apol_vector_destroy(&(a->excluded));
 	}
@@ -590,7 +590,7 @@ static apol_vector_t *cond_simplify_create_equation(const apol_policy_t * p, apo
 {
 	int error;
 	apol_vector_t *v = NULL, *inc = NULL, *exc = NULL;
-        apol_cond_term_t *c = NULL;
+	apol_cond_term_t *c = NULL;
 	if ((v = apol_vector_create_with_capacity(apol_vector_get_size(minterms), cond_term_free)) == NULL) {
 		error = errno;
 		ERR(p, "%s", strerror(error));
@@ -604,16 +604,16 @@ static apol_vector_t *cond_simplify_create_equation(const apol_policy_t * p, apo
 			continue;
 		}
 		if ((inc = apol_vector_create_with_capacity(num_bools, NULL)) == NULL ||
-                    (exc = apol_vector_create_with_capacity(num_bools, NULL)) == NULL) {
+		    (exc = apol_vector_create_with_capacity(num_bools, NULL)) == NULL) {
 			error = errno;
 			ERR(p, "%s", strerror(error));
 			goto err;
 		}
 		size_t j;
 		const char *s;
-                /* note that j counts backwards; this is because the
-                   boolean names were inserted in reverse order in
-                   cond_simplify_build_truth_table() */
+		/* note that j counts backwards; this is because the
+		   boolean names were inserted in reverse order in
+		   cond_simplify_build_truth_table() */
 		for (s = m->o_cube, j = num_bools - 1; *s != '\0'; s++, j--) {
 			if (*s == '1') {
 				if (apol_vector_append(inc, apol_vector_get_element(bools, j)) < 0) {
@@ -621,8 +621,7 @@ static apol_vector_t *cond_simplify_create_equation(const apol_policy_t * p, apo
 					ERR(p, "%s", strerror(error));
 					goto err;
 				}
-			}
-			else if (*s == '0') {
+			} else if (*s == '0') {
 				if (apol_vector_append(exc, apol_vector_get_element(bools, j)) < 0) {
 					error = errno;
 					ERR(p, "%s", strerror(error));
@@ -632,15 +631,15 @@ static apol_vector_t *cond_simplify_create_equation(const apol_policy_t * p, apo
 		}
 		assert(apol_vector_get_size(inc) > 0 || apol_vector_get_size(exc) > 0);
 
-                if ((c = calloc(1, sizeof(*c))) == NULL) {
+		if ((c = calloc(1, sizeof(*c))) == NULL) {
 			error = errno;
 			ERR(p, "%s", strerror(error));
 			goto err;
-                }
-                c->included = inc;
-                c->excluded = exc;
-                inc = NULL;
-                exc = NULL;
+		}
+		c->included = inc;
+		c->excluded = exc;
+		inc = NULL;
+		exc = NULL;
 
 		if (apol_vector_append(v, c) < 0) {
 			error = errno;
@@ -653,7 +652,7 @@ static apol_vector_t *cond_simplify_create_equation(const apol_policy_t * p, apo
 	return v;
       err:
 	apol_vector_destroy(&v);
-        cond_term_free(c);
+	cond_term_free(c);
 	apol_vector_destroy(&inc);
 	apol_vector_destroy(&exc);
 	errno = error;

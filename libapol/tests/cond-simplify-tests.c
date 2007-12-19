@@ -73,7 +73,7 @@ static void simple_test(void)
 			}
 			printf(" )");
 		}
-                printf("\n");
+		printf("\n");
 	}
 
 	qpol_iterator_destroy(&iter);

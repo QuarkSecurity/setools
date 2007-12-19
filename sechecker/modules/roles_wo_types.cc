@@ -36,7 +36,6 @@
 #include <map>
 #include <stdexcept>
 
-
 using std::vector;
 using std::string;
 using std::map;
@@ -47,22 +46,22 @@ using std::runtime_error;
 using std::out_of_range;
 using std::bad_alloc;
 
-void * roles_wo_types_init( void )
+void *roles_wo_types_init(void)
 {
-	return static_cast<void*>(new sechk::roles_wo_types_module());
+	return static_cast < void *>(new sechk::roles_wo_types_module());
 }
 
 namespace sechk
 {
-	roles_wo_types_module::roles_wo_types_module() throw(std::invalid_argument, std::out_of_range)
-	:module("roles_wo_types",SECHK_SEV_LOW,"Find roles without assigned types.",
-	"Roles without types cannot form a valid context.")
+	roles_wo_types_module::roles_wo_types_module() throw(std::invalid_argument, std::out_of_range):module("roles_wo_types",
+													      SECHK_SEV_LOW,
+													      "Find roles without assigned types.",
+													      "Roles without types cannot form a valid context.")
 	{
 		// nothing more to do
 	}
 
-	roles_wo_types_module::roles_wo_types_module(const roles_wo_types_module & rhs)
-	:module(rhs)
+	roles_wo_types_module::roles_wo_types_module(const roles_wo_types_module & rhs):module(rhs)
 	{
 		// nothing more to do
 	}
@@ -78,10 +77,10 @@ namespace sechk
 		if (qpol_policy_get_role_iter(apol_policy_get_qpol(pol), &role_iter))
 			throw bad_alloc();
 
-		for (/* already initialized */; !qpol_iterator_end(role_iter); qpol_iterator_next(role_iter))
+		for ( /* already initialized */ ; !qpol_iterator_end(role_iter); qpol_iterator_next(role_iter))
 		{
 			qpol_role_t *cur_role = NULL;
-			if (qpol_iterator_get_item(role_iter, reinterpret_cast<void**>(&cur_role)))
+			if (qpol_iterator_get_item(role_iter, reinterpret_cast < void **>(&cur_role)))
 				throw runtime_error("Error accessing policy roles");
 			qpol_iterator_t *role_types = NULL;
 			if (qpol_role_get_type_iter(apol_policy_get_qpol(pol), cur_role, &role_types))

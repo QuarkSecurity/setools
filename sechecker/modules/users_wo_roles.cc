@@ -36,7 +36,6 @@
 #include <map>
 #include <stdexcept>
 
-
 using std::vector;
 using std::string;
 using std::map;
@@ -47,25 +46,25 @@ using std::runtime_error;
 using std::out_of_range;
 using std::bad_alloc;
 
-void * users_wo_roles_init( void )
+void *users_wo_roles_init(void)
 {
-	return static_cast<void*>(new sechk::users_wo_roles_module());
+	return static_cast < void *>(new sechk::users_wo_roles_module());
 }
 
 namespace sechk
 {
-	users_wo_roles_module::users_wo_roles_module() throw(std::invalid_argument, std::out_of_range)
-	:module("users_wo_roles",SECHK_SEV_LOW,"Find users without assigned roles.",
-	"Users without roles may appear in the label of a file system object;\n"
-	"however, these users cannot login to the system or run any process.  Since these\n"
-	"users cannot be used on the system, a policy change is recomended to remove the\n"
-	"users or provide some intended access.")
+	users_wo_roles_module::users_wo_roles_module() throw(std::invalid_argument, std::out_of_range):module("users_wo_roles",
+													      SECHK_SEV_LOW,
+													      "Find users without assigned roles.",
+													      "Users without roles may appear in the label of a file system object;\n"
+													      "however, these users cannot login to the system or run any process.  Since these\n"
+													      "users cannot be used on the system, a policy change is recomended to remove the\n"
+													      "users or provide some intended access.")
 	{
 		// nothing more to do
 	}
 
-	users_wo_roles_module::users_wo_roles_module(const users_wo_roles_module & rhs)
-	:module(rhs)
+	users_wo_roles_module::users_wo_roles_module(const users_wo_roles_module & rhs):module(rhs)
 	{
 		// nothing more to do
 	}
@@ -81,10 +80,10 @@ namespace sechk
 		if (qpol_policy_get_user_iter(apol_policy_get_qpol(pol), &user_iter))
 			throw bad_alloc();
 
-		for (/* already initialized */; !qpol_iterator_end(user_iter); qpol_iterator_next(user_iter))
+		for ( /* already initialized */ ; !qpol_iterator_end(user_iter); qpol_iterator_next(user_iter))
 		{
 			qpol_user_t *cur_user = NULL;
-			if (qpol_iterator_get_item(user_iter, reinterpret_cast<void**>(&cur_user)))
+			if (qpol_iterator_get_item(user_iter, reinterpret_cast < void **>(&cur_user)))
 				throw runtime_error("Error accessing policy users");
 			qpol_iterator_t *user_roles = NULL;
 			if (qpol_user_get_role_iter(apol_policy_get_qpol(pol), cur_user, &user_roles))

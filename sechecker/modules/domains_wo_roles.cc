@@ -36,7 +36,6 @@
 #include <map>
 #include <stdexcept>
 
-
 using std::vector;
 using std::string;
 using std::map;
@@ -47,23 +46,23 @@ using std::runtime_error;
 using std::out_of_range;
 using std::bad_alloc;
 
-void * domains_wo_roles_init( void )
+void *domains_wo_roles_init(void)
 {
-	return static_cast<void*>(new sechk::domains_wo_roles_module());
+	return static_cast < void *>(new sechk::domains_wo_roles_module());
 }
 
 namespace sechk
 {
-	domains_wo_roles_module::domains_wo_roles_module() throw(std::invalid_argument, std::out_of_range)
-	:module("domains_wo_roles", SECHK_SEV_LOW, "Find domains not assigned to a role.",
-	"A domain not assigned to a role cannot form a valid context.\n"
-	"The role \"object_r\" is not considered in this module.")
+	domains_wo_roles_module::domains_wo_roles_module() throw(std::invalid_argument,
+								 std::out_of_range):module("domains_wo_roles", SECHK_SEV_LOW,
+											   "Find domains not assigned to a role.",
+											   "A domain not assigned to a role cannot form a valid context.\n"
+											   "The role \"object_r\" is not considered in this module.")
 	{
 		_dependencies.push_back("find_domains");
 	}
 
-	domains_wo_roles_module::domains_wo_roles_module(const domains_wo_roles_module & rhs)
-	:module(rhs)
+	domains_wo_roles_module::domains_wo_roles_module(const domains_wo_roles_module & rhs):module(rhs)
 	{
 		// nothing more to do
 	}
@@ -79,16 +78,16 @@ namespace sechk
 		const qpol_role_t *object_r = NULL;
 		qpol_policy_get_role_by_name(apol_policy_get_qpol(pol), "object_r", &object_r);
 
-		for (map<void*,result::entry>::const_iterator i = domains.entries().begin(); i != domains.entries().end(); i++)
+		for (map < void *, result::entry >::const_iterator i = domains.entries().begin(); i != domains.entries().end(); i++)
 		{
 			apol_role_query_t *rq = NULL;
 			if (!(rq = apol_role_query_create()))
 				throw bad_alloc();
 
-			const char * name = NULL;
-			qpol_type_get_name(apol_policy_get_qpol(pol), static_cast<qpol_type_t*>(i->first), &name);
+			const char *name = NULL;
+			qpol_type_get_name(apol_policy_get_qpol(pol), static_cast < qpol_type_t * >(i->first), &name);
 			apol_role_query_set_type(pol, rq, name);
-			apol_vector_t * roles;
+			apol_vector_t *roles;
 			apol_role_get_by_query(pol, rq, &roles);
 			for (size_t j = 0; j < apol_vector_get_size(roles); j++)
 			{
@@ -104,7 +103,7 @@ namespace sechk
 			if (size)
 				continue;
 
-			element domain(static_cast<qpol_type_t*>(i->first), NULL, NULL);
+			element domain(static_cast < qpol_type_t * >(i->first), NULL, NULL);
 			result::entry & cur_result = _results.addEntry(domain);
 			void *x = NULL;
 			element nothing(x, NULL, NULL);

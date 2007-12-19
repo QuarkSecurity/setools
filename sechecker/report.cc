@@ -70,7 +70,7 @@ namespace sechk
 	std::ostream & report::print(std::ostream & out) const
 	{
 		output_format out_mode = _output_mode;
-		for (map<string, const result *>::const_iterator i = _results.begin(); i != _results.end(); i++)
+		for (map < string, const result * >::const_iterator i = _results.begin(); i != _results.end(); i++)
 		{
 			if (_output_mode == SECHK_OUTPUT_DEFAULT)
 				out_mode = i->second->outputMode();
@@ -80,45 +80,49 @@ namespace sechk
 			out << setw(30) << left << "Module: " + i->first << "Severity: ";
 			switch (_top->modules().at(i->first).first->moduleSeverity())
 			{
-				case SECHK_SEV_UTIL:
-				{
-					out << "Utility";
-					break;
-				}
+			case SECHK_SEV_UTIL:
+			{
+				out << "Utility";
+				break;
+			}
 				case SECHK_SEV_LOW:
-				{
-					out << "Low";
-					break;
-				}
-				case SECHK_SEV_MED:
-				{
-					out << "Medium";
-					break;
-				}
-				case SECHK_SEV_HIGH:
-				{
-					out << "High";
-					break;
-				}
-				case SECHK_SEV_NONE:
-				default:
-				{
-					out << "Error";
-					break;
-				}
+			{
+				out << "Low";
+				break;
+			}
+			case SECHK_SEV_MED:
+			{
+				out << "Medium";
+				break;
+			}
+			case SECHK_SEV_HIGH:
+			{
+				out << "High";
+				break;
+			}
+			case SECHK_SEV_NONE:
+			default:
+			{
+				out << "Error";
+				break;
+			}
 			}
 			out << endl << setw(80) << std::setfill('-') << "-" << endl;
+			out << std::setfill(' ');
 			out << _top->modules().at(i->first).first->summary() << endl;
 			if (out_mode > SECHK_OUTPUT_SHORT)
 			{
-				out << _top->modules().at(i->first).first->description() << endl << endl;
+				out << _top->modules().at(i->first).first->description() << endl;
 				if (!_top->modules().at(i->first).first->options().empty())
 				{
-					out << "Options: " << endl;
-					for (map<string, option>::const_iterator j = _top->modules().at(i->first).first->options().begin(); j != _top->modules().at(i->first).first->options().end(); j++)
+					out << endl << "Options: " << endl;
+					for (map < string, option >::const_iterator j =
+					     _top->modules().at(i->first).first->options().begin();
+					     j != _top->modules().at(i->first).first->options().end(); j++)
 					{
 						out << "    " << j->first << ":" << endl << "        ";
-						for (vector<string>::const_iterator k = j->second.values().begin(); k != j->second.values().end(); k++)
+						for (vector < string >::const_iterator k = j->second.values().begin();
+						     k != j->second.values().end(); k++)
 						{
 							out << *k << " ";
 						}
@@ -128,18 +132,21 @@ namespace sechk
 			}
 			out << endl;
 			// now that all the heading info has been displayed print the results
-			out << "Found " << i->second->entries().size() << " result" << (i->second->entries().size() == 1 ?":":"s:") << endl;
-			int element_count = 0; // this is for spacing in short output mode
-			for (map<void*,result::entry>::const_iterator j = i->second->entries().begin(); j != i->second->entries().end(); j++)
+			out << "Found " << i->second->entries().size() << " result" << (i->second->entries().size() ==
+											1 ? ":" : "s:") << endl;
+			int element_count = 0;	// this is for spacing in short output mode
+			for (map < void *, result::entry >::const_iterator j = i->second->entries().begin();
+			     j != i->second->entries().end(); j++)
 			{
 				j->second.Element().print(out, _top->policy());
 				++element_count;
-				element_count %= 4; //change this to change number per line in short mode
+				element_count %= 4;	//change this to change number per line in short mode
 				if (out_mode == SECHK_OUTPUT_VERBOSE)
 				{
 					out << ":" << endl;
 					//print proof
-					for (map<void*,result::entry::proof>::const_iterator k = j->second.Proof().begin(); k != j->second.Proof().end(); k++)
+					for (map < void *, result::entry::proof >::const_iterator k = j->second.Proof().begin();
+					     k != j->second.Proof().end(); k++)
 					{
 						out << "    " << k->second.prefix();
 						k->second.Element().print(out, _top->policy());
@@ -147,24 +154,31 @@ namespace sechk
 					}
 				}
 				// if some kind of rule, add a newline
-				else if (j->second.Element().type() == typeid(qpol_avrule_t*) ||
-				        j->second.Element().type() == typeid(qpol_terule_t*) ||
-				        j->second.Element().type() == typeid(qpol_range_trans_t*) ||
-				        j->second.Element().type() == typeid(qpol_role_allow_t*) ||
-				        j->second.Element().type() == typeid(qpol_role_trans_t*) )
+				else if (j->second.Element().type() == typeid(qpol_avrule_t *) ||
+					 j->second.Element().type() == typeid(qpol_terule_t *) ||
+					 j->second.Element().type() == typeid(qpol_range_trans_t *) ||
+					 j->second.Element().type() == typeid(qpol_role_allow_t *) ||
+					 j->second.Element().type() == typeid(qpol_role_trans_t *))
 				{
 					out << endl;
 				}
 				// if count per line reached
 				else if (!element_count)
 				{
-					out << "," << endl;
+					if (++j != i->second->entries().end())	//no comma after last element
+						out << "," << endl;
+					--j;
 				}
-				else // in short mode but only need a comma
+				else   // in short mode but only need a comma
 				{
-					out << ", ";
+					if (++j != i->second->entries().end())
+						out << ", ";
+					--j;
 				}
 			}
+			if (out_mode != SECHK_OUTPUT_VERBOSE)
+				out << endl;
+			out << endl;
 		}
 		out << endl;
 		return out;
@@ -182,7 +196,7 @@ namespace sechk
 			throw invalid_argument("Results for " + mod_name + " have already been added");
 	}
 
-	const std::map<std::string, const result *> & report::results() const
+	const std::map < std::string, const result *>&report::results() const
 	{
 		return _results;
 	}

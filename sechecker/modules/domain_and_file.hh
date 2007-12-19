@@ -39,38 +39,38 @@ extern "C"
 	 * This is exported as a C function so dlsym can find it.
 	 * @return A fully initialized module object.
 	 */
-	void * domain_and_file_init( void );
+	void *domain_and_file_init(void);
 }
 
 namespace sechk
 {
-	class domain_and_file_module: public module
+	class domain_and_file_module:public module
 	{
-		public:
+	      public:
 		/**
 		 * Create a domain and file module.
 		 * Module will be initialized with default options.
 		 * @exception std::invalid_argument Error setting default properties of the module.
 		 * @exception std::out_of_range Error setting default options, requirements, or recommendations.
 		 */
-			domain_and_file_module() throw(std::invalid_argument, std::out_of_range);
+		domain_and_file_module() throw(std::invalid_argument, std::out_of_range);
 
 		/**
 			 * Copy a domain and file module.
 			 * @param rhs The module to copy.
 		 */
-			domain_and_file_module(const domain_and_file_module & rhs);
+		domain_and_file_module(const domain_and_file_module & rhs);
 
 		//! Destructor.
-			virtual ~domain_and_file_module();
+		 virtual ~domain_and_file_module();
 
 		/**
 			 * Function called by run() to perform module specific checking.
 			 * @param pol The policy used.
 			 * @param list The file context list to use.
 		 */
-			virtual void run_internal(apol_policy_t * pol, sefs_fclist * list) throw(std::runtime_error);
+		virtual void run_internal(apol_policy_t * pol, sefs_fclist * list) throw(std::runtime_error);
 	};
 }
 
-#endif /* SECHECKER_MODULE_DOMAIN_AND_FILE */
+#endif				       /* SECHECKER_MODULE_DOMAIN_AND_FILE */

@@ -35,10 +35,11 @@ extern "C"
 #include "policy.h"
 #include "vector.h"
 
-    typedef struct apol_cond_term {
-        apol_vector_t *included;
-        apol_vector_t *excluded;
-    } apol_cond_term_t;
+	typedef struct apol_cond_term
+	{
+		apol_vector_t *included;
+		apol_vector_t *excluded;
+	} apol_cond_term_t;
 
 	extern apol_vector_t *apol_cond_simplify(const apol_policy_t * p, const qpol_cond_t * cond);
 

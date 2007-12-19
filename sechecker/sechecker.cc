@@ -70,7 +70,7 @@ namespace sechk
 
 	std::ostream & sechecker::listProfiles(std::ostream & out)
 	{
-		for (map<string, profile>::const_iterator i = _profiles.begin(); i != _profiles.end(); i++)
+		for (map < string, profile >::const_iterator i = _profiles.begin(); i != _profiles.end(); i++)
 		{
 			out << setw(20) << i->first << "    " << i->second.description() << endl;
 		}
@@ -79,7 +79,7 @@ namespace sechk
 
 	std::ostream & sechecker::listModules(std::ostream & out)
 	{
-		for (map<string, pair<module*, void*> >::const_iterator i = _modules.begin(); i != _modules.end(); i++)
+		for (map < string, pair < module *, void * > >::const_iterator i = _modules.begin(); i != _modules.end(); i++)
 		{
 			out << setw(20) << i->first << "    " << i->second.first->summary() << endl;
 		}
@@ -181,7 +181,8 @@ namespace sechk
 		}
 	}
 
-	void sechecker::runModules(const std::vector < std::string > &mod_names) throw(std::out_of_range, std::runtime_error, std::invalid_argument)
+	void sechecker::runModules(const std::vector < std::string > &mod_names) throw(std::out_of_range, std::runtime_error,
+										       std::invalid_argument)
 	{
 		for (vector < string >::const_iterator i = mod_names.begin(); i != mod_names.end(); i++)
 			runModules(*i);
@@ -197,9 +198,11 @@ namespace sechk
 		module *mod = iter->second.first;
 		vector < string > dep_stack;
 		dep_stack.push_back(mod->name());
-		for (vector < string >::iterator i = dep_stack.begin(); i != dep_stack.end(); i++)
+//              for (vector < string >::iterator i = dep_stack.begin(); i != dep_stack.end(); i++)
+		for (size_t i = 0; i < dep_stack.size(); i++)
 		{
-			for (vector < string >::const_iterator j = mod->dependencies().begin(); j != mod->dependencies().end(); j++)
+			module *tmp = _modules.at(*(dep_stack.begin() + i)).first;
+			for (vector < string >::const_iterator j = tmp->dependencies().begin(); j != tmp->dependencies().end(); j++)
 			{
 				bool found = false;
 				for (vector < string >::iterator k = dep_stack.begin(); k != dep_stack.end(); k++)
@@ -212,12 +215,12 @@ namespace sechk
 
 		for (vector < string >::reverse_iterator i = dep_stack.rbegin(); i != dep_stack.rend(); i++)
 		{
-			module* cur_mod = NULL;
+			module *cur_mod = NULL;
 			try
 			{
 				cur_mod = (_modules.at(*i)).first;
 			}
-			catch (out_of_range)
+			catch(out_of_range)
 			{
 				throw out_of_range("No module with name " + *i + " (dependency of " + mod_name + ") exists");
 			}

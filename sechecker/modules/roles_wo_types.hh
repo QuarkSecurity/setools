@@ -39,38 +39,38 @@ extern "C"
 	 * This is exported as a C function so dlsym can find it.
 	 * @return A fully initialized module object.
 	 */
-	void * roles_wo_types_init( void );
+	void *roles_wo_types_init(void);
 }
 
 namespace sechk
 {
-	class roles_wo_types_module: public module
+	class roles_wo_types_module:public module
 	{
-		public:
+	      public:
 		/**
 		 * Create an roles without types module.
 		 * Module will be initialized with default options.
 		 * @exception std::invalid_argument Error setting default properties of the module.
 		 * @exception std::out_of_range Error setting default options, requirements, or recommendations.
 		 */
-			roles_wo_types_module() throw(std::invalid_argument, std::out_of_range);
+		roles_wo_types_module() throw(std::invalid_argument, std::out_of_range);
 
 		/**
 			 * Copy an roles without types module.
 			 * @param rhs The module to copy.
 		 */
-			roles_wo_types_module(const roles_wo_types_module & rhs);
+		roles_wo_types_module(const roles_wo_types_module & rhs);
 
 		//! Destructor.
-			virtual ~roles_wo_types_module();
+		 virtual ~roles_wo_types_module();
 
 		/**
 			 * Function called by run() to perform module specific checking.
 			 * @param pol The policy used.
 			 * @param list The file context list to use.
 		 */
-			virtual void run_internal(apol_policy_t * pol, sefs_fclist * list) throw(std::runtime_error);
+		virtual void run_internal(apol_policy_t * pol, sefs_fclist * list) throw(std::runtime_error);
 	};
 }
 
-#endif /* SECHECKER_MODULE_ROLES_WO_TYPES */
+#endif				       /* SECHECKER_MODULE_ROLES_WO_TYPES */

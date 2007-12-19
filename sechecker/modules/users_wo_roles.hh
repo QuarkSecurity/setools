@@ -39,38 +39,38 @@ extern "C"
 	 * This is exported as a C function so dlsym can find it.
 	 * @return A fully initialized module object.
 	 */
-	void * users_wo_roles_init( void );
+	void *users_wo_roles_init(void);
 }
 
 namespace sechk
 {
-	class users_wo_roles_module: public module
+	class users_wo_roles_module:public module
 	{
-		public:
+	      public:
 		/**
 		 * Create an users without roles module.
 		 * Module will be initialized with default options.
 		 * @exception std::invalid_argument Error setting default properties of the module.
 		 * @exception std::out_of_range Error setting default options, requirements, or recommendations.
 		 */
-			users_wo_roles_module() throw(std::invalid_argument, std::out_of_range);
+		users_wo_roles_module() throw(std::invalid_argument, std::out_of_range);
 
 		/**
 			 * Copy an users without roles module.
 			 * @param rhs The module to copy.
 		 */
-			users_wo_roles_module(const users_wo_roles_module & rhs);
+		users_wo_roles_module(const users_wo_roles_module & rhs);
 
 		//! Destructor.
-			virtual ~users_wo_roles_module();
+		 virtual ~users_wo_roles_module();
 
 		/**
 			 * Function called by run() to perform module specific checking.
 			 * @param pol The policy used.
 			 * @param list The file context list to use.
 		 */
-			virtual void run_internal(apol_policy_t * pol, sefs_fclist * list) throw(std::runtime_error);
+		virtual void run_internal(apol_policy_t * pol, sefs_fclist * list) throw(std::runtime_error);
 	};
 }
 
-#endif /* SECHECKER_MODULE_USERS_WO_ROLES */
+#endif				       /* SECHECKER_MODULE_USERS_WO_ROLES */

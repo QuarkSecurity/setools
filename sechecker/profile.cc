@@ -111,7 +111,7 @@ namespace sechk
 			return SECHK_OUTPUT_NONE;
 	}
 
-	profile::profile(const std::string & path)throw(std::runtime_error):_mod_specs()
+      profile::profile(const std::string & path)throw(std::runtime_error):_mod_specs()
 	{
 		_version = "";
 		_name = "";
@@ -218,7 +218,7 @@ namespace sechk
 				}
 				else if (xmlStrEqual(tag_name, reinterpret_cast < const xmlChar * >("desc")) == 1)
 				{
-					char * desc = reinterpret_cast < char *>(xmlTextReaderReadString(reader));
+					char *desc = reinterpret_cast < char *>(xmlTextReaderReadString(reader));
 					if (desc)
 						_description += desc;
 					free(desc);

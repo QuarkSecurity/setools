@@ -22,7 +22,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
 #ifndef SECHECKER_MODULE_FIND_FILE_TYPES
 #define SECHECKER_MODULE_FIND_FILE_TYPES
 
@@ -40,39 +39,38 @@ extern "C"
 	 * This is exported as a C function so dlsym can find it.
 	 * @return A fully initialized module object.
 	 */
-	void * find_file_types_init( void );
+	void *find_file_types_init(void);
 }
 
 namespace sechk
 {
-	class find_file_types_module: public module
+	class find_file_types_module:public module
 	{
-		public:
+	      public:
 		/**
 		 * Create a find domains module.
 		 * Module will be initialized with default options.
 		 * @exception std::invalid_argument Error setting default properties of the module.
 		 * @exception std::out_of_range Error setting default options, requirements, or recommendations.
 		 */
-			find_file_types_module() throw(std::invalid_argument, std::out_of_range);
+		find_file_types_module() throw(std::invalid_argument, std::out_of_range);
 
 		/**
 			 * Copy a find domains module.
 			 * @param rhs The module to copy.
 		 */
-			find_file_types_module(const find_file_types_module & rhs);
+		find_file_types_module(const find_file_types_module & rhs);
 
 		//! Destructor.
-			virtual ~find_file_types_module();
+		 virtual ~find_file_types_module();
 
 		/**
 			 * Function called by run() to perform module specific checking.
 			 * @param pol The policy used.
 			 * @param list The file context list to use.
 		 */
-			virtual void run_internal(apol_policy_t * pol, sefs_fclist * list) throw(std::runtime_error);
+		virtual void run_internal(apol_policy_t * pol, sefs_fclist * list) throw(std::runtime_error);
 	};
 }
 
-
-#endif /* SECHECKER_MODULE_FIND_FILE_TYPES */
+#endif				       /* SECHECKER_MODULE_FIND_FILE_TYPES */

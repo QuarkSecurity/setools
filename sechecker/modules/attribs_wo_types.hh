@@ -39,38 +39,38 @@ extern "C"
 	 * This is exported as a C function so dlsym can find it.
 	 * @return A fully initialized module object.
 	 */
-	void * attribs_wo_types_init( void );
+	void *attribs_wo_types_init(void);
 }
 
 namespace sechk
 {
-	class attribs_wo_types_module: public module
+	class attribs_wo_types_module:public module
 	{
-		public:
+	      public:
 		/**
 		 * Create an attributes without types module.
 		 * Module will be initialized with default options.
 		 * @exception std::invalid_argument Error setting default properties of the module.
 		 * @exception std::out_of_range Error setting default options, requirements, or recommendations.
 		 */
-			attribs_wo_types_module() throw(std::invalid_argument, std::out_of_range);
+		attribs_wo_types_module() throw(std::invalid_argument, std::out_of_range);
 
 		/**
 			 * Copy an attributes without types module.
 			 * @param rhs The module to copy.
 		 */
-			attribs_wo_types_module(const attribs_wo_types_module & rhs);
+		attribs_wo_types_module(const attribs_wo_types_module & rhs);
 
 		//! Destructor.
-			virtual ~attribs_wo_types_module();
+		 virtual ~attribs_wo_types_module();
 
 		/**
 			 * Function called by run() to perform module specific checking.
 			 * @param pol The policy used.
 			 * @param list The file context list to use.
 		 */
-			virtual void run_internal(apol_policy_t * pol, sefs_fclist * list) throw(std::runtime_error);
+		virtual void run_internal(apol_policy_t * pol, sefs_fclist * list) throw(std::runtime_error);
 	};
 }
 
-#endif /* SECHECKER_MODULE_ATTRIBS_WO_TYPES */
+#endif				       /* SECHECKER_MODULE_ATTRIBS_WO_TYPES */

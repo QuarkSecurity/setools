@@ -53,6 +53,7 @@ using std::endl;
 using std::ios_base;
 using std::invalid_argument;
 using std::runtime_error;
+using std::out_of_range;
 using std::bad_alloc;
 using std::ifstream;
 using std::setw;
@@ -69,17 +70,17 @@ enum opt_values
 
 /* command line options struct */
 static struct option const longopts[] = {
- {"list", no_argument, NULL, 'l'},
- {"help", optional_argument, NULL, 'h'},
- {"version", no_argument, NULL, 'V'},
- {"quiet", no_argument, NULL, 'q'},
- {"short", no_argument, NULL, 's'},
- {"verbose", no_argument, NULL, 'v'},
- {"profile", required_argument, NULL, 'p'},
- {"fcfile", required_argument, NULL, OPT_FCFILE},
- {"module", required_argument, NULL, 'm'},
- {"min-sev", required_argument, NULL, OPT_MIN_SEV},
- {NULL, 0, NULL, 0}
+	{"list", no_argument, NULL, 'l'},
+	{"help", optional_argument, NULL, 'h'},
+	{"version", no_argument, NULL, 'V'},
+	{"quiet", no_argument, NULL, 'q'},
+	{"short", no_argument, NULL, 's'},
+	{"verbose", no_argument, NULL, 'v'},
+	{"profile", required_argument, NULL, 'p'},
+	{"fcfile", required_argument, NULL, OPT_FCFILE},
+	{"module", required_argument, NULL, 'm'},
+	{"min-sev", required_argument, NULL, OPT_MIN_SEV},
+	{NULL, 0, NULL, 0}
 };
 
 /* display usage help */
@@ -89,9 +90,12 @@ void usage(const char *arg0, bool brief)
 	printf("       sechecker [OPTIONS] -m module [POLICY ...]\n");
 	printf("       sechecker [OPTIONS] -p profile -m module [POLICY ...]\n");
 	printf("\n");
-	if (brief) {
+	if (brief)
+	{
 		printf("\tTry %s --help for more help.\n\n", arg0);
-	} else {
+	}
+	else
+	{
 		printf("Perform modular checks on a SELinux policy.\n");
 		printf("\n");
 		printf("   -p PROF, --profile=PROF      name or path of profile to load\n");
@@ -114,7 +118,7 @@ void usage(const char *arg0, bool brief)
 static void print_list(sechecker & top)
 {
 	string profile_path = PROFILE_INSTALL_DIR;
-	DIR* profile_dir = opendir(profile_path.c_str());
+	DIR *profile_dir = opendir(profile_path.c_str());
 	if (!profile_dir)
 	{
 		throw ios_base::failure("Could not open profile directory (" + profile_path + ")");
@@ -126,10 +130,10 @@ static void print_list(sechecker & top)
 		// skip things that are not regular files
 		if (!S_ISREG(info.st_mode))
 			continue;
-		string path = profile_path + (profile_path[profile_path.length() -1] == '/'? "" : "/") + ent->d_name;
+		string path = profile_path + (profile_path[profile_path.length() - 1] == '/' ? "" : "/") + ent->d_name;
 		// check that it is a profile, currently this means the first line is a sechecker XML tag
 		ifstream test(path.c_str());
-		char buff[256] = {0};
+		char buff[256] = { 0 };
 		test.getline(buff, 255, '\n');
 		test.close();
 		if (string(buff).find("<sechecker") == 0)
@@ -191,11 +195,11 @@ static const string find_profile(const string & name)
 /* main application */
 int main(int argc, char **argv)
 {
-	string prof_name = ""; //profile to use
-	string single_mod = ""; //set if single module (-m) is specified
-	string fcpath = ""; //fcfile to load
-	severity min_sev = SECHK_SEV_NONE; //minimum severity for the report
-	output_format outf = SECHK_OUTPUT_NONE; //output format for the report
+	string prof_name = "";	       //profile to use
+	string single_mod = "";	       //set if single module (-m) is specified
+	string fcpath = "";	       //fcfile to load
+	severity min_sev = SECHK_SEV_NONE;	//minimum severity for the report
+	output_format outf = SECHK_OUTPUT_NONE;	//output format for the report
 	bool module_help = false;
 	bool list_stop = false;
 
@@ -204,100 +208,101 @@ int main(int argc, char **argv)
 	{
 		switch (optc)
 		{
-			case 'p':
+		case 'p':
+		{
+			prof_name = optarg;
+			break;
+		}
+		case 'm':
+		{
+			if (min_sev)
 			{
-				prof_name = optarg;
-				break;
+				cerr << "Error: Cannot specify minimum severity and single module." << endl;
+				exit(EXIT_FAILURE);
 			}
-			case 'm':
+			single_mod = optarg;
+			break;
+		}
+		case OPT_FCFILE:
+		{
+			fcpath = optarg;
+			break;
+		}
+		case 'q':
+		{
+			if (outf)
 			{
-				if (min_sev)
-				{
-					cerr << "Error: Cannot specify minimum severity and single module." << endl;
-					exit(EXIT_FAILURE);
-				}
-				single_mod = optarg;
-				break;
-			}
-			case OPT_FCFILE:
-			{
-				fcpath = optarg;
-				break;
-			}
-			case 'q':
-			{
-				if (outf)
-				{
-					cerr << "Error: Multiple output formats requested." << endl;
-					usage(argv[0], true);
-					exit(EXIT_FAILURE);
-				}
-				outf = SECHK_OUTPUT_QUIET;
-				break;
-			}
-			case 's':
-			{
-				if (outf)
-				{
-					cerr << "Error: Multiple output formats requested." << endl;
-					usage(argv[0], true);
-					exit(EXIT_FAILURE);
-				}
-				outf = SECHK_OUTPUT_SHORT;
-				break;
-			}
-			case 'v':
-			{
-				if (outf)
-				{
-					cerr << "Error: Multiple output formats requested." << endl;
-					usage(argv[0], true);
-					exit(EXIT_FAILURE);
-				}
-				outf = SECHK_OUTPUT_VERBOSE;
-				break;
-			}
-			case OPT_MIN_SEV:
-			{
-				if (single_mod != "")
-				{
-					cerr << "Error: Cannot specify minimum severity and single module." << endl;
-					exit(EXIT_FAILURE);
-				}
-				min_sev = strtosev(optarg);
-				if (!min_sev)
-				{
-					cerr << "Error: Invalid minimum severity " << optarg << " specified." << endl;
-					exit(EXIT_FAILURE);
-				}
-				break;
-			}
-			case 'l':
-			{
-				list_stop = true;
-				break;
-			}
-			case 'h':
-			{
-				if (optarg != NULL) {
-					single_mod = optarg;
-					module_help = true;
-					break;
-				}
-				usage(argv[0], false);
-				exit(EXIT_SUCCESS);
-			}
-			case 'V':
-			{
-				cout << "sechecker " << SECHECKER_VERSION << endl;
-				cout << COPYRIGHT_INFO << endl;
-				exit(EXIT_SUCCESS);
-			}
-			default:
-			{
+				cerr << "Error: Multiple output formats requested." << endl;
 				usage(argv[0], true);
 				exit(EXIT_FAILURE);
 			}
+			outf = SECHK_OUTPUT_QUIET;
+			break;
+		}
+		case 's':
+		{
+			if (outf)
+			{
+				cerr << "Error: Multiple output formats requested." << endl;
+				usage(argv[0], true);
+				exit(EXIT_FAILURE);
+			}
+			outf = SECHK_OUTPUT_SHORT;
+			break;
+		}
+		case 'v':
+		{
+			if (outf)
+			{
+				cerr << "Error: Multiple output formats requested." << endl;
+				usage(argv[0], true);
+				exit(EXIT_FAILURE);
+			}
+			outf = SECHK_OUTPUT_VERBOSE;
+			break;
+		}
+		case OPT_MIN_SEV:
+		{
+			if (single_mod != "")
+			{
+				cerr << "Error: Cannot specify minimum severity and single module." << endl;
+				exit(EXIT_FAILURE);
+			}
+			min_sev = strtosev(optarg);
+			if (!min_sev)
+			{
+				cerr << "Error: Invalid minimum severity " << optarg << " specified." << endl;
+				exit(EXIT_FAILURE);
+			}
+			break;
+		}
+		case 'l':
+		{
+			list_stop = true;
+			break;
+		}
+		case 'h':
+		{
+			if (optarg != NULL)
+			{
+				single_mod = optarg;
+				module_help = true;
+				break;
+			}
+			usage(argv[0], false);
+			exit(EXIT_SUCCESS);
+		}
+		case 'V':
+		{
+			cout << "sechecker " << SECHECKER_VERSION << endl;
+			cout << COPYRIGHT_INFO << endl;
+			exit(EXIT_SUCCESS);
+		}
+		default:
+		{
+			usage(argv[0], true);
+			exit(EXIT_FAILURE);
+		}
 		}
 	}
 
@@ -325,7 +330,7 @@ int main(int argc, char **argv)
 		{
 			top.loadModule(single_mod);
 		}
-		catch (ios_base::failure x) // failed loading module
+		catch(ios_base::failure x)	// failed loading module
 		{
 			cerr << x.what() << endl;
 			top.close();
@@ -341,7 +346,7 @@ int main(int argc, char **argv)
 	}
 
 	// if a profile is specified load it and all modules it mentions
-	profile* prof = NULL;
+	profile *prof = NULL;
 	if (prof_name != "")
 	{
 		try
@@ -349,7 +354,7 @@ int main(int argc, char **argv)
 			string prof_path = find_profile(prof_name);
 			prof = new profile(prof_path);
 		}
-		catch (runtime_error x) // failed opening profile
+		catch(runtime_error x) // failed opening profile
 		{
 			cerr << x.what() << endl;
 			top.close();
@@ -358,14 +363,14 @@ int main(int argc, char **argv)
 		}
 		top.addProfile(*prof);
 		// load the modules in the profile
-		const vector<string> mods = prof->getModuleList();
-		for (vector<string>::const_iterator i = mods.begin(); i != mods.end(); i++)
+		const vector < string > mods = prof->getModuleList();
+		for (vector < string >::const_iterator i = mods.begin(); i != mods.end(); i++)
 		{
 			try
 			{
-			top.loadModule(*i);
+				top.loadModule(*i);
 			}
-			catch (ios_base::failure x) // failed loading module
+			catch(ios_base::failure x)	// failed loading module
 			{
 				cerr << x.what() << endl;
 				top.close();
@@ -378,30 +383,30 @@ int main(int argc, char **argv)
 		{
 			top.activeProfile(prof->name());
 		}
-		catch (invalid_argument x) // invalid profile arguments
+		catch(invalid_argument x)	// invalid profile arguments
 		{
 			cerr << x.what() << endl;
 			top.close();
 			delete prof;
 			exit(EXIT_FAILURE);
 		}
-		delete prof; // done with local copy
+		delete prof;	       // done with local copy
 	}
 
 	// load any module dependencies (calling load multiple times for the same module is essentially a no-op)
-	const map<string, pair<module*, void*> > loaded_mods = top.modules();
+	const map < string, pair < module *, void * > >loaded_mods = top.modules();
 	try
 	{
-		for (map<string, pair<module*, void*> >::const_iterator i = loaded_mods.begin(); i != loaded_mods.end(); i++)
+		for (map < string, pair < module *, void * > >::const_iterator i = loaded_mods.begin(); i != loaded_mods.end(); i++)
 		{
-			const vector<string> deps = i->second.first->dependencies();
-			for (vector<string>::const_iterator j = deps.begin(); j != deps.end(); j++)
+			const vector < string > deps = i->second.first->dependencies();
+			for (vector < string >::const_iterator j = deps.begin(); j != deps.end(); j++)
 			{
 				top.loadModule(*j);
 			}
 		}
 	}
-	catch (ios_base::failure x) // failed loading module
+	catch(ios_base::failure x)     // failed loading module
 	{
 		cerr << x.what() << endl;
 		top.close();
@@ -415,12 +420,13 @@ int main(int argc, char **argv)
 		if (argc - optind)
 		{
 			//parse args for policy (and possibly modules)
-			char * base_path = argv[optind];
+			char *base_path = argv[optind];
 			optind++;
-			apol_policy_path_t * pol_path = NULL;
-			apol_vector_t * policy_mods = NULL;
+			apol_policy_path_t *pol_path = NULL;
+			apol_vector_t *policy_mods = NULL;
 			apol_policy_path_type_e path_type = APOL_POLICY_PATH_TYPE_MONOLITHIC;
-			if (argc - optind) {
+			if (argc - optind)
+			{
 				if (!(policy_mods = apol_vector_create(NULL)))
 				{
 					throw bad_alloc();
@@ -433,9 +439,12 @@ int main(int argc, char **argv)
 					}
 					path_type = APOL_POLICY_PATH_TYPE_MODULAR;
 				}
-			} else if (apol_file_is_policy_path_list(base_path) > 0) {
+			}
+			else if (apol_file_is_policy_path_list(base_path) > 0)
+			{
 				pol_path = apol_policy_path_create_from_file(base_path);
-				if (!pol_path) {
+				if (!pol_path)
+				{
 					throw invalid_argument("Invalid policy list file");
 				}
 			}
@@ -452,7 +461,7 @@ int main(int argc, char **argv)
 		else
 		{
 			//load default policy
-			char * default_path = NULL;
+			char *default_path = NULL;
 			int retv = qpol_default_policy_find(&default_path);
 			if (retv < 0)
 			{
@@ -462,7 +471,8 @@ int main(int argc, char **argv)
 			{
 				throw runtime_error("Could not load default policy");
 			}
-			apol_policy_path_t * policy_mods = apol_policy_path_create(APOL_POLICY_PATH_TYPE_MONOLITHIC, default_path, NULL);
+			apol_policy_path_t *policy_mods =
+				apol_policy_path_create(APOL_POLICY_PATH_TYPE_MONOLITHIC, default_path, NULL);
 			if (!policy_mods)
 			{
 				throw bad_alloc();
@@ -475,55 +485,55 @@ int main(int argc, char **argv)
 			int error = errno;
 			switch (error)
 			{
-				case ENOMEM:
-				{
-					throw bad_alloc();
-				}
-				case EINVAL:
-				{
-					throw invalid_argument("Invalid policy load options");
-				}
-				case ENOTSUP:
-				case EIO:
-				{
-					throw runtime_error("Unable to load policy");
-				}
-				case EACCES:
-				case EPERM:
-				case ENOENT:
-				{
-					throw ios_base::failure("Unable to open policy");
-				}
-				default:
-				{
-					throw runtime_error("Unknown policy load error");
-				}
+			case ENOMEM:
+			{
+				throw bad_alloc();
+			}
+			case EINVAL:
+			{
+				throw invalid_argument("Invalid policy load options");
+			}
+			case ENOTSUP:
+			case EIO:
+			{
+				throw runtime_error("Unable to load policy");
+			}
+			case EACCES:
+			case EPERM:
+			case ENOENT:
+			{
+				throw ios_base::failure("Unable to open policy");
+			}
+			default:
+			{
+				throw runtime_error("Unknown policy load error");
+			}
 			}
 		}
 		top.policy(policy);
 	}
-	catch (bad_alloc x)
+	catch(bad_alloc x)
 	{
 		cerr << x.what() << endl;
 		top.close();
 		apol_policy_destroy(&policy);
 		exit(EXIT_FAILURE);
 	}
-	catch (invalid_argument x)
+	catch(invalid_argument x)
 	{
 		cerr << x.what() << endl;
 		top.close();
 		apol_policy_destroy(&policy);
 		exit(EXIT_FAILURE);
 	}
-	catch (runtime_error x)
+	catch(runtime_error x)
 	{
 		cerr << x.what() << endl;
 		top.close();
 		apol_policy_destroy(&policy);
 		exit(EXIT_FAILURE);
 	}
-	catch (ios_base::failure x)
+	catch(ios_base::failure x)
 	{
 		cerr << x.what() << endl;
 		top.close();
@@ -538,11 +548,11 @@ int main(int argc, char **argv)
 		if (fcpath != "")
 		{
 			file_contexts = new sefs_fcfile(NULL, NULL);
-			dynamic_cast<sefs_fcfile*>(file_contexts)->appendFile(fcpath.c_str());
+			dynamic_cast < sefs_fcfile * >(file_contexts)->appendFile(fcpath.c_str());
 			top.fclist(file_contexts);
 		}
 	}
-	catch (invalid_argument x)
+	catch(invalid_argument x)
 	{
 		cerr << x.what() << endl;
 		top.close();
@@ -553,7 +563,7 @@ int main(int argc, char **argv)
 
 	int return_code = 0;
 	// run the modules and create the report
-	report* rep = NULL;
+	report *rep = NULL;
 	try
 	{
 		if (single_mod != "")
@@ -580,10 +590,10 @@ int main(int argc, char **argv)
 			}
 			rep->print(cout);
 		}
-		for (map<string,const result*>::const_iterator i = rep->results().begin(); i != rep->results().end(); i++)
+		for (map < string, const result * >::const_iterator i = rep->results().begin(); i != rep->results().end(); i++)
 		{
 			if ((min_sev != SECHK_SEV_NONE && top.modules().at(i->first).first->moduleSeverity() < min_sev) ||
-						  top.modules().at(i->first).first->moduleSeverity() == SECHK_SEV_UTIL)
+			    top.modules().at(i->first).first->moduleSeverity() == SECHK_SEV_UTIL)
 				continue;
 			if (i->second->entries().size())
 			{
@@ -593,7 +603,7 @@ int main(int argc, char **argv)
 		}
 		delete rep;
 	}
-	catch (runtime_error x) // error running module or creating report
+	catch(runtime_error x)	       // error running module or creating report
 	{
 		cerr << x.what() << endl;
 		delete rep;
@@ -602,7 +612,16 @@ int main(int argc, char **argv)
 		apol_policy_destroy(&policy);
 		exit(EXIT_FAILURE);
 	}
-	catch (invalid_argument x)
+	catch(invalid_argument x)
+	{
+		cerr << x.what() << endl;
+		delete rep;
+		top.close();
+		delete file_contexts;
+		apol_policy_destroy(&policy);
+		exit(EXIT_FAILURE);
+	}
+	catch(out_of_range x)
 	{
 		cerr << x.what() << endl;
 		delete rep;

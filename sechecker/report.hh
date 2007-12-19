@@ -81,7 +81,7 @@ namespace sechk
 		 * Get the set of results to be reported.
 		 * @return The set of results.
 		 */
-		const std::map<std::string, const result * > & results() const;
+		const std::map < std::string, const result *>&results() const;
 
 		/**
 		 * Get the preferred level of output for the report.

@@ -141,7 +141,8 @@ namespace sechk
 		 * @exception std::invalid_argument Requirements not met for a module in the list
 		 * or invalid options given.
 		 */
-		void runModules(const std::vector < std::string > &mod_names) throw(std::out_of_range, std::runtime_error, std::invalid_argument);
+		void runModules(const std::vector < std::string > &mod_names) throw(std::out_of_range, std::runtime_error,
+										    std::invalid_argument);
 		/**
 		 * Run a single module (and any of its dependencies).
 		 * This function will only run a module once including any previous calls

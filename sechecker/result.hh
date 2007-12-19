@@ -66,17 +66,16 @@ namespace sechk
 		 * copy the pointer address, pass NULL.
 		 * @exception std::bad_alloc Unable to duplicate data_.
 		 */
-		template < typename T > element(T * data_, free_fn free_, dup_fn dup_) throw(std::bad_alloc)
-		:_type(typeid(data_))
+		template < typename T > element(T * data_, free_fn free_, dup_fn dup_) throw(std::bad_alloc):_type(typeid(data_))
 		{
 			if (dup_)
 				_data = dup_(reinterpret_cast < void *>(data_));
 			else
-				_data = reinterpret_cast < void *>(data_);
-			if (!_data && _type != typeid(void*))
+				 _data = reinterpret_cast < void *>(data_);
+			if (!_data && _type != typeid(void *))
 				throw std::bad_alloc();
-			_free = free_;
-			_dup = dup_;
+			 _free = free_;
+			 _dup = dup_;
 		};
 		/**
 		 * Copy an element.
@@ -84,7 +83,7 @@ namespace sechk
 		 * @post It is safe to destroy both the original and the copy.
 		 * @exception std::bad_alloc Unable to duplicate data_.
 		 */
-		element(const element & rhs) throw(std::bad_alloc);
+		 element(const element & rhs) throw(std::bad_alloc);
 		/**
 		 * Assignment operator. This performs a deep copy of the element.
 		 * @param rhs The element to use as the right hand side of the assignment.
@@ -165,19 +164,19 @@ namespace sechk
 
 			      private:
 				 element _element;	//!< Policy element representing the proof.
-				 std::string _prefix; //!< Prefix to print before the element in the report; it should explain why the element is proof of a result.
+				 std::string _prefix;	//!< Prefix to print before the element in the report; it should explain why the element is proof of a result.
 			};
 
 			/**
 			 * Create a result entry.
 			 * @param The element for which the result was found.
 			 */
-			 entry(const element & elem);
+			entry(const element & elem);
 			/**
 			 * Copy a result entry.
 			 * @param rhs The entry to copy.
 			 */
-			 entry(const entry & rhs);
+			entry(const entry & rhs);
 			//! Destructor.
 			~entry();
 
@@ -201,7 +200,7 @@ namespace sechk
 			proof & addProof(const element & elem, const std::string prefix_) throw(std::invalid_argument);
 
 		      private:
-			 std::map < void *, proof > _proof;	//!< The set of proof entries for this result entry.
+			std::map < void *, proof > _proof;	//!< The set of proof entries for this result entry.
 			element _element;	//!< The policy element for which the result was found.
 		};
 

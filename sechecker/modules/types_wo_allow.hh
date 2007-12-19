@@ -1,6 +1,6 @@
 /**
  *  @file
- *  Defines the interface for the domains without roles module.
+ *  Defines the interface for the types without allow rules module.
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
@@ -22,8 +22,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef SECHECKER_MODULE_DOMAINS_WO_ROLES
-#define SECHECKER_MODULE_DOMAINS_WO_ROLES
+#ifndef SECHECKER_MODULE_TYPES_WO_ALLOW
+#define SECHECKER_MODULE_TYPES_WO_ALLOW
 
 #include "sechecker.hh"
 #include "module.hh"
@@ -39,30 +39,30 @@ extern "C"
 	 * This is exported as a C function so dlsym can find it.
 	 * @return A fully initialized module object.
 	 */
-	void *domains_wo_roles_init(void);
+	void *types_wo_allow_init(void);
 }
 
 namespace sechk
 {
-	class domains_wo_roles_module:public module
+	class types_wo_allow_module:public module
 	{
 	      public:
 		/**
-		 * Create a domains without roles module.
+		 * Create a types without allow rules module.
 		 * Module will be initialized with default options.
 		 * @exception std::invalid_argument Error setting default properties of the module.
 		 * @exception std::out_of_range Error setting default options, requirements, or recommendations.
 		 */
-		domains_wo_roles_module() throw(std::invalid_argument, std::out_of_range);
+		types_wo_allow_module() throw(std::invalid_argument, std::out_of_range);
 
 		/**
-			 * Copy a domains without roles module.
+			 * Copy a types without allow rules module.
 			 * @param rhs The module to copy.
 		 */
-		domains_wo_roles_module(const domains_wo_roles_module & rhs);
+		types_wo_allow_module(const types_wo_allow_module & rhs);
 
 		//! Destructor.
-		 virtual ~domains_wo_roles_module();
+		 virtual ~types_wo_allow_module();
 
 		/**
 			 * Function called by run() to perform module specific checking.
@@ -73,4 +73,4 @@ namespace sechk
 	};
 }
 
-#endif				       /* SECHECKER_MODULE_DOMAINS_WO_ROLES */
+#endif				       /* SECHECKER_MODULE_TYPES_WO_ALLOW */

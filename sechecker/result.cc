@@ -50,7 +50,7 @@ namespace sechk
 			_data = rhs._dup(rhs._data);
 		else
 			_data = rhs._data;
-		if (!_data && _type != typeid(void*))
+		if (!_data && _type != typeid(void *))
 			throw bad_alloc();
 		_free = rhs._free;
 		_dup = rhs._dup;
@@ -88,101 +88,101 @@ namespace sechk
 	{
 		const char *name = NULL;
 		char *rule = NULL;
-		if (_type == typeid(qpol_avrule_t*))
+		if (_type == typeid(qpol_avrule_t *))
 		{
-			out << (rule = apol_avrule_render(pol, static_cast<qpol_avrule_t*>(_data)));
+			out << (rule = apol_avrule_render(pol, static_cast < qpol_avrule_t * >(_data)));
 		}
-		else if (_type == typeid(qpol_bool_t*))
+		else if (_type == typeid(qpol_bool_t *))
 		{
-			qpol_bool_get_name(apol_policy_get_qpol(pol), static_cast<qpol_bool_t*>(_data), &name);
+			qpol_bool_get_name(apol_policy_get_qpol(pol), static_cast < qpol_bool_t * >(_data), &name);
 			out << name;
 		}
-		else if (_type == typeid(qpol_cat_t*))
+		else if (_type == typeid(qpol_cat_t *))
 		{
-			qpol_cat_get_name(apol_policy_get_qpol(pol), static_cast<qpol_cat_t*>(_data), &name);
+			qpol_cat_get_name(apol_policy_get_qpol(pol), static_cast < qpol_cat_t * >(_data), &name);
 			out << name;
 		}
-		else if (_type == typeid(qpol_class_t*))
+		else if (_type == typeid(qpol_class_t *))
 		{
-			qpol_class_get_name(apol_policy_get_qpol(pol), static_cast<qpol_class_t*>(_data), &name);
+			qpol_class_get_name(apol_policy_get_qpol(pol), static_cast < qpol_class_t * >(_data), &name);
 			out << name;
 		}
-		else if (_type == typeid(qpol_common_t*))
+		else if (_type == typeid(qpol_common_t *))
 		{
-			qpol_common_get_name(apol_policy_get_qpol(pol), static_cast<qpol_common_t*>(_data), &name);
+			qpol_common_get_name(apol_policy_get_qpol(pol), static_cast < qpol_common_t * >(_data), &name);
 			out << name;
 		}
-		else if (_type == typeid(qpol_fs_use_t*))
+		else if (_type == typeid(qpol_fs_use_t *))
 		{
-			out << (rule = apol_fs_use_render(pol, static_cast<qpol_fs_use_t*>(_data)));
+			out << (rule = apol_fs_use_render(pol, static_cast < qpol_fs_use_t * >(_data)));
 		}
-		else if (_type == typeid(qpol_genfscon_t*))
+		else if (_type == typeid(qpol_genfscon_t *))
 		{
-			out << (rule = apol_genfscon_render(pol, static_cast<qpol_genfscon_t*>(_data)));
+			out << (rule = apol_genfscon_render(pol, static_cast < qpol_genfscon_t * >(_data)));
 		}
-		else if (_type == typeid(qpol_isid_t*))
+		else if (_type == typeid(qpol_isid_t *))
 		{
-			qpol_isid_get_name(apol_policy_get_qpol(pol), static_cast<qpol_isid_t*>(_data), &name);
+			qpol_isid_get_name(apol_policy_get_qpol(pol), static_cast < qpol_isid_t * >(_data), &name);
 			out << name;
 		}
-		else if (_type == typeid(qpol_level_t*))
+		else if (_type == typeid(qpol_level_t *))
 		{
-			qpol_level_get_name(apol_policy_get_qpol(pol), static_cast<qpol_level_t*>(_data), &name);
+			qpol_level_get_name(apol_policy_get_qpol(pol), static_cast < qpol_level_t * >(_data), &name);
 			out << name;
 		}
-		else if (_type == typeid(qpol_netifcon_t*))
+		else if (_type == typeid(qpol_netifcon_t *))
 		{
-			out << (rule = apol_netifcon_render(pol, static_cast<qpol_netifcon_t*>(_data)));
+			out << (rule = apol_netifcon_render(pol, static_cast < qpol_netifcon_t * >(_data)));
 		}
-		else if (_type == typeid(qpol_nodecon_t*))
+		else if (_type == typeid(qpol_nodecon_t *))
 		{
-			out << (rule = apol_nodecon_render(pol, static_cast<qpol_nodecon_t*>(_data)));
+			out << (rule = apol_nodecon_render(pol, static_cast < qpol_nodecon_t * >(_data)));
 		}
-		else if (_type == typeid(qpol_portcon_t*))
+		else if (_type == typeid(qpol_portcon_t *))
 		{
-			out << (rule = apol_portcon_render(pol, static_cast<qpol_portcon_t*>(_data)));
+			out << (rule = apol_portcon_render(pol, static_cast < qpol_portcon_t * >(_data)));
 		}
-		else if (_type == typeid(qpol_range_trans_t*))
+		else if (_type == typeid(qpol_range_trans_t *))
 		{
-			out << (rule = apol_range_trans_render(pol, static_cast<qpol_range_trans_t*>(_data)));
+			out << (rule = apol_range_trans_render(pol, static_cast < qpol_range_trans_t * >(_data)));
 		}
-		else if (_type == typeid(qpol_role_allow_t*))
+		else if (_type == typeid(qpol_role_allow_t *))
 		{
-			out << (rule = apol_role_allow_render(pol, static_cast<qpol_role_allow_t*>(_data)));
+			out << (rule = apol_role_allow_render(pol, static_cast < qpol_role_allow_t * >(_data)));
 		}
-		else if (_type == typeid(qpol_role_t*))
+		else if (_type == typeid(qpol_role_t *))
 		{
-			qpol_role_get_name(apol_policy_get_qpol(pol), static_cast<qpol_role_t*>(_data), &name);
+			qpol_role_get_name(apol_policy_get_qpol(pol), static_cast < qpol_role_t * >(_data), &name);
 			out << name;
 		}
-		else if (_type == typeid(qpol_role_trans_t*))
+		else if (_type == typeid(qpol_role_trans_t *))
 		{
-			out << (rule = apol_role_trans_render(pol, static_cast<qpol_role_trans_t*>(_data)));
+			out << (rule = apol_role_trans_render(pol, static_cast < qpol_role_trans_t * >(_data)));
 		}
-		else if (_type == typeid(qpol_terule_t*))
+		else if (_type == typeid(qpol_terule_t *))
 		{
-			out << (rule = apol_terule_render(pol, static_cast<qpol_terule_t*>(_data)));
+			out << (rule = apol_terule_render(pol, static_cast < qpol_terule_t * >(_data)));
 		}
-		else if (_type == typeid(qpol_type_t*))
+		else if (_type == typeid(qpol_type_t *))
 		{
-			qpol_type_get_name(apol_policy_get_qpol(pol), static_cast<qpol_type_t*>(_data), &name);
+			qpol_type_get_name(apol_policy_get_qpol(pol), static_cast < qpol_type_t * >(_data), &name);
 			out << name;
 		}
-		else if (_type == typeid(qpol_user_t*))
+		else if (_type == typeid(qpol_user_t *))
 		{
-			qpol_user_get_name(apol_policy_get_qpol(pol), static_cast<qpol_user_t*>(_data), &name);
+			qpol_user_get_name(apol_policy_get_qpol(pol), static_cast < qpol_user_t * >(_data), &name);
 			out << name;
 		}
-		else if (_type == typeid(std::string*))
+		else if (_type == typeid(std::string *))
 		{
-			out << static_cast<string*>(_data);
+			out << static_cast < string * >(_data);
 		}
-		else if (_type == typeid(sefs_entry*))
+		else if (_type == typeid(sefs_entry *))
 		{
-			out << (rule = static_cast<sefs_entry*>(_data)->toString());
+			out << (rule = static_cast < sefs_entry * >(_data)->toString());
 		}
 		//special case for nothing to print
-		else if (_type == typeid(void*) && _data == NULL)
+		else if (_type == typeid(void *) && _data == NULL)
 		{
 			return out;
 		}
@@ -194,7 +194,7 @@ namespace sechk
 		return out;
 	}
 
-	result::entry::proof::proof(const element & elem, const std::string prefix_):_element(elem), _prefix(prefix_)
+      result::entry::proof::proof(const element & elem, const std::string prefix_):_element(elem), _prefix(prefix_)
 	{
 		//nothing more to do
 	}
@@ -244,7 +244,7 @@ namespace sechk
 		return _proof;
 	}
 
-	result::entry::proof & result::entry::addProof(const element & elem, const std::string prefix_) throw(std::invalid_argument)
+	result::entry::proof & result::entry::addProof(const element & elem, const std::string prefix_)throw(std::invalid_argument)
 	{
 		proof newproof(elem, prefix_);
 
