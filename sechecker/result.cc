@@ -128,7 +128,7 @@ namespace sechk
 			apol_context_t *ctx = apol_context_create_from_qpol_context(pol, qctx);
 			rule = apol_context_render(pol, ctx);
 			apol_context_destroy(&ctx);
-			out << "sid" << name << " " << rule;
+			out << "sid " << name << " " << rule;
 		}
 		else if (_type == typeid(qpol_level_t *))
 		{
@@ -307,12 +307,12 @@ namespace sechk
 		return _entries;
 	}
 
-	result::entry & result::addEntry(element elem) throw(std::invalid_argument)
+	result::entry & result::addEntry(const element & elem)throw(std::invalid_argument)
 	{
 		entry newentry(elem);
 
-		if (_entries.find(elem.data()) != _entries.end())
-			return _entries.find(elem.data())->second;
+		if (_entries.find(const_cast < void *>(elem.data())) != _entries.end())
+			return _entries.find(const_cast < void *>(elem.data()))->second;
 
 		pair < map < void *, entry >::iterator, bool > retv =
 			_entries.insert(make_pair(const_cast < void *>(newentry.Element().data()), newentry));

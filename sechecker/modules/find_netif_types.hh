@@ -1,6 +1,6 @@
 /**
  *  @file
- *  Defines the interface for the find port types utility module.
+ *  Defines the interface for the find netif types utility module.
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
@@ -22,8 +22,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef SECHECKER_MODULE_FIND_PORT_TYPES
-#define SECHECKER_MODULE_FIND_PORT_TYPES
+#ifndef SECHECKER_MODULE_FIND_NODE_TYPES
+#define SECHECKER_MODULE_FIND_NODE_TYPES
 
 #include "sechecker.hh"
 #include "module.hh"
@@ -39,38 +39,38 @@ extern "C"
 	 * This is exported as a C function so dlsym can find it.
 	 * @return A fully initialized module object.
 	 */
-	void *find_port_types_init(void);
+	void *find_netif_types_init(void);
 }
 
 namespace sechk
 {
-	class find_port_types_module:public module
+	class find_netif_types_module:public module
 	{
 	      public:
 		/**
-		 * Create a find port types module.
+		 * Create a find netif types module.
 		 * Module will be initialized with default options.
 		 * @exception std::invalid_argument Error setting default properties of the module.
 		 * @exception std::out_of_range Error setting default options, requirements, or recommendations.
 		 */
-		find_port_types_module() throw(std::invalid_argument, std::out_of_range);
+		find_netif_types_module() throw(std::invalid_argument, std::out_of_range);
 
 		/**
-		 * Copy a find port types module.
-		 * @param rhs The module to copy.
+			 * Copy a find netif types module.
+			 * @param rhs The module to copy.
 		 */
-		find_port_types_module(const find_port_types_module & rhs);
+		find_netif_types_module(const find_netif_types_module & rhs);
 
 		//! Destructor.
-		 virtual ~find_port_types_module();
+		 virtual ~find_netif_types_module();
 
 		/**
-		 * Function called by run() to perform module specific checking.
-		 * @param pol The policy used.
-		 * @param list The file context list to use.
+			 * Function called by run() to perform module specific checking.
+			 * @param pol The policy used.
+			 * @param list The file context list to use.
 		 */
 		virtual void run_internal(apol_policy_t * pol, sefs_fclist * list) throw(std::runtime_error);
 	};
 }
 
-#endif				       /* SECHECKER_MODULE_FIND_PORT_TYPES */
+#endif				       /* SECHECKER_MODULE_FIND_NODE_TYPES */

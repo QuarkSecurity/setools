@@ -244,7 +244,7 @@ namespace sechk
 		 * @return The entry added or, if already it exists, the current entry.
 		 * @exception std::invalid_argument Type of \a elem conflicts with previously added entry.
 		 */
-		entry & addEntry(element elem) throw(std::invalid_argument);
+		entry & addEntry(const element & elem) throw(std::invalid_argument);
 
 	      private:
 		std::map < void *, entry > _entries;	//! Set of entries.

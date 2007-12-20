@@ -98,10 +98,13 @@ namespace sechk
 			}
 			catch(out_of_range)
 			{
+				delete new_element;
 				continue;	// result was only a domain but not a file type
 			}
 			// add an entry
 			result::entry & new_entry = _results.addEntry(*new_element);
+			delete new_element;
+			new_element = NULL;
 			// copy proof from the domain result
 			for (map < void *, result::entry::proof >::const_iterator j = i->second.Proof().begin();
 			     j != i->second.Proof().end(); j++)

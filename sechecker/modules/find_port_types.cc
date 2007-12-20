@@ -104,5 +104,6 @@ namespace sechk
 			element port_elem(cur_portcon, NULL, NULL);
 			port_res.addProof(port_elem, "");
 		}
+		apol_vector_destroy(&portcons);
 	}
 }

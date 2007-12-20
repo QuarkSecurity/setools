@@ -473,6 +473,7 @@ int main(int argc, char **argv)
 			}
 			apol_policy_path_t *policy_mods =
 				apol_policy_path_create(APOL_POLICY_PATH_TYPE_MONOLITHIC, default_path, NULL);
+			free(default_path);
 			if (!policy_mods)
 			{
 				throw bad_alloc();
