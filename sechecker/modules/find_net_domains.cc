@@ -53,11 +53,11 @@ void *find_net_domains_init(void)
 
 namespace sechk
 {
-	find_net_domains_module::find_net_domains_module() throw(std::invalid_argument, std::out_of_range):module("find_net_domains",
-													  SECHK_SEV_UTIL,
-													  "Find all types treated as a network domain.",
-													  "A type is considered a network domain if it is the source of an allow rule\n"
-													  "for a network object.")
+	find_net_domains_module::find_net_domains_module() throw(std::invalid_argument,
+								 std::out_of_range):module("find_net_domains", SECHK_SEV_UTIL,
+											   "Find types treated as a network domain.",
+											   "A type is considered a network domain if it is the source of an allow rule\n"
+											   "for a network object.")
 	{
 		vector < string > net_obj_names;
 		net_obj_names.push_back("netif");
@@ -93,7 +93,8 @@ namespace sechk
 		polsearch_string_expression_parameter *av_src_name = new polsearch_string_expression_parameter("X");
 		av_src.param(av_src_name);
 		polsearch_criterion & av_obj = av_test.addCriterion(POLSEARCH_OP_CLASS);
-		polsearch_string_expression_parameter *av_obj_name = new polsearch_string_expression_parameter(_options.at("net_obj").values());
+		polsearch_string_expression_parameter *av_obj_name =
+			new polsearch_string_expression_parameter(_options.at("net_obj").values());
 		av_obj.param(av_obj_name);
 
 		// run the query
@@ -109,7 +110,9 @@ namespace sechk
 			{
 				element *proof_elem = NULL;
 				string prefix = "";
-				proof_elem = new element(static_cast < qpol_avrule_t * >(const_cast < void *>(j->element())), NULL, NULL);
+				proof_elem =
+					new element(static_cast < qpol_avrule_t * >(const_cast < void *>(j->element())), NULL,
+						    NULL);
 				cur_entry.addProof(*proof_elem, prefix);
 				delete proof_elem;
 			}

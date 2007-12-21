@@ -55,7 +55,7 @@ namespace sechk
 {
 	domain_and_file_module::domain_and_file_module() throw(std::invalid_argument, std::out_of_range):module("domain_and_file",
 														SECHK_SEV_LOW,
-														"Find all types treated as both a domain and a file type.",
+														"Find types treated as both a domain and a file type.",
 														"See the find_domains and find_file_types modules for details about the\n"
 														"heuristics used to determine these types.  It is considered bad security\n"
 														"practice to use the same type for a domain and its data objects because it \n"

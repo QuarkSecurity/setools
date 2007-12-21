@@ -55,7 +55,7 @@ namespace sechk
 {
 	find_port_types_module::find_port_types_module() throw(std::invalid_argument, std::out_of_range):module("find_port_types",
 														SECHK_SEV_UTIL,
-														"Find all types treated as a port type.",
+														"Find types treated as a port type.",
 														"A type is considered a port type if either of the following is true:\n"
 														"\n"
 														"   1) it is used in the context of a a portcon statement\n"

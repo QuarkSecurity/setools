@@ -55,7 +55,7 @@ namespace sechk
 {
 	find_domains_module::find_domains_module() throw(std::invalid_argument, std::out_of_range):module("find_domains",
 													  SECHK_SEV_UTIL,
-													  "Find all types treated as a domain.",
+													  "Find types treated as a domain.",
 													  "A type is considered a domain if any of the following is true:\n"
 													  "\n"
 													  "   1) it has an attribute associated with domains\n"

@@ -55,7 +55,7 @@ namespace sechk
 {
 	types_wo_allow_module::types_wo_allow_module() throw(std::invalid_argument, std::out_of_range):module("types_wo_allow",
 													      SECHK_SEV_LOW,
-													      "Find all types not used in an allow rule.",
+													      "Find types not used in an allow rule.",
 													      "A type that is never granted an allow rule in the policy is a dead type.\n"
 													      "This means that all attempted access to the type will be denied including\n"
 													      "attempts to relabel to a (usable) type.  The type may need to be removed from\n"

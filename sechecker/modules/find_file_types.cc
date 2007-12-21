@@ -55,7 +55,7 @@ namespace sechk
 {
 	find_file_types_module::find_file_types_module() throw(std::invalid_argument, std::out_of_range):module("find_file_types",
 														SECHK_SEV_UTIL,
-														"Find all types treated as a file type.",
+														"Find types treated as a file type.",
 														"A type is considered a file type if any of the following is true:"
 														"\n"
 														"   1) it has an attribute associated with file types\n"

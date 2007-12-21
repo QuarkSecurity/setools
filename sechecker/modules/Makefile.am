@@ -9,6 +9,7 @@ modules_DATA = \
 	find_netif_types.so \
 	find_node_types.so \
 	find_port_types.so \
+	roles_wo_allow.so \
 	roles_wo_types.so \
 	roles_wo_users.so \
 	types_wo_allow.so \
@@ -24,6 +25,7 @@ EXTRA_DIST = \
 	find_netif_types.cc find_netif_types.hh \
 	find_node_types.cc find_node_types.hh \
 	find_port_types.cc find_port_types.hh \
+	roles_wo_allow.cc roles_wo_allow.hh \
 	roles_wo_types.cc roles_wo_types.hh \
 	roles_wo_users.cc roles_wo_users.hh \
 	types_wo_allow.cc types_wo_allow.hh \

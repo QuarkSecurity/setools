@@ -55,7 +55,7 @@ namespace sechk
 {
 	find_netif_types_module::find_netif_types_module() throw(std::invalid_argument,
 								 std::out_of_range):module("find_netif_types", SECHK_SEV_UTIL,
-											   "Find all types treated as a netif type.",
+											   "Find types treated as a netif type.",
 											   "A type is considered a netif type if either of the following is true:\n"
 											   "\n"
 											   "   1) it is used in the interface context of a a netifcon statement\n"
