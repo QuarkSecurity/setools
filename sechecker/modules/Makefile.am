@@ -5,6 +5,7 @@ modules_DATA = \
 	domains_wo_roles.so \
 	find_domains.so \
 	find_file_types.so \
+	find_net_domains.so \
 	find_netif_types.so \
 	find_node_types.so \
 	find_port_types.so \
@@ -19,6 +20,7 @@ EXTRA_DIST = \
 	domains_wo_roles.cc domains_wo_roles.hh \
 	find_domains.cc find_domains.hh \
 	find_file_types.cc find_file_types.hh \
+	find_net_domains.cc find_net_domains.hh \
 	find_netif_types.cc find_netif_types.hh \
 	find_node_types.cc find_node_types.hh \
 	find_port_types.cc find_port_types.hh \
