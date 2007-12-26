@@ -91,6 +91,14 @@ namespace sechk
 		if (_type == typeid(qpol_avrule_t *))
 		{
 			out << (rule = apol_avrule_render(pol, static_cast < qpol_avrule_t * >(_data)));
+			const qpol_cond_t *cond = NULL;
+			qpol_avrule_get_cond(apol_policy_get_qpol(pol), static_cast < qpol_avrule_t * >(_data), &cond);
+			if (cond)
+			{
+				char *cond_str = apol_cond_expr_render(pol, cond);
+				out << " [ " << cond_str << " ]";
+				free(cond_str);
+			}
 		}
 		else if (_type == typeid(qpol_bool_t *))
 		{
@@ -167,6 +175,14 @@ namespace sechk
 		else if (_type == typeid(qpol_terule_t *))
 		{
 			out << (rule = apol_terule_render(pol, static_cast < qpol_terule_t * >(_data)));
+			const qpol_cond_t *cond = NULL;
+			qpol_terule_get_cond(apol_policy_get_qpol(pol), static_cast < qpol_terule_t * >(_data), &cond);
+			if (cond)
+			{
+				char *cond_str = apol_cond_expr_render(pol, cond);
+				out << " [ " << cond_str << " ]";
+				free(cond_str);
+			}
 		}
 		else if (_type == typeid(qpol_type_t *))
 		{

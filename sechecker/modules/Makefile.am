@@ -12,6 +12,7 @@ modules_DATA = \
 	roles_wo_allow.so \
 	roles_wo_types.so \
 	roles_wo_users.so \
+	spurious_audit.so \
 	types_wo_allow.so \
 	users_wo_roles.so
 
@@ -28,6 +29,7 @@ EXTRA_DIST = \
 	roles_wo_allow.cc roles_wo_allow.hh \
 	roles_wo_types.cc roles_wo_types.hh \
 	roles_wo_users.cc roles_wo_users.hh \
+	spurious_audit.cc spurious_audit.hh \
 	types_wo_allow.cc types_wo_allow.hh \
 	users_wo_roles.cc users_wo_roles.hh
 
