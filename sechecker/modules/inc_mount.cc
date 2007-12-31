@@ -36,11 +36,6 @@
 #include <map>
 #include <stdexcept>
 
-//FIXME remove next 3 lines
-#include <iostream>
-using std::cerr;
-using std::endl;
-
 using std::vector;
 using std::string;
 using std::map;
@@ -175,7 +170,6 @@ namespace sechk
 			bool match = false;
 			vector < const qpol_type_t *>mount_source_types = expand_type(q, mount_source);
 			vector < const qpol_type_t *>mount_target_types = expand_type(q, mount_target);
-			cerr << "next rule" << endl;
 			for (vector < const qpol_type_t * >::const_iterator j = mount_source_types.begin();
 			     j != mount_source_types.end(); j++)
 			{
@@ -213,7 +207,6 @@ namespace sechk
 						string *missing_rule =
 							new string(string("allow ") + src_name + " " + tgt_name +
 								   " : dir mounton;");
-						cerr << "adding proof with missing of " << *missing_rule << endl;
 						element missing_elem(missing_rule, std_string_free, std_string_dup);
 						dom_entry.addProof(missing_elem, "Missing: ");
 						delete missing_rule;
@@ -232,7 +225,6 @@ namespace sechk
 			}
 		}
 
-		cerr << "second run through" << endl;
 		// find mounon w/o mount
 		for (size_t i = 0; i < apol_vector_get_size(mounton_vector); i++)
 		{
@@ -245,7 +237,6 @@ namespace sechk
 			bool match = false;
 			vector < const qpol_type_t *>mounton_source_types = expand_type(q, mounton_source);
 			vector < const qpol_type_t *>mounton_target_types = expand_type(q, mounton_target);
-			cerr << "next rule" << endl;
 			for (vector < const qpol_type_t * >::const_iterator j = mounton_source_types.begin();
 			     j != mounton_source_types.end(); j++)
 			{
@@ -283,7 +274,6 @@ namespace sechk
 						string *missing_rule =
 							new string(string("allow ") + src_name + " " + tgt_name +
 								   " : filesystem mount;");
-						cerr << "adding proof with missing of " << *missing_rule << endl;
 						element missing_elem(missing_rule, std_string_free, std_string_dup);
 						dom_entry.addProof(missing_elem, "Missing: ");
 						delete missing_rule;

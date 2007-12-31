@@ -91,9 +91,44 @@ namespace sechk
 		 * @exception std::bad_alloc Unable to duplicate data_.
 		 */
 		const element & operator=(const element & rhs) throw(std::bad_alloc);
+
+		/**
+		 * Comparison operator.
+		 * @param rhs The element to compare.
+		 * @return Return \a true if \a this is less than \a rhs; otherwise, return \a false.
+		 */
 		bool operator<(const element & rhs) const;
+		/**
+		 * Comparison operator.
+		 * @param rhs The element to compare.
+		 * @return Return \a true if \a this is equal to \a rhs; otherwise, return \a false.
+		 */
 		bool operator==(const element & rhs) const;
+		/**
+		 * Comparison operator.
+		 * @param rhs The element to compare.
+		 * @return Return \a true if \a this is not equal to \a rhs; otherwise, return \a false.
+		 */
 		bool operator!=(const element & rhs) const;
+		/**
+		 * Comparison operator.
+		 * @param rhs The element to compare.
+		 * @return Return \a true if \a this is greater than \a rhs; otherwise, return \a false.
+		 */
+		bool operator>(const element & rhs) const;
+		/**
+		 * Comparison operator.
+		 * @param rhs The element to compare.
+		 * @return Return \a true if \a this is less than or equal to \a rhs; otherwise, return \a false.
+		 */
+		bool operator<=(const element & rhs) const;
+		/**
+		 * Comparison operator.
+		 * @param rhs The element to compare.
+		 * @return Return \a true if \a this is greater than or equal to \a rhs; otherwise, return \a false.
+		 */
+		bool operator>=(const element & rhs) const;
+
 		//! Destructor.
 		~element();
 		/**

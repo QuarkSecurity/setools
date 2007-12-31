@@ -68,6 +68,21 @@ namespace sechk
 		return _data < rhs.data();
 	}
 
+	bool element::operator<=(const element & rhs)const
+	{
+		return _data <= rhs.data();
+	}
+
+	bool element::operator>(const element & rhs)const
+	{
+		return _data > rhs.data();
+	}
+
+	bool element::operator>=(const element & rhs)const
+	{
+		return _data >= rhs.data();
+	}
+
 	bool element::operator==(const element & rhs)const
 	{
 		return _data == rhs.data();
