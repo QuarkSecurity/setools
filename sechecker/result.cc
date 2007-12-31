@@ -63,6 +63,21 @@ namespace sechk
 		return *this;
 	}
 
+	bool element::operator<(const element & rhs)const
+	{
+		return _data < rhs.data();
+	}
+
+	bool element::operator==(const element & rhs)const
+	{
+		return _data == rhs.data();
+	}
+
+	bool element::operator!=(const element & rhs)const
+	{
+		return _data != rhs.data();
+	}
+
 	element::~element()
 	{
 		if (_free)
@@ -196,7 +211,7 @@ namespace sechk
 		}
 		else if (_type == typeid(std::string *))
 		{
-			out << static_cast < string * >(_data);
+			out << *(static_cast < string * >(_data));
 		}
 		else if (_type == typeid(sefs_entry *))
 		{
@@ -242,7 +257,7 @@ namespace sechk
 
 	result::entry::entry(const element & elem):_element(elem)
 	{
-		_proof = map < void *, proof > ();
+		_proof = map < element, proof > ();
 	}
 
 	result::entry::entry(const entry & rhs):_element(rhs._element)
@@ -260,7 +275,7 @@ namespace sechk
 		return _element;
 	}
 
-	const std::map < void *, result::entry::proof > &result::entry::Proof() const
+	const std::map < element, result::entry::proof > &result::entry::Proof() const
 	{
 		return _proof;
 	}
@@ -269,8 +284,7 @@ namespace sechk
 	{
 		proof newproof(elem, prefix_);
 
-		pair < map < void *, proof >::iterator, bool > retv =
-			_proof.insert(make_pair(const_cast < void *>(newproof.Element().data()), newproof));
+		pair < map < element, proof >::iterator, bool > retv = _proof.insert(make_pair(newproof.Element(), newproof));
 		if (!retv.second)
 		{
 			throw invalid_argument("Cannot insert duplicate proof");

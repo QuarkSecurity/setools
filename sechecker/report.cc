@@ -145,7 +145,7 @@ namespace sechk
 				{
 					out << ":" << endl;
 					//print proof
-					for (map < void *, result::entry::proof >::const_iterator k = j->second.Proof().begin();
+					for (map < element, result::entry::proof >::const_iterator k = j->second.Proof().begin();
 					     k != j->second.Proof().end(); k++)
 					{
 						out << "    " << k->second.prefix();

@@ -91,6 +91,9 @@ namespace sechk
 		 * @exception std::bad_alloc Unable to duplicate data_.
 		 */
 		const element & operator=(const element & rhs) throw(std::bad_alloc);
+		bool operator<(const element & rhs) const;
+		bool operator==(const element & rhs) const;
+		bool operator!=(const element & rhs) const;
 		//! Destructor.
 		~element();
 		/**
@@ -189,18 +192,18 @@ namespace sechk
 			 * Get the set of proof for the entry.
 			 * @return The set of proof, indexed by proof element data.
 			 */
-			const std::map < void *, proof > &Proof() const;
+			const std::map < element, proof > &Proof() const;
 			/**
 			 * Add proof for an entry.
 			 * @param elem Policy element that provides proof that the entry should be part of the results.
 			 * @param prefix_ String to prefix to the element when prining the report.
-			 * @return The proof added or, if already it exists, the current proof.
-			 * @exception std::invalid_argument Type of \a elem conflicts with previously added proof.
+			 * @return The proof added.
+			 * @exception std::invalid_argument Proof for \a elem was previously added.
 			 */
 			proof & addProof(const element & elem, const std::string prefix_) throw(std::invalid_argument);
 
 		      private:
-			std::map < void *, proof > _proof;	//!< The set of proof entries for this result entry.
+			std::map < element, proof > _proof;	//!< The set of proof entries for this result entry.
 			element _element;	//!< The policy element for which the result was found.
 		};
 

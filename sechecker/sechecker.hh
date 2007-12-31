@@ -256,5 +256,6 @@ namespace sechk
 #include "profile.hh"
 #include "result.hh"
 #include "report.hh"
+#include "util.hh"
 
 #endif				       /* SECHECKER_HH */

@@ -106,13 +106,13 @@ namespace sechk
 			delete new_element;
 			new_element = NULL;
 			// copy proof from the domain result
-			for (map < void *, result::entry::proof >::const_iterator j = i->second.Proof().begin();
+			for (map < element, result::entry::proof >::const_iterator j = i->second.Proof().begin();
 			     j != i->second.Proof().end(); j++)
 			{
 				new_entry.addProof(j->second.Element(), j->second.prefix());
 			}
 			// copy proof from the file type result
-			for (map < void *, result::entry::proof >::const_iterator j =
+			for (map < element, result::entry::proof >::const_iterator j =
 			     file_types.entries().at(const_cast < void *>(i->second.Element().data())).Proof().begin();
 			     j != file_types.entries().at(const_cast < void *>(i->second.Element().data())).Proof().end(); j++)
 			{
