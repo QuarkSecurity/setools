@@ -31,7 +31,7 @@ Run common development modules.
 <module name="types_wo_allow" output="short">
 </module>
 
-<module name="attribs_wo_rules" output="short">
+<module name="unused_attribs" output="short">
 </module>
 
 <module name="roles_wo_users" output="short">

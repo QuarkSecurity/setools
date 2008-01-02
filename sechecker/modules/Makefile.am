@@ -15,6 +15,7 @@ modules_DATA = \
 	roles_wo_users.so \
 	spurious_audit.so \
 	types_wo_allow.so \
+	unused_attribs.so \
 	users_wo_roles.so
 
 EXTRA_DIST = \
@@ -33,6 +34,7 @@ EXTRA_DIST = \
 	roles_wo_users.cc roles_wo_users.hh \
 	spurious_audit.cc spurious_audit.hh \
 	types_wo_allow.cc types_wo_allow.hh \
+	unused_attribs.cc unused_attribs.hh \
 	users_wo_roles.cc users_wo_roles.hh
 
 #dist_noinst_DATA = \

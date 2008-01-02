@@ -56,7 +56,7 @@ int apol_constraint_get_by_query(const apol_policy_t * p, apol_constraint_query_
 	if (qpol_policy_get_constraint_iter(p->p, &iter) < 0) {
 		return -1;
 	}
-	if ((*v = apol_vector_create(NULL)) == NULL) {
+	if ((*v = apol_vector_create(free)) == NULL) {
 		ERR(p, "%s", strerror(errno));
 		goto cleanup;
 	}
@@ -158,7 +158,7 @@ int apol_validatetrans_get_by_query(const apol_policy_t * p, apol_validatetrans_
 	if (qpol_policy_get_validatetrans_iter(p->p, &iter) < 0) {
 		return -1;
 	}
-	if ((*v = apol_vector_create(NULL)) == NULL) {
+	if ((*v = apol_vector_create(free)) == NULL) {
 		ERR(p, "%s", strerror(errno));
 		goto cleanup;
 	}
