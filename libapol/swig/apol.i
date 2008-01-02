@@ -5,7 +5,7 @@
  * @author Jeremy A. Mowery jmowery@tresys.com
  * @author Jason Tang  jtang@tresys.com
  *
- * Copyright (C) 2006-2007 Tresys Technology, LLC
+ * Copyright (C) 2006-2008 Tresys Technology, LLC
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -29,6 +29,7 @@
 #include <apol/bool-query.h>
 #include <apol/bst.h>
 #include <apol/class-perm-query.h>
+#include <apol/cond-simplify.h>
 #include <apol/condrule-query.h>
 #include <apol/constraint-query.h>
 #include <apol/context-query.h>
@@ -2500,6 +2501,7 @@ typedef struct apol_role_trans_query {} apol_role_trans_query_t;
 %newobject apol_role_trans_render(apol_policy_t*, qpol_role_trans_t*);
 char *apol_role_trans_render(apol_policy_t * policy, qpol_role_trans_t * rule);
 
+
 /* apol range transition rule query */
 typedef struct apol_range_trans_query {} apol_range_trans_query_t;
 %extend apol_range_trans_query_t {
@@ -3269,5 +3271,33 @@ typedef struct apol_types_relation_access {} apol_types_relation_access_t;
 %inline %{
 	apol_types_relation_access_t *apol_types_relation_access_from_void(void *x) {
 		return (apol_types_relation_access_t*)x;
+	};
+%}
+
+%newobject apol_cond_simplify(const apol_policy_t *p, const qpol_cond_t *cond);
+apol_vector_t *apol_cond_simplify(const apol_policy_t * p, const qpol_cond_t * cond);
+
+%typedef struct apol_cond_minterm {} apol_cond_minterm_t;
+%extend apol_cond_minterm_t {
+	apol_cond_minterm_t() {
+		BEGIN_EXCEPTION
+		SWIG_exception(SWIG_RuntimeError, "Cannot directly create apol_cond_minterm_t objects");
+		END_EXCEPTION
+	fail:
+		return NULL;
+	};
+	~apol_types_relation_result_t() {
+		/* do nothing */
+	};
+        const apol_vector_t *get_variables() {
+		return apol_cond_minterm_get_variables(self);
+	};
+        const apol_vector_t *get_comp_variables() {
+		return apol_cond_minterm_get_comp_variables(self);
+	};
+};
+%inline %{
+	apol_cond_minterm_t *apol_cond_minterm_from_void(void *x) {
+		return (apol_cond_minterm_t*)x;
 	};
 %}

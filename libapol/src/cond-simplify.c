@@ -7,7 +7,7 @@
  * @author Jeremy A. Mowery jmowery@tresys.com
  * @author Jason Tang  jtang@tresys.com
  *
- * Copyright (C) 2001-2007 Tresys Technology, LLC
+ * Copyright (C) 2007-2008 Tresys Technology, LLC
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -34,6 +34,12 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+
+struct apol_cond_minterm
+{
+	apol_vector_t *included;
+	apol_vector_t *excluded;
+};
 
 struct minterm
 {
@@ -577,21 +583,34 @@ static void cond_simplify_find_essential_primes(apol_vector_t * minterms, apol_v
 	}
 }
 
-static void cond_term_free(void *elem)
+static void cond_minterm_free(void *elem)
 {
 	if (elem != NULL) {
-		apol_cond_term_t *a = (apol_cond_term_t *) elem;
+		apol_cond_minterm_t *a = (apol_cond_minterm_t *) elem;
 		apol_vector_destroy(&(a->included));
 		apol_vector_destroy(&(a->excluded));
+		free(a);
 	}
 }
 
+/**
+ * Given the vector of implicants, generate and return a vector that
+ * represents the final equation (as a sum of products).
+ *
+ * @param p Error handler.
+ * @param bools Vector of all booleans used in the expression; needed
+ * to map back from bit position to boolean.
+ * @param minterms Vector of essential implicants.
+ *
+ * @return Vector of minterms (of type apol_cond_minterm_t *).  The
+ * caller must destroy the vector afterwards.
+ */
 static apol_vector_t *cond_simplify_create_equation(const apol_policy_t * p, apol_vector_t * bools, apol_vector_t * minterms)
 {
 	int error;
 	apol_vector_t *v = NULL, *inc = NULL, *exc = NULL;
-	apol_cond_term_t *c = NULL;
-	if ((v = apol_vector_create_with_capacity(apol_vector_get_size(minterms), cond_term_free)) == NULL) {
+	apol_cond_minterm_t *c = NULL;
+	if ((v = apol_vector_create_with_capacity(apol_vector_get_size(minterms), cond_minterm_free)) == NULL) {
 		error = errno;
 		ERR(p, "%s", strerror(error));
 		goto err;
@@ -652,14 +671,14 @@ static apol_vector_t *cond_simplify_create_equation(const apol_policy_t * p, apo
 	return v;
       err:
 	apol_vector_destroy(&v);
-	cond_term_free(c);
+	cond_minterm_free(c);
 	apol_vector_destroy(&inc);
 	apol_vector_destroy(&exc);
 	errno = error;
 	return NULL;
 }
 
-/**
+/*
  * Perform the Quine-McCluskey algorithm as follows:
  *
  * 1. Determine the total number of boolean variables are actually
@@ -734,10 +753,29 @@ apol_vector_t *apol_cond_simplify(const apol_policy_t * p, const qpol_cond_t * c
 	caught_error = false;
       cleanup:
 	apol_vector_destroy(&bools);
+	apol_vector_destroy(&minterms);
 	free(truth_table);
 	if (caught_error) {
 		apol_vector_destroy(&retval);
 		errno = error;
 	}
 	return retval;
+}
+
+const apol_vector_t *apol_cond_minterm_get_variables(const apol_cond_minterm_t * minterm)
+{
+	if (minterm == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return minterm->included;
+}
+
+const apol_vector_t *apol_cond_minterm_get_comp_variables(const apol_cond_minterm_t * minterm)
+{
+	if (minterm == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return minterm->excluded;
 }

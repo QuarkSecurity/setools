@@ -118,7 +118,6 @@ extern "C"
  *
  *  @param diff The policy difference structure associated with the
  *  bool diff.
- *  @param cls The bool from which to get the name.
  *
  *  @return Name of the bool on success and NULL on failure; if the
  *  call fails, errno will be set. The caller should not free the

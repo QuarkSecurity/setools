@@ -69,13 +69,7 @@ int main(int argc, char *argv[])
 
 	CU_register_suites(suites);
 	CU_basic_set_mode(CU_BRM_VERBOSE);
-	if (argc == 1) {
-		CU_basic_run_tests();
-	} else {
-		CU_pTestRegistry r = CU_get_registry();
-		CU_pSuite s = CU_get_suite_by_name("Conditional Expression Simplification", r);
-		CU_basic_run_suite(s);
-	}
+	CU_basic_run_tests();
 	unsigned int num_failures = CU_get_number_of_failure_records();
 	CU_cleanup_registry();
 	return (int)num_failures;

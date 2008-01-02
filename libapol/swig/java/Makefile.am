@@ -17,6 +17,7 @@ BUILT_SOURCES = apol_wrap.c \
 	apol_cat_query_t.java \
 	apol_class_query_t.java \
 	apol_common_query_t.java \
+	apol_cond_minterm_t.java \
 	apol_cond_query_t.java \
 	apolConstants.java \
 	apol_constraint_query_t.java \

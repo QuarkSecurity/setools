@@ -1,3 +1,8 @@
+2008-01-02  J. Tang  <jtang@tresys.com>
+
+	* Added conditional expression simplification algorithm to
+	libapol.  See apol/cond-simplify.h.
+
 2007-12-10  J. Tang  <jtang@tresys.com>
 
 	* Apol help files are now formatted using HTML instead of plain
