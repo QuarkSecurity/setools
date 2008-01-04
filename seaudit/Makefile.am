@@ -55,7 +55,7 @@ seaudit_report_DEPENDENCIES = $(top_builddir)/libseaudit/src/libseaudit.so \
                               $(top_builddir)/libapol/src/libapol.so \
                               $(top_builddir)/libqpol/src/libqpol.so
 
-logwatch = /etc/logwatch
+logwatch = $(DESTDIR)/etc/logwatch
 LOGWATCH_GROUP = $(logwatch)/conf/logfiles
 LOGWATCH_SERVICE = $(logwatch)/conf/services
 LOGWATCH_FILTER = $(logwatch)/scripts/services
