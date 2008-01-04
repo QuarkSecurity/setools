@@ -63,6 +63,29 @@ namespace sechk
 	 * return \a false otherwise.
 	 */
 	bool terule_key_match(const apol_policy_t * pol, const qpol_terule_t * first, const qpol_terule_t * second);
+
+	/**
+	 * Duplication callback for use in elements for std::string.
+	 * @param str The string to duplicate as a void pointer.
+	 * @return A newly allocated copy of the string as a void pointer.
+	 * The caller is responsible for calling std_string_free() on the returned pointer.
+	 */
+	void *std_string_dup(void *str);
+
+	/**
+	 * Deallocation callback for use in elements for std::string.
+	 * @param str The string to deallocate as a void pointer.
+	 */
+	void std_string_free(void *str);
+
+	/**
+	 * Determine if a permission is valid for class.
+	 * @param q The policy from which the class comes.
+	 * @param obj_class The class to check.
+	 * @param perm The permission for which to check.
+	 * @return If \a perm is valid for \a obj_class, return \a true; otherwise, return \a false.
+	 */
+	bool validate_permission(const qpol_policy_t * q, const qpol_class_t * obj_class, const char *perm);
 }
 
 #endif				       /* SECHECKER_UTIL_HH */

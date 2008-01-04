@@ -238,7 +238,6 @@ static void simple_test(void)
 	apol_vector_destroy(&answers_v);
 }
 
-
 CU_TestInfo cond_simplify_tests[] = {
 	{"Simple Policies", simple_test}
 	,

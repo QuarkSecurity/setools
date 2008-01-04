@@ -154,4 +154,56 @@ namespace sechk
 		qpol_terule_get_target_type(qp, second, &second_tgt);
 		return semantic_type_match(qp, first_tgt, second_tgt);
 	}
+
+	void *std_string_dup(void *str)
+	{
+		return reinterpret_cast < void *>(new string(*(reinterpret_cast < string * >(str))));
+	}
+
+	void std_string_free(void *str)
+	{
+		delete reinterpret_cast < string * >(str);
+	}
+
+	bool validate_permission(const qpol_policy_t * q, const qpol_class_t * obj_class, const char *perm)
+	{
+		bool valid = false;
+
+		if (!q || !obj_class || !perm)
+			return false;
+
+		qpol_iterator_t *iter = NULL;
+		qpol_class_get_perm_iter(q, obj_class, &iter);
+		for ( /* already initialized */ ; !qpol_iterator_end(iter); qpol_iterator_next(iter))
+		{
+			char *cur_perm = NULL;
+			qpol_iterator_get_item(iter, reinterpret_cast < void **>(&cur_perm));
+			if (string(cur_perm) == perm)
+			{
+				valid = true;
+				break;
+			}
+		}
+		qpol_iterator_destroy(&iter);
+
+		const qpol_common_t *common = NULL;
+		qpol_class_get_common(q, obj_class, &common);
+		if (common)
+		{
+			qpol_common_get_perm_iter(q, common, &iter);
+			for ( /* already initialized */ ; !qpol_iterator_end(iter); qpol_iterator_next(iter))
+			{
+				char *cur_perm = NULL;
+				qpol_iterator_get_item(iter, reinterpret_cast < void **>(&cur_perm));
+				if (string(cur_perm) == perm)
+				{
+					valid = true;
+					break;
+				}
+			}
+			qpol_iterator_destroy(&iter);
+		}
+
+		return valid;
+	}
 }

@@ -143,7 +143,7 @@ namespace sechk
 		{
 			bool pol_ok = false, fc_ok = false;
 			if (qpol_policy_has_capability(apol_policy_get_qpol(pol), QPOL_CAP_MLS))
-				pol_ok = false;
+				pol_ok = true;
 			if (!list || list->isMLS())
 				fc_ok = true;
 			_satisfied = (pol_ok && fc_ok);

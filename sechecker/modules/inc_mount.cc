@@ -108,16 +108,6 @@ namespace sechk
 		}
 	}
 
-	static void *std_string_dup(void *str)
-	{
-		return reinterpret_cast < void *>(new string(*(reinterpret_cast < string * >(str))));
-	}
-
-	static void std_string_free(void *str)
-	{
-		delete reinterpret_cast < string * >(str);
-	}
-
 	void inc_mount_module::run_internal(apol_policy_t * pol, sefs_fclist * list) throw(std::runtime_error)
 	{
 		qpol_policy_t *q = apol_policy_get_qpol(pol);
