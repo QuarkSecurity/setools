@@ -58,8 +58,27 @@ BUILT_SOURCES = \
 	htmldefaultstyle.c \
 	htmltokens.c htmltokens.h
 
-EXTRA_DIST = aclocal.m4 ChangeLog COMPILE.txt COPYRIGHT doc linux-gcc.mk \
-	main.mk mingw.mk nightly.sh puppy.sh README tclconfig webpage
+EXTRA_DIST = aclocal.m4 ChangeLog COMPILE.txt COPYRIGHT linux-gcc.mk \
+	main.mk mingw.mk nightly.sh puppy.sh README \
+	doc \
+	doc/hv3.man \
+	doc/tkhtml_requirements.tcl \
+	doc/browser.man \
+	doc/tree.fig \
+	doc/tree.gif \
+	doc/macros.tcl \
+	doc/html.man \
+	tclconfig \
+	tclconfig/README.txt \
+	tclconfig/tcl.m4 \
+	tclconfig/ChangeLog \
+	webpage \
+	webpage/mkhv3page.tcl \
+	webpage/tkhtml_tcl_tk.css \
+	webpage/mksupportpage.tcl \
+	webpage/mkwebpage.tcl \
+	webpage/common.tcl \
+	webpage/mkffaqpage.tcl
 
 libTkhtml3so_OBJS = $(notdir $(patsubst %.c,%.o,$(filter %.c,$(libTkhtml3_a_SOURCES) $(nodist_libTkhtml3_a_SOURCES))))
 

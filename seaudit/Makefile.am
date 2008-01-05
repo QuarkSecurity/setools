@@ -69,9 +69,17 @@ seaudit-report-service: seaudit-report-service.in Makefile
 	sed -e 's|\@bindir\@|$(bindir)|g' $< > $@
 
 install-logwatch: $(dist_noinst_DATA) seaudit-report-service
-	install -m 644 seaudit-report-group.conf $(LOGWATCH_GROUP)
-	install -m 644 seaudit-report-service.conf $(LOGWATCH_SERVICE)
-	install -m 755 seaudit-report-service $(LOGWATCH_FILTER)
+	mkdir -p "$(LOGWATCH_GROUP)" && \
+		install -m 644 seaudit-report-group.conf "$(LOGWATCH_GROUP)"
+	mkdir -p "$(LOGWATCH_SERVICE)" && \
+		install -m 644 seaudit-report-service.conf "$(LOGWATCH_SERVICE)"
+	mkdir -p "$(LOGWATCH_FILTER)" && \
+		install -m 755 seaudit-report-service "$(LOGWATCH_FILTER)"
+
+uninstall-logwatch:
+	rm -f "$(LOGWATCH_GROUP)/seaudit-report-group.conf"
+	rm -f "$(LOGWATCH_SERVICE)/seaudit-report-service.conf"
+	rm -f "$(LOGWATCH_FILTER)/seaudit-report-service"
 
 $(top_builddir)/libapol/src/libapol.so:
 	$(MAKE) -C $(top_builddir)/libapol/src $(notdir $@)
