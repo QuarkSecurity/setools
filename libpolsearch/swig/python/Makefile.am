@@ -11,7 +11,7 @@ BUILT_SOURCES = polsearch_wrap.cc
 AM_CXXFLAGS = @DEBUGCXXFLAGS@ @WARNCXXFLAGS@ @PROFILECFLAGS@ @SELINUX_CFLAGS@ \
 	@QPOL_CFLAGS@ @APOL_CFLAGS@ @SEFS_CFLAGS@ -I$(top_builddir) -fpic \
 	-I$(top_srcdir)/libpolsearch/include
-AM_LDFLAGS = @DEBUGLDFLAGS@ @WARNLDFLAGS@ @PROFILELDFLAGS@ \
+AM_LDFLAGS = @DEBUGLDFLAGS@ @WARNLDFLAGS@ @PROFILELDFLAGS@ @PYTHON_LDFLAGS@ \
 	@SEFS_LIB_FLAG@ @APOL_LIB_FLAG@ @QPOL_LIB_FLAG@ @POLSEARCH_LIB_FLAG@
 DEPENDENCIES = $(top_builddir)/libqpol/src/libqpol.so \
 	$(top_builddir)/libapol/src/libapol.so \

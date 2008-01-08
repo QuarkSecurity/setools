@@ -6,6 +6,7 @@ apolsodir = $(libdir)
 
 AM_CFLAGS = @DEBUGCFLAGS@ @WARNCFLAGS@ @PROFILECFLAGS@ @SELINUX_CFLAGS@ \
 	@QPOL_CFLAGS@ -fpic -I$(srcdir)/../include \
+	-DAPOL_LIB_INSTALL_DIR='"${setoolslibdir}"' \
 	-DAPOL_INSTALL_DIR='"${setoolsdir}"' \
 	-DLIBAPOL_POLICY_INSTALL_DIR='"@selinux_policy_dir@/policy"' \
 	-DLIBAPOL_DEFAULT_POLICY='"@selinux_default_policy@"'

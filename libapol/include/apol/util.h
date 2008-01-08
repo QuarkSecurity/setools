@@ -160,7 +160,8 @@ extern "C"
  * Given a file name, search and return that file's path on the
  * running system.  First search the present working directory, then
  * the directory at APOL_INSTALL_DIR (an environment variable), then
- * apol's install dir.
+ * apol's install directories (both architecture-specific and
+ * non-specific).
  *
  * @param file_name File to find.
  *

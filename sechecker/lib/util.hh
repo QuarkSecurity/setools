@@ -30,6 +30,11 @@
 namespace sechk
 {
 	/**
+	 * Print copyright information to stdout.
+	 */
+	void print_copyright(void);
+
+	/**
 	 * Determine if two types semantically match.
 	 * This is true if either they are the same type or
 	 * has at least one type with the other if one is an attribute.

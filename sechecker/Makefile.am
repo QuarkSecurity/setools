@@ -1,4 +1,4 @@
-SUBDIRS = modules
+SUBDIRS = lib modules
 
 setoolsdir = @setoolsdir@
 bin_PROGRAMS = sechecker
@@ -6,7 +6,7 @@ bin_PROGRAMS = sechecker
 dist_setools_DATA = \
 	sechecker_help.txt
 
-profilesdir = @profile_install_dir@
+profilesdir = @sechecker_profile_dir@
 dist_profiles_DATA = \
 	profiles/all.profile \
 	profiles/all-no-mls.profile \
@@ -15,27 +15,21 @@ dist_profiles_DATA = \
 	profiles/sechecker.dtd
 
 AM_CXXFLAGS = @DEBUGCFLAGS@ @WARNCFLAGS@ @PROFILECFLAGS@ @SELINUX_CFLAGS@ \
-	@QPOL_CFLAGS@ @APOL_CFLAGS@ @SEFS_CFLAGS@ @POLSEARCH_CFLAGS@ @XML_CFLAGS@ \
-	-DPROFILE_INSTALL_DIR='"${profile_install_dir}"' -rdynamic
-AM_LDFLAGS = @DEBUGLDFLAGS@ @WARNLDFLAGS@ @PROFILELDFLAGS@
+	@QPOL_CFLAGS@ @APOL_CFLAGS@ @SEFS_CFLAGS@ -Ilib \
+	-DPROFILE_INSTALL_DIR='"${sechecker_profile_dir}"' \
+	-DMODULES_INSTALL_DIR='"${sechecker_modules_dir}"'
+AM_LDFLAGS = @DEBUGLDFLAGS@ @WARNLDFLAGS@ @PROFILELDFLAGS@ -export-dynamic
 
-LDADD = @SELINUX_LIB_FLAG@ @POLSEARCH_LIB_FLAG@ @SEFS_LIB_FLAG@ @APOL_LIB_FLAG@ @QPOL_LIB_FLAG@ @XML_LIBS@
+sechecker_LDADD = lib/libsechecker.la \
+	@SELINUX_LIB_FLAG@ @POLSEARCH_LIB_FLAG@ @SEFS_LIB_FLAG@ @APOL_LIB_FLAG@ @QPOL_LIB_FLAG@ @XML_LIBS@
+
 sechecker_DEPENDENCIES = \
 	$(top_builddir)/libsefs/src/libsefs.so \
-	$(top_builddir)/libpolsearch/src/libpolsearch.so \
 	$(top_builddir)/libapol/src/libapol.so \
 	$(top_builddir)/libqpol/src/libqpol.so
 
 sechecker_SOURCES = \
-	main.cc \
-	sechecker.cc sechecker.hh \
-	module.cc module.hh \
-	option.cc option.hh \
-	profile.cc profile.hh \
-	report.cc report.hh \
-	requirement.cc requirement.hh \
-	result.cc result.hh \
-	util.cc util.hh
+	main.cc
 
 $(top_builddir)/libapol/src/libapol.so:
 	$(MAKE) -C $(top_builddir)/libapol/src $(notdir $@)

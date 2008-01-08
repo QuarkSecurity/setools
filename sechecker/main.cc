@@ -44,8 +44,6 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-#define COPYRIGHT_INFO "Copyright (C) 2005-2007 Tresys Technology, LLC"
-
 using std::string;
 using std::cout;
 using std::cerr;
@@ -117,42 +115,47 @@ void usage(const char *arg0, bool brief)
 
 static void print_list(sechecker & top)
 {
-	string profile_path = PROFILE_INSTALL_DIR;
-	DIR *profile_dir = opendir(profile_path.c_str());
-	if (!profile_dir)
+	const char *paths[] = { PROFILE_INSTALL_DIR, MODULES_INSTALL_DIR, NULL };
+	for (const char **s = paths; *s != NULL; s++)
 	{
-		throw ios_base::failure("Could not open profile directory (" + profile_path + ")");
-	}
-	while (dirent * ent = readdir(profile_dir))
-	{
-		struct stat info;
-		stat((profile_path + "/" + ent->d_name).c_str(), &info);
-		// skip things that are not regular files
-		if (!S_ISREG(info.st_mode))
-			continue;
-		string path = profile_path + (profile_path[profile_path.length() - 1] == '/' ? "" : "/") + ent->d_name;
-		// check that it is a profile, currently this means the first line is a sechecker XML tag
-		ifstream test(path.c_str());
-		char buff[256] = { 0 };
-		test.getline(buff, 255, '\n');
-		test.close();
-		if (string(buff).find("<sechecker") == 0)
+		string profile_path(*s);
+
+		DIR *profile_dir = opendir(profile_path.c_str());
+		if (!profile_dir)
 		{
-			profile prof(path);
-			top.addProfile(prof);
-			continue;
+			throw ios_base::failure("Could not open profile directory (" + profile_path + ")");
 		}
-		// not a profile, could be a module; try to load it
-		if (path.find(".so") == path.length() - 3)
+		while (dirent * ent = readdir(profile_dir))
 		{
-			// remove the .so
-			string name = ent->d_name;
-			name.erase(name.end() - 3, name.end());
-			// load it
-			top.loadModule(name);
+			struct stat info;
+			stat((profile_path + "/" + ent->d_name).c_str(), &info);
+			// skip things that are not regular files
+			if (!S_ISREG(info.st_mode))
+				continue;
+			string path = profile_path + (profile_path[profile_path.length() - 1] == '/' ? "" : "/") + ent->d_name;
+			// check that it is a profile, currently this means the first line is a sechecker XML tag
+			ifstream test(path.c_str());
+			char buff[256] = { 0 };
+			test.getline(buff, 255, '\n');
+			test.close();
+			if (string(buff).find("<sechecker") == 0)
+			{
+				profile prof(path);
+				top.addProfile(prof);
+				continue;
+			}
+			// not a profile, could be a module; try to load it
+			if (path.find(".so") == path.length() - 3)
+			{
+				// remove the .so
+				string name = ent->d_name;
+				name.erase(name.end() - 3, name.end());
+				// load it
+				top.loadModule(name);
+			}
 		}
+		closedir(profile_dir);
 	}
-	closedir(profile_dir);
 
 	//done loading known profiles and modules; begin printing
 	cout << "Profiles:" << endl;
@@ -294,8 +297,7 @@ int main(int argc, char **argv)
 		}
 		case 'V':
 		{
-			cout << "sechecker " << SECHECKER_VERSION << endl;
-			cout << COPYRIGHT_INFO << endl;
+			sechk::print_copyright();
 			exit(EXIT_SUCCESS);
 		}
 		default:

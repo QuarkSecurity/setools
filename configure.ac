@@ -44,6 +44,7 @@ libseaudit_tswig_soname=libtseaudit.so.4
 sechecker_version=2.0
 
 setoolsdir='${prefix}/share/setools-3.4'
+setoolslibdir='${prefix}/lib/setools'
 javadir='${prefix}/share/java'
 
 version_min_sepol_major=1
@@ -780,7 +781,8 @@ AM_CONDITIONAL(BUILD_APOL, test ${build_apol} = "yes")
 AM_CONDITIONAL(BUILD_GUI, test ${build_gui} = "yes")
 #AM_CONDITIONAL(DO_FUSE, test ${have_fuse} = "yes")
 
-profile_install_dir='${setoolsdir}/sechecker'
+sechecker_profile_dir='${setoolsdir}/sechecker'
+sechecker_modules_dir='${setoolslibdir}/sechecker'
 
 AC_SUBST(VERSION)
 AC_SUBST(javadir)
@@ -816,9 +818,11 @@ AC_SUBST(libseaudit_pyswig_soname)
 AC_SUBST(libseaudit_jswig_soname)
 AC_SUBST(libseaudit_tswig_soname)
 AC_SUBST(setoolsdir)
+AC_SUBST(setoolslibdir)
 AC_SUBST(selinux_policy_dir)
 AC_SUBST(selinux_default_policy)
-AC_SUBST(profile_install_dir)
+AC_SUBST(sechecker_profile_dir)
+AC_SUBST(sechecker_modules_dir)
 
 AC_DEFINE_UNQUOTED(LIBAPOL_VERSION_STRING, "${libapol_version}", [libapol version])
 AC_DEFINE_UNQUOTED(LIBQPOL_VERSION_STRING, "${libqpol_version}", [libqpol version])
@@ -903,7 +907,7 @@ AC_CONFIG_FILES([Makefile VERSION \
                  libseaudit/swig/Makefile libseaudit/swig/python/Makefile libseaudit/swig/java/Makefile libseaudit/swig/java/MANIFEST.MF libseaudit/swig/tcl/Makefile \
                  secmds/Makefile \
                  apol/Makefile \
-                 sechecker/Makefile sechecker/modules/Makefile \
+                 sechecker/Makefile sechecker/lib/Makefile sechecker/modules/Makefile \
                  seaudit/Makefile \
                  sediff/Makefile \
                  man/Makefile \

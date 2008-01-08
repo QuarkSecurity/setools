@@ -276,7 +276,7 @@ const char *apol_cond_expr_type_to_str(uint32_t expr_type)
 
 char *apol_file_find(const char *file_name)
 {
-	char *file = NULL, *var = NULL, *dirs[3];
+	char *file = NULL, *var = NULL, *dirs[4];
 	size_t i;
 	int rt;
 
@@ -286,11 +286,12 @@ char *apol_file_find(const char *file_name)
 	}
 
 	/* check current directory, environment variable, and then
-	 * installed directory */
+	 * installed directories */
 	dirs[0] = ".";
 	dirs[1] = getenv(APOL_ENVIRON_VAR_NAME);
-	dirs[2] = APOL_INSTALL_DIR;
-	for (i = 0; i < 3; i++) {
+	dirs[2] = APOL_LIB_INSTALL_DIR;
+	dirs[3] = APOL_INSTALL_DIR;
+	for (i = 0; i < 4; i++) {
 		if ((var = dirs[i]) != NULL) {
 			if (asprintf(&file, "%s/%s", var, file_name) < 0) {
 				return NULL;
@@ -309,7 +310,7 @@ char *apol_file_find(const char *file_name)
 
 char *apol_file_find_path(const char *file_name)
 {
-	char *file = NULL, *var = NULL, *dirs[3];
+	char *file = NULL, *var = NULL, *dirs[4];
 	size_t i;
 	int rt;
 
@@ -319,11 +320,12 @@ char *apol_file_find_path(const char *file_name)
 	}
 
 	/* check current directory, environment variable, and then
-	 * installed directory */
+	 * installed directories */
 	dirs[0] = ".";
 	dirs[1] = getenv(APOL_ENVIRON_VAR_NAME);
 	dirs[2] = APOL_INSTALL_DIR;
-	for (i = 0; i < 3; i++) {
+	dirs[3] = APOL_LIB_INSTALL_DIR;
+	for (i = 0; i < 4; i++) {
 		if ((var = dirs[i]) != NULL) {
 			if (asprintf(&file, "%s/%s", var, file_name) < 0) {
 				return NULL;

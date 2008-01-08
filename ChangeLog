@@ -1,3 +1,9 @@
+2008-01-07  J. Tang  <jtang@tresys.com>
+
+	* Changed sechecker's compilation system to one based upon
+	libtool.  Modules are now installed in $(PREFIX)/lib/setools
+	instead of $(PREFIX)/share/setools.
+
 2008-01-02  J. Tang  <jtang@tresys.com>
 
 	* Added conditional expression simplification algorithm to

@@ -5,7 +5,7 @@
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
  *
- *  Copyright (C) 2005-2007 Tresys Technology, LLC
+ *  Copyright (C) 2005-2008 Tresys Technology, LLC
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,11 +22,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <config.h>
+
 #include "util.hh"
 
 #include <apol/policy.h>
 #include <apol/util.h>
 
+#include <iostream>
 #include <vector>
 #include <string>
 #include <set>
@@ -34,6 +37,10 @@
 #include <stdexcept>
 #include <cassert>
 
+#define COPYRIGHT_INFO "Copyright (C) 2005-2008 Tresys Technology, LLC"
+
+using std::cout;
+using std::endl;
 using std::vector;
 using std::string;
 using std::set;
@@ -47,6 +54,12 @@ using std::bad_alloc;
 
 namespace sechk
 {
+	void print_copyright(void)
+	{
+		cout << "sechecker " << SECHECKER_VERSION << endl;
+		cout << COPYRIGHT_INFO << endl;
+	}
+
 	bool semantic_type_match(const qpol_policy_t * policy, const qpol_type_t * first_type, const qpol_type_t * second_type)
 	{
 		unsigned char first_type_is_attr = 0;

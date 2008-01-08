@@ -12,7 +12,7 @@ BUILT_SOURCES = apol_wrap.c
 AM_CFLAGS = @DEBUGCFLAGS@ @WARNCFLAGS@ @PROFILECFLAGS@ @SELINUX_CFLAGS@ \
 	@QPOL_CFLAGS@ -I$(top_builddir) -fpic \
 	-I$(top_srcdir)/libapol/include
-AM_LDFLAGS = @DEBUGLDFLAGS@ @WARNLDFLAGS@ @PROFILELDFLAGS@ \
+AM_LDFLAGS = @DEBUGLDFLAGS@ @WARNLDFLAGS@ @PROFILELDFLAGS@ @TCL_LIB_SPEC@ \
 	@APOL_LIB_FLAG@ @QPOL_LIB_FLAG@
 DEPENDENCIES = $(top_builddir)/libqpol/src/libqpol.so \
 	$(top_builddir)/libapol/src/libapol.so
