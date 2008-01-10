@@ -1,3 +1,9 @@
+2008-01-09  J. Tang  <jtang@tresys.com>
+
+	* Added initial attempt at Debian-izing SETools.  The Debian
+	control files are only present in the SVN checkout of SETools, not
+	in the distributed tarball.
+
 2008-01-07  J. Tang  <jtang@tresys.com>
 
 	* Changed sechecker's compilation system to one based upon

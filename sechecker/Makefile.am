@@ -15,7 +15,7 @@ dist_profiles_DATA = \
 	profiles/sechecker.dtd
 
 AM_CXXFLAGS = @DEBUGCFLAGS@ @WARNCFLAGS@ @PROFILECFLAGS@ @SELINUX_CFLAGS@ \
-	@QPOL_CFLAGS@ @APOL_CFLAGS@ @SEFS_CFLAGS@ -Ilib \
+	@QPOL_CFLAGS@ @APOL_CFLAGS@ @SEFS_CFLAGS@ -I${srcdir}/lib \
 	-DPROFILE_INSTALL_DIR='"${sechecker_profile_dir}"' \
 	-DMODULES_INSTALL_DIR='"${sechecker_modules_dir}"'
 AM_LDFLAGS = @DEBUGLDFLAGS@ @WARNLDFLAGS@ @PROFILELDFLAGS@ -export-dynamic

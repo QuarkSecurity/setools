@@ -1,6 +1,6 @@
 %define setools_maj_ver 3.4
 %define setools_min_ver 0
-%define setools_release pre2007121100
+%define setools_release pre20080101
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 %{!?python_sitearch: %define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")}
 
@@ -192,13 +192,14 @@ This package includes the following graphical tools:
 %define pkg_py_arch %{python_sitearch}/setools
 %define javajardir %{_datadir}/java
 %define tcllibdir %{_libdir}/setools
+%define secheckerlibdir %{_libdir}/setools
 
 %prep
 %setup -q -n setools-%{setools_maj_ver}.%{setools_min_ver}
 
 %build
 %configure --libdir=%{_libdir} \
-	--disable-bwidget-check --disable-selinux-check \
+	--disable-bwidget-check --without-tkhtml --disable-selinux-check \
 	--enable-swig-python --enable-swig-java --enable-swig-tcl 
 make %{?_smp_mflags}
 
@@ -301,6 +302,7 @@ rm -rf ${RPM_BUILD_ROOT}
 %{_bindir}/seinfo
 %{_bindir}/sesearch
 %{setoolsdir}/sechecker/
+%{secheckerlibdir}/sechecker/
 %{setoolsdir}/sechecker_help.txt
 %{setoolsdir}/seaudit-report-service
 %{setoolsdir}/seaudit-report.conf

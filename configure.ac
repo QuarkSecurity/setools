@@ -399,16 +399,21 @@ else
     install_snit=no
 fi
 
+AC_ARG_WITH([tkhtml],
+            AC_HELP_STRING([--without-tkhtml],
+                           [assume Tkhtml not installed and use SETools's version (overrides --disable-tkhtml-check)]),
+            with_tkhtml="$withval",
+            with_tkhtml="yes")
+
 AC_ARG_ENABLE(tkhtml-check,
               AC_HELP_STRING([--disable-tkhtml-check],
                              [do not check for Tkhtml 3.0, assume it exists]),
               enable_tkhtml="$enableval",
               enable_tkhtml="yes")
-if test ${build_apol} = "no"; then
+if test \( ${build_apol} = "no" \) -o \( "x${with_tkhtml}" = "xno" \); then
     enable_tkhtml=no
-else
-    AC_MSG_CHECKING([for Tkhtml 3.0 or greater])
 fi
+AC_MSG_CHECKING([for Tkhtml 3.0 or greater])
 if test "x${enable_tkhtml}" = "xyes"; then
     changequote(<<<,>>>)dnl
     cat > ./conftest.tcl <<EOF
@@ -440,8 +445,13 @@ EOF
             ;;
     esac
 else
-    AC_MSG_RESULT([skipped, assuming 3.0+ is installed])
-    install_tkhtml=no
+    if test ${with_tkhtml} = "no"; then
+       AC_MSG_RESULT([skipped, using SETools's copy])
+       install_tkhtml=yes
+    else
+       AC_MSG_RESULT([skipped, assuming 3.0+ is installed])
+       install_tkhtml=no
+    fi
 fi
 
 if test "x${enable_debug}" = xyes; then

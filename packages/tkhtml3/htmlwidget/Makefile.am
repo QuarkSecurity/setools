@@ -60,7 +60,6 @@ BUILT_SOURCES = \
 
 EXTRA_DIST = aclocal.m4 ChangeLog COMPILE.txt COPYRIGHT linux-gcc.mk \
 	main.mk mingw.mk nightly.sh puppy.sh README \
-	doc \
 	doc/hv3.man \
 	doc/tkhtml_requirements.tcl \
 	doc/browser.man \
@@ -68,11 +67,9 @@ EXTRA_DIST = aclocal.m4 ChangeLog COMPILE.txt COPYRIGHT linux-gcc.mk \
 	doc/tree.gif \
 	doc/macros.tcl \
 	doc/html.man \
-	tclconfig \
 	tclconfig/README.txt \
 	tclconfig/tcl.m4 \
 	tclconfig/ChangeLog \
-	webpage \
 	webpage/mkhv3page.tcl \
 	webpage/tkhtml_tcl_tk.css \
 	webpage/mksupportpage.tcl \
