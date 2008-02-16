@@ -1,4 +1,4 @@
-SETools - Policy analysis tools for SELinux (C) 2001-2007
+SETools - Policy analysis tools for SELinux (C) 2001-2008
 Tresys Technology
 setools@tresys.com, http://oss.tresys.com/projects/setools
 
@@ -214,6 +214,10 @@ You can customize your SETools build using the flags given to
       Look for Tk development files in PATH.  Debian users will need
       to specify this flag, as Tk 8.4 is typically located at
       /usr/lib/tk8.4.
+
+  --without-tkhtml
+      Instead of autodetecting Tkhtml, always use the one packaged
+      with SETools.  This flag overrides --disable-tkhtml-check.
 
   --with-sepol-devel=PATH
       Look for libsepol header files in PATH/include and library in
