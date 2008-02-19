@@ -480,7 +480,7 @@ int main(int argc, char **argv)
 			{
 				throw bad_alloc();
 			}
-			policy = apol_policy_create_from_policy_path(policy_mods, 0, NULL, NULL);
+			policy = apol_policy_create_from_policy_path(policy_mods, QPOL_POLICY_OPTION_MATCH_SYSTEM, NULL, NULL);
 			apol_policy_path_destroy(&policy_mods);
 		}
 		if (!policy)

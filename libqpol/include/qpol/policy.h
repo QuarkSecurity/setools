@@ -71,11 +71,20 @@ extern "C"
  *  When loading the policy, do not load neverallow rules.
  */
 #define QPOL_POLICY_OPTION_NO_NEVERALLOWS 0x00000001
+
 /**
  *  When loading the policy, do not load any rules;
  *  this option implies QPOL_POLICY_OPTION_NO_NEVERALLOWS.
  */
 #define QPOL_POLICY_OPTION_NO_RULES       0x00000002
+
+/**
+ *  When loading the policy, attempt to interpret it as the way the
+ *  running system would.  If the policy is of a version higher than
+ *  one supported by the system, then the policy will be downgraded to
+ *  the system's maximum value.
+ */
+#define QPOL_POLICY_OPTION_MATCH_SYSTEM   0x00000004
 
 /**
  *  List of capabilities a policy may have. This list represents
