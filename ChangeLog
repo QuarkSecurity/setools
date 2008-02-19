@@ -1,3 +1,8 @@
+2008-02-19  J. Tang  <jtang@tresys.com>
+
+	* Modified libqpol to understand version 22 policy.  Added
+	QPOL_CAP_POLCAPS to qpol_capability enum.
+
 2008-02-15  J. Tang  <jtang@tresys.com>
 
 	* Synced libqpol to libsepol version 2.0.20.  The configure script

@@ -6,7 +6,7 @@
  *  @author Jason Tang jtang@tresys.com
  *  @author Brandon Whalen bwhalen@tresys.com
  *
- *  Copyright (C) 2006-2007 Tresys Technology, LLC
+ *  Copyright (C) 2006-2008 Tresys Technology, LLC
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -80,7 +80,9 @@ extern "C"
 /**
  *  List of capabilities a policy may have. This list represents
  *  features of policy that may differ from version to version or
- *  based upon the format of the policy file.
+ *  based upon the format of the policy file.  Note that "polcaps" in
+ *  this case refers to "policy capabilities" that were introduced
+ *  with version 22 policies.
  */
 	typedef enum qpol_capability
 	{
@@ -94,6 +96,8 @@ extern "C"
 		QPOL_CAP_CONDITIONALS,
 		/** The policy version supports MLS components and statements. */
 		QPOL_CAP_MLS,
+		/** The policy version has policy capabilities (polcaps). */
+		QPOL_CAP_POLCAPS,
 		/** The policy format supports linking loadable modules. */
 		QPOL_CAP_MODULES,
 		/** The policy was loaded with av/te rules. */
