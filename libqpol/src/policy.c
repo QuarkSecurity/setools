@@ -46,8 +46,6 @@
 #include <sepol/module.h>
 #include <sepol/policydb/module.h>
 
-#include <selinux/selinux.h>
-
 #include <stdbool.h>
 #include <qpol/iterator.h>
 #include <qpol/policy.h>
@@ -398,6 +396,7 @@ static int infer_policy_version(qpol_policy_t * policy)
 	qpol_iterator_destroy(&iter);
 
 	/* 22 : there exists at least one policy capability */
+#ifdef HAVE_SEPOL_POLICYCAPS
 	ebitmap_node_t *node = NULL;
 	unsigned int i = 0;
 	ebitmap_for_each_bit(&db->policycaps, node, i) {
@@ -406,6 +405,7 @@ static int infer_policy_version(qpol_policy_t * policy)
 			return STATUS_SUCCESS;
 		}
 	}
+#endif
 
 	/* 21 : object classes other than process for range_transitions */
 	qpol_policy_get_range_trans_iter(policy, &iter);
@@ -578,23 +578,6 @@ int qpol_policy_rebuild_opt(qpol_policy_t * policy, const int options)
 	if (infer_policy_version(policy)) {
 		error = errno;
 		goto err;
-	}
-	if (options & QPOL_POLICY_OPTION_MATCH_SYSTEM) {
-		int kernvers = security_policyvers();
-		int currentvers = policy->p->p.policyvers;
-		if (kernvers < 0) {
-			error = errno;
-			ERR(policy, "%s", "Could not determine running system's policy version.");
-			goto err;
-		}
-		if (policy->p->p.policyvers > kernvers) {
-			if (sepol_policydb_set_vers(policy->p, kernvers)) {
-				error = errno;
-				ERR(policy, "Could not downgrade policy to version %d.", kernvers);
-				goto err;
-			}
-			WARN(policy, "Policy has been downgraded from version %d to %d.", currentvers, kernvers);
-		}
 	}
 
 	if (policy_extend(policy)) {

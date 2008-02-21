@@ -7,7 +7,7 @@ AM_INIT_AUTOMAKE([-Wno-portability])
 dnl *** update these variables as versions change; also update AC_INIT ***
 
 libqpol_soversion=1
-libqpol_version=1.3.1
+libqpol_version=1.3.2
 
 libapol_soversion=4
 libapol_version=4.2
@@ -620,8 +620,17 @@ else
   sepol_new_expand_boolmap="no"
 fi
 
+dnl check for policycap, added in libsepol version
+AC_CHECK_MEMBER([struct policydb.policycaps.node],
+                sepol_new_policycaps="yes",
+                sepol_new_policycaps="no",
+                [#include <sepol/policydb/policydb.h>])
+
 dnl check for modified AV tab behavior, introduced in libsepol version 2.0.20
-AC_CHECK_DECL([avtab_alloc], sepol_new_avtab="yes", sepol_new_avtab="no", [#include <sepol/policydb/conditional.h>])
+AC_CHECK_DECL([avtab_alloc],
+              sepol_new_avtab="yes",
+              sepol_new_avtab="no",
+              [#include <sepol/policydb/conditional.h>])
 
 AC_RUN_IFELSE(
    [AC_LANG_SOURCE([
@@ -869,11 +878,14 @@ if test ${sepol_new_defines} != "yes" ; then
    AC_DEFINE(SEPOL_ENOMEM, HASHTAB_OVERFLOW, [remap of libsepol 1.x.x define to 2.x.x])
    AC_DEFINE(SEPOL_EEXIST, HASHTAB_PRESENT, [remap of libsepol 1.x.x define to 2.x.x])
 fi
-if test ${sepol_new_avtab} == "yes"; then
-   AC_DEFINE(SEPOL_DYNAMIC_AVTAB, 1, [if avtab sizes are calculated dynamically by loader or are hardcoded])
-fi
 if test ${sepol_new_expand_boolmap} == "yes" ; then
    AC_DEFINE(HAVE_SEPOL_BOOLMAP, 1, [sepol's new expand boolmap behavior])
+fi
+if test ${sepol_new_policycaps} == "yes"; then
+   AC_DEFINE(HAVE_SEPOL_POLICYCAPS, 1, [if libsepol has policycaps])
+fi
+if test ${sepol_new_avtab} == "yes"; then
+   AC_DEFINE(SEPOL_DYNAMIC_AVTAB, 1, [if avtab sizes are calculated dynamically by loader or are hardcoded])
 fi
 
 if test ${use_shared} == "yes"; then
@@ -945,6 +957,7 @@ AC_CONFIG_FILES([Makefile VERSION \
                  seaudit/Makefile \
                  sediff/Makefile \
                  man/Makefile \
+                 debian/Makefile \
                  packages/Makefile packages/tkhtml3/Makefile packages/tkhtml3/htmlwidget/Makefile packages/tkhtml3/htmlwidget/hv/Makefile packages/rpm/Makefile \
                  packages/libqpol.pc packages/libapol.pc packages/libpoldiff.pc packages/libseaudit.pc packages/libsefs.pc packages/libpolsearch.pc])
 

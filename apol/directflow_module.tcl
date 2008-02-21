@@ -391,7 +391,7 @@ proc Apol_Analysis_directflow::_createResultsDisplay {} {
     pack $res -expand 1 -fill both
 
     $tres.tree configure -selectcommand [list Apol_Analysis_directflow::_treeSelect $res]
-   $tres.tree configure -opencmd [list Apol_Analysis_directflow::_treeOpen $tres.tree]
+    $tres.tree configure -opencmd [list Apol_Analysis_directflow::_treeOpen $tres.tree]
     return $f
 }
 
