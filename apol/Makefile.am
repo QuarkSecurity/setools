@@ -109,6 +109,8 @@ init.tcl: Makefile
 	@echo "    package require polsearch @libpolsearch_version@" >> $@
 	@echo "    print_init \"done.\nInitializing libapol_tcl... \"" >> $@
 	@echo "    package require apol_tcl @libapol_version@" >> $@
+	@echo "    print_init \"done.\nInitializing Tk... \"" >> $@
+	@echo "    package require Tk" >> $@
 	@echo "    print_init \"done.\nInitializing Tkhtml... \"" >> $@
 	@echo "    package require Tkhtml 3.0" >> $@
 	@echo "    print_init \"done.\n\"" >> $@

@@ -59,8 +59,6 @@ using std::map;
 using std::pair;
 using std::vector;
 
-using namespace sechk;
-
 enum opt_values
 {
 	OPT_FCFILE = 256, OPT_MIN_SEV
@@ -80,6 +78,8 @@ static struct option const longopts[] = {
 	{"min-sev", required_argument, NULL, OPT_MIN_SEV},
 	{NULL, 0, NULL, 0}
 };
+
+using namespace sechk;
 
 /* display usage help */
 void usage(const char *arg0, bool brief)

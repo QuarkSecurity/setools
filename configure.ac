@@ -323,12 +323,19 @@ if test ${build_apol} = "no"; then
 else
     AC_MSG_CHECKING([for BWidget 1.7 or greater])
 fi
+
+TCL_AUTOPATH=''
 if test "x${enable_bwidget}" = "xyes"; then
+    # certain distributions do not properly set the auto_path to point
+    # to Tk, so try to detect it here
     changequote(<<<,>>>)dnl
-    cat > ./conftest.tcl <<EOF
+    (echo "if {[catch {package require Tk}]} {exit 1}" | ${TCLSH_PROG}) || \
+        TCL_AUTOPATH=$(find ${TK_EXEC_PREFIX}  -maxdepth 3 -name pkgIndex.tcl -path '*tk*' -printf %h)
+    echo "lappend auto_path ${TCL_AUTOPATH}" > ./conftest.tcl
+    cat >> ./conftest.tcl <<EOF
 if {[catch {package require Tk}]} {
-   puts stderr "Could not load Tk."
-   exit 1
+    puts stderr "Could not load Tk."
+    exit 1
 }
 if {![catch {package require BWidget} bwidget_version]} {
     if {[package vcompare \$bwidget_version 1.8] >= 0} {
@@ -468,12 +475,12 @@ else
 fi
 
 if test "x${enable_debug}" = xyes; then
-   TCL_AUTOPATH='$(top_builddir)/libqpol/swig/tcl $(top_builddir)/libapol/swig/tcl $(top_builddir)/libsefs/swig/tcl $(top_builddir)/libpolsearch/swig/tcl $(top_builddir)/apol'
+   TCL_AUTOPATH+=' $(top_builddir)/libqpol/swig/tcl $(top_builddir)/libapol/swig/tcl $(top_builddir)/libsefs/swig/tcl $(top_builddir)/libpolsearch/swig/tcl $(top_builddir)/apol'
    if test ${install_tkhtml} = yes; then
       TCL_AUTOPATH+=' $(top_builddir)/packages/tkhtml3/htmlwidget'
    fi
 else
-   TCL_AUTOPATH='$(libdir)/setools'
+   TCL_AUTOPATH+=' $(libdir)/setools'
 fi
 AC_SUBST(TCL_AUTOPATH)
 

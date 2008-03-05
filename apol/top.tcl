@@ -780,9 +780,13 @@ proc ApolTop::_about {} {
             -modal none -parent . -separator 1 -title "About apol"
         set f [.apol_about getframe]
         set l1 [label $f.l1 -text "apol [tcl_config_get_version]" -height 2]
-        foreach {name size} [$l1 cget -font] {break}
-        incr size 6
-        $l1 configure -font [list $name $size bold]
+        set label_font [$l1 cget -font]
+        # Tk 8.4 differs from 8.5 in how fonts are handled
+        if {[llength $label_font] > 1} {
+            foreach {name size} [$l1 cget -font] {break}
+            incr size 6
+            $l1 configure -font [list $name $size bold]
+        }
         set l2 [label $f.l2 -text "Security Policy Analysis Tool for Security Enhanced Linux\n${::COPYRIGHT_INFO}\nhttp://oss.tresys.com/projects/setools"]
         pack $l1 $l2
         .apol_about add -text "Close" -command [list destroy .apol_about]
@@ -909,10 +913,6 @@ proc print_init {s} {
     flush stdout
 }
 
-if {[catch {package require Tk}]} {
-    puts stderr "This program requires Tk to run."
-    exit -1
-}
 if {[catch {tcl_config_init_libraries}]} {
     puts stderr "The SETools libraries could not be found in one of these subdirectories:\n\y[join $auto_path "\n\t"]"
     exit -1
