@@ -206,30 +206,30 @@ proc ApolTop::showPolicySourceLineNumber {line} {
 
 proc ApolTop::_create_toplevel {} {
     set menus {
-	"&File" {} file 0 {
-	    {command "&Open..." {} "Open a new policy" {Ctrl o} -command ApolTop::_open_policy}
-	    {command "&Close" {tag_policy_open} "Close current polocy" {Ctrl w} -command ApolTop::_close_policy}
-	    {separator}
-	    {cascade "&Recent Files" {} recent 0 {}}
-	    {separator}
+        "&File" {} file 0 {
+            {command "&Open..." {} "Open a new policy" {Ctrl o} -command ApolTop::_open_policy}
+            {command "&Close" {tag_policy_open} "Close current polocy" {Ctrl w} -command ApolTop::_close_policy}
+            {separator}
+            {cascade "&Recent Files" {} recent 0 {}}
+            {separator}
             {command "&Quit" {} "Quit policy analysis tool" {Ctrl q} -command ApolTop::_exit}
-	}
-	"&Edit" {} edit 0 {
+        }
+        "&Edit" {} edit 0 {
             {command "&Copy" {tag_policy_open} {} {Ctrl c} -command ApolTop::_copy}
             {command "Select &All" {tag_policy_open} {} {Ctrl a} -command ApolTop::_select_all}
             {separator}
-	    {command "&Find..." {tag_policy_open} "Find text in current buffer" {Ctrl f} -command Apol_Find::find}
-	    {command "&Goto Line..." {tag_policy_open} "Goto a line in current buffer" {Ctrl g} -command Apol_Goto::goto}
+            {command "&Find..." {tag_policy_open} "Find text in current buffer" {Ctrl f} -command Apol_Find::find}
+            {command "&Goto Line..." {tag_policy_open} "Goto a line in current buffer" {Ctrl g} -command Apol_Goto::goto}
             {separator}
             {command "Prefere&nces..." {} "Modify user's preferences" {} -command Apol_Prefs::modifyPreferences}
-	}
-	"&Query" {} query 0 {
-	    {command "&Open Query..." {tag_policy_open} "Open query criteria file" {} -command ApolTop::_open_query_file}
-	    {command "&Save Query..." {tag_policy_open tag_query_saveable} "Save current query criteria to file" {} -command ApolTop::_save_query_file}
-	    {separator}
-	    {command "&Policy Summary" {tag_policy_open} "Display summary statistics" {} -command ApolTop::_show_policy_summary}
-	}
-	"&Tools" {} tools 0 {
+        }
+        "&Query" {} query 0 {
+            {command "&Open Query..." {tag_policy_open} "Open query criteria file" {} -command ApolTop::_open_query_file}
+            {command "&Save Query..." {tag_policy_open tag_query_saveable} "Save current query criteria to file" {} -command ApolTop::_save_query_file}
+            {separator}
+            {command "&Policy Summary" {tag_policy_open} "Display summary statistics" {} -command ApolTop::_show_policy_summary}
+        }
+        "&Tools" {} tools 0 {
             {command "&Open Perm Map..." {tag_policy_open} "Open a permission map from file" {} -command ApolTop::_open_perm_map_from_file}
             {command "Open &Default Perm Map" {tag_policy_open} "Open the default permission map" {} -command ApolTop::openDefaultPermMap}
             {command "&Save Perm Map..." {tag_policy_open tag_perm_map_open} "Save the permission map to a file" {} -command ApolTop::_save_perm_map}
@@ -237,15 +237,15 @@ proc ApolTop::_create_toplevel {} {
             {command "Save Perm Map as D&efault" {tag_policy_open tag_perm_map_open} "Save the permission map to default file" {} -command ApolTop::_save_perm_map_default}
             {command "&View Perm Map..." {tag_policy_open tag_perm_map_open} "Edit currently loaded permission map" {} -command Apol_Perms_Map::showPermMappings}
         }
-	"&Help" {} helpmenu 0 {
-	    {command "&General Help" {} "Show help on using apol" {} -command {ApolTop::_show_file Help apol_help.html}}
-	    {command "&Domain Transition Analysis" {} "Show help on domain transitions" {} -command {ApolTop::_show_file "Domain Transition Analysis Help" domaintrans_help.html}}
-	    {command "&File Relabel Analysis" {} "Show help on file relabeling" {} -command {ApolTop::_show_file "File Relabel Analysis Help" file_relabel_help.html}}
-	    {command "&Information Flow Analysis" {} "Show help on information flows" {} -command {ApolTop::_show_file "Information Flow Analysis Help" infoflow_help.html}}
-	    {command "&Types Relationship Summary Analysis" {} "Show help on types relationships" {} -command {ApolTop::_show_file "Types Relationship Summary Analysis Help" types_relation_help.html}}
-	    {separator}
-	    {command "&About apol" {} "Show copyright information" {} -command ApolTop::_about}
-	}
+        "&Help" {} helpmenu 0 {
+            {command "&General Help" {} "Show help on using apol" {} -command {ApolTop::_show_file Help apol_help.html}}
+            {command "&Domain Transition Analysis" {} "Show help on domain transitions" {} -command {ApolTop::_show_file "Domain Transition Analysis Help" domaintrans_help.html}}
+            {command "&File Relabel Analysis" {} "Show help on file relabeling" {} -command {ApolTop::_show_file "File Relabel Analysis Help" file_relabel_help.html}}
+            {command "&Information Flow Analysis" {} "Show help on information flows" {} -command {ApolTop::_show_file "Information Flow Analysis Help" infoflow_help.html}}
+            {command "&Types Relationship Summary Analysis" {} "Show help on types relationships" {} -command {ApolTop::_show_file "Types Relationship Summary Analysis Help" types_relation_help.html}}
+            {separator}
+            {command "&About apol" {} "Show copyright information" {} -command ApolTop::_about}
+        }
     }
     # Note that the name of the last menu is "helpmenu", not "help".
     # This is because Tk handles menus named "help" differently in X
