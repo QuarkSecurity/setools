@@ -64,9 +64,7 @@
  * when we have a parse error for a conditional rule.  We can't check 
  * for NULL (ie 0) because that is a potentially valid return.
  */
-static avrule_t *conditional_unused_error_code;
-#define COND_ERR (avrule_t *)&conditional_unused_error_code
-
+#define COND_ERR (avrule_t *)-1
 #define TRUE 1
 #define FALSE 0
 
@@ -81,7 +79,6 @@ static int load_rules;
 static unsigned int num_rules = 0;
 char *curfile = 0;
 int mlspol = 0;
-int handle_unknown = 0;
 
 extern unsigned long policydb_lineno;
 extern unsigned long source_lineno;
@@ -883,8 +880,6 @@ void yyerror2(char *fmt, ...)
 	yyerror(errormsg);
 	va_end(ap);
 }
-
-#define DEBUG 1
 
 static int insert_separator(int push)
 {
