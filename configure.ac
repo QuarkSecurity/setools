@@ -329,7 +329,7 @@ if test "x${enable_bwidget}" = "xyes"; then
     # certain distributions do not properly set the auto_path to point
     # to Tk, so try to detect it here
     changequote(<<<,>>>)dnl
-    (echo "if {[catch {package require Tk}]} {exit 1}" | ${TCLSH_PROG}) || \
+    (echo "if {[catch {package require Tk}]} {exit 1} ; exit 0" | ${TCLSH_PROG}) || \
         TCL_AUTOPATH=$(find ${TK_EXEC_PREFIX}  -maxdepth 3 -name pkgIndex.tcl -path '*tk*' -printf %h)
     echo "lappend auto_path ${TCL_AUTOPATH}" > ./conftest.tcl
     cat >> ./conftest.tcl <<EOF
