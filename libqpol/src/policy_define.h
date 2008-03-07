@@ -6,8 +6,8 @@
 
 /* Functions used to define policy grammar components. */
 
-#ifndef __POLICY_DEFINE_H__
-#define __POLICY_DEFINE_H__
+#ifndef _POLICY_DEFINE_H_
+#define _POLICY_DEFINE_H_
 
 /*
  * We need the following so we have a valid error return code in yacc
@@ -66,4 +66,4 @@ role_datum_t *define_role_dom(role_datum_t * r);
 role_datum_t *merge_roles_dom(role_datum_t * r1, role_datum_t * r2);
 uintptr_t define_cexpr(uint32_t expr_type, uintptr_t arg1, uintptr_t arg2);
 
-#endif				       /* __POLICY_DEFINE_H__ */
+#endif				       /* _POLICY_DEFINE_H_ */
