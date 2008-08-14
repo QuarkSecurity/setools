@@ -31,7 +31,7 @@
 #include "qpol_internal.h"
 #include "expand.h"
 
-static int type_attr_map(hashtab_key_t key __attribute__ ((unused)), hashtab_datum_t datum, void *ptr)
+static int expand_type_attr_map(hashtab_key_t key __attribute__ ((unused)), hashtab_datum_t datum, void *ptr)
 {
 	type_datum_t *type = NULL, *orig_type;
 	policydb_t *db = (policydb_t *) ptr;
@@ -49,6 +49,32 @@ static int type_attr_map(hashtab_key_t key __attribute__ ((unused)), hashtab_dat
 					return -1;
 				}
 			}
+		}
+	}
+	return 0;
+}
+
+static int expand_type_permissive_map(hashtab_key_t key __attribute__ ((unused)), hashtab_datum_t datum, void *ptr)
+{
+	type_datum_t *type = (type_datum_t *) datum;
+	policydb_t *db = (policydb_t *) ptr;
+
+	type = (type_datum_t *) datum;
+	/* if this type is marked as permissive, then set its
+	   corresponding bit in the permissive map.  note that unlike
+	   other bitmaps, this one does not subtract 1 in the
+	   bitmap. */
+	if (type->flags & TYPE_FLAGS_PERMISSIVE) {
+		uint32_t value;
+		if (type->flavor == TYPE_ALIAS) {
+			/* aliases that came from modules should use the value
+			 * referenced to by that alias */
+			value = type->primary;
+		} else {
+			value = type->s.value;
+		}
+		if (ebitmap_set_bit(&db->permissive_map, value, 1)) {
+			return -1;
 		}
 	}
 	return 0;
@@ -74,10 +100,19 @@ int qpol_expand_module(qpol_policy_t * base, int neverallows)
 	db->global->enabled = db->global->branch_list;
 
 	/* expand out the types to include all the attributes */
-	if (hashtab_map(db->p_types.table, type_attr_map, (db))) {
+	if (hashtab_map(db->p_types.table, expand_type_attr_map, (db))) {
 		ERR(base, "%s", "Error expanding attributes for types.");
 		goto err;
 	}
+#ifdef HAVE_SEPOL_PERMISSIVE_TYPES
+	/* fill in the permissive types bitmap.  this is normally done
+	 * in type_copy_callback(), but types are not copied in
+	 * expand_module_avrules() */
+	if (hashtab_map(db->p_types.table, expand_type_permissive_map, (db))) {
+		ERR(base, "%s", "Error expanding attributes for types.");
+		goto err;
+	}
+#endif
 
 	/* Build the typemap such that we can expand into the same policy */
 	typemap = (uint32_t *) calloc(db->p_types.nprim, sizeof(uint32_t));

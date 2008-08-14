@@ -5,7 +5,7 @@
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
  *
- *  Copyright (C) 2006-2007 Tresys Technology, LLC
+ *  Copyright (C) 2006-2008 Tresys Technology, LLC
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,8 @@
  *  License along with this library; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
+
+#include <config.h>
 
 #include <stddef.h>
 #include <stdint.h>
@@ -174,6 +176,35 @@ int qpol_type_get_isattr(const qpol_policy_t * policy, const qpol_type_t * datum
 
 	internal_datum = (type_datum_t *) datum;
 	*isattr = (internal_datum->flavor == TYPE_ATTRIB ? 1 : 0);
+
+	return STATUS_SUCCESS;
+}
+
+int qpol_type_get_ispermissive(const qpol_policy_t * policy, const qpol_type_t * datum, unsigned char *ispermissive)
+{
+	if (policy == NULL || datum == NULL || ispermissive == NULL) {
+		if (ispermissive != NULL)
+			*ispermissive = 0;
+		ERR(policy, "%s", strerror(EINVAL));
+		errno = EINVAL;
+		return STATUS_ERR;
+	}
+
+#ifdef HAVE_SEPOL_PERMISSIVE_TYPES
+	/* checking internal_datum->flags for permissive won't work,
+	   because the type could be an alias.  so instead, look up
+	   its value within the permissive map */
+	uint32_t value;
+	if (qpol_type_get_value(policy, datum, &value) < 0) {
+		return STATUS_ERR;
+	}
+	policydb_t *p = &policy->p->p;
+	/* note that unlike other bitmaps, this one does not subtract
+	   1 in the bitmap */
+	*ispermissive = ebitmap_get_bit(&p->permissive_map, value);
+#else
+	*ispermissive = 0;
+#endif
 
 	return STATUS_SUCCESS;
 }

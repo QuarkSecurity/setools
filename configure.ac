@@ -7,7 +7,7 @@ AM_INIT_AUTOMAKE([-Wno-portability])
 dnl *** update these variables as versions change; also update AC_INIT ***
 
 libqpol_soversion=1
-libqpol_version=1.3.3
+libqpol_version=1.4
 
 libapol_soversion=4
 libapol_version=4.2
@@ -627,7 +627,7 @@ else
   sepol_new_expand_boolmap="no"
 fi
 
-dnl check for policycap, added in libsepol version
+dnl check for policycap, added in libsepol version 2.0.18
 AC_CHECK_MEMBER([struct policydb.policycaps.node],
                 sepol_new_policycaps="yes",
                 sepol_new_policycaps="no",
@@ -639,6 +639,12 @@ AC_CHECK_DECL([avtab_alloc],
               sepol_new_avtab="no",
               [#include <sepol/policydb/conditional.h>])
 
+dnl check for permissive types, added in libsepol version 2.0.26
+AC_CHECK_DECL([TYPE_FLAGS_PERMISSIVE],
+                sepol_new_permissive_types="yes",
+                sepol_new_permissive_types="no",
+                [#include <sepol/policydb/policydb.h>])
+                
 AC_RUN_IFELSE(
    [AC_LANG_SOURCE([
 #include <sepol/policydb/policydb.h>
@@ -893,6 +899,9 @@ if test ${sepol_new_policycaps} == "yes"; then
 fi
 if test ${sepol_new_avtab} == "yes"; then
    AC_DEFINE(SEPOL_DYNAMIC_AVTAB, 1, [if avtab sizes are calculated dynamically by loader or are hardcoded])
+fi
+if test ${sepol_new_permissive_types} == "yes"; then
+   AC_DEFINE(HAVE_SEPOL_PERMISSIVE_TYPES, 1, [if types can be marked as permissive])
 fi
 
 if test ${use_shared} == "yes"; then
