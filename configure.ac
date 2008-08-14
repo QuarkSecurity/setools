@@ -601,43 +601,18 @@ SELINUX_CFLAGS="-I${sepol_devel_incdir} -I${selinux_devel_incdir}"
 AC_SUBST(SELINUX_CFLAGS)
 AC_SUBST(SELINUX_LIB_FLAG)
 
+dnl ** check for certain features of libsepol
+
 sepol_save_CFLAGS="${CFLAGS}"
 sepol_save_CPPFLAGS="${CPPFLAGS}"
 CFLAGS="${CFLAGS} ${SELINUX_CFLAGS} ${SELINUX_LIB_FLAG}"
 CPPFLAGS="${CPPFLAGS} ${SELINUX_CFLAGS}"
-dnl if using libsepol < 2.0.0, then map the old error codes to the new
-dnl format
-AC_CHECK_HEADER([sepol/errcodes.h], sepol_new_defines="yes", sepol_new_defines="no")
 
-dnl check for broken boolmap behavior in libsepol version 2.0.2
-AC_CHECK_DECL([cond_node_create], sepol_check_boolmap="yes", sepol_check_boolmap="no", [#include <sepol/policydb/conditional.h>])
-if test ${sepol_check_boolmap} = "yes"; then
-    dnl check for boolmap parameter that is fixed in version 2.0.3
-    AC_MSG_CHECKING([correct libsepol expand behavior])
-    AC_COMPILE_IFELSE(
-        [AC_LANG_SOURCE([
-#include <sepol/policydb/expand.h>
-int main () {
-  return expand_module_avrules(NULL, NULL, NULL, NULL, NULL, 0, 0);
-}])],
-    AC_MSG_RESULT([yes]),
-    AC_MSG_ERROR([this version of libsepol is incompatible with SETools]))
-  sepol_new_expand_boolmap="yes"
-else
-  sepol_new_expand_boolmap="no"
-fi
-
-dnl check for policycap, added in libsepol version 2.0.18
-AC_CHECK_MEMBER([struct policydb.policycaps.node],
-                sepol_new_policycaps="yes",
-                sepol_new_policycaps="no",
-                [#include <sepol/policydb/policydb.h>])
-
-dnl check for modified AV tab behavior, introduced in libsepol version 2.0.20
-AC_CHECK_DECL([avtab_alloc],
-              sepol_new_avtab="yes",
-              sepol_new_avtab="no",
-              [#include <sepol/policydb/conditional.h>])
+dnl check for user and role mapping, added in libsepol version 2.0.29
+AC_CHECK_DECL([role_set_expand],
+              sepol_new_user_role_mapping="yes",
+              sepol_new_user_role_mapping="no",
+              [#include <sepol/policydb/expand.h>])
 
 dnl check for permissive types, added in libsepol version 2.0.26
 AC_CHECK_DECL([TYPE_FLAGS_PERMISSIVE],
@@ -645,6 +620,45 @@ AC_CHECK_DECL([TYPE_FLAGS_PERMISSIVE],
                 sepol_new_permissive_types="no",
                 [#include <sepol/policydb/policydb.h>])
                 
+dnl check for modified AV tab behavior, introduced in libsepol version 2.0.20
+AC_CHECK_DECL([avtab_alloc],
+              sepol_new_avtab="yes",
+              sepol_new_avtab="no",
+              [#include <sepol/policydb/conditional.h>])
+
+dnl check for policycap, added in libsepol version 2.0.18
+AC_CHECK_MEMBER([struct policydb.policycaps.node],
+                sepol_new_policycaps="yes",
+                sepol_new_policycaps="no",
+                [#include <sepol/policydb/policydb.h>])
+
+dnl check for broken boolmap behavior in libsepol version 2.0.2
+AC_CHECK_DECL([cond_node_create], sepol_check_boolmap="yes", sepol_check_boolmap="no", [#include <sepol/policydb/conditional.h>])
+if test ${sepol_check_boolmap} = "yes"; then
+    dnl check for boolmap parameter that is fixed in version 2.0.3 through
+    dnl 2.0.28.  version 2.0.29 (see check above) implies that this check
+    dnl will succeed.
+    if test ${sepol_new_user_role_mapping} = "no"; then
+        AC_MSG_CHECKING([for corrected libsepol boolean expand behavior])
+        AC_COMPILE_IFELSE(
+                         [AC_LANG_SOURCE([
+#include <sepol/policydb/expand.h>
+int main () {
+  return expand_module_avrules(NULL, NULL, NULL, NULL, NULL, 0, 0);
+}])],
+                         AC_MSG_RESULT([yes]),
+                         AC_MSG_ERROR([this version of libsepol is incompatible with SETools]))
+    fi
+    sepol_new_expand_boolmap="yes"
+else
+    sepol_new_expand_boolmap="no"
+fi
+
+dnl check for new error code format, added in libsepol 2.0.0
+AC_CHECK_HEADER([sepol/errcodes.h],
+	        sepol_new_defines="yes",
+                sepol_new_defines="no")
+
 AC_RUN_IFELSE(
    [AC_LANG_SOURCE([
 #include <sepol/policydb/policydb.h>
@@ -902,6 +916,9 @@ if test ${sepol_new_avtab} == "yes"; then
 fi
 if test ${sepol_new_permissive_types} == "yes"; then
    AC_DEFINE(HAVE_SEPOL_PERMISSIVE_TYPES, 1, [if types can be marked as permissive])
+fi
+if test ${sepol_new_user_role_mapping} == "yes"; then
+   AC_DEFINE(HAVE_SEPOL_USER_ROLE_MAPPING, 1, [if users and roles are mapped during policy expansion])
 fi
 
 if test ${use_shared} == "yes"; then

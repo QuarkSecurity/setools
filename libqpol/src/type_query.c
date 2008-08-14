@@ -189,7 +189,6 @@ int qpol_type_get_ispermissive(const qpol_policy_t * policy, const qpol_type_t *
 		errno = EINVAL;
 		return STATUS_ERR;
 	}
-
 #ifdef HAVE_SEPOL_PERMISSIVE_TYPES
 	/* checking internal_datum->flags for permissive won't work,
 	   because the type could be an alias.  so instead, look up
