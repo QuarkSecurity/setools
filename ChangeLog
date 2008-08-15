@@ -6,9 +6,9 @@
 	where errno was not being set properly.
 	
 	* Fixed error in apol_syn_avrule_render() where braces were not
-	being added around the target set whenn there is exactly one
-	target type and the keyword 'self'.  Thanks to Ryan Kagin for
-	reporting this error.
+	being added around the target set when there is exactly one target
+	type and the keyword 'self'.  Thanks to Ryan Kagin for reporting
+	this error.
 
 2008-08-14  J. Tang  <jtang@tresys.com>
 

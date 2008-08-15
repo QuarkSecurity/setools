@@ -808,7 +808,7 @@ char *apol_avrule_render(const apol_policy_t * policy, const qpol_avrule_t * rul
 		error = errno;
 		goto err;
 	}
-	if (apol_str_appendf(&tmp, &tmp_sz, "%s ", tmp_name)) {
+	if (apol_str_appendf(&tmp, &tmp_sz, "%s : ", tmp_name)) {
 		error = errno;
 		ERR(policy, "%s", strerror(error));
 		goto err;
