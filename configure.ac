@@ -616,8 +616,9 @@ AC_COMPILE_IFELSE(
 int main () {
   return role_set_expand(NULL, NULL, NULL, NULL);
 }])],
-                  [sepol_new_user_role_mapping="yes"; AC_MSG_RESULT(libsepol >= 2.0.29)],
-                  [sepol_new_user_role_mapping="no"; AC_MSG_RESULT(libsepol < 2.0.29)])
+                  sepol_new_user_role_mapping="yes",
+                  sepol_new_user_role_mapping="no")
+AC_MSG_RESULT([${sepol_new_user_role_mapping}])
 
 dnl check for permissive types, added in libsepol version 2.0.26
 AC_CHECK_DECL([TYPE_FLAGS_PERMISSIVE],

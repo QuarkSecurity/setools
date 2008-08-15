@@ -1,6 +1,6 @@
 %define setools_maj_ver 3.4
 %define setools_min_ver 0
-%define setools_release pre20080101
+%define setools_release pre20080815
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 %{!?python_sitearch: %define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")}
 
