@@ -365,6 +365,9 @@ rm -rf ${RPM_BUILD_ROOT}
 %postun libs-tcl -p /sbin/ldconfig
 
 %changelog
+* Fri Aug 15 2008 Jason Tang <selinux@tresys.com> 3.3.5-0
+- Update to SETools 3.3.5 release.
+
 * Fri Mar 7 2008 Jason Tang <selinux@tresys.com> 3.3.4-0
 - Update to SETools 3.3.4 release.
 

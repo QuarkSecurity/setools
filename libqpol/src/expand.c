@@ -180,5 +180,9 @@ int qpol_expand_module(qpol_policy_t * base, int neverallows)
 	return rt;
       err:
 	rt = -1;
+	/* libsepol does not always set errno correctly, so have a
+	   default errno here */
+	if (!error)
+		error = EIO;
 	goto exit;
 }
