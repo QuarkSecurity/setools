@@ -619,7 +619,7 @@ AC_CHECK_DECL([TYPE_FLAGS_PERMISSIVE],
                 sepol_new_permissive_types="yes",
                 sepol_new_permissive_types="no",
                 [#include <sepol/policydb/policydb.h>])
-                
+
 dnl check for modified AV tab behavior, introduced in libsepol version 2.0.20
 AC_CHECK_DECL([avtab_alloc],
               sepol_new_avtab="yes",
