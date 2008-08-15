@@ -609,10 +609,15 @@ CFLAGS="${CFLAGS} ${SELINUX_CFLAGS} ${SELINUX_LIB_FLAG}"
 CPPFLAGS="${CPPFLAGS} ${SELINUX_CFLAGS}"
 
 dnl check for user and role mapping, added in libsepol version 2.0.29
-AC_CHECK_DECL([role_set_expand],
-              sepol_new_user_role_mapping="yes",
-              sepol_new_user_role_mapping="no",
-              [#include <sepol/policydb/expand.h>])
+AC_MSG_CHECKING([for user and role mappings])
+AC_COMPILE_IFELSE(
+                  [AC_LANG_SOURCE([
+#include <sepol/policydb/expand.h>
+int main () {
+  return role_set_expand(NULL, NULL, NULL, NULL);
+}])],
+                  [sepol_new_user_role_mapping="yes"; AC_MSG_RESULT(libsepol >= 2.0.29)],
+                  [sepol_new_user_role_mapping="no"; AC_MSG_RESULT(libsepol < 2.0.29)])
 
 dnl check for permissive types, added in libsepol version 2.0.26
 AC_CHECK_DECL([TYPE_FLAGS_PERMISSIVE],
