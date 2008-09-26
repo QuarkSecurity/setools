@@ -45,6 +45,7 @@
 #include <sepol/policydb.h>
 #include <sepol/module.h>
 #include <sepol/policydb/module.h>
+#include <sepol/policydb/avrule_block.h>
 
 #include <stdbool.h>
 #include <qpol/iterator.h>
@@ -470,6 +471,97 @@ static int infer_policy_version(qpol_policy_t * policy)
 	return STATUS_SUCCESS;
 }
 
+/** State tracking struct used in the functions check_disabled, remove_symbol, and prune_disabled_symbols to handle disabled symbols */
+struct symbol_pruning_state
+{
+	qpol_policy_t *p; /**< The policy */
+	int symbol_type; /**< The current symbol type being processed */
+};
+
+/** Apply callback for hashtab_map_remove_on_error.
+ *  This function tests whether a symbol referenced by the policy is declared or only ever required.
+ *  Symbols without a declaration are disabled and must be removed.
+ *  @param key Symbol key to check.
+ *  @param datum Symbol datum to check.
+ *  @param args State object (of type struct symbol_pruning_state)
+ *  @return 0 if symbol is enabled, 1 if not enabled.
+ */
+static int check_disabled(hashtab_key_t key, hashtab_datum_t datum, void *args)
+{
+	struct symbol_pruning_state *s = args;
+	if (!is_id_enabled((char *)key, &(s->p->p->p), s->symbol_type))
+		return 1;
+	return 0;
+}
+
+/** Remove callback for hashtab_map_remove_on_error.
+ *  Frees all memory associated with a disabled symbol that has been removed from the symbol table.
+ *  @param key Symbol key to remove
+ *  @param datum Symbol datum to remove
+ *  @param args State object (of type struct symbol_pruning_state)
+ *  @post All memory associated with the symbol is freed.
+ */
+static void remove_symbol(hashtab_key_t key, hashtab_datum_t datum, void *args)
+{
+	struct symbol_pruning_state *s = args;
+	switch (s->symbol_type) {
+	case SYM_ROLES:
+	{
+		role_datum_destroy((role_datum_t *) datum);
+		break;
+	}
+	case SYM_TYPES:
+	{
+		type_datum_destroy((type_datum_t *) datum);
+		break;
+	}
+	case SYM_USERS:
+	{
+		user_datum_destroy((user_datum_t *) datum);
+		break;
+	}
+	case SYM_BOOLS:
+	{
+		/* no-op */
+		break;
+	}
+	case SYM_LEVELS:
+	{
+		level_datum_destroy((level_datum_t *) datum);
+		break;
+	}
+	case SYM_CATS:
+	{
+		cat_datum_destroy((cat_datum_t *) datum);
+		break;
+	}
+	default:
+		return;		       /* invalid type of datum to free; do nothing */
+	}
+	free(key);
+	free(datum);
+}
+
+/** Remove symbols that are only required but never declared from the policy.
+ *  Removes each disabled symbol freeing all memory associated with it.
+ *  @param policy The policy from which disabled symbols should be removed.
+ *  @return always 0.
+ *  @note Since hashtab_map_remove_on_error does not return any error status,
+ *  it is impossible to tell if it has failed; if it fails, the policy will
+ *  be in an inconsistent state.
+ */
+static int prune_disabled_symbols(qpol_policy_t * policy)
+{
+	if (policy->type == QPOL_POLICY_KERNEL_BINARY)
+		return 0;	       /* checkpolicy already prunes disabled symbols */
+	struct symbol_pruning_state state;
+	state.p = policy;
+	for (state.symbol_type = SYM_ROLES; state.symbol_type < SYM_NUM; state.symbol_type++) {
+		hashtab_map_remove_on_error(policy->p->p.symtab[state.symbol_type].table, check_disabled, remove_symbol, &state);
+	}
+	return 0;
+}
+
 /* forward declarations see policy_extend.c */
 struct qpol_extended_image;
 extern void qpol_extended_image_destroy(struct qpol_extended_image **ext);
@@ -581,6 +673,11 @@ int qpol_policy_rebuild_opt(qpol_policy_t * policy, const int options)
 		avtab_destroy(&(policy->p->p.te_cond_avtab));
 		avtab_init(&(policy->p->p.te_avtab));
 		avtab_init(&(policy->p->p.te_cond_avtab));
+	}
+
+	if (prune_disabled_symbols(policy)) {
+		error = errno;
+		goto err;
 	}
 
 	if (qpol_expand_module(policy, !(options & (QPOL_POLICY_OPTION_NO_NEVERALLOWS)))) {
@@ -793,6 +890,11 @@ int qpol_policy_open_from_file_opt(const char *path, qpol_policy_t ** policy, qp
 		avtab_init(&((*policy)->p->p.te_avtab));
 		avtab_init(&((*policy)->p->p.te_cond_avtab));
 
+		if (prune_disabled_symbols(*policy)) {
+			error = errno;
+			goto err;
+		}
+
 		/* expand */
 		if (qpol_expand_module(*policy, !(options & (QPOL_POLICY_OPTION_NO_NEVERALLOWS)))) {
 			error = errno;
@@ -911,7 +1013,12 @@ int qpol_policy_open_from_memory_opt(qpol_policy_t ** policy, const char *fileda
 	avtab_init(&((*policy)->p->p.te_avtab));
 	avtab_init(&((*policy)->p->p.te_cond_avtab));
 
-	/* expand :) */
+	if (prune_disabled_symbols(*policy)) {
+		error = errno;
+		goto err;
+	}
+
+	/* expand */
 	if (qpol_expand_module(*policy, !(options & (QPOL_POLICY_OPTION_NO_NEVERALLOWS)))) {
 		error = errno;
 		goto err;
