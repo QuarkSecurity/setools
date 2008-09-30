@@ -562,7 +562,7 @@ static int prune_disabled_symbols(qpol_policy_t * policy)
 	return 0;
 }
 
-/** For all symbols that are multiply defined (such as roles and users),
+/** For all symbols that are multiply defined (such as attributes, roles, and users),
  *  union the relevant sets of types and roles from each declaration.
  *  @param policy The policy containig the symbols to union.
  *  @return 0 on success, non-zero on error; if the call fails,
@@ -570,7 +570,7 @@ static int prune_disabled_symbols(qpol_policy_t * policy)
  */
 static int union_multiply_declared_symbols(qpol_policy_t * policy) {
 	/* general structure of this function:
-	walk role and user symbol tables for each role/user
+	walk role and user symbol tables for each role/user/attribute
 		get datum from symtab, get key from array
 		look up symbol in scope table
 		foreach decl_id in scope entry
@@ -578,6 +578,48 @@ static int union_multiply_declared_symbols(qpol_policy_t * policy) {
 	*/
 	qpol_iterator_t * iter = NULL;
 	int error = 0;
+	if (qpol_policy_get_type_iter(policy, &iter)) {
+		return 1;
+	}
+	for (; !qpol_iterator_end(iter); qpol_iterator_next(iter)) {
+		type_datum_t *attr;
+		if (qpol_iterator_get_item(iter, (void**)&attr)) {
+			error = errno;
+			goto err;
+		}
+		unsigned char isattr = 0;
+		if (qpol_type_get_isattr(policy, attr, &isattr)) {
+			error = errno;
+			goto err;
+		}
+		if (!isattr)
+			continue;
+		const char *name;
+		if (qpol_type_get_name(policy, (qpol_type_t*)attr, &name)) {
+			error = errno;
+			goto err;
+		}
+		policydb_t *db = &policy->p->p;
+		avrule_block_t *blk = db->global;
+		for (; blk; blk = blk->next) {
+			avrule_decl_t *decl = blk->enabled;
+			if (!decl)
+				continue; /* disabled */
+			type_datum_t *internal_datum = hashtab_search(decl->symtab[SYM_TYPES].table, (const hashtab_key_t)name);
+			if (internal_datum == NULL) {
+				continue; /* not declared here */
+			}
+			if (ebitmap_union(&attr->types, &internal_datum->types))
+			{
+				error = errno;
+				ERR(policy, "could not merge declarations for attribute %s", name);
+				goto err;
+			}
+		}
+	}
+	qpol_iterator_destroy(&iter);
+
+	/* repeat for roles */
 	if (qpol_policy_get_role_iter(policy, &iter)) {
 		return 1;
 	}
@@ -643,7 +685,7 @@ static int union_multiply_declared_symbols(qpol_policy_t * policy) {
 		{
 			if (db->decl_val_to_struct[scope_datum->decl_ids[i] - 1]->enabled == 0)
 				continue; /* block is disabled */
-			user_datum_t *internal_datum = hashtab_search(db->decl_val_to_struct[scope_datum->decl_ids[i]]->symtab[SYM_USERS].table, (const hashtab_key_t)name);
+			user_datum_t *internal_datum = hashtab_search(db->decl_val_to_struct[scope_datum->decl_ids[i] -1 ]->symtab[SYM_USERS].table, (const hashtab_key_t)name);
 			if (internal_datum == NULL) {
 				continue; /* not declared here */
 			}
