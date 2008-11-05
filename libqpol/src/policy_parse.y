@@ -109,6 +109,7 @@ extern char *qpol_src_inputlim;/* end of data */
 %token ROLES
 %token TYPEALIAS
 %token TYPEATTRIBUTE
+%token TYPEBOUNDS
 %token TYPE
 %token TYPES
 %token ALIAS
@@ -275,6 +276,7 @@ te_decl			: attribute_def
                         | type_def
                         | typealias_def
                         | typeattribute_def
+                        | typebounds_def
                         | bool_def
                         | transition_def
                         | range_trans_def
@@ -295,6 +297,9 @@ typealias_def           : TYPEALIAS identifier alias_def ';'
 typeattribute_def	: TYPEATTRIBUTE identifier id_comma_list ';'
 			{if (define_typeattribute()) return -1;}
 			;
+typebounds_def          : TYPEBOUNDS identifier id_comma_list ';'
+                        {if (define_typebounds()) return -1;}
+                        ;
 opt_attr_list           : ',' id_comma_list
 			| 
 			;

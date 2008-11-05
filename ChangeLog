@@ -1,3 +1,8 @@
+2008-11-05  J. Tang  <jtang@tresys.com>
+
+	* Synced libqpol to libsepol version 2.0.32, policy parser to
+	2.0.18.
+
 2008-10-07  Chris PeBenito  <cpebenito@tresys.com>
 
         * Added policy version 23 permission maps.

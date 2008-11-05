@@ -1,7 +1,7 @@
 /**
  *  @file
  *
- *  This file is a copy of module_compiler.c from NSA's CVS repository.
+ *  This file is a copy of module_compiler.c from NSA's GIT repository.
  *
  * Author : Joshua Brindle <jbrindle@tresys.com>
  *	    Karl MacMillan <kmacmillan@tresys.com>
@@ -161,6 +161,45 @@ int declare_symbol(uint32_t symbol_type, hashtab_key_t key, hashtab_datum_t datu
 	return retval;
 }
 
+static int role_implicit_bounds(hashtab_t roles_tab,
+				char *role_id, role_datum_t *role)
+{
+	role_datum_t *bounds;
+	char *bounds_id, *delim;
+
+	delim = strrchr(role_id, '.');
+	if (!delim)
+		return 0;	/* no implicit boundary */
+
+	bounds_id = strdup(role_id);
+	if (!bounds_id) {
+		yyerror("out of memory");
+		return -1;
+	}
+	bounds_id[(size_t)(delim - role_id)] = '\0';
+
+	bounds = hashtab_search(roles_tab, bounds_id);
+	if (!bounds) {
+		yyerror2("role %s doesn't exist, is implicit bounds of %s",
+			 bounds_id, role_id);
+		return -1;
+	}
+
+#ifdef HAVE_SEPOL_SYMBOL_BOUNDS
+	if (!role->bounds)
+		role->bounds = bounds->s.value;
+	else if (role->bounds != bounds->s.value) {
+		yyerror2("role %s has inconsistent bounds %s/%s",
+			 role_id, bounds_id,
+			 policydbp->p_role_val_to_name[role->bounds - 1]);
+		return -1;
+	}
+#endif
+	free(bounds_id);
+
+	return 0;
+}
+
 role_datum_t *declare_role(void)
 {
 	char *id = queue_remove(id_queue), *dest_id = NULL;
@@ -211,6 +250,12 @@ role_datum_t *declare_role(void)
 			}
 			role_datum_init(dest_role);
 			dest_role->s.value = value;
+			if (role_implicit_bounds(roles_tab, dest_id, dest_role)) {
+				free(dest_id);
+				role_datum_destroy(dest_role);
+				free(dest_role);
+				return NULL;
+			}
 			if (hashtab_insert(roles_tab, dest_id, dest_role)) {
 				yyerror("Out of memory!");
 				free(dest_id);
@@ -326,6 +371,45 @@ type_datum_t *declare_type(unsigned char primary, unsigned char isattr)
 	}
 }
 
+static int user_implicit_bounds(hashtab_t users_tab,
+				char *user_id, user_datum_t *user)
+{
+	user_datum_t *bounds;
+	char *bounds_id, *delim;
+
+	delim = strrchr(user_id, '.');
+	if (!delim)
+		return 0;	/* no implicit boundary */
+
+	bounds_id = strdup(user_id);
+	if (!bounds_id) {
+		yyerror("out of memory");
+		return -1;
+	}
+	bounds_id[(size_t)(delim - user_id)] = '\0';
+
+	bounds = hashtab_search(users_tab, bounds_id);
+	if (!bounds) {
+		yyerror2("user %s doesn't exist, is implicit bounds of %s",
+			 bounds_id, user_id);
+		return -1;
+	}
+
+#ifdef HAVE_SEPOL_SYMBOL_BOUNDS
+	if (!user->bounds)
+		user->bounds = bounds->s.value;
+	else if (user->bounds != bounds->s.value) {
+		yyerror2("user %s has inconsistent bounds %s/%s",
+			 user_id, bounds_id,
+			 policydbp->p_role_val_to_name[user->bounds - 1]);
+		return -1;
+	}
+#endif
+	free(bounds_id);
+
+	return 0;
+}
+
 user_datum_t *declare_user(void)
 {
 	char *id = queue_remove(id_queue), *dest_id = NULL;
@@ -377,6 +461,12 @@ user_datum_t *declare_user(void)
 			}
 			user_datum_init(dest_user);
 			dest_user->s.value = value;
+			if (user_implicit_bounds(users_tab, dest_id, dest_user)) {
+				free(dest_id);
+				user_datum_destroy(dest_user);
+				free(dest_user);
+				return NULL;
+			}
 			if (hashtab_insert(users_tab, dest_id, dest_user)) {
 				yyerror("Out of memory!");
 				free(dest_id);

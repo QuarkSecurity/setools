@@ -608,6 +608,13 @@ sepol_save_CPPFLAGS="${CPPFLAGS}"
 CFLAGS="${CFLAGS} ${SELINUX_CFLAGS} ${SELINUX_LIB_FLAG}"
 CPPFLAGS="${CPPFLAGS} ${SELINUX_CFLAGS}"
 
+dnl check for user, role, and typebounds, added in libsepol version 2.0.34
+AC_MSG_CHECKING([for symbol bounds])
+AC_CHECK_MEMBER([struct type_datum.bounds],
+                sepol_new_symbol_bounds="yes",
+                sepol_new_symbol_bounds="no",
+                [#include <sepol/policydb/policydb.h>])
+
 dnl check for user and role mapping, added in libsepol version 2.0.29
 AC_MSG_CHECKING([for user and role mappings])
 AC_COMPILE_IFELSE(
@@ -927,6 +934,9 @@ if test ${sepol_new_permissive_types} == "yes"; then
 fi
 if test ${sepol_new_user_role_mapping} == "yes"; then
    AC_DEFINE(HAVE_SEPOL_USER_ROLE_MAPPING, 1, [if users and roles are mapped during policy expansion])
+fi
+if test ${sepol_new_symbol_bounds} == "yes"; then
+   AC_DEFINE(HAVE_SEPOL_SYMBOL_BOUNDS, 1, [if users, roles, and types may declare bounded symbols])
 fi
 
 if test ${use_shared} == "yes"; then
