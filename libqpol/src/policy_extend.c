@@ -183,7 +183,7 @@ static int qpol_policy_build_attrs_from_map(qpol_policy_t * policy)
 	ebitmap_node_t *node = NULL;
 	type_datum_t *tmp_type = NULL, *orig_type;
 	char *tmp_name = NULL, buff[10];
-	int error = 0, retv;
+	int error = 0;
 
 	INFO(policy, "%s", "Generating attributes for policy. (Step 4 of 5)");
 	if (policy == NULL) {
@@ -205,6 +205,10 @@ static int qpol_policy_build_attrs_from_map(qpol_policy_t * policy)
 		if (count == 0) {
 			continue;
 		}
+#ifdef HAVE_SEPOL_SYMBOL_BOUNDS
+		tmp_type = db->type_val_to_struct[i];
+		assert(tmp_type != NULL);
+#else
 		/* first create a new type_datum_t for the attribute,
 		 * with the attribute's type_list consisting of types
 		 * with this attribute */
@@ -225,6 +229,8 @@ static int qpol_policy_build_attrs_from_map(qpol_policy_t * policy)
 		tmp_type->primary = 1;
 		tmp_type->flavor = TYPE_ATTRIB;
 		tmp_type->s.value = i + 1;
+#endif
+
 		if (ebitmap_cpy(&tmp_type->types, &db->attr_type_map[i])) {
 			error = ENOMEM;
 			goto err;
@@ -242,7 +248,8 @@ static int qpol_policy_build_attrs_from_map(qpol_policy_t * policy)
 			}
 		}
 
-		retv = hashtab_insert(db->p_types.table, (hashtab_key_t) tmp_name, (hashtab_datum_t) tmp_type);
+#ifndef HAVE_SEPOL_SYMBOL_BOUNDS
+		int retv = hashtab_insert(db->p_types.table, (hashtab_key_t) tmp_name, (hashtab_datum_t) tmp_type);
 		if (retv) {
 			if (retv == SEPOL_ENOMEM)
 				error = db->p_types.table ? ENOMEM : EINVAL;
@@ -252,6 +259,7 @@ static int qpol_policy_build_attrs_from_map(qpol_policy_t * policy)
 		}
 		db->p_type_val_to_name[i] = tmp_name;
 		db->type_val_to_struct[i] = tmp_type;
+#endif
 
 		/* memory now owned by symtab do not free */
 		tmp_name = NULL;

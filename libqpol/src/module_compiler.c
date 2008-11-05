@@ -161,37 +161,33 @@ int declare_symbol(uint32_t symbol_type, hashtab_key_t key, hashtab_datum_t datu
 	return retval;
 }
 
-static int role_implicit_bounds(hashtab_t roles_tab,
-				char *role_id, role_datum_t *role)
+static int role_implicit_bounds(hashtab_t roles_tab, char *role_id, role_datum_t * role)
 {
 	role_datum_t *bounds;
 	char *bounds_id, *delim;
 
 	delim = strrchr(role_id, '.');
 	if (!delim)
-		return 0;	/* no implicit boundary */
+		return 0;	       /* no implicit boundary */
 
 	bounds_id = strdup(role_id);
 	if (!bounds_id) {
 		yyerror("out of memory");
 		return -1;
 	}
-	bounds_id[(size_t)(delim - role_id)] = '\0';
+	bounds_id[(size_t) (delim - role_id)] = '\0';
 
 	bounds = hashtab_search(roles_tab, bounds_id);
 	if (!bounds) {
-		yyerror2("role %s doesn't exist, is implicit bounds of %s",
-			 bounds_id, role_id);
+		yyerror2("role %s doesn't exist, is implicit bounds of %s", bounds_id, role_id);
 		return -1;
 	}
-
 #ifdef HAVE_SEPOL_SYMBOL_BOUNDS
 	if (!role->bounds)
 		role->bounds = bounds->s.value;
 	else if (role->bounds != bounds->s.value) {
 		yyerror2("role %s has inconsistent bounds %s/%s",
-			 role_id, bounds_id,
-			 policydbp->p_role_val_to_name[role->bounds - 1]);
+			 role_id, bounds_id, policydbp->p_role_val_to_name[role->bounds - 1]);
 		return -1;
 	}
 #endif
@@ -371,37 +367,33 @@ type_datum_t *declare_type(unsigned char primary, unsigned char isattr)
 	}
 }
 
-static int user_implicit_bounds(hashtab_t users_tab,
-				char *user_id, user_datum_t *user)
+static int user_implicit_bounds(hashtab_t users_tab, char *user_id, user_datum_t * user)
 {
 	user_datum_t *bounds;
 	char *bounds_id, *delim;
 
 	delim = strrchr(user_id, '.');
 	if (!delim)
-		return 0;	/* no implicit boundary */
+		return 0;	       /* no implicit boundary */
 
 	bounds_id = strdup(user_id);
 	if (!bounds_id) {
 		yyerror("out of memory");
 		return -1;
 	}
-	bounds_id[(size_t)(delim - user_id)] = '\0';
+	bounds_id[(size_t) (delim - user_id)] = '\0';
 
 	bounds = hashtab_search(users_tab, bounds_id);
 	if (!bounds) {
-		yyerror2("user %s doesn't exist, is implicit bounds of %s",
-			 bounds_id, user_id);
+		yyerror2("user %s doesn't exist, is implicit bounds of %s", bounds_id, user_id);
 		return -1;
 	}
-
 #ifdef HAVE_SEPOL_SYMBOL_BOUNDS
 	if (!user->bounds)
 		user->bounds = bounds->s.value;
 	else if (user->bounds != bounds->s.value) {
 		yyerror2("user %s has inconsistent bounds %s/%s",
-			 user_id, bounds_id,
-			 policydbp->p_role_val_to_name[user->bounds - 1]);
+			 user_id, bounds_id, policydbp->p_role_val_to_name[user->bounds - 1]);
 		return -1;
 	}
 #endif

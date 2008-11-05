@@ -1173,15 +1173,13 @@ static int define_typebounds_helper(char *bounds_id, char *type_id)
 	} else if (type->flavor == TYPE_ALIAS) {
 		type = policydbp->type_val_to_struct[type->primary - 1];
 	}
-
 #ifdef HAVE_SEPOL_SYMBOL_BOUNDS
 	if (!type->bounds)
 		type->bounds = bounds->s.value;
 	else if (type->bounds != bounds->s.value) {
 		yyerror2("type %s has inconsistent master {%s,%s}",
 			 type_id,
-			 policydbp->p_type_val_to_name[type->bounds - 1],
-			 policydbp->p_type_val_to_name[bounds->s.value - 1]);
+			 policydbp->p_type_val_to_name[type->bounds - 1], policydbp->p_type_val_to_name[bounds->s.value - 1]);
 		return -1;
 	}
 #endif
@@ -1199,7 +1197,7 @@ int define_typebounds(void)
 		return 0;
 	}
 
-	bounds = (char *) queue_remove(id_queue);
+	bounds = (char *)queue_remove(id_queue);
 	if (!bounds) {
 		yyerror("no type name for typebounds definition?");
 		return -1;
@@ -1232,7 +1230,7 @@ int define_type(int alias)
 
 			if ((delim = strrchr(id, '.'))
 			    && (bounds = strdup(id))) {
-				bounds[(size_t)(delim - id)] = '\0';
+				bounds[(size_t) (delim - id)] = '\0';
 
 				if (define_typebounds_helper(bounds, id))
 					return -1;

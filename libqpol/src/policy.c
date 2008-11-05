@@ -568,34 +568,37 @@ static int prune_disabled_symbols(qpol_policy_t * policy)
  *  @return 0 on success, non-zero on error; if the call fails,
  *  errno will be set, and the policy should be considered invalid.
  */
-static int union_multiply_declared_symbols(qpol_policy_t * policy) {
+static int union_multiply_declared_symbols(qpol_policy_t * policy)
+{
+	/* *INDENT-OFF* */
 	/* general structure of this function:
-	walk role and user symbol tables for each role/user/attribute
+	walk role, user, and type symbol tables for each role/user/attribute
 		get datum from symtab, get key from array
 		look up symbol in scope table
 		foreach decl_id in scope entry
 			union types/roles bitmap with datum's copy
-	*/
-	qpol_iterator_t * iter = NULL;
+	 */
+	/* *INDENT-ON* */
+	qpol_iterator_t *iter = NULL;
 	int error = 0;
 	if (qpol_policy_get_type_iter(policy, &iter)) {
 		return 1;
 	}
 	for (; !qpol_iterator_end(iter); qpol_iterator_next(iter)) {
 		type_datum_t *attr;
-		if (qpol_iterator_get_item(iter, (void**)&attr)) {
+		if (qpol_iterator_get_item(iter, (void **)&attr)) {
 			error = errno;
 			goto err;
 		}
 		unsigned char isattr = 0;
-		if (qpol_type_get_isattr(policy, attr, &isattr)) {
+		if (qpol_type_get_isattr(policy, (qpol_type_t *) attr, &isattr)) {
 			error = errno;
 			goto err;
 		}
 		if (!isattr)
 			continue;
 		const char *name;
-		if (qpol_type_get_name(policy, (qpol_type_t*)attr, &name)) {
+		if (qpol_type_get_name(policy, (qpol_type_t *) attr, &name)) {
 			error = errno;
 			goto err;
 		}
@@ -604,13 +607,12 @@ static int union_multiply_declared_symbols(qpol_policy_t * policy) {
 		for (; blk; blk = blk->next) {
 			avrule_decl_t *decl = blk->enabled;
 			if (!decl)
-				continue; /* disabled */
+				continue;	/* disabled */
 			type_datum_t *internal_datum = hashtab_search(decl->symtab[SYM_TYPES].table, (const hashtab_key_t)name);
 			if (internal_datum == NULL) {
-				continue; /* not declared here */
+				continue;	/* not declared here */
 			}
-			if (ebitmap_union(&attr->types, &internal_datum->types))
-			{
+			if (ebitmap_union(&attr->types, &internal_datum->types)) {
 				error = errno;
 				ERR(policy, "could not merge declarations for attribute %s", name);
 				goto err;
@@ -625,32 +627,33 @@ static int union_multiply_declared_symbols(qpol_policy_t * policy) {
 	}
 	for (; !qpol_iterator_end(iter); qpol_iterator_next(iter)) {
 		role_datum_t *role;
-		if (qpol_iterator_get_item(iter, (void**)&role)) {
+		if (qpol_iterator_get_item(iter, (void **)&role)) {
 			error = errno;
 			goto err;
 		}
 		const char *name;
-		if (qpol_role_get_name(policy, (qpol_role_t*)role, &name)) {
+		if (qpol_role_get_name(policy, (qpol_role_t *) role, &name)) {
 			error = errno;
 			goto err;
 		}
 		policydb_t *db = &policy->p->p;
-		scope_datum_t* scope_datum = hashtab_search(db->scope[SYM_ROLES].table, (const hashtab_key_t)name);
+		scope_datum_t *scope_datum = hashtab_search(db->scope[SYM_ROLES].table, (const hashtab_key_t)name);
 		if (scope_datum == NULL) {
 			ERR(policy, "could not find scope datum for role %s", name);
 			error = ENOENT;
 			goto err;
 		}
-		for (uint32_t i = 0; i < scope_datum->decl_ids_len; i++)
-		{
+		for (uint32_t i = 0; i < scope_datum->decl_ids_len; i++) {
 			if (db->decl_val_to_struct[scope_datum->decl_ids[i] - 1]->enabled == 0)
-				continue; /* block is disabled */
-			role_datum_t *internal_datum = hashtab_search(db->decl_val_to_struct[scope_datum->decl_ids[i] - 1]->symtab[SYM_ROLES].table, (const hashtab_key_t)name);
+				continue;	/* block is disabled */
+			role_datum_t *internal_datum =
+				hashtab_search(db->decl_val_to_struct[scope_datum->decl_ids[i] - 1]->symtab[SYM_ROLES].table,
+					       (const hashtab_key_t)name);
 			if (internal_datum == NULL) {
-				continue; /* not declared here */
+				continue;	/* not declared here */
 			}
-			if (ebitmap_union(&role->types.types, &internal_datum->types.types) || ebitmap_union(&role->dominates, &internal_datum->dominates))
-			{
+			if (ebitmap_union(&role->types.types, &internal_datum->types.types) ||
+			    ebitmap_union(&role->dominates, &internal_datum->dominates)) {
 				error = errno;
 				ERR(policy, "could not merge declarations for role %s", name);
 				goto err;
@@ -665,32 +668,32 @@ static int union_multiply_declared_symbols(qpol_policy_t * policy) {
 	}
 	for (; !qpol_iterator_end(iter); qpol_iterator_next(iter)) {
 		user_datum_t *user;
-		if (qpol_iterator_get_item(iter, (void**)&user)) {
+		if (qpol_iterator_get_item(iter, (void **)&user)) {
 			error = errno;
 			goto err;
 		}
 		const char *name;
-		if (qpol_user_get_name(policy, (qpol_user_t*)user, &name)) {
+		if (qpol_user_get_name(policy, (qpol_user_t *) user, &name)) {
 			error = errno;
 			goto err;
 		}
 		policydb_t *db = &policy->p->p;
-		scope_datum_t* scope_datum = hashtab_search(db->scope[SYM_USERS].table, (const hashtab_key_t)name);
+		scope_datum_t *scope_datum = hashtab_search(db->scope[SYM_USERS].table, (const hashtab_key_t)name);
 		if (scope_datum == NULL) {
 			ERR(policy, "could not find scope datum for user %s", name);
 			error = ENOENT;
 			goto err;
 		}
-		for (uint32_t i = 0; i < scope_datum->decl_ids_len; i++)
-		{
+		for (uint32_t i = 0; i < scope_datum->decl_ids_len; i++) {
 			if (db->decl_val_to_struct[scope_datum->decl_ids[i] - 1]->enabled == 0)
-				continue; /* block is disabled */
-			user_datum_t *internal_datum = hashtab_search(db->decl_val_to_struct[scope_datum->decl_ids[i] -1 ]->symtab[SYM_USERS].table, (const hashtab_key_t)name);
+				continue;	/* block is disabled */
+			user_datum_t *internal_datum =
+				hashtab_search(db->decl_val_to_struct[scope_datum->decl_ids[i] - 1]->symtab[SYM_USERS].table,
+					       (const hashtab_key_t)name);
 			if (internal_datum == NULL) {
-				continue; /* not declared here */
+				continue;	/* not declared here */
 			}
-			if (ebitmap_union(&user->roles.roles, &internal_datum->roles.roles))
-			{
+			if (ebitmap_union(&user->roles.roles, &internal_datum->roles.roles)) {
 				error = errno;
 				ERR(policy, "could not merge declarations for user %s", name);
 				goto err;
@@ -700,7 +703,7 @@ static int union_multiply_declared_symbols(qpol_policy_t * policy) {
 	qpol_iterator_destroy(&iter);
 
 	return 0;
-err:
+      err:
 	qpol_iterator_destroy(&iter);
 	errno = error;
 	return 1;
