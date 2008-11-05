@@ -1,8 +1,18 @@
+2008-10-07  Chris PeBenito  <cpebenito@tresys.com>
+
+        * Added policy version 23 permission maps.
+
 2008-09-30  J. Mowery  <jmowery@tresys.com>
 
 	* Fixed errors in expanding symbols to correctly resolve symbols
 	that are only required but never defined; these symbols are now
 	properly removed from the appropriate symbol table.
+
+2008-09-11  J. Tang  <jtang@tresys.com>
+
+        * Fixed error in qpol_policy_rebuild_opt() where a policy's
+        neverallow rules are expanded when the rebuild option is
+        QPOL_POLICY_OPTION_NO_RULES.
 
 2008-08-15  J. Tang  <jtang@tresys.com>
 
