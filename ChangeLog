@@ -1,3 +1,9 @@
+2008-09-30  J. Mowery  <jmowery@tresys.com>
+
+	* Fixed errors in expanding symbols to correctly resolve symbols
+	that are only required but never defined; these symbols are now
+	properly removed from the appropriate symbol table.
+
 2008-08-15  J. Tang  <jtang@tresys.com>
 
 	* This is the official release of SETools 3.3.5.
