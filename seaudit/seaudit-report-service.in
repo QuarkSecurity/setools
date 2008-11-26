@@ -2,7 +2,7 @@
 # shell script to run seaudit-report on STDIN
 #
 
-SEAUDITREPORT=@bindir@
+SEAUDITREPORT=@bindir@/seaudit-report
 OPTS="--stdin --malformed"
 
 echo "Date Range: $LOGWATCH_DATE_RANGE"
@@ -11,7 +11,7 @@ echo "Temp Dir: $LOGWATCH_TEMP_DIR"
 echo "Debug Level: $LOGWATCH_DEBUG"
 
 # execute the program with the specified options
-${SEAUDITREPORT} ${OPTS} 
+${SEAUDITREPORT} ${OPTS}
 
 # program failed
 if [ $? -ne 0 ]; then
