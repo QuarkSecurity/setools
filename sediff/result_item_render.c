@@ -5,7 +5,7 @@
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
  *
- *  Copyright (C) 2007 Tresys Technology, LLC
+ *  Copyright (C) 2007-2008 Tresys Technology, LLC
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -139,7 +139,7 @@ void result_item_print_string_inline(GtkTextBuffer * tb, GtkTextIter * iter, con
 		}
 		case ' ':
 		{
-			if (current_tag != "modified") {
+			if (strcmp(current_tag, "modified") != 0) {
 				gtk_text_buffer_insert_with_tags_by_name(tb, iter, s + start, end - start + 1, current_tag, NULL);
 				start = end + 1;
 				current_tag = "modified";
