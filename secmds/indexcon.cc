@@ -7,7 +7,7 @@
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
  *
- *  Copyright (C) 2003-2007 Tresys Technology, LLC
+ *  Copyright (C) 2003-2008 Tresys Technology, LLC
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 {
 	int optc;
 
-	char *outfilename = NULL, *dir = "/";
+	const char *outfilename = NULL, *dir = "/";
 
 	while ((optc = getopt_long(argc, argv, "d:hV", longopts, NULL)) != -1)
 	{

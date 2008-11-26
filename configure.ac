@@ -1,6 +1,6 @@
 AC_INIT(setools, 3.4.0, [Tresys Technology <setools@tresys.com>], [setools])
 AC_PREREQ([2.59])
-AC_CONFIG_SRCDIR(libqpol/src/policy.c)
+AC_CONFIG_SRCDIR(src/qpol/policy.c)
 AC_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE([-Wno-portability])
 
@@ -97,58 +97,39 @@ AC_ARG_ENABLE(debug,
               enable_debug="$enableval")
 AC_MSG_CHECKING([for debugging support])
 if test "x${enable_debug}" = xyes; then
-    DEBUGCFLAGS="-g3 -gdwarf-2 -O0 -Wall -DSETOOLS_DEBUG=1 -fno-strict-aliasing"
-    DEBUGCXXFLAGS="-g3 -gdwarf-2 -O0 -Wall -DSETOOLS_DEBUG=1 -fno-strict-aliasing"
-    DEBUGJFLAGS="-g"
-    DEBUGLDFLAGS="-g -lm"
-    QPOL_LIB_FLAG='$(top_builddir)/libqpol/src/libqpol.so -Wl,-rpath=$(top_builddir)/libqpol/src'
-    APOL_LIB_FLAG='$(top_builddir)/libapol/src/libapol.a -Wl,-rpath=$(top_builddir)/libapol/src'
-    SEFS_LIB_FLAG='$(top_builddir)/libsefs/src/libsefs.a -Wl,-rpath=$(top_builddir)/libsefs/src'
-    POLDIFF_LIB_FLAG='$(top_builddir)/libpoldiff/src/libpoldiff.a -Wl,-rpath=$(top_builddir)/libpoldiff/src'
-    POLSEARCH_LIB_FLAG='$(top_builddir)/libpolsearch/src/libpolsearch.a -Wl,-rpath=$(top_builddir)/libpolsearch/src'
-    SEAUDIT_LIB_FLAG='$(top_builddir)/libseaudit/src/libseaudit.a -Wl,-rpath=$(top_builddir)/libseaudit/src'
+    DEBUG_CFLAGS="-g3 -gdwarf-2 -O0 -Wall -DSETOOLS_DEBUG=1 -fno-strict-aliasing"
+    DEBUG_CXXFLAGS="-g3 -gdwarf-2 -O0 -Wall -DSETOOLS_DEBUG=1 -fno-strict-aliasing"
+    DEBUG_JFLAGS="-g"
+    DEBUG_LDFLAGS="-g -lm"
     use_shared=no
     AC_MSG_RESULT(yes)
 else
     AC_DEFINE(NDEBUG, 1, [disable calls to assert()])
-    DEBUGCFLAGS="-fno-strict-aliasing"
-    DEBUGCXXFLAGS="-fno-strict-aliasing"
-    DEBUGJFLAGS=""
-    DEBUGLDFLAGS=""
-    if test ${use_shared} = yes; then
-        QPOL_LIB_FLAG='$(top_builddir)/libqpol/src/libqpol.so'
-        APOL_LIB_FLAG='$(top_builddir)/libapol/src/libapol.so'
-        SEFS_LIB_FLAG='$(top_builddir)/libsefs/src/libsefs.so'
-        POLDIFF_LIB_FLAG='$(top_builddir)/libpoldiff/src/libpoldiff.so'
-        POLSEARCH_LIB_FLAG='$(top_builddir)/libpolsearch/src/libpolsearch.so'
-        SEAUDIT_LIB_FLAG='$(top_builddir)/libseaudit/src/libseaudit.so'
-    else
-        QPOL_LIB_FLAG='$(top_builddir)/libqpol/src/libqpol.so'
-        APOL_LIB_FLAG='$(top_builddir)/libapol/src/libapol.a'
-        SEFS_LIB_FLAG='$(top_builddir)/libsefs/src/libsefs.a'
-        POLDIFF_LIB_FLAG='$(top_builddir)/libpoldiff/src/libpoldiff.a'
-        POLSEARCH_LIB_FLAG='$(top_builddir)/libpolsearch/src/libpolsearch.a'
-        SEAUDIT_LIB_FLAG='$(top_builddir)/libseaudit/src/libseaudit.a'
-    fi
+    DEBUG_CFLAGS="-fno-strict-aliasing"
+    DEBUG_CXXFLAGS="-fno-strict-aliasing"
+    DEBUG_JFLAGS=""
+    DEBUG_LDFLAGS=""
     AC_MSG_RESULT(disabled)
 fi
-AC_SUBST(DEBUGCFLAGS)
-AC_SUBST(DEBUGCXXFLAGS)
-AC_SUBST(DEBUGJFLAGS)
-AC_SUBST(DEBUGLDFLAGS)
 
-QPOL_CFLAGS='-I$(top_srcdir)/libqpol/include'
-APOL_CFLAGS='-I$(top_srcdir)/libapol/include'
-SEFS_CFLAGS='-I$(top_srcdir)/libsefs/include'
-POLDIFF_CFLAGS='-I$(top_srcdir)/libpoldiff/include'
-POLSEARCH_CFLAGS='-I$(top_srcdir)/libpolsearch/include'
-SEAUDIT_CFLAGS='-I$(top_srcdir)/libseaudit/include'
-AC_SUBST(QPOL_CFLAGS)
-AC_SUBST(APOL_CFLAGS)
-AC_SUBST(SEFS_CFLAGS)
-AC_SUBST(POLDIFF_CFLAGS)
-AC_SUBST(POLSEARCH_CFLAGS)
-AC_SUBST(SEAUDIT_CFLAGS)
+AC_MSG_CHECKING([for how to link against libraries])
+if test ${use_shared} = yes; then
+    QPOL_LIB_FLAG='$(top_builddir)/lib/libqpol.so'
+    APOL_LIB_FLAG='$(top_builddir)/lib/libapol.so'
+    SEFS_LIB_FLAG='$(top_builddir)/lib/libsefs.so'
+    POLDIFF_LIB_FLAG='$(top_builddir)/lib/libpoldiff.so'
+    POLSEARCH_LIB_FLAG='$(top_builddir)/lib/libpolsearch.so'
+    SEAUDIT_LIB_FLAG='$(top_builddir)/lib/libseaudit.so'
+    AC_MSG_RESULT(shared)
+else
+    QPOL_LIB_FLAG='$(top_builddir)/lib/libqpol.so -Wl,-rpath=$(top_builddir)/lib'
+    APOL_LIB_FLAG='$(top_builddir)/src/apol/libapol.a'
+    SEFS_LIB_FLAG='$(top_builddir)/src/sefs/libsefs.a'
+    POLDIFF_LIB_FLAG='$(top_builddir)/src/poldiff/libpoldiff.a'
+    POLSEARCH_LIB_FLAG='$(top_builddir)/src/polsearch/libpolsearch.a'
+    SEAUDIT_LIB_FLAG='$(top_builddir)/src/seaudit/libseaudit.a'
+    AC_MSG_RESULT(static)
+fi
 
 AC_SUBST(QPOL_LIB_FLAG)
 AC_SUBST(APOL_LIB_FLAG)
@@ -157,32 +138,21 @@ AC_SUBST(POLDIFF_LIB_FLAG)
 AC_SUBST(POLSEARCH_LIB_FLAG)
 AC_SUBST(SEAUDIT_LIB_FLAG)
 
-AC_MSG_CHECKING([for how to link against libraries])
-if test ${use_shared} = yes; then
-    AC_MSG_RESULT(shared)
-else
-    AC_MSG_RESULT(static)
-fi
-
 AC_ARG_ENABLE(warnall,
               AC_HELP_STRING([--enable-warnall],
                              [compile with most warnings enabled]),
               enable_warnall="$enableval")
 if test "x${enable_warnall}" = xyes; then
-    WARNCFLAGS=" -O1 -Wall -Wshadow -Wundef -pedantic -Wuninitialized -fno-strict-aliasing -std=c99"
-    WARNCXXFLAGS=" -O1 -Wall -Wshadow -Wundef -pedantic -Wuninitialized -Wabi -fno-strict-aliasing -Wno-variadic-macros"
-    WARNJFLAGS=" -verbose"
+    WARN_CFLAGS=" -O1 -Wall -Wshadow -Wundef -pedantic -Wuninitialized -fno-strict-aliasing -std=c99"
+    WARN_CXXFLAGS=" -O1 -Wall -Wshadow -Wundef -pedantic -Wuninitialized -Wabi -fno-strict-aliasing -Wno-variadic-macros"
+    WARN_JFLAGS=" -verbose"
     WARNLDFLAGS=""
 else
-    WARNCFLAGS=""
-    WARNCXXFLAGS=""
-    WARNJFLAGS=""
-    WARNLDFLAGS=""
+    WARN_CFLAGS=""
+    WARN_CXXFLAGS=""
+    WARN_JFLAGS=""
+    WARN_LDFLAGS=""
 fi
-AC_SUBST(WARNCFLAGS)
-AC_SUBST(WARNCXXFLAGS)
-AC_SUBST(WARNJFLAGS)
-AC_SUBST(WARNLDFLAGS)
 
 AC_ARG_ENABLE(profiling,
               AC_HELP_STRING([--enable-profiling],
@@ -190,16 +160,15 @@ AC_ARG_ENABLE(profiling,
               enable_profiling="$enableval")
 AC_MSG_CHECKING([for profiling support])
 if test "x${enable_profiling}" = xyes; then
-    PROFILECFLAGS="-ftest-coverage -fprofile-arcs -pg"
-    PROFILELDFLAGS="-lgcov"
+    PROFILE_CFLAGS="-ftest-coverage -fprofile-arcs -pg"
+    PROFILE_CXXFLAGS="-ftest-coverage -fprofile-arcs -pg"
+    PROFILE_LDFLAGS="-lgcov"
     AC_MSG_RESULT(yes)
 else
-    PROFILECFLAGS=""
-    PROFILELDFLAGS=""
+    PROFILE_CFLAGS=""
+    PROFILE_LDFLAGS=""
     AC_MSG_RESULT(disabled)
 fi
-AC_SUBST(PROFILECFLAGS)
-AC_SUBST(PROFILELDFLAGS)
 
 do_swigify=no
 do_swigify_java=no
@@ -279,6 +248,10 @@ if test "x${enable_tclswig}" = xyes; then
    do_swigify=yes
 else
    build_apol=no
+fi
+if test ${do_swigify} = yes; then
+   SWIG_FLAGS='-I$(top_srcdir)/include -I$(top_srcdir)/src/qpol -I$(top_srcdir)/src/apol -I$(top_srcdir)/src/poldiff -I$(top_srcdir)/src/polsearch -I$(top_srcdir)/src/seaudit -I$(top_srcdir)/src/sefs'
+   AC_SUBST(SWIG_FLAGS)
 fi
 AC_CACHE_SAVE
 
@@ -475,7 +448,7 @@ else
 fi
 
 if test "x${enable_debug}" = xyes; then
-   TCL_AUTOPATH+=' $(top_builddir)/libqpol/swig/tcl $(top_builddir)/libapol/swig/tcl $(top_builddir)/libsefs/swig/tcl $(top_builddir)/libpolsearch/swig/tcl $(top_builddir)/apol'
+   TCL_AUTOPATH+=' $(top_builddir)/src/qpol/tcl $(top_builddir)/src/apol/tcl $(top_builddir)/src/sefs/tcl $(top_builddir)/src/polsearch/tcl $(top_builddir)/apol'
    if test ${install_tkhtml} = yes; then
       TCL_AUTOPATH+=' $(top_builddir)/packages/tkhtml3/htmlwidget'
    fi
@@ -598,7 +571,6 @@ else
    sepol_devel_incdir="${sepol_srcdir}/../include"
 fi
 SELINUX_CFLAGS="-I${sepol_devel_incdir} -I${selinux_devel_incdir}"
-AC_SUBST(SELINUX_CFLAGS)
 AC_SUBST(SELINUX_LIB_FLAG)
 
 dnl ** check for certain features of libsepol
@@ -609,7 +581,6 @@ CFLAGS="${CFLAGS} ${SELINUX_CFLAGS} ${SELINUX_LIB_FLAG}"
 CPPFLAGS="${CPPFLAGS} ${SELINUX_CFLAGS}"
 
 dnl check for user, role, and typebounds, added in libsepol version 2.0.34
-AC_MSG_CHECKING([for symbol bounds])
 AC_CHECK_MEMBER([struct type_datum.bounds],
                 sepol_new_symbol_bounds="yes",
                 sepol_new_symbol_bounds="no",
@@ -738,6 +709,16 @@ AC_ARG_WITH(test-policies,
             test_policies=".")
 
 AC_CACHE_SAVE
+
+SETOOLS_CFLAGS="${DEBUG_CFLAGS} ${WARN_CFLAGS} ${PROFILE_CFLAGS} ${SELINUX_CFLAGS} -I\$(top_srcdir)/include"
+AC_SUBST(SETOOLS_CFLAGS)
+SETOOLS_CXXFLAGS="${DEBUG_CXXFLAGS} ${WARN_CXXFLAGS} ${PROFILE_CXXFLAGS} ${SELINUX_CFLAGS} -I\$(top_srcdir)/include"
+SETOOLS_LDFLAGS="${DEBUG_LDFLAGS} ${WARN_LDFLAGS} ${PROFILE_LDFLAGS}"
+SETOOLS_JFLAGS="${DEBUG_JFLAGS} ${WARN_JFLAGS}"
+AC_SUBST(SETOOLS_CFLAGS)
+AC_SUBST(SETOOLS_CXXFLAGS)
+AC_SUBST(SETOOLS_LDFLAGS)
+AC_SUBST(SETOOLS_JFLAGS)
 
 dnl check for pkg-config
 AC_CHECK_PROG(has_pkg_config, pkg-config, yes, no)
@@ -990,24 +971,32 @@ EOF
 ]], [bwidget_ver=$bwidget_ver; enable_debug=$enable_debug; version=$VERSION])
 
 AC_CONFIG_FILES([Makefile VERSION \
-                 libqpol/Makefile libqpol/src/Makefile libqpol/include/Makefile libqpol/include/qpol/Makefile libqpol/tests/Makefile \
-                 libqpol/swig/Makefile libqpol/swig/python/Makefile libqpol/swig/java/Makefile libqpol/swig/java/MANIFEST.MF libqpol/swig/tcl/Makefile \
-                 libapol/Makefile libapol/src/Makefile libapol/include/Makefile libapol/include/apol/Makefile libapol/share/Makefile libapol/tests/Makefile \
-                 libapol/swig/Makefile libapol/swig/python/Makefile libapol/swig/java/Makefile libapol/swig/java/MANIFEST.MF libapol/swig/tcl/Makefile \
-                 libpoldiff/Makefile libpoldiff/src/Makefile libpoldiff/include/Makefile libpoldiff/include/poldiff/Makefile libpoldiff/tests/Makefile \
-                 libpoldiff/swig/Makefile libpoldiff/swig/python/Makefile libpoldiff/swig/java/Makefile libpoldiff/swig/java/MANIFEST.MF libpoldiff/swig/tcl/Makefile \
-                 libpolsearch/Makefile libpolsearch/src/Makefile libpolsearch/include/Makefile libpolsearch/include/polsearch/Makefile libpolsearch/tests/Makefile \
-                 libpolsearch/swig/Makefile libpolsearch/swig/python/Makefile libpolsearch/swig/java/Makefile libpolsearch/swig/java/MANIFEST.MF libpolsearch/swig/tcl/Makefile \
-                 libsefs/Makefile libsefs/src/Makefile libsefs/include/Makefile libsefs/include/sefs/Makefile libsefs/tests/Makefile \
-                 libsefs/swig/Makefile libsefs/swig/python/Makefile libsefs/swig/java/Makefile libsefs/swig/tcl/Makefile libsefs/swig/java/MANIFEST.MF \
-                 libseaudit/Makefile libseaudit/src/Makefile libseaudit/include/Makefile libseaudit/include/seaudit/Makefile libseaudit/tests/Makefile \
-                 libseaudit/swig/Makefile libseaudit/swig/python/Makefile libseaudit/swig/java/Makefile libseaudit/swig/java/MANIFEST.MF libseaudit/swig/tcl/Makefile \
+                 include/Makefile \
+                 include/apol/Makefile \
+                 include/poldiff/Makefile \
+                 include/polsearch/Makefile \
+                 include/qpol/Makefile \
+                 include/seaudit/Makefile \
+                 include/sefs/Makefile \
+                 lib/Makefile src/Makefile \
+                 src/qpol/Makefile src/qpol/tests/Makefile \
+                 src/qpol/python/Makefile src/qpol/java/Makefile src/qpol/java/MANIFEST.MF src/qpol/tcl/Makefile \
+                 src/apol/Makefile src/apol/tests/Makefile \
+                 src/apol/python/Makefile src/apol/java/Makefile src/apol/java/MANIFEST.MF src/apol/tcl/Makefile \
+                 src/sefs/Makefile src/sefs/tests/Makefile \
+                 src/sefs/python/Makefile src/sefs/java/Makefile src/sefs/java/MANIFEST.MF src/sefs/tcl/Makefile \
+                 src/seaudit/Makefile src/seaudit/tests/Makefile \
+                 src/seaudit/python/Makefile src/seaudit/java/Makefile src/seaudit/java/MANIFEST.MF src/seaudit/tcl/Makefile \
+                 src/poldiff/Makefile src/poldiff/tests/Makefile \
+                 src/poldiff/python/Makefile src/poldiff/java/Makefile src/poldiff/java/MANIFEST.MF src/poldiff/tcl/Makefile \
+                 src/polsearch/Makefile src/polsearch/tests/Makefile \
+                 src/polsearch/python/Makefile src/polsearch/java/Makefile src/polsearch/java/MANIFEST.MF src/polsearch/tcl/Makefile \
                  secmds/Makefile \
                  apol/Makefile \
                  sechecker/Makefile sechecker/lib/Makefile sechecker/modules/Makefile \
                  seaudit/Makefile \
                  sediff/Makefile \
-                 man/Makefile \
+                 share/Makefile share/man/Makefile share/setools/Makefile \
                  debian/Makefile \
                  packages/Makefile packages/tkhtml3/Makefile packages/tkhtml3/htmlwidget/Makefile packages/tkhtml3/htmlwidget/hv/Makefile packages/rpm/Makefile \
                  packages/libqpol.pc packages/libapol.pc packages/libpoldiff.pc packages/libseaudit.pc packages/libsefs.pc packages/libpolsearch.pc])

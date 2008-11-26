@@ -9,9 +9,8 @@ endif
 
 bin_PROGRAMS = sediff $(MAYBE_SEDIFFX)
 
-AM_CFLAGS = @DEBUGCFLAGS@ @WARNCFLAGS@ @PROFILECFLAGS@ @SELINUX_CFLAGS@ \
-	@QPOL_CFLAGS@ @APOL_CFLAGS@ @POLDIFF_CFLAGS@
-AM_LDFLAGS = @DEBUGLDFLAGS@ @WARNLDFLAGS@ @PROFILELDFLAGS@
+AM_CFLAGS = @SETOOLS_CFLAGS@
+AM_LDFLAGS = @SETOOLS_LDFLAGS@
 
 LDADD = @SELINUX_LIB_FLAG@ @POLDIFF_LIB_FLAG@ @APOL_LIB_FLAG@ @QPOL_LIB_FLAG@
 
@@ -24,9 +23,10 @@ sediffx_LDFLAGS = $(AM_LDFLAGS) \
 	@GTK_LIBS@ @PIXBUF_LIBS@ @GLADE_LIBS@ @GTHREAD_LIBS@ @XML_LIBS@ \
 	-rdynamic
 
-DEPENDENCIES = $(top_builddir)/libpoldiff/src/libpoldiff.so \
-	$(top_builddir)/libapol/src/libapol.so \
-	$(top_builddir)/libqpol/src/libqpol.so
+DEPENDENCIES = \
+	$(top_builddir)/lib/libqpol.so \
+	$(top_builddir)/lib/libapol.so \
+	$(top_builddir)/lib/libpoldiff.so
 
 sediff_SOURCES = sediff.c
 
@@ -43,12 +43,3 @@ sediffx_SOURCES = \
 	toplevel.c toplevel.h \
 	utilgui.c utilgui.h \
 	sediffx.c sediffx.h
-
-$(top_builddir)/libpoldiff/src/libpoldiff.so:
-	$(MAKE) -C $(top_builddir)/libpoldiff/src $(notdir $@)
-
-$(top_builddir)/libapol/src/libapol.so:
-	$(MAKE) -C $(top_builddir)/libapol/src $(notdir $@)
-
-$(top_builddir)/libqpol/src/libqpol.so:
-	$(MAKE) -C $(top_builddir)/libqpol/src $(notdir $@)

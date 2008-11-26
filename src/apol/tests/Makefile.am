@@ -1,0 +1,22 @@
+TESTS = libapol-tests
+check_PROGRAMS = libapol-tests
+
+libapol_tests_SOURCES = \
+	avrule-tests.c avrule-tests.h \
+	dta-tests.c dta-tests.h \
+	infoflow-tests.c infoflow-tests.h \
+	policy-21-tests.c policy-21-tests.h \
+	role-tests.c role-tests.h \
+	terule-tests.c terule-tests.h \
+	user-tests.c user-tests.h \
+	icase_regex-tests.c icase_regex-tests.h \
+	cond-simplify-tests.c cond-simplify-tests.h \
+	libapol-tests.c
+
+AM_CFLAGS = @SETOOLS_CFLAGS@ -DTOP_SRCDIR="\"$(top_srcdir)\""
+
+AM_LDFLAGS = @SETOOLS_LDFLAGS@
+
+LDADD = @SELINUX_LIB_FLAG@ @APOL_LIB_FLAG@ @QPOL_LIB_FLAG@ @CUNIT_LIB_FLAG@
+
+libapol_tests_DEPENDENCIES = $(top_builddir)/lib/libapol.so

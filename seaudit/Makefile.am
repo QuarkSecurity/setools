@@ -2,14 +2,12 @@ setoolsdir = @setoolsdir@
 bin_PROGRAMS = seaudit-report
 sbin_PROGRAMS = seaudit
 
-AM_CFLAGS = @DEBUGCFLAGS@ @WARNCFLAGS@ @PROFILECFLAGS@ @SELINUX_CFLAGS@ \
-	@QPOL_CFLAGS@ @APOL_CFLAGS@ @SEAUDIT_CFLAGS@
-
+AM_CFLAGS = @SETOOLS_CFLAGS@
 seaudit_CFLAGS = $(AM_CFLAGS) \
 	@GTK_CFLAGS@ @PIXBUF_CFLAGS@ @GLADE_CFLAGS@ @GTHREAD_CFLAGS@
 seaudit_report_CFLAGS = $(AM_CFLAGS) -DAPOL_INSTALL_DIR='"${setoolsdir}"'
 
-AM_LDFLAGS = @DEBUGLDFLAGS@ @WARNLDFLAGS@ @PROFILELDFLAGS@
+AM_LDFLAGS = @SETOOLS_LDFLAGS@
 
 # need the -rdynamic flag below - glade uses dlopen() upon seaudit callbacks
 seaudit_LDFLAGS = $(AM_LDFLAGS) \
@@ -43,17 +41,19 @@ seaudit_SOURCES = \
 	toplevel.c toplevel.h \
 	utilgui.c utilgui.h
 
-seaudit_DEPENDENCIES = $(top_builddir)/libseaudit/src/libseaudit.so \
-                       $(top_builddir)/libapol/src/libapol.so \
-                       $(top_builddir)/libqpol/src/libqpol.so
+seaudit_DEPENDENCIES = \
+        $(top_builddir)/lib/libqpol.so \
+	$(top_builddir)/lib/libapol.so \
+	$(top_builddir)/lib/libseaudit.so
 
 dot_seaudit: dot_seaudit.in Makefile
 	sed -e 's|\@setoolsdir\@|$(setoolsdir)|g' $< > $@
 
 seaudit_report_SOURCES = seaudit-report.c
-seaudit_report_DEPENDENCIES = $(top_builddir)/libseaudit/src/libseaudit.so \
-                              $(top_builddir)/libapol/src/libapol.so \
-                              $(top_builddir)/libqpol/src/libqpol.so
+seaudit_report_DEPENDENCIES = \
+        $(top_builddir)/lib/libqpol.so \
+	$(top_builddir)/lib/libapol.so \
+	$(top_builddir)/lib/libseaudit.so
 
 logwatch = $(DESTDIR)/etc/logwatch
 LOGWATCH_GROUP = $(logwatch)/conf/logfiles
@@ -80,15 +80,6 @@ uninstall-logwatch:
 	rm -f "$(LOGWATCH_GROUP)/seaudit-report-group.conf"
 	rm -f "$(LOGWATCH_SERVICE)/seaudit-report-service.conf"
 	rm -f "$(LOGWATCH_FILTER)/seaudit-report-service"
-
-$(top_builddir)/libapol/src/libapol.so:
-	$(MAKE) -C $(top_builddir)/libapol/src $(notdir $@)
-
-$(top_builddir)/libqpol/src/libqpol.so:
-	$(MAKE) -C $(top_builddir)/libqpol/src $(notdir $@)
-
-$(top_builddir)/libsefs/src/libsefs.so:
-	$(MAKE) -C $(top_builddir)/libsefs/src $(notdir $@)
 
 .PHONY: install-logwatch
 

@@ -1,3 +1,14 @@
+2008-11-26  J. Tang  <jtang@tresys.com>
+
+	* Massive reorganization of source tree, to allow much easier
+	maintenance of Makefiles.
+
+	* Fixed missing command in seaudit-report-service script.  Thanks
+	to Manoj Srivastava for spotting this.
+
+	* Fixed a string comparison in result_item_render.c.  Thanks to
+	Pavol Rusnak for spotting this.
+
 2008-11-05  J. Tang  <jtang@tresys.com>
 
 	* Synced libqpol to libsepol version 2.0.32, policy parser to
@@ -25,7 +36,7 @@
 
 	* Fixed errors in libapol's AV and TE rule rendering functions
 	where errno was not being set properly.
-	
+
 	* Fixed error in apol_syn_avrule_render() where braces were not
 	being added around the target set when there is exactly one target
 	type and the keyword 'self'.  Thanks to Ryan Kagin for reporting

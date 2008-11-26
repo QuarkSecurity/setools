@@ -10,7 +10,7 @@ if BUILD_GUI
 endif
 # sediffx is also built conditionally, from sediffx/Makefile.am
 
-SUBDIRS = libqpol libapol libsefs libpoldiff libpolsearch libseaudit secmds sechecker sediff man packages debian $(MAYBE_APOL) $(MAYBE_GUI)
+SUBDIRS = src lib include secmds sechecker sediff share packages debian $(MAYBE_APOL) $(MAYBE_GUI)
 
 #old indent opts
 #INDENT_OPTS = -npro -nbad -bap -sob -ss -l132 -di1 -nbc -br -nbbb -c40 -cd40 -ncdb -ce -cli0 -cp40 -ncs -d0 -nfc1 -nfca -i8 -ts8 -ci8 -lp -ip0 -npcs -npsl -sc
@@ -19,40 +19,22 @@ CXX_INDENT_OPTS = -npro -nbad -bap -nbbb -nbbo -nbc -bl -bli0 -bls -c40 -cbi0 -c
 
 EXTRA_DIST = VERSION KNOWN-BUGS COPYING.LGPL COPYING.GPL
 
-libqpol:
-	$(MAKE) -C $(top_srcdir)/libqpol
-
-libapol:
-	$(MAKE) -C $(top_srcdir)/libapol
-
-libpoldiff:
-	$(MAKE) -C $(top_srcdir)/libpoldiff
-
-libpolsearch:
-	$(MAKE) -C $(top_srcdir)/libpolsearch
-
-libsefs:
-	$(MAKE) -C $(top_srcdir)/libsefs
-
-libseaudit:
-	$(MAKE) -C $(top_srcdir)/libseaudit
-
-apol: libqpol libapol libsefs packages
+apol: lib packages
 	$(MAKE) -C $(top_srcdir)/apol
 
-secmds: libqpol libapol libsefs
+secmds: lib
 	$(MAKE) -C $(top_srcdir)/secmds
 
-seaudit: libqpol libapol libseaudit
+seaudit: lib
 	$(MAKE) -C $(top_srcdir)/seaudit
 
-sediff: libqpol libapol libpoldiff
+sediff: lib
 	$(MAKE) -C $(top_srcdir)/sediff sediff
 
-sediffx: libqpol libapol libpoldiff
+sediffx: lib
 	$(MAKE) -C $(top_srcdir)/sediff sediffx
 
-sechecker: libqpol libapol libsefs
+sechecker: lib
 	$(MAKE) -C $(top_srcdir)/sechecker
 
 help:
@@ -77,29 +59,26 @@ help:
 install-logwatch:
 	$(MAKE) -C $(top_srcdir)/seaudit install-logwatch
 
-.PHONY: libqpol libapol libpoldiff libsefs libseaudit \
+.PHONY: include lib src \
 	apol secmds seaudit sediff sediffx sechecker \
 	install-logwatch help \
 	seinfo sesearch indexcon findcon replcon searchcon \
 	packages
 
-seinfo: libqpol libapol
+seinfo: lib
 	$(MAKE) -C $(top_srcdir)/secmds seinfo
 
-sesearch: libqpol libapol
+sesearch: lib
 	$(MAKE) -C $(top_srcdir)/secmds sesearch
 
-indexcon: libqpol libapol libsefs
+indexcon: lib
 	$(MAKE) -C $(top_srcdir)/secmds indexcon
 
-findcon: libqpol libapol libsefs
+findcon: lib
 	$(MAKE) -C $(top_srcdir)/secmds findcon
 
-replcon: libqpol libapol libsefs
+replcon: lib
 	$(MAKE) -C $(top_srcdir)/secmds replcon
-
-searchcon: libqpol libapol libsefs
-	$(MAKE) -C $(top_srcdir)/secmds searchcon
 
 packages:
 	$(MAKE) -C $(top_srcdir)/packages

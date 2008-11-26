@@ -79,15 +79,15 @@ EXTRA_DIST = aclocal.m4 ChangeLog COMPILE.txt COPYRIGHT linux-gcc.mk \
 
 libTkhtml3so_OBJS = $(notdir $(patsubst %.c,%.o,$(filter %.c,$(libTkhtml3_a_SOURCES) $(nodist_libTkhtml3_a_SOURCES))))
 
-AM_CFLAGS = @DEBUGCFLAGS@ @WARNCFLAGS@ @PROFILECFLAGS@ @SWIG_TCL_CFLAGS@ -I src -fpic
-AM_LDFLAGS = @DEBUGLDFLAGS@ @WARNLDFLAGS@ @PROFILELDFLAGS@
+AM_CFLAGS = @SETOOLS_CFLAGS@ @SWIG_TCL_CFLAGS@ -I src -fpic
+AM_LDFLAGS = @SETOOLS_LDFLAGS@
 
 cssprop.c: src/cssprop.tcl
 	$(TCLSH_PROG) $<
 
 cssprop.h: cssprop.c
 
-htmldefaultstyle.c: src/mkdefaultstyle.tcl src/tkhtml.tcl src/html.css 
+htmldefaultstyle.c: src/mkdefaultstyle.tcl src/tkhtml.tcl src/html.css
 	$(TCLSH_PROG) $< > $@
 
 htmltokens.c: src/tokenlist.txt

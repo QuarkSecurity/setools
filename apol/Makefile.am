@@ -59,36 +59,34 @@ EXTRA_DIST = \
 # top.tcl must be last one written because it spawns the rest of the script
 
 TCL_STRIP_FILES = $(patsubst %,$(srcdir)/%,$(filter-out head.tcl,$(EXTRA_DIST)))
-DEPENDENCIES = $(top_builddir)/libqpol/src/libqpol.so \
-	$(top_builddir)/libapol/src/libapol.so \
-	$(top_builddir)/libsefs/src/libsefs.so \
-	$(top_builddir)/libqpol/swig/tcl/libtqpol.so \
-	$(top_builddir)/libapol/swig/tcl/libtapol.so \
-	$(top_builddir)/libsefs/swig/tcl/libtsefs.so \
+DEPENDENCIES = \
+	$(top_builddir)/lib/libqpol.so \
+	$(top_builddir)/lib/libapol.so \
+	$(top_builddir)/lib/libsefs.so \
+	$(top_builddir)/lib/libpolsearch.so \
+	$(top_builddir)/src/qpol/tcl/libtqpol.so \
+	$(top_builddir)/src/apol/tcl/libtapol.so \
+	$(top_builddir)/src/sefs/tcl/libtsefs.so \
+	$(top_builddir)/src/polsearch/tcl/libtpolsearch.so \
 	$(top_builddir)/config.tcl
 
-AM_CXXFLAGS = @DEBUGCXXFLAGS@ @WARNCXXFLAGS@ @PROFILECFLAGS@ @SELINUX_CFLAGS@ \
-	@SEFS_CFLAGS@ @APOL_CFLAGS@ @QPOL_CFLAGS@ -I$(top_builddir) -fpic \
-	-I$(top_srcdir)/libapol/include
-AM_LDFLAGS = @DEBUGLDFLAGS@ @WARNLDFLAGS@ @PROFILELDFLAGS@ \
+AM_CXXFLAGS = @SETOOLS_CXXFLAGS@ -fpic -I$(top_srcdir)
+AM_LDFLAGS = @SETOOLS_LDFLAGS@ \
 	@SEFS_LIB_FLAG@ @APOL_LIB_FLAG@ @QPOL_LIB_FLAG@
 
 apol_tcl_wrap.cc: apol_tcl.i $(DEPENDENCIES)
-	$(SWIG) -c++ $(SWIG_TCL_OPT) -pkgversion @libapol_version@ -o $@ \
-	-I$(top_srcdir)/libsefs/include -I$(top_srcdir)/libsefs/swig \
-	-I$(top_srcdir)/libapol/include -I$(top_srcdir)/libapol/swig \
-	-I$(top_srcdir)/libqpol/swig $<
+	$(SWIG) -c++ $(SWIG_TCL_OPT) -pkgversion @libapol_version@ -o $@ @SWIG_FLAGS@ $<
 
 $(wrappedso_DATA): apol_tcl.cc apol_tcl_wrap.cc
 	$(CXX) -shared -o $@ $^ $(AM_CXXFLAGS) $(CXXFLAGS) $(SWIG_TCL_CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -Wl,-soname,$(wrappedso_SONAME)
 
 $(package_SCRIPTS): $(wrappedso_DATA) mkIndex.tcl
-	cat mkIndex.tcl | LD_LIBRARY_PATH=$(top_builddir)/libqpol/src:$(top_builddir)/libapol/src:$(top_builddir)/libsefs/src $(TCLSH_PROG)
+	cat mkIndex.tcl | LD_LIBRARY_PATH=$(top_builddir)/lib $(TCLSH_PROG)
 	$(mkdir_p) apol_tcl
 	cp $< $@ apol_tcl
 
 mkIndex.tcl: $(wrappedso_DATA) Makefile
-	@echo "lappend auto_path $(top_builddir)/libapol/swig/tcl $(top_builddir)/libsefs/swig/tcl" > $@
+	@echo "lappend auto_path $(top_builddir)/src/apol/tcl $(top_builddir)/src/sefs/tcl" > $@
 	@echo "package require apol" >> $@
 	@echo "package require sefs" >> $@
 	@echo "pkg_mkIndex . $<" >> $@
