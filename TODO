@@ -27,3 +27,7 @@ Result filtering/sorting - allow rule diffs to be sorted or filtered
 by various fields - sediffx
 
 Duplicate TE warning - can we remove it - parser
+
+Change libpoldiff algorithm to use Quine-McCluskey to resolve conditional differences.
+
+Optimize libpolsearch; it seems kind of slow currently.

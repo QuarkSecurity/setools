@@ -22,4 +22,4 @@ install/python-setools::
 
 install/setools-console::
 	$(MAKE) DESTDIR=$(CURDIR)/debian/tmp install-logwatch
-	chmod 0755 $(CURDIR)/debian/tmp/usr/share/setools-3.3/seaudit-report-service
+	chmod 0755 $(CURDIR)/debian/tmp/usr/share/setools-3.4/seaudit-report-service
