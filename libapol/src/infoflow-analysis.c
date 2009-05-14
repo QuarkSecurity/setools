@@ -33,7 +33,6 @@
 #include <errno.h>
 #include <limits.h>
 #include <time.h>
-#include <limits.h>
 
 /*
  * Nodes in the graph represent either a type used in the source
