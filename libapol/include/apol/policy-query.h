@@ -64,6 +64,7 @@ extern "C"
 #include "netcon-query.h"
 #include "fscon-query.h"
 #include "context-query.h"
+#include "permissive-query.h"
 
 #include "avrule-query.h"
 #include "terule-query.h"

@@ -160,6 +160,20 @@ int apol_compare_type(const apol_policy_t * p, const qpol_type_t * type, const c
 	return compval;
 }
 
+int apol_compare_permissive(const apol_policy_t * p, const qpol_permissive_t * permissive, const char *name, unsigned int flags,
+		      regex_t ** permissive_regex)
+{
+	const char *permissive_name;
+	int compval;
+	
+	if (qpol_permissive_get_name(p->p, permissive, &permissive_name) < 0) {
+		return -1;
+	}
+	compval = apol_compare(p, permissive_name, name, flags, permissive_regex);
+	
+	return compval;
+}
+
 int apol_compare_cond_expr(const apol_policy_t * p, const qpol_cond_t * cond, const char *name, unsigned int flags,
 			   regex_t ** bool_regex)
 {
