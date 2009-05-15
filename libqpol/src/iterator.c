@@ -606,6 +606,52 @@ void *ebitmap_state_get_cur_cat(const qpol_iterator_t * iter)
 	return (void *)cat;
 }
 
+void *ebitmap_state_get_cur_permissive(const qpol_iterator_t * iter)
+{
+	ebitmap_state_t *es = NULL;
+	const policydb_t *db = NULL;
+
+	if (iter == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	es = qpol_iterator_state(iter);
+	if (es == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	db = qpol_iterator_policy(iter);
+	if (db == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	return db->type_val_to_struct[es->cur - 1];
+}
+
+void *ebitmap_state_get_cur_polcap(const qpol_iterator_t * iter)
+{
+	ebitmap_state_t *es = NULL;
+	const policydb_t *db = NULL;
+
+	if (iter == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	es = qpol_iterator_state(iter);
+	if (es == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	db = qpol_iterator_policy(iter);
+	if (db == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	return &es->cur;
+}
+
 void ebitmap_state_destroy(void *es)
 {
 	ebitmap_state_t *ies = (ebitmap_state_t *) es;
