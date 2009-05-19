@@ -36,6 +36,7 @@
 #include <string.h>
 
 #include <sepol/policydb/policydb.h>
+#include <sepol/policydb/polcaps.h>
 #include <sepol/policydb/util.h>
 #include <sepol/policydb.h>
 
@@ -649,7 +650,7 @@ void *ebitmap_state_get_cur_polcap(const qpol_iterator_t * iter)
 		return NULL;
 	}
 
-	return &es->cur;
+	return sepol_polcap_getname(es->cur);
 }
 
 void ebitmap_state_destroy(void *es)

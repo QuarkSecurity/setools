@@ -28,14 +28,13 @@
 #include <qpol/policy.h>
 #include <qpol/polcap_query.h>
 #include <sepol/policydb/policydb.h>
-#include <sepol/policydb/polcaps.h>
 #include "qpol_internal.h"
 #include "iterator_internal.h"
 
 	
 int qpol_polcap_get_name(const qpol_policy_t *policy, const qpol_polcap_t * datum, const char **name)
 {
-	size_t *internal_datum = NULL;
+	char *internal_datum = NULL;
 	
 	if (policy == NULL || datum == NULL || name == NULL) {
 		if (name != NULL)
@@ -45,9 +44,9 @@ int qpol_polcap_get_name(const qpol_policy_t *policy, const qpol_polcap_t * datu
 		return STATUS_ERR;
 	}
 
-	internal_datum = (size_t *) datum;
-	*name = sepol_polcap_getname(*internal_datum);
-	
+	internal_datum = (char *) datum;
+	*name = internal_datum;
+		
 	return STATUS_SUCCESS;
 }
 
