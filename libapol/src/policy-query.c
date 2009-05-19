@@ -174,6 +174,20 @@ int apol_compare_permissive(const apol_policy_t * p, const qpol_permissive_t * p
 	return compval;
 }
 
+int apol_compare_polcap(const apol_policy_t * p, const qpol_polcap_t * polcap, const char *name, unsigned int flags,
+		      regex_t ** polcap_regex)
+{
+	const char *polcap_name;
+	int compval;
+	
+	if (qpol_polcap_get_name(p->p, polcap, &polcap_name) < 0) {
+		return -1;
+	}
+	compval = apol_compare(p, polcap_name, name, flags, polcap_regex);
+	
+	return compval;
+}
+
 int apol_compare_cond_expr(const apol_policy_t * p, const qpol_cond_t * cond, const char *name, unsigned int flags,
 			   regex_t ** bool_regex)
 {

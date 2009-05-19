@@ -65,6 +65,7 @@ extern "C"
 #include "fscon-query.h"
 #include "context-query.h"
 #include "permissive-query.h"
+#include "polcap-query.h"
 
 #include "avrule-query.h"
 #include "terule-query.h"
