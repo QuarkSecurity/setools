@@ -59,7 +59,7 @@ static const struct visible_field default_visible_fields[] = {
 	{SUSER_FIELD, "src_usr_field", 0},
 	{SROLE_FIELD, "src_role_field", 0},
 	{STYPE_FIELD, "src_type_field", 1},
-	{SMLS_FIELD, "src_mlse_field", 0},
+	{SMLS_FIELD, "src_mls_field", 0},
 	{TUSER_FIELD, "tgt_usr_field", 0},
 	{TROLE_FIELD, "tgt_role_field", 0},
 	{TTYPE_FIELD, "tgt_type_field", 1},
