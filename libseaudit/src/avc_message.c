@@ -4,6 +4,7 @@
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
+ *  @author Jeremy Solt jsolt@tresys.com
  *
  *  Copyright (C) 2006-2007 Tresys Technology, LLC
  *
@@ -75,6 +76,15 @@ const char *seaudit_avc_message_get_source_type(const seaudit_avc_message_t * av
 	return avc->stype;
 }
 
+const char *seaudit_avc_message_get_source_mls(const seaudit_avc_message_t * avc)
+{
+	if (avc == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return avc->smls;
+}
+
 const char *seaudit_avc_message_get_target_user(const seaudit_avc_message_t * avc)
 {
 	if (avc == NULL) {
@@ -100,6 +110,15 @@ const char *seaudit_avc_message_get_target_type(const seaudit_avc_message_t * av
 		return NULL;
 	}
 	return avc->ttype;
+}
+
+const char *seaudit_avc_message_get_target_mls(const seaudit_avc_message_t * avc)
+{
+	if (avc == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return avc->tmls;
 }
 
 const char *seaudit_avc_message_get_object_class(const seaudit_avc_message_t * avc)
@@ -455,12 +474,13 @@ char *avc_message_to_string(const seaudit_message_t * msg, const char *date)
 		return NULL;
 	}
 	free(misc_string);
-	if (avc->suser && apol_str_appendf(&s, &len, "scontext=%s:%s:%s ", avc->suser, avc->srole, avc->stype) < 0) {
+	if (avc->suser && apol_str_appendf(&s, &len, "scontext=%s:%s:%s:%s ", avc->suser, avc->srole, avc->stype, avc->smls) < 0) {
 		return NULL;
 	}
-	if (avc->tuser && apol_str_appendf(&s, &len, "tcontext=%s:%s:%s ", avc->tuser, avc->trole, avc->ttype) < 0) {
+	if (avc->tuser && apol_str_appendf(&s, &len, "tcontext=%s:%s:%s:%s ", avc->tuser, avc->trole, avc->ttype, avc->tmls) < 0) {
 		return NULL;
 	}
+	
 	if (avc->tclass && apol_str_appendf(&s, &len, "tclass=%s ", avc->tclass) < 0) {
 		return NULL;
 	}
@@ -533,13 +553,13 @@ char *avc_message_to_string_html(const seaudit_message_t * msg, const char *date
 	}
 	free(misc_string);
 	if (avc->suser &&
-	    apol_str_appendf(&s, &len, "<font class=\"src_context\">scontext=%s:%s:%s</font> ",
-			     avc->suser, avc->srole, avc->stype) < 0) {
+	    apol_str_appendf(&s, &len, "<font class=\"src_context\">scontext=%s:%s:%s:%s</font> ",
+			     avc->suser, avc->srole, avc->stype, avc->smls) < 0) {
 		return NULL;
 	}
 	if (avc->tuser &&
-	    apol_str_appendf(&s, &len, "<font class=\"tgt_context\">tcontext=%s:%s:%s</font> ",
-			     avc->tuser, avc->trole, avc->ttype) < 0) {
+	    apol_str_appendf(&s, &len, "<font class=\"tgt_context\">tcontext=%s:%s:%s:%s</font> ",
+			     avc->tuser, avc->trole, avc->ttype, avc->tmls) < 0) {
 		return NULL;
 	}
 	if (avc->tclass && apol_str_appendf(&s, &len, "<font class=\"obj_class\">tclass=%s</font> ", avc->tclass) < 0) {

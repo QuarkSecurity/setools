@@ -5,6 +5,7 @@
  *  @author Meggan Whalen mwhalen@tresys.com
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
+ *  @author Jeremy Solt jsolt@tresys.com
  *
  *  Copyright (C) 2003-2007 Tresys Technology, LLC
  *
@@ -221,21 +222,27 @@ static int insert_manager(const seaudit_log_t * log, seaudit_message_t * msg, co
  * Parse a context (user:role:type).  For each of the pieces, add them
  * to the log's BSTs.  Set reference pointers to those strings.
  */
-static int parse_context(seaudit_log_t * log, char *token, char **user, char **role, char **type)
+static int parse_context(seaudit_log_t * log, char *token, char **user, char **role, char **type, char **mls)
 {
 	size_t i = 0;
-	char *fields[PARSE_NUM_CONTEXT_FIELDS], *s;
+	char *fields[PARSE_NUM_CONTEXT_FIELDS + 1], *s;
 	int error;
-
-	*user = *role = *type = NULL;
-	while (i < PARSE_NUM_CONTEXT_FIELDS && (fields[i] = strsep(&token, ":")) != NULL) {
+	*user = *role = *type = *mls = NULL;
+	while (i < (PARSE_NUM_CONTEXT_FIELDS) && (fields[i] = strsep(&token, ":")) != NULL) {
 		i++;
 	}
+
 	if (i != PARSE_NUM_CONTEXT_FIELDS) {
 		WARN(log, "%s", "Not enough tokens for context.");
 		return 1;
 	}
-
+	fields[i] = strsep(&token, " ");
+	if (fields[i] != NULL)
+	{
+		i++;
+		
+	}
+	
 	if ((s = strdup(fields[0])) == NULL || apol_bst_insert_and_get(log->users, (void **)&s, NULL) < 0) {
 		error = errno;
 		ERR(log, "%s", strerror(error));
@@ -259,6 +266,16 @@ static int parse_context(seaudit_log_t * log, char *token, char **user, char **r
 		return -1;
 	}
 	*type = s;
+	
+	if (i > 3){
+		if ((s = strdup(fields[3])) == NULL || apol_bst_insert_and_get(log->mls, (void **)&s, NULL) < 0) {
+			error = errno;
+			ERR(log, "%s", strerror(error));
+			errno = error;
+			return -1;
+		}
+		*mls = s;
+	}
 
 	return 0;
 }
@@ -406,37 +423,39 @@ static int avc_msg_insert_access_type(const seaudit_log_t * log, const char *tok
 
 static int avc_msg_insert_scon(seaudit_log_t * log, seaudit_avc_message_t * avc, char *tmp)
 {
-	char *user, *role, *type;
+	char *user, *role, *type, *mls;
 	int retval;
 	if (tmp == NULL) {
 		WARN(log, "%s", "Invalid source context.");
 		return 1;
 	}
-	retval = parse_context(log, tmp, &user, &role, &type);
+	retval = parse_context(log, tmp, &user, &role, &type, &mls);
 	if (retval != 0) {
 		return retval;
 	}
 	avc->suser = user;
 	avc->srole = role;
 	avc->stype = type;
+	avc->smls = mls;
 	return 0;
 }
 
 static int avc_msg_insert_tcon(seaudit_log_t * log, seaudit_avc_message_t * avc, char *tmp)
 {
-	char *user, *role, *type;
+	char *user, *role, *type, *mls;
 	int retval;
 	if (tmp == NULL) {
 		WARN(log, "%s", "Invalid target context.");
 		return 1;
 	}
-	retval = parse_context(log, tmp, &user, &role, &type);
+	retval = parse_context(log, tmp, &user, &role, &type, &mls);
 	if (retval != 0) {
 		return retval;
 	}
 	avc->tuser = user;
 	avc->trole = role;
 	avc->ttype = type;
+	avc->tmls = mls;
 	return 0;
 }
 

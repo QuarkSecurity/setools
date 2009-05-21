@@ -4,6 +4,7 @@
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
+ *  @author Jeremy Solt jsolt@tresys.com
  *
  *  Copyright (C) 2003-2007 Tresys Technology, LLC
  *
@@ -102,9 +103,11 @@ static const struct view_column_record column_data[] = {
 	{SUSER_FIELD, "Source\nUser", "Source", seaudit_sort_by_source_user},
 	{SROLE_FIELD, "Source\nRole", "Source", seaudit_sort_by_source_role},
 	{STYPE_FIELD, "Source\nType", "unlabeled_t", seaudit_sort_by_source_type},
+	{SMLS_FIELD, "Source\nMLS", "s0-s4:c0.c255", NULL},
 	{TUSER_FIELD, "Target\nUser", "Target", seaudit_sort_by_target_user},
 	{TROLE_FIELD, "Target\nRole", "Target", seaudit_sort_by_target_role},
 	{TTYPE_FIELD, "Target\nType", "unlabeled_t", seaudit_sort_by_target_type},
+	{TMLS_FIELD, "Target\nMLS", "s0-s4:c0.c255", NULL},
 	{OBJCLASS_FIELD, "Object\nClass", "Object", seaudit_sort_by_object_class},
 	{PERM_FIELD, "Permission", "Permission", seaudit_sort_by_permission},
 	{EXECUTABLE_FIELD, "Executable", "/usr/bin/cat", seaudit_sort_by_executable},
@@ -436,6 +439,11 @@ static void message_view_store_get_value(GtkTreeModel * tree_model, GtkTreeIter 
 		message_view_to_utf8(value, seaudit_avc_message_get_source_type(avc));
 		return;
 	}
+	case SMLS_FIELD:
+	{
+		message_view_to_utf8(value, seaudit_avc_message_get_source_mls(avc));
+		return;
+	}
 	case TUSER_FIELD:
 	{
 		message_view_to_utf8(value, seaudit_avc_message_get_target_user(avc));
@@ -449,6 +457,11 @@ static void message_view_store_get_value(GtkTreeModel * tree_model, GtkTreeIter 
 	case TTYPE_FIELD:
 	{
 		message_view_to_utf8(value, seaudit_avc_message_get_target_type(avc));
+		return;
+	}
+	case TMLS_FIELD:
+	{
+		message_view_to_utf8(value, seaudit_avc_message_get_target_mls(avc));
 		return;
 	}
 	case OBJCLASS_FIELD:
