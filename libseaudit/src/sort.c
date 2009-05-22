@@ -243,20 +243,36 @@ seaudit_sort_t *seaudit_sort_by_source_type(const int direction)
 	return sort_create("source_type", sort_source_type_comp, sort_source_type_support, direction);
 }
 
-static int sort_source_mls_comp(const seaudit_sort_t * sort
+static int sort_source_mls_lvl_comp(const seaudit_sort_t * sort
 				 __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
 {
-		return strcmp(a->data.avc->smls, b->data.avc->smls);
+		return strcmp(a->data.avc->smls_lvl, b->data.avc->smls_lvl);
 }
 
-static int sort_source_mls_support(const seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
+static int sort_source_mls_lvl_support(const seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
 {
-	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && msg->data.avc->smls != NULL;
+	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && msg->data.avc->smls_lvl != NULL;
 }
 
-seaudit_sort_t *seaudit_sort_by_source_mls(const int direction)
+seaudit_sort_t *seaudit_sort_by_source_mls_lvl(const int direction)
 {
-	return sort_create("source_mls", sort_source_mls_comp, sort_source_mls_support, direction);
+	return sort_create("source_mls_lvl", sort_source_mls_lvl_comp, sort_source_mls_lvl_support, direction);
+}
+
+static int sort_source_mls_clr_comp(const seaudit_sort_t * sort
+				 __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
+{
+		return strcmp(a->data.avc->smls_clr, b->data.avc->smls_clr);
+}
+
+static int sort_source_mls_clr_support(const seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
+{
+	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && msg->data.avc->smls_clr != NULL;
+}
+
+seaudit_sort_t *seaudit_sort_by_source_mls_clr(const int direction)
+{
+	return sort_create("source_mls_clr", sort_source_mls_clr_comp, sort_source_mls_clr_support, direction);
 }
 
 static int sort_target_user_comp(const seaudit_sort_t * sort
@@ -307,20 +323,36 @@ seaudit_sort_t *seaudit_sort_by_target_type(const int direction)
 	return sort_create("target_type", sort_target_type_comp, sort_target_type_support, direction);
 }
 
-static int sort_target_mls_comp(const seaudit_sort_t * sort
+static int sort_target_mls_lvl_comp(const seaudit_sort_t * sort
 				 __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
 {
-	return strcmp(a->data.avc->tmls, b->data.avc->tmls);
+	return strcmp(a->data.avc->tmls_lvl, b->data.avc->tmls_lvl);
 }
 
-static int sort_target_mls_support(const seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
+static int sort_target_mls_lvl_support(const seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
 {
-	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && msg->data.avc->tmls != NULL;
+	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && msg->data.avc->tmls_lvl != NULL;
 }
 
-seaudit_sort_t *seaudit_sort_by_target_mls(const int direction)
+seaudit_sort_t *seaudit_sort_by_target_mls_lvl(const int direction)
 {
-	return sort_create("target_mls", sort_target_mls_comp, sort_target_mls_support, direction);
+	return sort_create("target_mls_lvl", sort_target_mls_lvl_comp, sort_target_mls_lvl_support, direction);
+}
+
+static int sort_target_mls_clr_comp(const seaudit_sort_t * sort
+				 __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
+{
+	return strcmp(a->data.avc->tmls_clr, b->data.avc->tmls_clr);
+}
+
+static int sort_target_mls_clr_support(const seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
+{
+	return msg->type == SEAUDIT_MESSAGE_TYPE_AVC && msg->data.avc->tmls_clr != NULL;
+}
+
+seaudit_sort_t *seaudit_sort_by_target_mls_clr(const int direction)
+{
+	return sort_create("target_mls_clr", sort_target_mls_clr_comp, sort_target_mls_clr_support, direction);
 }
 
 static int sort_object_class_comp(const seaudit_sort_t * sort

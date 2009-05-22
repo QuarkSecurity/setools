@@ -103,11 +103,13 @@ static const struct view_column_record column_data[] = {
 	{SUSER_FIELD, "Source\nUser", "Source", seaudit_sort_by_source_user},
 	{SROLE_FIELD, "Source\nRole", "Source", seaudit_sort_by_source_role},
 	{STYPE_FIELD, "Source\nType", "unlabeled_t", seaudit_sort_by_source_type},
-	{SMLS_FIELD, "Source\nMLS", "s0-s4:c0.c255", seaudit_sort_by_source_mls},
+	{SMLS_LVL_FIELD, "Source\nMLS Level", "MLS Level", seaudit_sort_by_source_mls_lvl},
+	{SMLS_CLR_FIELD, "Source\nMLS Clearance", "MLS Clearance", seaudit_sort_by_source_mls_clr},
 	{TUSER_FIELD, "Target\nUser", "Target", seaudit_sort_by_target_user},
 	{TROLE_FIELD, "Target\nRole", "Target", seaudit_sort_by_target_role},
 	{TTYPE_FIELD, "Target\nType", "unlabeled_t", seaudit_sort_by_target_type},
-	{TMLS_FIELD, "Target\nMLS", "s0-s4:c0.c255", seaudit_sort_by_target_mls},
+	{TMLS_LVL_FIELD, "Target\nMLS Level", "MLS Level", seaudit_sort_by_target_mls_lvl},
+	{TMLS_CLR_FIELD, "Target\nMLS Clearance", "MLS Clearance", seaudit_sort_by_target_mls_clr},
 	{OBJCLASS_FIELD, "Object\nClass", "Object", seaudit_sort_by_object_class},
 	{PERM_FIELD, "Permission", "Permission", seaudit_sort_by_permission},
 	{EXECUTABLE_FIELD, "Executable", "/usr/bin/cat", seaudit_sort_by_executable},
@@ -439,9 +441,14 @@ static void message_view_store_get_value(GtkTreeModel * tree_model, GtkTreeIter 
 		message_view_to_utf8(value, seaudit_avc_message_get_source_type(avc));
 		return;
 	}
-	case SMLS_FIELD:
+	case SMLS_LVL_FIELD:
 	{
-		message_view_to_utf8(value, seaudit_avc_message_get_source_mls(avc));
+		message_view_to_utf8(value, seaudit_avc_message_get_source_mls_lvl(avc));
+		return;
+	}
+	case SMLS_CLR_FIELD:
+	{
+		message_view_to_utf8(value, seaudit_avc_message_get_source_mls_clr(avc));
 		return;
 	}
 	case TUSER_FIELD:
@@ -459,9 +466,14 @@ static void message_view_store_get_value(GtkTreeModel * tree_model, GtkTreeIter 
 		message_view_to_utf8(value, seaudit_avc_message_get_target_type(avc));
 		return;
 	}
-	case TMLS_FIELD:
+	case TMLS_LVL_FIELD:
 	{
-		message_view_to_utf8(value, seaudit_avc_message_get_target_mls(avc));
+		message_view_to_utf8(value, seaudit_avc_message_get_target_mls_lvl(avc));
+		return;
+	}
+	case TMLS_CLR_FIELD:
+	{
+		message_view_to_utf8(value, seaudit_avc_message_get_target_mls_clr(avc));
 		return;
 	}
 	case OBJCLASS_FIELD:

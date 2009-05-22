@@ -186,12 +186,21 @@ apol_vector_t *seaudit_get_log_types(seaudit_t * s)
 	}
 }
 
-apol_vector_t *seaudit_get_log_mls(seaudit_t * s)
+apol_vector_t *seaudit_get_log_mls_lvl(seaudit_t * s)
 {
 	if (s->log == NULL) {
 		return NULL;
 	} else {
-		return seaudit_log_get_mls(s->log);
+		return seaudit_log_get_mls_lvl(s->log);
+	}
+}
+
+apol_vector_t *seaudit_get_log_mls_clr(seaudit_t * s)
+{
+	if (s->log == NULL) {
+		return NULL;
+	} else {
+		return seaudit_log_get_mls_clr(s->log);
 	}
 }
 

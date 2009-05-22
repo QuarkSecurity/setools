@@ -171,7 +171,19 @@ apol_vector_t *seaudit_get_log_types(seaudit_t * s);
  * @return Vector of sorted types, or NULL if no log is loaded.  The
  * caller must call apol_vector_destroy() upon the return value.
  */
-apol_vector_t *seaudit_get_log_mls(seaudit_t * s);
+apol_vector_t *seaudit_get_log_mls_lvl(seaudit_t * s);
+
+/**
+ * Return a vector of strings corresponding to all mls clearance 
+ * found within currently opened log files.  The vector will be sorted
+ * alphabetically.
+ *
+ * @param s seaudit object to query.
+ *
+ * @return Vector of sorted types, or NULL if no log is loaded.  The
+ * caller must call apol_vector_destroy() upon the return value.
+ */
+apol_vector_t *seaudit_get_log_mls_clr(seaudit_t * s);
 
 /**
  * Return a vector of strings corresponding to all object classes

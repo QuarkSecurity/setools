@@ -164,7 +164,19 @@ apol_vector_t *toplevel_get_log_types(toplevel_t * top);
  * @return Vector of sorted types, or NULL if no log is loaded.  The
  * caller must call apol_vector_destroy() upon the return value.
  */
-apol_vector_t *toplevel_get_log_mls(toplevel_t * top);
+apol_vector_t *toplevel_get_log_clr(toplevel_t * top);
+
+/**
+ * Return a vector of strings corresponding to all mls
+ * clearance found within the current log file.  
+ * The vector will be sorted alphabetically.
+ *
+ * @param top Toplevel containing seaudit log object.
+ *
+ * @return Vector of sorted types, or NULL if no log is loaded.  The
+ * caller must call apol_vector_destroy() upon the return value.
+ */
+apol_vector_t *toplevel_get_log_clr(toplevel_t * top);
 
 /**
  * Return a vector of strings corresponding to all object classes

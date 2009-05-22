@@ -222,12 +222,13 @@ static int insert_manager(const seaudit_log_t * log, seaudit_message_t * msg, co
  * Parse a context (user:role:type).  For each of the pieces, add them
  * to the log's BSTs.  Set reference pointers to those strings.
  */
-static int parse_context(seaudit_log_t * log, char *token, char **user, char **role, char **type, char **mls)
+static int parse_context(seaudit_log_t * log, char *token, char **user, char **role, char **type, char **mls_lvl, char **mls_clr)
 {
 	size_t i = 0;
-	char *fields[PARSE_NUM_CONTEXT_FIELDS + 1], *s;
+	char *fields[PARSE_NUM_CONTEXT_FIELDS + 2], *s;
+	char *tmp;
 	int error;
-	*user = *role = *type = *mls = NULL;
+	*user = *role = *type = *mls_lvl = *mls_clr = NULL;
 	while (i < (PARSE_NUM_CONTEXT_FIELDS) && (fields[i] = strsep(&token, ":")) != NULL) {
 		i++;
 	}
@@ -237,12 +238,20 @@ static int parse_context(seaudit_log_t * log, char *token, char **user, char **r
 		return 1;
 	}
 	fields[i] = strsep(&token, " ");
-	if (fields[i] != NULL)
+	if (fields[i] != NULL) //MLS exists
 	{
 		i++;
-		
+		if (strchr(fields[i-1], 45) != NULL) //Check for '-' (clearance exists)
+		{
+			tmp = strsep(&fields[i-1], "-"); //Get level
+			fields[i] = strsep(&fields[i-1], " "); //Get clearance
+			fields[i-1] = tmp; //Move level from tmp to fields[3]
+		}
+		else{
+			fields[i] = fields[i-1]; //No clearance - copy level to clearance
+		}
+
 	}
-	
 	if ((s = strdup(fields[0])) == NULL || apol_bst_insert_and_get(log->users, (void **)&s, NULL) < 0) {
 		error = errno;
 		ERR(log, "%s", strerror(error));
@@ -266,15 +275,23 @@ static int parse_context(seaudit_log_t * log, char *token, char **user, char **r
 		return -1;
 	}
 	*type = s;
-	
+
 	if (i > 3){
-		if ((s = strdup(fields[3])) == NULL || apol_bst_insert_and_get(log->mls, (void **)&s, NULL) < 0) {
+		if ((s = strdup(fields[3])) == NULL || apol_bst_insert_and_get(log->mls_lvl, (void **)&s, NULL) < 0) {
 			error = errno;
 			ERR(log, "%s", strerror(error));
 			errno = error;
 			return -1;
 		}
-		*mls = s;
+		*mls_lvl = s;
+
+		if ((s = strdup(fields[4])) == NULL || apol_bst_insert_and_get(log->mls_clr, (void **)&s, NULL) < 0) {
+			error = errno;
+			ERR(log, "%s", strerror(error));
+			errno = error;
+			return -1;
+		}
+		*mls_clr = s;
 	}
 
 	return 0;
@@ -423,39 +440,41 @@ static int avc_msg_insert_access_type(const seaudit_log_t * log, const char *tok
 
 static int avc_msg_insert_scon(seaudit_log_t * log, seaudit_avc_message_t * avc, char *tmp)
 {
-	char *user, *role, *type, *mls;
+	char *user, *role, *type, *mls_lvl, *mls_clr;
 	int retval;
 	if (tmp == NULL) {
 		WARN(log, "%s", "Invalid source context.");
 		return 1;
 	}
-	retval = parse_context(log, tmp, &user, &role, &type, &mls);
+	retval = parse_context(log, tmp, &user, &role, &type, &mls_lvl, &mls_clr);
 	if (retval != 0) {
 		return retval;
 	}
 	avc->suser = user;
 	avc->srole = role;
 	avc->stype = type;
-	avc->smls = mls;
+	avc->smls_lvl = mls_lvl;
+	avc->smls_clr = mls_clr;
 	return 0;
 }
 
 static int avc_msg_insert_tcon(seaudit_log_t * log, seaudit_avc_message_t * avc, char *tmp)
 {
-	char *user, *role, *type, *mls;
+	char *user, *role, *type, *mls_lvl, *mls_clr;
 	int retval;
 	if (tmp == NULL) {
 		WARN(log, "%s", "Invalid target context.");
 		return 1;
 	}
-	retval = parse_context(log, tmp, &user, &role, &type, &mls);
+	retval = parse_context(log, tmp, &user, &role, &type, &mls_lvl, &mls_clr);
 	if (retval != 0) {
 		return retval;
 	}
 	avc->tuser = user;
 	avc->trole = role;
 	avc->ttype = type;
-	avc->tmls = mls;
+	avc->tmls_lvl = mls_lvl;
+	avc->tmls_clr = mls_clr;
 	return 0;
 }
 
