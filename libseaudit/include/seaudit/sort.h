@@ -9,6 +9,7 @@
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
+ *  @author Jeremy Solt jsolt@tresys.com
  *
  *  Copyright (C) 2003-2007 Tresys Technology, LLC
  *
@@ -146,6 +147,19 @@ extern "C"
 	extern seaudit_sort_t *seaudit_sort_by_source_type(const int direction);
 
 /**
+ * Instruct a model to sort AVC messages by source context's mls.
+ * Non-AVC messages will be placed below AVC ones.
+ *
+ * @param direction Direction to sort.  Non-negative for ascending,
+ * negative for descending.
+ *
+ * @return Sort object for this criterion, or NULL upon error.  The
+ * caller is responsible for calling seaudit_sort_destroy()
+ * afterwards.
+ */
+	extern seaudit_sort_t *seaudit_sort_by_source_mls(const int direction);
+
+/**
  * Instruct a model to sort AVC messages by target context's user,
  * alphabetically.  Non-AVC messages will be placed below AVC ones.
  *
@@ -183,6 +197,19 @@ extern "C"
  * afterwards.
  */
 	extern seaudit_sort_t *seaudit_sort_by_target_type(const int direction);
+
+/**
+ * Instruct a model to sort AVC messages by target context's mls.
+ * Non-AVC messages will be placed below AVC ones.
+ *
+ * @param direction Direction to sort.  Non-negative for ascending,
+ * negative for descending.
+ *
+ * @return Sort object for this criterion, or NULL upon error.  The
+ * caller is responsible for calling seaudit_sort_destroy()
+ * afterwards.
+ */
+	extern seaudit_sort_t *seaudit_sort_by_target_mls(const int direction);
 
 /**
  * Instruct a model to sort AVC messages by object class,
