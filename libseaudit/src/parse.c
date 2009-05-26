@@ -38,6 +38,7 @@
 #define ALT_SYSCALL_STRING "msg=audit("	/* should contain SYSCALL_STRING */
 #define AUDITD_MSG "type="
 #define AVCMSG " avc: "
+#define SYSMSG "type=SYSCALL "
 #define BOOLMSG "committed booleans"
 #define LOADMSG " security: "
 #define NUM_TIME_COMPONENTS 3
@@ -94,6 +95,8 @@ static seaudit_message_type_e is_selinux(const char *line)
 		return SEAUDIT_MESSAGE_TYPE_LOAD;
 	else if (strstr(line, AVCMSG) && (strstr(line, "kernel") || strstr(line, AUDITD_MSG)))
 		return SEAUDIT_MESSAGE_TYPE_AVC;
+	else if (strstr(line, SYSMSG) && (strstr(line, "kernel") || strstr(line, AUDITD_MSG)))
+		return SEAUDIT_MESSAGE_TYPE_SYSCALL;
 	else
 		return SEAUDIT_MESSAGE_TYPE_INVALID;
 }
@@ -741,11 +744,241 @@ static int avc_msg_insert_additional_field_data(seaudit_log_t * log, apol_vector
 			}
 			continue;
 		}
+
 		/* found a field that this parser did not understand,
 		 * so flag the entire message as a warning */
 		has_warnings = 1;
 	}
 
+	/* can't have both a sid and a context */
+	if ((avc->is_src_sid && avc->suser) || (avc->is_tgt_sid && avc->tuser)) {
+		has_warnings = 1;
+	}
+
+	if (!avc->tclass) {
+		has_warnings = 1;
+	}
+
+	if (has_warnings) {
+		avc->avc_type = SEAUDIT_AVC_DATA_MALFORMED;
+	}
+
+	return has_warnings;
+}
+
+/**
+ * Parse the remaining tokens of an AVC message, filling as much
+ * information as possible.
+ *
+ * @return 0 on success, > 0 if warnings, < 0 on error
+ */
+static int avc_msg_insert_additional_syscall_field_data(seaudit_log_t * log, apol_vector_t * tokens, seaudit_avc_message_t * avc,
+						size_t * position)
+{
+	char *token, *v;
+	int retval, has_warnings = 0;
+
+	avc->avc_type = SEAUDIT_AVC_DATA_FS;
+	for (; (*position) < apol_vector_get_size(tokens); (*position)++) {
+		token = apol_vector_get_element(tokens, (*position));
+		v = NULL;
+		if (strcmp(token, "") == 0) {
+			break;
+		}
+
+		if (!avc->is_pid && avc_msg_is_prefix(token, "pid=", &v)) {
+			avc->pid = atoi(v);
+			avc->is_pid = 1;
+			continue;
+		}
+
+		if (!avc->comm && avc_msg_is_prefix(token, "comm=", &v)) {
+			if (avc_msg_remove_quotes_insert_string(log, v, &avc->comm) < 0) {
+				return -1;
+			}
+			continue;
+		}
+
+		/* Gather all tokens located after the exe=XXXX token
+		 * until we encounter a valid additional field.  This
+		 * is because a path name file name may be seperated
+		 * by whitespace.  Look ahead at the next token, but we
+		 * make sure not to access memory beyond the total
+		 * number of tokens. */
+		/* reusing avc->path for exe */
+		if (!avc->path && avc_msg_is_prefix(token, "exe=", &v)) {
+			if (avc_msg_reformat_path(log, avc, v) < 0) {
+				return -1;
+			}
+			while (*position + 1 < apol_vector_get_size(tokens)) {
+				token = apol_vector_get_element(tokens, *position + 1);
+				if (avc_msg_is_valid_additional_field(token)) {
+					break;
+				}
+				(*position)++;
+				if (avc_msg_reformat_path(log, avc, token) < 0) {
+					return -1;
+				}
+			}
+			continue;
+		}
+
+		//SYSCALL messages too
+		if (!avc->is_key && avc_msg_is_prefix(token, "key=", &v)) {
+			avc->key = atoi(v);
+			avc->is_key = 1;
+			avc->avc_type = SEAUDIT_AVC_DATA_IPC;
+			continue;
+		}
+
+		if (!avc->suser && avc_msg_is_prefix(token, "subj=", &v)) {
+			retval = avc_msg_insert_scon(log, avc, v);
+			if (retval < 0) {
+				return retval;
+			} else if (retval > 0) {
+				has_warnings = 1;
+			}
+			continue;
+		}
+
+		//below are al SYSCALL message related
+		//arch=#
+		if (!avc->is_arch && avc_msg_is_prefix(token, "arch=", &v)) {
+			avc->arch = atoi(v);
+			avc->is_arch = 1;
+			continue;
+		}
+		//syscall=#
+		if (!avc->is_syscall && avc_msg_is_prefix(token, "syscall=", &v)) {
+			avc->syscall = atoi(v);
+			avc->is_syscall = 1;
+			continue;
+		}
+		//success=(yes|no)
+		if (!avc->success && avc_msg_is_prefix(token, "success=", &v)) {
+			if (avc_msg_insert_string(log, v, &avc->success)) {
+				return -1;
+			}
+			continue;
+		}
+		//exit=#
+		if (!avc->is_exit && avc_msg_is_prefix(token, "exit=", &v)) {
+			avc->exit = atoi(v);
+			avc->is_exit = 1;
+			continue;
+		}
+		//a0=0x#
+		if (!avc->is_a0 && avc_msg_is_prefix(token, "a0=", &v)) {
+			//avc->a0 = atoi(v);
+			avc->a0 = strtol(v, (char **) NULL, 16);
+			avc->is_a0 = 1;
+			continue;
+		}
+		//a1=0x#
+		if (!avc->is_a1 && avc_msg_is_prefix(token, "a1=", &v)) {
+			avc->a1 = strtol(v, (char **) NULL, 16);
+			avc->is_a1 = 1;
+			continue;
+		}
+		//a2=#
+		if (!avc->is_a2 && avc_msg_is_prefix(token, "a2=", &v)) {
+			avc->a2 = strtol(v, (char **) NULL, 16);
+			avc->is_a2 = 1;
+			continue;
+		}
+		//a3=#
+		if (!avc->is_a3 && avc_msg_is_prefix(token, "a3=", &v)) {
+			avc->a3 = strtol(v, (char **) NULL, 16);
+			avc->is_a3 = 1;
+			continue;
+		}
+		//items=#
+		if (!avc->is_items && avc_msg_is_prefix(token, "items=", &v)) {
+			avc->items = atoi(v);
+			avc->is_items = 1;
+			continue;
+		}
+		//ppid=#
+		if (!avc->is_ppid && avc_msg_is_prefix(token, "ppid=", &v)) {
+			avc->ppid = atoi(v);
+			avc->is_ppid = 1;
+			continue;
+		}
+		//auid=#
+		if (!avc->is_auid && avc_msg_is_prefix(token, "auid=", &v)) {
+			avc->auid = atoi(v);
+			avc->is_auid = 1;
+			continue;
+		}
+		//uid=#
+		if (!avc->is_uid && avc_msg_is_prefix(token, "uid=", &v)) {
+			avc->uid = atoi(v);
+			avc->is_uid = 1;
+			continue;
+		}
+		//gid=#
+		if (!avc->is_gid && avc_msg_is_prefix(token, "gid=", &v)) {
+			avc->gid = atoi(v);
+			avc->is_gid = 1;
+			continue;
+		}
+		//euid=#
+		if (!avc->is_euid && avc_msg_is_prefix(token, "euid=", &v)) {
+			avc->euid = atoi(v);
+			avc->is_euid = 1;
+			continue;
+		}
+		//suid=#
+		if (!avc->is_suid && avc_msg_is_prefix(token, "suid=", &v)) {
+			avc->suid = atoi(v);
+			avc->is_suid = 1;
+			continue;
+		}
+		//fsuid=#
+		if (!avc->is_fsuid && avc_msg_is_prefix(token, "fsuid=", &v)) {
+			avc->fsuid = atoi(v);
+			avc->is_fsuid = 1;
+			continue;
+		}
+		//egid=#
+		if (!avc->is_egid && avc_msg_is_prefix(token, "egid=", &v)) {
+			avc->egid = atoi(v);
+			avc->is_egid = 1;
+			continue;
+		}
+		//sgid=#
+		if (!avc->is_sgid && avc_msg_is_prefix(token, "sgid=", &v)) {
+			avc->sgid = atoi(v);
+			avc->is_sgid = 1;
+			continue;
+		}
+		//fsgid=#
+		if (!avc->is_fsgid && avc_msg_is_prefix(token, "fsgid=", &v)) {
+			avc->fsgid = atoi(v);
+			avc->is_fsgid = 1;
+			continue;
+		}
+		//tty=(none)
+		if (!avc->tty && avc_msg_is_prefix(token, "tty=", &v)) {
+			if (avc_msg_insert_string(log, v, &avc->tty)) {
+				return -1;
+			}
+			continue;
+		}
+		//ses=#
+		if (!avc->is_ses && avc_msg_is_prefix(token, "ses=", &v)) {
+			avc->ses = atoi(v);
+			avc->is_ses = 1;
+			continue;
+		}
+
+
+		/* found a field that this parser did not understand,
+		 * so flag the entire message as a warning */
+		has_warnings = 1;
+	}
+
+	/* TODO consider if this logic is valid for syscall messages, probobly not */
 	/* can't have both a sid and a context */
 	if ((avc->is_src_sid && avc->suser) || (avc->is_tgt_sid && avc->tuser)) {
 		has_warnings = 1;
@@ -921,6 +1154,126 @@ static int avc_parse(seaudit_log_t * log, apol_vector_t * tokens)
 	} else if (ret > 0) {
 		has_warnings = 1;
 	}
+
+	seaudit_avc_message_get_timestamp_nano(avc);
+
+
+	return has_warnings;
+}
+
+static int syscall_parse(seaudit_log_t * log, apol_vector_t * tokens)
+{
+
+	seaudit_message_t *msg;
+	seaudit_avc_message_t *avc;
+	seaudit_message_type_e type;
+	int ret, has_warnings = 0;
+	size_t position = 0, num_tokens = apol_vector_get_size(tokens);
+	char *token, *t;
+
+	if ((msg = message_create(log, SEAUDIT_MESSAGE_TYPE_SYSCALL)) == NULL) {
+		return -1;
+	}
+	avc = seaudit_message_get_data(msg, &type);
+
+	token = apol_vector_get_element(tokens, position);
+
+	/* Check for new auditd log format */
+	if (strstr(token, AUDITD_MSG)) {
+		position++;
+		if (position >= num_tokens) {
+			WARN(log, "%s", "Not enough tokens for audit header.");
+			return 1;
+		}
+		log->logtype = SEAUDIT_LOG_TYPE_AUDITD;
+		token = apol_vector_get_element(tokens, position);
+	}
+
+	/* Insert the audit header if it exists */
+	if (avc_msg_is_token_new_audit_header(token)) {
+		ret = avc_msg_insert_syscall_info(log, token, msg, avc);
+		if (ret < 0) {
+			return ret;
+		} else if (ret > 0) {
+			has_warnings = 1;
+		} else {
+			position++;
+			if (position >= num_tokens) {
+				WARN(log, "%s", "Not enough tokens for new audit header.");
+				return 1;
+			}
+			token = apol_vector_get_element(tokens, position);
+		}
+	} else {
+		/* TODO this branch of logic may or may not be handeling SYSCALL style log messages
+		 * should be tested, though it has been recorded this change has occured since
+		 * FC5.
+		 */
+		ret = insert_standard_msg_header(log, tokens, &position, msg);
+		if (ret < 0) {
+			return ret;
+		} else if (ret > 0) {
+			has_warnings = 1;
+		}
+		if (position >= num_tokens) {
+			WARN(log, "%s", "Not enough tokens for new audit header.");
+			return 1;
+		}
+		token = apol_vector_get_element(tokens, position);
+
+		/* for now, only let avc messages set their object
+		 * manager */
+		if ((t = strrchr(token, ':')) == NULL) {
+			WARN(log, "%s", "Expected to find an object manager here.");
+			has_warnings = 1;
+			/* Hold the position */
+		} else {
+			*t = '\0';
+			if ((ret = insert_manager(log, msg, token)) < 0) {
+				return ret;
+			}
+			position++;
+			if (position >= num_tokens) {
+				WARN(log, "%s", "Not enough tokens for new audit header.");
+				return 1;
+			}
+			token = apol_vector_get_element(tokens, position);
+		}
+
+		/* new style audit messages can show up in syslog
+		 * files starting with FC5. This means that both the
+		 * old kernel: header and the new audit header might
+		 * be present. So, here we check again for the audit
+		 * message.
+		 */
+		if (avc_msg_is_token_new_audit_header(token)) {
+			ret = avc_msg_insert_syscall_info(log, token, msg, avc);
+			if (ret < 0) {
+				return ret;
+			} else if (ret > 0) {
+				has_warnings = 1;
+			} else {
+				position++;
+				if (position >= num_tokens) {
+					WARN(log, "%s", "Not enough tokens for new audit header.");
+					return 1;
+				}
+				token = apol_vector_get_element(tokens, position);
+			}
+		}
+	}
+
+	/* At this point we have a valid message, for we have gathered
+	 * all of the standard fields so insert anything else.  If
+	 * nothing else is left, the message is still considered
+	 * valid. */
+	ret = avc_msg_insert_additional_syscall_field_data(log, tokens, avc, &position);
+	if (ret < 0) {
+		return ret;
+	} else if (ret > 0) {
+		has_warnings = 1;
+	}
+
 
 	return has_warnings;
 }
@@ -1315,6 +1668,9 @@ static int seaudit_log_parse_line(seaudit_log_t * log, char *line)
 	switch (is_sel) {
 	case SEAUDIT_MESSAGE_TYPE_AVC:
 		retval2 = avc_parse(log, tokens);
+		break;
+	case SEAUDIT_MESSAGE_TYPE_SYSCALL:
+		retval2 = syscall_parse(log, tokens);
 		break;
 	case SEAUDIT_MESSAGE_TYPE_BOOL:
 		retval2 = bool_parse(log, tokens);

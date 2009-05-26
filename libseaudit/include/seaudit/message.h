@@ -49,6 +49,9 @@ extern "C"
 		/** AVC is a standard 'allowed' or 'denied' type
 		    message. */
 		SEAUDIT_MESSAGE_TYPE_AVC,
+		/** SYSCALL log message which should relate to an AVC
+		    message. */
+		SEAUDIT_MESSAGE_TYPE_SYSCALL,
 		/** LOAD is the message that results when a policy is
 		    loaded into the system. */
 		SEAUDIT_MESSAGE_TYPE_LOAD

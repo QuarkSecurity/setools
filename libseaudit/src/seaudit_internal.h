@@ -124,6 +124,7 @@ struct seaudit_message
 	union
 	{
 		seaudit_avc_message_t *avc;
+		seaudit_avc_message_t *syscall;
 		seaudit_bool_message_t *boolm;
 		seaudit_load_message_t *load;
 	} data;
@@ -158,6 +159,7 @@ typedef enum seaudit_avc_message_class
 	SEAUDIT_AVC_DATA_IPC,
 	SEAUDIT_AVC_DATA_CAP,	       /* capability */
 	SEAUDIT_AVC_DATA_FS,
+	SEAUDIT_SYSCALL_DATA_FS,
 	SEAUDIT_AVC_DATA_NET,
 } seaudit_avc_message_class_e;
 
@@ -172,10 +174,18 @@ struct seaudit_avc_message
 	 * (i.e., auditallow) */
 	seaudit_avc_message_class_e avc_type;
 	/** executable and path - free() this */
+	/* found in syscall log messages TODO using path field for now 
+	 * Consider including functions to parse exe path names for exe
+	 * function avc_msg_reformat_path operates only ->path, have function
+	 * choose which field to operate on, or pass in field to operate on, or
+	 * have seperate function to handle
+	 */
 	char *exe;
 	/** command - free() this */
+	/* found in syscall log messages, reusing field */
 	char *comm;
 	/** path of the OBJECT - free() this */
+	/* syscall messages use this for exe field, reusing field */
 	char *path;
 	/** device for the object - free() this */
 	char *dev;
@@ -193,10 +203,13 @@ struct seaudit_avc_message
 	char *name;
 	/** free() this */
 	char *ipaddr;
+	/* used for SYSCALL subj as well, reusing field */
 	/** source context's user */
 	char *suser;
+	/* used for SYSCALL subj as well, reusing field */
 	/** source context's role */
 	char *srole;
+	/* used for SYSCALL subj as well, reusing field */
 	/** source context's type */
 	char *stype;
 	/** target context's user */
@@ -216,6 +229,7 @@ struct seaudit_avc_message
 	/** pointers into log->perms BST (hence char *) */
 	apol_vector_t *perms;
 	/** key for an IPC call */
+	/* found in syscall log messages, reusing field */
 	int key;
 	int is_key;
 	/** process capability (corresponds with class 'capability') */
@@ -240,8 +254,35 @@ struct seaudit_avc_message
 	unsigned int tgt_sid;
 	int is_tgt_sid;
 	/** process ID of the subject */
+	/* found in syscall log messages, reusing field */
 	unsigned int pid;
 	int is_pid;
+	/* syscall only log message fields */
+
+	/* TODO comment on each field for documentation on what each means
+	 * incoprorate with doxagen
+	 */
+	unsigned int arch; int is_arch;
+	unsigned int syscall; int is_syscall;
+	char *success;
+	unsigned int exit; int is_exit;
+	unsigned int a0; int is_a0;
+	unsigned int a1; int is_a1;
+	unsigned int a2; int is_a2;
+	unsigned int a3; int is_a3;
+	unsigned int items; int is_items;
+	unsigned int ppid; int is_ppid;
+	unsigned int auid; int is_auid;
+	unsigned int uid; int is_uid;
+	unsigned int gid; int is_gid;
+	unsigned int euid; int is_euid;
+	unsigned int suid; int is_suid;
+	unsigned int fsuid; int is_fsuid;
+	unsigned int egid; int is_egid;
+	unsigned int sgid; int is_sgid;
+	unsigned int fsgid; int is_fsgid;
+	char *tty;
+	unsigned int ses; int is_ses;
 };
 
 /**

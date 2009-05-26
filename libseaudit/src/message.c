@@ -43,6 +43,8 @@ void *seaudit_message_get_data(const seaudit_message_t * msg, seaudit_message_ty
 	switch ((*type = msg->type)) {
 	case SEAUDIT_MESSAGE_TYPE_AVC:
 		return msg->data.avc;
+	case SEAUDIT_MESSAGE_TYPE_SYSCALL:
+		return msg->data.syscall;
 	case SEAUDIT_MESSAGE_TYPE_BOOL:
 		return msg->data.boolm;
 	case SEAUDIT_MESSAGE_TYPE_LOAD:
@@ -155,6 +157,11 @@ seaudit_message_t *message_create(seaudit_log_t * log, seaudit_message_type_e ty
 	m->type = type;
 	switch (m->type) {
 	case SEAUDIT_MESSAGE_TYPE_AVC:
+		if ((m->data.avc = avc_message_create()) == NULL) {
+			rt = -1;
+		}
+		break;
+	case SEAUDIT_MESSAGE_TYPE_SYSCALL:
 		if ((m->data.avc = avc_message_create()) == NULL) {
 			rt = -1;
 		}
