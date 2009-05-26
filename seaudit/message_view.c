@@ -853,9 +853,12 @@ static gboolean message_view_on_button_press(GtkWidget * treeview, GdkEventButto
 	} else if (event->type == GDK_BUTTON_PRESS && event->button == 1) {
 		/* n.b.: rows can be selected but never deselected.
 		 * delay updating the menu, for upon the first click
-		 * there is not a selection yet */
+		 * there is not a selection yet */ 
 		g_idle_add(&message_view_delayed_selection_menu_item, view);
 		return FALSE;
+	} else if (event->type == GDK_2BUTTON_PRESS && event->button == 1){
+		//Show message on double click
+		message_view_entire_message(view);
 	}
 	return FALSE;
 }
