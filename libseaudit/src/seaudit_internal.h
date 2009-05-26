@@ -52,6 +52,8 @@ struct seaudit_log
 	/** vector of strings, corresponding to log messages that did
 	 * not parse cleanly */
 	apol_vector_t *malformed_msgs;
+	/** groups of correlated messages (vector of vectors of messages) */
+	apol_vector_t *groups;
 	/** vector of seaudit_model_t that are watching this log */
 	apol_vector_t *models;
 	apol_bst_t *types, *classes, *roles, *users;
@@ -82,6 +84,26 @@ int log_append_model(seaudit_log_t * log, seaudit_model_t * model);
  * @param model Model that stopped watching.
  */
 void log_remove_model(seaudit_log_t * log, seaudit_model_t * model);
+
+/**
+ * Adds a message to a group based on the messages serial
+ *
+ * @param log Log to group a message
+ * @param msg Mesage to group
+ *
+ * @return 0 on success, < 0 on error
+ */
+int log_group_message(seaudit_log_t * log, seaudit_message_t * msg);
+
+/**
+ * Deallocate all space associated with the groups. Messages associated with a free'd group
+ * will no longer be a member of any groups.
+ *
+ * This does not deallocate space associated with the messages that are part of the group.
+ *
+ * @param group If not NULL, group to free.
+ */
+void log_group_free(void *group);
 
 /**
  * Get a vector of all messages from this seaudit log object.
@@ -120,6 +142,9 @@ struct seaudit_message
 	char *manager;
 	/** type of message this really is */
 	seaudit_message_type_e type;
+	/** group that this message belongs to, or NULL if this message
+	 * belongs to no group */
+	apol_vector_t * group;
 	/** fake polymorphism by having a union of possible subclasses */
 	union
 	{
@@ -141,6 +166,16 @@ struct seaudit_message
  * value.
  */
 seaudit_message_t *message_create(seaudit_log_t * log, seaudit_message_type_e type);
+
+/**
+ * Get the serial of a message. Sets serial to the serial value of message if one exists
+ *
+ * @param msg Message to get the serial of
+ * @param serial The serial of msg. serial is undefined if the serial message does not have a serial
+ *
+ * @return 0 if message has a serial and serial param was set, < 0 otherwise
+ */
+int message_get_serial(const seaudit_message_t * msg, unsigned int * serial);
 
 /**
  * Deallocate all space associated with a message, recursing into the

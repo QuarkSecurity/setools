@@ -43,6 +43,7 @@ seaudit_log_t *seaudit_log_create(seaudit_handle_fn_t fn, void *callback_arg)
 	log->handle_arg = callback_arg;
 	if ((log->messages = apol_vector_create(message_free)) == NULL ||
 	    (log->malformed_msgs = apol_vector_create(free)) == NULL ||
+		(log->groups = apol_vector_create(log_group_free)) == NULL || 
 	    (log->models = apol_vector_create(NULL)) == NULL ||
 	    (log->types = apol_bst_create(apol_str_strcmp, free)) == NULL ||
 	    (log->classes = apol_bst_create(apol_str_strcmp, free)) == NULL ||
@@ -70,6 +71,7 @@ void seaudit_log_destroy(seaudit_log_t ** log)
 		seaudit_model_t *m = apol_vector_get_element((*log)->models, i);
 		model_remove_log(m, *log);
 	}
+	apol_vector_destroy(&(*log)->groups);
 	apol_vector_destroy(&(*log)->messages);
 	apol_vector_destroy(&(*log)->malformed_msgs);
 	apol_vector_destroy(&(*log)->models);
@@ -91,6 +93,7 @@ void seaudit_log_clear(seaudit_log_t * log)
 		errno = EINVAL;
 		return;
 	}
+	apol_vector_destroy(&log->groups);
 	apol_vector_destroy(&log->messages);
 	apol_vector_destroy(&log->malformed_msgs);
 	apol_bst_destroy(&log->types);
@@ -103,6 +106,7 @@ void seaudit_log_clear(seaudit_log_t * log)
 	apol_bst_destroy(&log->managers);
 	if ((log->messages = apol_vector_create(message_free)) == NULL ||
 	    (log->malformed_msgs = apol_vector_create(free)) == NULL ||
+		(log->groups = apol_vector_create(log_group_free)) == NULL ||
 	    (log->types = apol_bst_create(apol_str_strcmp, free)) == NULL ||
 	    (log->classes = apol_bst_create(apol_str_strcmp, free)) == NULL ||
 	    (log->roles = apol_bst_create(apol_str_strcmp, free)) == NULL ||
@@ -175,6 +179,75 @@ void log_remove_model(seaudit_log_t * log, seaudit_model_t * model)
 	if (apol_vector_get_index(log->models, model, NULL, NULL, &i) == 0) {
 		apol_vector_remove(log->models, i);
 	}
+}
+
+int log_group_message(seaudit_log_t * log, seaudit_message_t * msg)
+{
+	size_t i, num_groups;
+	unsigned int msg_serial;
+	apol_vector_t * msg_group;
+
+	if (msg->group) {
+		// this message has already been added to a group
+		return 0;	
+	}
+
+	if (message_get_serial(msg, &msg_serial) != 0) {
+		return -1;
+	}
+
+	msg_group = NULL;
+	num_groups = apol_vector_get_size(log->groups);
+		
+	// search through the group vector in reverse. 	if the group already exists, 
+	// it's likely that we recently added it and it will be at the end of the vector
+	for (i = num_groups - 1; i != (size_t)-1; i--)
+	{
+		unsigned int first_serial;
+		apol_vector_t * group = apol_vector_get_element(log->groups, i);
+		if (apol_vector_get_size(group) <= 0) {
+			continue;
+		}
+		seaudit_message_t * first_msg = apol_vector_get_element(group, 0);
+
+		if (message_get_serial(first_msg, &first_serial) != 0) {
+			return -1;
+		}
+			
+		if (msg_serial == first_serial) {
+			msg_group = group;
+			break;
+		}
+	}
+
+	if (!msg_group)
+	{
+		// didn't find an existing group, create a new one
+		msg_group = apol_vector_create(NULL);
+		apol_vector_append(log->groups, msg_group);
+	}
+	
+	msg->group = msg_group;
+	apol_vector_append(msg_group, msg);
+
+	return 0;
+}
+
+void log_group_free(void *g)
+{
+	size_t i, num_messages;
+
+	if (g == NULL)
+		return;
+
+	apol_vector_t *group = (apol_vector_t *)g;
+	
+	num_messages = apol_vector_get_size(group);
+	for (i = 0; i < num_messages; i++) {
+		seaudit_message_t * msg = apol_vector_get_element(group, i);
+		msg->group = NULL;
+	}
+	apol_vector_destroy(&group);
 }
 
 const apol_vector_t *log_get_messages(const seaudit_log_t * log)

@@ -1157,6 +1157,7 @@ static int avc_parse(seaudit_log_t * log, apol_vector_t * tokens)
 
 	seaudit_avc_message_get_timestamp_nano(avc);
 
+	log_group_message(log, msg);
 
 	return has_warnings;
 }
@@ -1274,6 +1275,7 @@ static int syscall_parse(seaudit_log_t * log, apol_vector_t * tokens)
 		has_warnings = 1;
 	}
 
+	log_group_message(log, msg);
 
 	return has_warnings;
 }

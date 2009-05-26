@@ -188,11 +188,39 @@ seaudit_message_t *message_create(seaudit_log_t * log, seaudit_message_type_e ty
 	return m;
 }
 
+int message_get_serial(const seaudit_message_t * msg, unsigned int * serial)
+{
+	int ret = 0;
+	
+	switch(msg->type)
+	{
+		case SEAUDIT_MESSAGE_TYPE_AVC:
+			*serial = msg->data.avc->serial;
+			break;
+		case SEAUDIT_MESSAGE_TYPE_SYSCALL:
+			*serial = msg->data.syscall->serial;
+			break;
+		default:
+			ret = -1;
+	}
+
+	return ret;
+}
+
 void message_free(void *msg)
 {
 	if (msg != NULL) {
 		seaudit_message_t *m = (seaudit_message_t *) msg;
 		free(m->date_stamp);
+		
+		if (m->group) {
+			size_t index = 0;
+			if (apol_vector_get_index(m->group, m, NULL, NULL, &index) == 0) {
+				apol_vector_remove(m->group, index);
+			}
+			m->group = NULL;
+		}
+
 		switch (m->type) {
 		case SEAUDIT_MESSAGE_TYPE_AVC:
 			avc_message_free(m->data.avc);
