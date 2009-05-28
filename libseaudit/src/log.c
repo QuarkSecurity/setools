@@ -43,7 +43,6 @@ seaudit_log_t *seaudit_log_create(seaudit_handle_fn_t fn, void *callback_arg)
 	log->handle_arg = callback_arg;
 	if ((log->messages = apol_vector_create(message_free)) == NULL ||
 	    (log->malformed_msgs = apol_vector_create(free)) == NULL ||
-		(log->groups = apol_vector_create(log_group_free)) == NULL || 
 	    (log->models = apol_vector_create(NULL)) == NULL ||
 	    (log->types = apol_bst_create(apol_str_strcmp, free)) == NULL ||
 	    (log->classes = apol_bst_create(apol_str_strcmp, free)) == NULL ||
@@ -71,7 +70,6 @@ void seaudit_log_destroy(seaudit_log_t ** log)
 		seaudit_model_t *m = apol_vector_get_element((*log)->models, i);
 		model_remove_log(m, *log);
 	}
-	apol_vector_destroy(&(*log)->groups);
 	apol_vector_destroy(&(*log)->messages);
 	apol_vector_destroy(&(*log)->malformed_msgs);
 	apol_vector_destroy(&(*log)->models);
@@ -93,7 +91,6 @@ void seaudit_log_clear(seaudit_log_t * log)
 		errno = EINVAL;
 		return;
 	}
-	apol_vector_destroy(&log->groups);
 	apol_vector_destroy(&log->messages);
 	apol_vector_destroy(&log->malformed_msgs);
 	apol_bst_destroy(&log->types);
@@ -106,7 +103,6 @@ void seaudit_log_clear(seaudit_log_t * log)
 	apol_bst_destroy(&log->managers);
 	if ((log->messages = apol_vector_create(message_free)) == NULL ||
 	    (log->malformed_msgs = apol_vector_create(free)) == NULL ||
-		(log->groups = apol_vector_create(log_group_free)) == NULL ||
 	    (log->types = apol_bst_create(apol_str_strcmp, free)) == NULL ||
 	    (log->classes = apol_bst_create(apol_str_strcmp, free)) == NULL ||
 	    (log->roles = apol_bst_create(apol_str_strcmp, free)) == NULL ||
@@ -181,73 +177,126 @@ void log_remove_model(seaudit_log_t * log, seaudit_model_t * model)
 	}
 }
 
-int log_group_message(seaudit_log_t * log, seaudit_message_t * msg)
+void log_correlate_messages(const seaudit_log_t * log)
 {
-	size_t i, num_groups;
-	unsigned int msg_serial;
-	apol_vector_t * msg_group;
+	size_t i, j; 
+	size_t num_messages, min_message;
+	seaudit_message_t * msg;
 
-	if (msg->group) {
-		// this message has already been added to a group
-		return 0;	
+	if (log == NULL || log->messages == NULL) {
+		return;
 	}
+	
+	num_messages = apol_vector_get_size(log->messages);
+	min_message = 0;
 
-	if (message_get_serial(msg, &msg_serial) != 0) {
-		return -1;
-	}
-
-	msg_group = NULL;
-	num_groups = apol_vector_get_size(log->groups);
-		
-	// search through the group vector in reverse. 	if the group already exists, 
-	// it's likely that we recently added it and it will be at the end of the vector
-	for (i = num_groups - 1; i != (size_t)-1; i--)
+	for (i = 0; i < num_messages; i++)
 	{
-		unsigned int first_serial;
-		apol_vector_t * group = apol_vector_get_element(log->groups, i);
-		if (apol_vector_get_size(group) <= 0) {
+		seaudit_avc_message_t * syscall = NULL;
+		unsigned int syscall_serial = 0;
+
+		msg = apol_vector_get_element(log->messages, i);
+		if (msg->type != SEAUDIT_MESSAGE_TYPE_SYSCALL) {
+			// not a syscall, ignore
 			continue;
 		}
-		seaudit_message_t * first_msg = apol_vector_get_element(group, 0);
 
-		if (message_get_serial(first_msg, &first_serial) != 0) {
-			return -1;
+		if (message_get_serial(msg, &syscall_serial) != 0) {
+			// syscall doesn't have a serial
+			continue;
 		}
-			
-		if (msg_serial == first_serial) {
-			msg_group = group;
-			break;
+		
+		syscall = msg->data.syscall;
+
+		for (j = min_message; j < num_messages; j++)
+		{
+			seaudit_avc_message_t * avc = NULL;
+			unsigned int avc_serial = 0;
+
+			msg = apol_vector_get_element(log->messages, j);
+			if (msg->type != SEAUDIT_MESSAGE_TYPE_AVC) {
+				// ignore, only care about avc messages
+				if (min_message == j) { 
+					min_message++;
+				}
+				continue;
+			}
+
+			if (message_get_serial(msg, &avc_serial) != 0) {
+				//message doesn't have a serial, ignore
+				if (min_message == j) {
+					min_message++;
+				}
+				continue;
+			}
+
+			avc = msg->data.avc;
+
+			if (syscall_serial == avc_serial && 
+				syscall->tm_stmp_nano == avc->tm_stmp_nano &&
+				difftime(syscall->tm_stmp_sec, avc->tm_stmp_sec) == 0) {
+				// found a match
+				if (min_message == j) {
+					min_message++;
+				}
+				log_copy_syscall_to_avc(syscall, avc);
+			}
 		}
 	}
-
-	if (!msg_group)
-	{
-		// didn't find an existing group, create a new one
-		msg_group = apol_vector_create(NULL);
-		apol_vector_append(log->groups, msg_group);
-	}
-	
-	msg->group = msg_group;
-	apol_vector_append(msg_group, msg);
-
-	return 0;
 }
 
-void log_group_free(void *g)
+void log_copy_syscall_to_avc(const seaudit_avc_message_t * syscall, seaudit_avc_message_t *avc )
 {
-	size_t i, num_messages;
 
-	if (g == NULL)
-		return;
-
-	apol_vector_t *group = (apol_vector_t *)g;
-	
-	num_messages = apol_vector_get_size(group);
-	for (i = 0; i < num_messages; i++) {
-		seaudit_message_t * msg = apol_vector_get_element(group, i);
-		msg->group = NULL;
+#define COPYINTCOND(COND,VAR) \
+	if (!avc->COND && syscall->COND) { \
+		avc->VAR  = syscall->VAR; \
+		avc->COND = syscall->COND; \
 	}
-	apol_vector_destroy(&group);
+
+#define COPYINT(VAR) COPYINTCOND(is_##VAR, VAR)
+
+#define COPYSTR(VAR) \
+	if (!avc->VAR && syscall->VAR) { \
+		avc->VAR = strdup(syscall->VAR); \
+	}
+
+	COPYINT(a0)
+	COPYINT(a1)
+	COPYINT(a2)
+	COPYINT(a3)
+	COPYINT(arch)
+	COPYINT(auid)
+	COPYINT(egid)
+	COPYINT(euid)
+	COPYINT(exit)
+	COPYINT(fsgid)
+	COPYINT(fsuid)
+	COPYINT(gid)
+	COPYINT(items)
+	COPYINT(key)
+	COPYINT(pid)
+	COPYINT(ppid)
+	COPYINT(ses)
+	COPYINT(sgid)
+	COPYINT(suid)
+	COPYINT(syscall)
+	COPYINT(uid)
+	
+	COPYINTCOND(is_key, avc_type)
+
+	COPYSTR(comm)
+	COPYSTR(exe)
+	COPYSTR(srole)
+	COPYSTR(stype)
+	COPYSTR(success)
+	COPYSTR(suser)
+	COPYSTR(tty)
+
+#undef COPYINT
+#undef COPYINTCOND
+#undef COPYSTR
+
 }
 
 const apol_vector_t *log_get_messages(const seaudit_log_t * log)

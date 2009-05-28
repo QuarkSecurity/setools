@@ -978,16 +978,6 @@ static int avc_msg_insert_additional_syscall_field_data(seaudit_log_t * log, apo
 		has_warnings = 1;
 	}
 
-	/* TODO consider if this logic is valid for syscall messages, probobly not */
-	/* can't have both a sid and a context */
-	if ((avc->is_src_sid && avc->suser) || (avc->is_tgt_sid && avc->tuser)) {
-		has_warnings = 1;
-	}
-
-	if (!avc->tclass) {
-		has_warnings = 1;
-	}
-
 	if (has_warnings) {
 		avc->avc_type = SEAUDIT_AVC_DATA_MALFORMED;
 	}
@@ -1157,8 +1147,6 @@ static int avc_parse(seaudit_log_t * log, apol_vector_t * tokens)
 
 	seaudit_avc_message_get_timestamp_nano(avc);
 
-	log_group_message(log, msg);
-
 	return has_warnings;
 }
 
@@ -1274,8 +1262,6 @@ static int syscall_parse(seaudit_log_t * log, apol_vector_t * tokens)
 	} else if (ret > 0) {
 		has_warnings = 1;
 	}
-
-	log_group_message(log, msg);
 
 	return has_warnings;
 }
@@ -1752,6 +1738,8 @@ int seaudit_log_parse(seaudit_log_t * log, FILE * syslog)
 		}
 	}
 
+	log_correlate_messages(log);
+
 	retval = 0;
       cleanup:
 	free(line);
@@ -1816,6 +1804,8 @@ int seaudit_log_parse_buffer(seaudit_log_t * log, const char *buffer, const size
 			has_warnings = 1;
 		}
 	}
+	
+	log_correlate_messages(log);
 
 	retval = 0;
       cleanup:

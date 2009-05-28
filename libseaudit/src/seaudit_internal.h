@@ -52,8 +52,6 @@ struct seaudit_log
 	/** vector of strings, corresponding to log messages that did
 	 * not parse cleanly */
 	apol_vector_t *malformed_msgs;
-	/** groups of correlated messages (vector of vectors of messages) */
-	apol_vector_t *groups;
 	/** vector of seaudit_model_t that are watching this log */
 	apol_vector_t *models;
 	apol_bst_t *types, *classes, *roles, *users;
@@ -86,26 +84,6 @@ int log_append_model(seaudit_log_t * log, seaudit_model_t * model);
 void log_remove_model(seaudit_log_t * log, seaudit_model_t * model);
 
 /**
- * Adds a message to a group based on the messages serial
- *
- * @param log Log to group a message
- * @param msg Mesage to group
- *
- * @return 0 on success, < 0 on error
- */
-int log_group_message(seaudit_log_t * log, seaudit_message_t * msg);
-
-/**
- * Deallocate all space associated with the groups. Messages associated with a free'd group
- * will no longer be a member of any groups.
- *
- * This does not deallocate space associated with the messages that are part of the group.
- *
- * @param group If not NULL, group to free.
- */
-void log_group_free(void *group);
-
-/**
  * Get a vector of all messages from this seaudit log object.
  *
  * @param log Log object containing messages.
@@ -129,6 +107,14 @@ const apol_vector_t *log_get_messages(const seaudit_log_t * log);
 const apol_vector_t *log_get_malformed_messages(const seaudit_log_t * log);
 
 /*************** messages (defined in message.c) ***************/
+
+/**
+ * Correlate the syscall messages with the avc messages
+ *
+ * @param log Log object containing avc and syscall messages
+ *
+ */
+void log_correlate_messages(const seaudit_log_t * log);
 
 struct seaudit_message
 {

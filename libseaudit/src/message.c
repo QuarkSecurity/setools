@@ -213,14 +213,6 @@ void message_free(void *msg)
 		seaudit_message_t *m = (seaudit_message_t *) msg;
 		free(m->date_stamp);
 		
-		if (m->group) {
-			size_t index = 0;
-			if (apol_vector_get_index(m->group, m, NULL, NULL, &index) == 0) {
-				apol_vector_remove(m->group, index);
-			}
-			m->group = NULL;
-		}
-
 		switch (m->type) {
 		case SEAUDIT_MESSAGE_TYPE_AVC:
 			avc_message_free(m->data.avc);
