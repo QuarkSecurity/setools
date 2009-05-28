@@ -106,8 +106,6 @@ const apol_vector_t *log_get_messages(const seaudit_log_t * log);
  */
 const apol_vector_t *log_get_malformed_messages(const seaudit_log_t * log);
 
-/*************** messages (defined in message.c) ***************/
-
 /**
  * Correlate the syscall messages with the avc messages
  *
@@ -115,6 +113,8 @@ const apol_vector_t *log_get_malformed_messages(const seaudit_log_t * log);
  *
  */
 void log_correlate_messages(const seaudit_log_t * log);
+
+/*************** messages (defined in message.c) ***************/
 
 struct seaudit_message
 {
@@ -351,6 +351,14 @@ char *avc_message_to_string_html(const seaudit_message_t * msg, const char *date
  * afterwards.
  */
 char *avc_message_to_misc_string(const seaudit_avc_message_t * avc);
+
+/**
+ * Copy information from a syscall message to an avc message
+ *
+ * @param syscall Syscall message to copy information from
+ * @param avc Avc message to copy information to
+ */
+void avc_message_copy_syscall_to_avc(const seaudit_avc_message_t * syscall, seaudit_avc_message_t *avc );
 
 /*************** bool messages (defined in bool_message.c) ***************/
 

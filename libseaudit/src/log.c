@@ -239,64 +239,10 @@ void log_correlate_messages(const seaudit_log_t * log)
 				if (min_message == j) {
 					min_message++;
 				}
-				log_copy_syscall_to_avc(syscall, avc);
+				avc_message_copy_syscall_to_avc(syscall, avc);
 			}
 		}
 	}
-}
-
-void log_copy_syscall_to_avc(const seaudit_avc_message_t * syscall, seaudit_avc_message_t *avc )
-{
-
-#define COPYINTCOND(COND,VAR) \
-	if (!avc->COND && syscall->COND) { \
-		avc->VAR  = syscall->VAR; \
-		avc->COND = syscall->COND; \
-	}
-
-#define COPYINT(VAR) COPYINTCOND(is_##VAR, VAR)
-
-#define COPYSTR(VAR) \
-	if (!avc->VAR && syscall->VAR) { \
-		avc->VAR = strdup(syscall->VAR); \
-	}
-
-	COPYINT(a0)
-	COPYINT(a1)
-	COPYINT(a2)
-	COPYINT(a3)
-	COPYINT(arch)
-	COPYINT(auid)
-	COPYINT(egid)
-	COPYINT(euid)
-	COPYINT(exit)
-	COPYINT(fsgid)
-	COPYINT(fsuid)
-	COPYINT(gid)
-	COPYINT(items)
-	COPYINT(key)
-	COPYINT(pid)
-	COPYINT(ppid)
-	COPYINT(ses)
-	COPYINT(sgid)
-	COPYINT(suid)
-	COPYINT(syscall)
-	COPYINT(uid)
-	
-	COPYINTCOND(is_key, avc_type)
-
-	COPYSTR(comm)
-	COPYSTR(exe)
-	COPYSTR(srole)
-	COPYSTR(stype)
-	COPYSTR(success)
-	COPYSTR(suser)
-	COPYSTR(tty)
-
-#undef COPYINT
-#undef COPYINTCOND
-#undef COPYSTR
-
 }
 
 const apol_vector_t *log_get_messages(const seaudit_log_t * log)
