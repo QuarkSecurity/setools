@@ -195,18 +195,12 @@ struct seaudit_avc_message
 	 * (i.e., auditallow) */
 	seaudit_avc_message_class_e avc_type;
 	/** executable and path - free() this */
-	/* found in syscall log messages TODO using path field for now 
-	 * Consider including functions to parse exe path names for exe
-	 * function avc_msg_reformat_path operates only ->path, have function
-	 * choose which field to operate on, or pass in field to operate on, or
-	 * have seperate function to handle
-	 */
+	/* syscall messages use this for exe field which is a full path for SYSCALL */
 	char *exe;
 	/** command - free() this */
 	/* found in syscall log messages, reusing field */
 	char *comm;
 	/** path of the OBJECT - free() this */
-	/* syscall messages use this for exe field, reusing field */
 	char *path;
 	/** device for the object - free() this */
 	char *dev;

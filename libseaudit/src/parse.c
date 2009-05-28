@@ -513,28 +513,28 @@ static int avc_msg_is_valid_additional_field(const char *orig_token)
 	return 1;
 }
 
-static int avc_msg_reformat_path(const seaudit_log_t * log, seaudit_avc_message_t * avc, const char *token)
+static int avc_msg_reformat_path(const seaudit_log_t * log, char *path, const char *token)
 {
 	int error;
-	if (avc->path == NULL) {
-		if ((avc->path = strdup(token)) == NULL) {
+	if (path == NULL) {
+		if ((path = strdup(token)) == NULL) {
 			error = errno;
 			ERR(log, "%s", strerror(error));
 			errno = error;
 			return -1;
 		}
 	} else {
-		size_t len = strlen(avc->path) + strlen(token) + 2;
-		char *s = realloc(avc->path, len);
+		size_t len = strlen(path) + strlen(token) + 2;
+		char *s = realloc(path, len);
 		if (s == NULL) {
 			error = errno;
 			ERR(log, "%s", strerror(error));
 			errno = error;
 			return -1;
 		}
-		avc->path = s;
-		strcat(avc->path, " ");
-		strcat(avc->path, token);
+		path = s;
+		strcat(path, " ");
+		strcat(path, token);
 	}
 	return 0;
 }
@@ -586,7 +586,7 @@ static int avc_msg_insert_additional_field_data(seaudit_log_t * log, apol_vector
 		 * make sure not to access memory beyond the total
 		 * number of tokens. */
 		if (!avc->path && avc_msg_is_prefix(token, "path=", &v)) {
-			if (avc_msg_reformat_path(log, avc, v) < 0) {
+			if (avc_msg_reformat_path(log, avc->path, v) < 0) {
 				return -1;
 			}
 			while (*position + 1 < apol_vector_get_size(tokens)) {
@@ -595,7 +595,7 @@ static int avc_msg_insert_additional_field_data(seaudit_log_t * log, apol_vector
 					break;
 				}
 				(*position)++;
-				if (avc_msg_reformat_path(log, avc, token) < 0) {
+				if (avc_msg_reformat_path(log, avc->path, token) < 0) {
 					return -1;
 				}
 			}
@@ -801,13 +801,12 @@ static int avc_msg_insert_additional_syscall_field_data(seaudit_log_t * log, apo
 
 		/* Gather all tokens located after the exe=XXXX token
 		 * until we encounter a valid additional field.  This
-		 * is because a path name file name may be seperated
+		 * is because a path name file name may be separated
 		 * by whitespace.  Look ahead at the next token, but we
 		 * make sure not to access memory beyond the total
 		 * number of tokens. */
-		/* reusing avc->path for exe */
-		if (!avc->path && avc_msg_is_prefix(token, "exe=", &v)) {
-			if (avc_msg_reformat_path(log, avc, v) < 0) {
+		if (!avc->exe && avc_msg_is_prefix(token, "exe=", &v)) {
+			if (avc_msg_reformat_path(log, avc->exe, v) < 0) {
 				return -1;
 			}
 			while (*position + 1 < apol_vector_get_size(tokens)) {
@@ -816,7 +815,7 @@ static int avc_msg_insert_additional_syscall_field_data(seaudit_log_t * log, apo
 					break;
 				}
 				(*position)++;
-				if (avc_msg_reformat_path(log, avc, token) < 0) {
+				if (avc_msg_reformat_path(log, avc->exe, token) < 0) {
 					return -1;
 				}
 			}
@@ -841,7 +840,7 @@ static int avc_msg_insert_additional_syscall_field_data(seaudit_log_t * log, apo
 			continue;
 		}
 
-		//below are al SYSCALL message related
+		//below are all SYSCALL message related
 		//arch=#
 		if (!avc->is_arch && avc_msg_is_prefix(token, "arch=", &v)) {
 			avc->arch = atoi(v);
