@@ -4,6 +4,7 @@
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
+ *  @author Ryan Haggerty@tresys.com
  *
  *  Copyright (C) 2006-2007 Tresys Technology, LLC
  *

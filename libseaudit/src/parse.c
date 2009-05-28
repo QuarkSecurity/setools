@@ -5,6 +5,7 @@
  *  @author Meggan Whalen mwhalen@tresys.com
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
+ *  @author Ryan Haggerty rhaggerty@tresys.com
  *
  *  Copyright (C) 2003-2007 Tresys Technology, LLC
  *
@@ -513,31 +514,29 @@ static int avc_msg_is_valid_additional_field(const char *orig_token)
 	return 1;
 }
 
-static int avc_msg_reformat_path(const seaudit_log_t * log, char **path_addy, const char *token)
+static int avc_msg_reformat_path(const seaudit_log_t * log, char **path, const char *token)
 {
 
-	char* path = *path_addy;
-
 	int error;
-	if (path == NULL) {
-		if ((path = strdup(token)) == NULL) {
+	if (*path == NULL) {
+		if ((*path = strdup(token)) == NULL) {
 			error = errno;
 			ERR(log, "%s", strerror(error));
 			errno = error;
 			return -1;
 		}
 	} else {
-		size_t len = strlen(path) + strlen(token) + 2;
-		char *s = realloc(path, len);
+		size_t len = strlen(*path) + strlen(token) + 2;
+		char *s = realloc(*path, len);
 		if (s == NULL) {
 			error = errno;
 			ERR(log, "%s", strerror(error));
 			errno = error;
 			return -1;
 		}
-		path = s;
-		strcat(path, " ");
-		strcat(path, token);
+		*path = s;
+		strcat(*path, " ");
+		strcat(*path, token);
 	}
 	return 0;
 }
