@@ -513,8 +513,11 @@ static int avc_msg_is_valid_additional_field(const char *orig_token)
 	return 1;
 }
 
-static int avc_msg_reformat_path(const seaudit_log_t * log, char *path, const char *token)
+static int avc_msg_reformat_path(const seaudit_log_t * log, char **path_addy, const char *token)
 {
+
+	char* path = *path_addy;
+
 	int error;
 	if (path == NULL) {
 		if ((path = strdup(token)) == NULL) {
@@ -586,7 +589,7 @@ static int avc_msg_insert_additional_field_data(seaudit_log_t * log, apol_vector
 		 * make sure not to access memory beyond the total
 		 * number of tokens. */
 		if (!avc->path && avc_msg_is_prefix(token, "path=", &v)) {
-			if (avc_msg_reformat_path(log, avc->path, v) < 0) {
+			if (avc_msg_reformat_path(log, &(avc->path), v) < 0) {
 				return -1;
 			}
 			while (*position + 1 < apol_vector_get_size(tokens)) {
@@ -595,7 +598,7 @@ static int avc_msg_insert_additional_field_data(seaudit_log_t * log, apol_vector
 					break;
 				}
 				(*position)++;
-				if (avc_msg_reformat_path(log, avc->path, token) < 0) {
+				if (avc_msg_reformat_path(log, &(avc->path), token) < 0) {
 					return -1;
 				}
 			}
@@ -806,7 +809,7 @@ static int avc_msg_insert_additional_syscall_field_data(seaudit_log_t * log, apo
 		 * make sure not to access memory beyond the total
 		 * number of tokens. */
 		if (!avc->exe && avc_msg_is_prefix(token, "exe=", &v)) {
-			if (avc_msg_reformat_path(log, avc->exe, v) < 0) {
+			if (avc_msg_reformat_path(log, &(avc->exe), v) < 0) {
 				return -1;
 			}
 			while (*position + 1 < apol_vector_get_size(tokens)) {
@@ -815,7 +818,7 @@ static int avc_msg_insert_additional_syscall_field_data(seaudit_log_t * log, apo
 					break;
 				}
 				(*position)++;
-				if (avc_msg_reformat_path(log, avc->exe, token) < 0) {
+				if (avc_msg_reformat_path(log, &(avc->exe), token) < 0) {
 					return -1;
 				}
 			}
