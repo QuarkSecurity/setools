@@ -4317,11 +4317,11 @@ Any Criterion</property>
 		      <property name="label_yalign">0.5</property>
 		      <property name="shadow_type">GTK_SHADOW_ETCHED_IN</property>
 
-		      <child>
+		  <child>
 			<widget class="GtkTable" id="table17">
 			  <property name="border_width">4</property>
 			  <property name="visible">True</property>
-			  <property name="n_rows">3</property>
+			  <property name="n_rows">5</property>
 			  <property name="n_columns">2</property>
 			  <property name="homogeneous">False</property>
 			  <property name="row_spacing">4</property>
@@ -4392,6 +4392,50 @@ Any Criterion</property>
 			      <property name="y_options"></property>
 			    </packing>
 			  </child>
+			  
+			  <child>
+			    <widget class="GtkEntry" id="FilterViewSMLSLVLEntry">
+			      <property name="visible">True</property>
+			      <property name="tooltip" translatable="yes">Source MLS Level(s) to filter, comma separated</property>
+			      <property name="can_focus">True</property>
+			      <property name="editable">True</property>
+			      <property name="visibility">True</property>
+			      <property name="max_length">0</property>
+			      <property name="text" translatable="yes"></property>
+			      <property name="has_frame">True</property>
+			      <property name="invisible_char">*</property>
+			      <property name="activates_default">False</property>
+			    </widget>
+			    <packing>
+			      <property name="left_attach">1</property>
+			      <property name="right_attach">2</property>
+			      <property name="top_attach">3</property>
+			      <property name="bottom_attach">4</property>
+			      <property name="y_options"></property>
+			    </packing>
+			  </child>
+			  
+			  <child>
+			    <widget class="GtkEntry" id="FilterViewSMLSCLREntry">
+			      <property name="visible">True</property>
+			      <property name="tooltip" translatable="yes">Source MLS Clearance(s) to filter, comma separated</property>
+			      <property name="can_focus">True</property>
+			      <property name="editable">True</property>
+			      <property name="visibility">True</property>
+			      <property name="max_length">0</property>
+			      <property name="text" translatable="yes"></property>
+			      <property name="has_frame">True</property>
+			      <property name="invisible_char">*</property>
+			      <property name="activates_default">False</property>
+			    </widget>
+			    <packing>
+			      <property name="left_attach">1</property>
+			      <property name="right_attach">2</property>
+			      <property name="top_attach">4</property>
+			      <property name="bottom_attach">5</property>
+			      <property name="y_options"></property>
+			    </packing>
+			  </child>
 
 			  <child>
 			    <widget class="GtkButton" id="FilterViewSRoleButton">
@@ -4455,6 +4499,50 @@ Any Criterion</property>
 			      <property name="y_options"></property>
 			    </packing>
 			  </child>
+			  
+			  <child>
+			    <widget class="GtkButton" id="FilterViewSMLSLVLButton">
+			      <property name="border_width">2</property>
+			      <property name="visible">True</property>
+			      <property name="tooltip" translatable="yes">Select source MLS Level(s)</property>
+			      <property name="can_focus">True</property>
+			      <property name="label" translatable="yes"> MLS Level: </property>
+			      <property name="use_underline">True</property>
+			      <property name="relief">GTK_RELIEF_NORMAL</property>
+			      <property name="focus_on_click">True</property>
+			    </widget>
+			    <packing>
+			      <property name="left_attach">0</property>
+			      <property name="right_attach">1</property>
+			      <property name="top_attach">3</property>
+			      <property name="bottom_attach">4</property>
+			      <property name="x_options">fill</property>
+			      <property name="y_options"></property>
+			    </packing>
+			  </child>
+			  
+			  <child>
+			    <widget class="GtkButton" id="FilterViewSMLSCLRButton">
+			      <property name="border_width">2</property>
+			      <property name="visible">True</property>
+			      <property name="tooltip" translatable="yes">Select source MLS Clearance(s)</property>
+			      <property name="can_focus">True</property>
+			      <property name="label" translatable="yes"> MLS Clearance: </property>
+			      <property name="use_underline">True</property>
+			      <property name="relief">GTK_RELIEF_NORMAL</property>
+			      <property name="focus_on_click">True</property>
+			    </widget>
+			    <packing>
+			      <property name="left_attach">0</property>
+			      <property name="right_attach">1</property>
+			      <property name="top_attach">4</property>
+			      <property name="bottom_attach">5</property>
+			      <property name="x_options">fill</property>
+			      <property name="y_options"></property>
+			    </packing>
+			  </child>
+			 
+
 			</widget>
 		      </child>
 
@@ -4499,7 +4587,7 @@ Any Criterion</property>
 			<widget class="GtkTable" id="table18">
 			  <property name="border_width">4</property>
 			  <property name="visible">True</property>
-			  <property name="n_rows">3</property>
+			  <property name="n_rows">5</property>
 			  <property name="n_columns">2</property>
 			  <property name="homogeneous">False</property>
 			  <property name="row_spacing">4</property>
@@ -4563,6 +4651,48 @@ Any Criterion</property>
 			      <property name="right_attach">1</property>
 			      <property name="top_attach">2</property>
 			      <property name="bottom_attach">3</property>
+			      <property name="x_options">fill</property>
+			      <property name="y_options"></property>
+			    </packing>
+			  </child>
+			  
+			  <child>
+			    <widget class="GtkButton" id="FilterViewTMLSLVLButton">
+			      <property name="border_width">2</property>
+			      <property name="visible">True</property>
+			      <property name="tooltip" translatable="yes">Select target MLS Level(s)</property>
+			      <property name="can_focus">True</property>
+			      <property name="label" translatable="yes"> MLS Level: </property>
+			      <property name="use_underline">True</property>
+			      <property name="relief">GTK_RELIEF_NORMAL</property>
+			      <property name="focus_on_click">True</property>
+			    </widget>
+			    <packing>
+			      <property name="left_attach">0</property>
+			      <property name="right_attach">1</property>
+			      <property name="top_attach">3</property>
+			      <property name="bottom_attach">4</property>
+			      <property name="x_options">fill</property>
+			      <property name="y_options"></property>
+			    </packing>
+			  </child>
+			  
+			  <child>
+			    <widget class="GtkButton" id="FilterViewTMLSCLRButton">
+			      <property name="border_width">2</property>
+			      <property name="visible">True</property>
+			      <property name="tooltip" translatable="yes">Select target MLS Clearance(s)</property>
+			      <property name="can_focus">True</property>
+			      <property name="label" translatable="yes"> MLS Clearance: </property>
+			      <property name="use_underline">True</property>
+			      <property name="relief">GTK_RELIEF_NORMAL</property>
+			      <property name="focus_on_click">True</property>
+			    </widget>
+			    <packing>
+			      <property name="left_attach">0</property>
+			      <property name="right_attach">1</property>
+			      <property name="top_attach">4</property>
+			      <property name="bottom_attach">5</property>
 			      <property name="x_options">fill</property>
 			      <property name="y_options"></property>
 			    </packing>
@@ -4633,6 +4763,51 @@ Any Criterion</property>
 			      <property name="y_options"></property>
 			    </packing>
 			  </child>
+			  
+			  <child>
+			    <widget class="GtkEntry" id="FilterViewTMLSLVLEntry">
+			      <property name="visible">True</property>
+			      <property name="tooltip" translatable="yes">Target MLS Level(s) to filter, comma separated</property>
+			      <property name="can_focus">True</property>
+			      <property name="editable">True</property>
+			      <property name="visibility">True</property>
+			      <property name="max_length">0</property>
+			      <property name="text" translatable="yes"></property>
+			      <property name="has_frame">True</property>
+			      <property name="invisible_char">*</property>
+			      <property name="activates_default">False</property>
+			    </widget>
+			    <packing>
+			      <property name="left_attach">1</property>
+			      <property name="right_attach">2</property>
+			      <property name="top_attach">3</property>
+			      <property name="bottom_attach">4</property>
+			      <property name="y_options"></property>
+			    </packing>
+			  </child>
+			  
+			  <child>
+			    <widget class="GtkEntry" id="FilterViewTMLSCLREntry">
+			      <property name="visible">True</property>
+			      <property name="tooltip" translatable="yes">Target MLS Clearance(s) to filter, comma separated</property>
+			      <property name="can_focus">True</property>
+			      <property name="editable">True</property>
+			      <property name="visibility">True</property>
+			      <property name="max_length">0</property>
+			      <property name="text" translatable="yes"></property>
+			      <property name="has_frame">True</property>
+			      <property name="invisible_char">*</property>
+			      <property name="activates_default">False</property>
+			    </widget>
+			    <packing>
+			      <property name="left_attach">1</property>
+			      <property name="right_attach">2</property>
+			      <property name="top_attach">4</property>
+			      <property name="bottom_attach">5</property>
+			      <property name="y_options"></property>
+			    </packing>
+			  </child>
+			  
 			</widget>
 		      </child>
 
