@@ -4,7 +4,8 @@
  *
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
- *
+ *  @author Jeremy Solt jsolt@tresys.com
+ * 
  *  Copyright (C) 2004-2007 Tresys Technology, LLC
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -656,7 +657,7 @@ static apol_vector_t *filter_view_get_policy_types(struct filter_view *fv)
 }
 
 /**
- * Return a list of mls levels (not aliases) within the
+ * Return a list of mls levels/clearance (not aliases) within the
  * currently loaded policy, sorted alphabetically.  If there is no
  * policy loaded then return NULL.
  */
@@ -664,59 +665,104 @@ static apol_vector_t *filter_view_get_policy_mls_lvl(struct filter_view *fv)
 {
 	apol_vector_t *policy_items = NULL, *v = NULL;
 	apol_policy_t *p = toplevel_get_policy(fv->top);
+	const qpol_iterator_t **cats = NULL;
+	
 	size_t i;
+
 	if (p == NULL) {
 		return NULL;
 	}
-	if (apol_level_get_by_query(p, NULL, &v) < 0 || (policy_items = apol_vector_create(NULL)) == NULL) {
+
+	if (apol_level_get_by_query(p, NULL, &v) < 0 || (policy_items = apol_vector_create(&free)) == NULL) {
 		toplevel_ERR(fv->top, "Error getting a list of policy mls levels: %s", strerror(errno));
 		apol_vector_destroy(&policy_items);
 		return NULL;
 	}
-	for (i = 0; i < apol_vector_get_size(v); i++) {
+
+	for (i = 0; i < apol_vector_get_size(v); i++) 
+	{
+		const char *name = NULL;
+		const char *mls = malloc(100*sizeof(mls));
+		
+		const char *cat_name1 = NULL, *cat_name2 = NULL;
+		uint32_t *cat_val1, *cat_val2;
+		const char *cat_low = NULL;
+		const char *cat_high = NULL;
+		bool isrange = false, isrange_end = false, isempty = true;
+		size_t k;
+		qpol_cat_t *c = NULL;
 		const qpol_level_t *e = apol_vector_get_element(v, i);
-		const char *name;
+
 		qpol_level_get_name(apol_policy_get_qpol(p), e, &name);
-		if (apol_vector_append(policy_items, (void *)name) < 0) {
+		strcpy(mls, name);
+		if (qpol_level_get_cat_iter(apol_policy_get_qpol(p), e, &cats) < 0){
+			toplevel_ERR(fv->top, "Error getting categories for level: %s", strerror(errno));
+			qpol_iterator_destroy(&cats);
+		}
+		qpol_iterator_get_size(cats, &k);
+
+		if (k > 0){
+			strcat(mls, ":");
+			isempty = true;
+		}
+		if (qpol_iterator_get_item(cats, &c) < 0){
+			toplevel_ERR(fv->top, "Error getting category: %s", strerror(errno));
+				qpol_iterator_destroy(&cats);
+		}
+		qpol_cat_get_value(apol_policy_get_qpol(p), c, &cat_val1);
+		qpol_cat_get_name(apol_policy_get_qpol(p), c, &cat_name1);
+		isrange = false;
+		isrange_end = false;
+		
+		for (; !qpol_iterator_end(cats); qpol_iterator_next(cats))
+		{
+			if (qpol_iterator_get_item(cats, &c) < 0){
+				toplevel_ERR(fv->top, "Error getting category: %s", strerror(errno));
+				qpol_iterator_destroy(&cats);
+			}
+			qpol_cat_get_value(apol_policy_get_qpol(p), c, &cat_val2);
+			qpol_cat_get_name(apol_policy_get_qpol(p), c, &cat_name2);
+			if (((int)cat_val2 == ((int)cat_val1 + 1)) && (isrange == false))
+			{
+				cat_low = cat_name1;
+				strcat(mls, cat_low);
+				strcat(mls, ".");
+				isrange = true;
+				isempty = false;
+			}
+			if ((isrange == true) && ((int)cat_val2 == ((int)cat_val1 + 1)))
+			{
+				cat_high = cat_name2;
+			}
+			else if ((isrange == true) && ((int)cat_val2 != ((int)cat_val1 + 1)))
+			{
+				cat_high = cat_name1;
+				isrange_end = true;
+				strcat(mls, cat_high);
+				isempty=false;
+			}
+			if ((isrange == false) && (isempty == false) && ((int)cat_val2 != ((int)cat_val1 + 1)))
+			{
+				strcat(mls, ",");
+				strcat(mls, cat_name2);
+			}
+			cat_val1 = cat_val2;
+			cat_name1 = cat_name2;
+			
+		} 
+		if ((isrange == true) && (isrange_end == false))
+		{
+			strcat(mls, cat_high);
+		}
+		if (apol_vector_append(policy_items, (void *)mls) < 0) {
 			toplevel_ERR(fv->top, "Error getting a list of policy mls levels: %s", strerror(errno));
 			apol_vector_destroy(&v);
 			apol_vector_destroy(&policy_items);
 		}
 	}
-	apol_vector_destroy(&v);
-	apol_vector_sort(policy_items, apol_str_strcmp, NULL);
-	return policy_items;
-}
 
-/**
- * Return a list of mls levels (not aliases) within the
- * currently loaded policy, sorted alphabetically.  If there is no
- * policy loaded then return NULL.
- */
-static apol_vector_t *filter_view_get_policy_mls_clr(struct filter_view *fv)
-{
-	apol_vector_t *policy_items = NULL, *v = NULL;
-	apol_policy_t *p = toplevel_get_policy(fv->top);
-	size_t i;
-	if (p == NULL) {
-		return NULL;
-	}
-	if (apol_level_get_by_query(p, NULL, &v) < 0 || (policy_items = apol_vector_create(NULL)) == NULL) {
-		toplevel_ERR(fv->top, "Error getting a list of policy mls clearance: %s", strerror(errno));
-		apol_vector_destroy(&policy_items);
-		return NULL;
-	}
-	for (i = 0; i < apol_vector_get_size(v); i++) {
-		const qpol_level_t *e = apol_vector_get_element(v, i);
-		const char *name;
-		qpol_level_get_name(apol_policy_get_qpol(p), e, &name);
-		if (apol_vector_append(policy_items, (void *)name) < 0) {
-			toplevel_ERR(fv->top, "Error getting a list of policy mls clearance: %s", strerror(errno));
-			apol_vector_destroy(&v);
-			apol_vector_destroy(&policy_items);
-		}
-	}
 	apol_vector_destroy(&v);
+	qpol_iterator_destroy(&cats);
 	apol_vector_sort(policy_items, apol_str_strcmp, NULL);
 	return policy_items;
 }
@@ -796,6 +842,7 @@ static void filter_view_on_stype_context_click(GtkButton * widget __attribute__ 
 static void filter_view_on_smls_lvl_context_click(GtkButton * widget __attribute__ ((unused)), gpointer user_data)
 {
 	struct filter_view *fv = (struct filter_view *)user_data;
+
 	apol_vector_t *log_items = toplevel_get_log_mls_lvl(fv->top);
 	apol_vector_t *policy_items = filter_view_get_policy_mls_lvl(fv);
 	fv->smls_lvl.items =
@@ -810,7 +857,7 @@ static void filter_view_on_smls_clr_context_click(GtkButton * widget __attribute
 {
 	struct filter_view *fv = (struct filter_view *)user_data;
 	apol_vector_t *log_items = toplevel_get_log_mls_clr(fv->top);
-	apol_vector_t *policy_items = filter_view_get_policy_mls_clr(fv);
+	apol_vector_t *policy_items = filter_view_get_policy_mls_lvl(fv);
 	fv->smls_clr.items =
 		policy_components_view_run(fv->top, GTK_WINDOW(fv->dialog), "Source MLS Clearance Items", log_items, policy_items,
 					   fv->smls_clr.items);
@@ -858,6 +905,7 @@ static void filter_view_on_ttype_context_click(GtkButton * widget __attribute__ 
 	filter_view_context_item_to_entry(fv, &fv->ttype);
 }
 
+
 static void filter_view_on_tmls_lvl_context_click(GtkButton * widget __attribute__ ((unused)), gpointer user_data)
 {
 	struct filter_view *fv = (struct filter_view *)user_data;
@@ -875,7 +923,7 @@ static void filter_view_on_tmls_clr_context_click(GtkButton * widget __attribute
 {
 	struct filter_view *fv = (struct filter_view *)user_data;
 	apol_vector_t *log_items = toplevel_get_log_mls_clr(fv->top);
-	apol_vector_t *policy_items = filter_view_get_policy_mls_clr(fv);
+	apol_vector_t *policy_items = filter_view_get_policy_mls_lvl(fv);
 	fv->tmls_clr.items =
 		policy_components_view_run(fv->top, GTK_WINDOW(fv->dialog), "Target MLS Clearance Items", log_items, policy_items,
 					   fv->tmls_clr.items);
