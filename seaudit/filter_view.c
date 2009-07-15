@@ -5,7 +5,7 @@
  *  @author Jeremy A. Mowery jmowery@tresys.com
  *  @author Jason Tang jtang@tresys.com
  *  @author Jeremy Solt jsolt@tresys.com
- * 
+ *
  *  Copyright (C) 2004-2007 Tresys Technology, LLC
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -904,7 +904,6 @@ static void filter_view_on_ttype_context_click(GtkButton * widget __attribute__ 
 	apol_vector_destroy(&policy_items);
 	filter_view_context_item_to_entry(fv, &fv->ttype);
 }
-
 
 static void filter_view_on_tmls_lvl_context_click(GtkButton * widget __attribute__ ((unused)), gpointer user_data)
 {

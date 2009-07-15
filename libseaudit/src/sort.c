@@ -246,7 +246,7 @@ seaudit_sort_t *seaudit_sort_by_source_type(const int direction)
 static int sort_source_mls_lvl_comp(const seaudit_sort_t * sort
 				 __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
 {
-		return strcmp(a->data.avc->smls_lvl, b->data.avc->smls_lvl);
+	return strcmp(a->data.avc->smls_lvl, b->data.avc->smls_lvl);
 }
 
 static int sort_source_mls_lvl_support(const seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)
@@ -262,7 +262,7 @@ seaudit_sort_t *seaudit_sort_by_source_mls_lvl(const int direction)
 static int sort_source_mls_clr_comp(const seaudit_sort_t * sort
 				 __attribute__ ((unused)), const seaudit_message_t * a, const seaudit_message_t * b)
 {
-		return strcmp(a->data.avc->smls_clr, b->data.avc->smls_clr);
+	return strcmp(a->data.avc->smls_clr, b->data.avc->smls_clr);
 }
 
 static int sort_source_mls_clr_support(const seaudit_sort_t * sort __attribute__ ((unused)), const seaudit_message_t * msg)

@@ -492,28 +492,23 @@ char *avc_message_to_string(const seaudit_message_t * msg, const char *date)
 		return NULL;
 	}
 	free(misc_string);
-	
-	if (strcmp(avc->smls_lvl, avc->smls_clr)){//level and clearance are not the same - show both
+
+	if (strcmp(avc->smls_lvl, avc->smls_clr)) { /* level and clearance are not the same - show both */
 		if (avc->suser && apol_str_appendf(&s, &len, "scontext=%s:%s:%s:%s-%s ", avc->suser, avc->srole, avc->stype, avc->smls_lvl, avc->smls_clr) < 0) {
 			return NULL;
 		}
+	} else if (avc->suser && apol_str_appendf(&s, &len, "scontext=%s:%s:%s:%s ", avc->suser, avc->srole, avc->stype, avc->smls_lvl) < 0) {
+		/* level and clearance are the same - only show one */
+		return NULL;
 	}
-	else{//level and clearance are the same - only show one
-		if (avc->suser && apol_str_appendf(&s, &len, "scontext=%s:%s:%s:%s ", avc->suser, avc->srole, avc->stype, avc->smls_lvl) < 0) {
-			return NULL;
-		}
-	}
-	if (strcmp(avc->tmls_lvl, avc->tmls_clr)){//level and clearance are not the same - show both
+	if (strcmp(avc->tmls_lvl, avc->tmls_clr)) { /* level and clearance are not the same - show both */
 		if (avc->tuser && apol_str_appendf(&s, &len, "tcontext=%s:%s:%s:%s-%s ", avc->tuser, avc->trole, avc->ttype, avc->tmls_lvl, avc->tmls_clr) < 0) {
 			return NULL;
 		}
+	} else if (avc->tuser && apol_str_appendf(&s, &len, "tcontext=%s:%s:%s:%s ", avc->tuser, avc->trole, avc->ttype, avc->tmls_lvl) < 0) {
+		/* level and clearance are the same - only show one */
+		return NULL;
 	}
-	else{ //level and clearance are the same - only show one
-		if (avc->tuser && apol_str_appendf(&s, &len, "tcontext=%s:%s:%s:%s ", avc->tuser, avc->trole, avc->ttype, avc->tmls_lvl) < 0) {
-			return NULL;
-		}
-	}
-	
 	if (avc->tclass && apol_str_appendf(&s, &len, "tclass=%s ", avc->tclass) < 0) {
 		return NULL;
 	}
@@ -585,33 +580,28 @@ char *avc_message_to_string_html(const seaudit_message_t * msg, const char *date
 		return NULL;
 	}
 	free(misc_string);
-	if(strcmp(avc->smls_lvl, avc->smls_clr)){//level and clearance are not the same - show both
+	if(strcmp(avc->smls_lvl, avc->smls_clr)) { /* level and clearance are not the same - show both */
 		if (avc->suser &&
 		    apol_str_appendf(&s, &len, "<font class=\"src_context\">scontext=%s:%s:%s:%s-%s</font> ",
 				     avc->suser, avc->srole, avc->stype, avc->smls_lvl, avc->smls_clr) < 0) {
 			return NULL;
 		}
-	}
-	else{//level and clearance are the same - only show one
-		if (avc->suser &&
-		    apol_str_appendf(&s, &len, "<font class=\"src_context\">scontext=%s:%s:%s:%s</font> ",
+	} else if (avc->suser && apol_str_appendf(&s, &len, "<font class=\"src_context\">scontext=%s:%s:%s:%s</font> ",
 				     avc->suser, avc->srole, avc->stype, avc->smls_lvl) < 0) {
-			return NULL;
-		}
+		/* level and clearance are the same - only show one */
+		return NULL;
 	}
-	if(strcmp(avc->tmls_lvl, avc->tmls_clr)){//level and clearance are not the same - show both
+	if(strcmp(avc->tmls_lvl, avc->tmls_clr)) { /* level and clearance are not the same - show both */
 		if (avc->tuser &&
 		    apol_str_appendf(&s, &len, "<font class=\"tgt_context\">tcontext=%s:%s:%s:%s-%s</font> ",
 				     avc->tuser, avc->trole, avc->ttype, avc->tmls_lvl, avc->tmls_clr) < 0) {
 			return NULL;
 		}
-	}
-	else{//level and clearance are the same - only show one
-		if (avc->tuser &&
+	} else if (avc->tuser &&
 		    apol_str_appendf(&s, &len, "<font class=\"tgt_context\">tcontext=%s:%s:%s:%s</font> ",
 				     avc->tuser, avc->trole, avc->ttype, avc->tmls_lvl) < 0) {
-			return NULL;
-		}
+		/* level and clearance are the same - only show one */
+		return NULL;
 	}
 	if (avc->tclass && apol_str_appendf(&s, &len, "<font class=\"obj_class\">tclass=%s</font> ", avc->tclass) < 0) {
 		return NULL;
