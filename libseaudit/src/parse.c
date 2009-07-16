@@ -36,6 +36,8 @@
 #include <string.h>
 #include <time.h>
 
+#include <selinux/context.h>
+
 #define ALT_SYSCALL_STRING "msg=audit("	/* should contain SYSCALL_STRING */
 #define AUDITD_MSG "type="
 #define AVCMSG " avc: "
@@ -43,7 +45,6 @@
 #define LOADMSG " security: "
 #define NUM_TIME_COMPONENTS 3
 #define OLD_LOAD_POLICY_STRING "loadingpolicyconfigurationfrom"
-#define PARSE_NUM_CONTEXT_FIELDS 3
 #define PARSE_NUM_SYSCALL_FIELDS 3
 #define SYSCALL_STRING "audit("
 
@@ -224,77 +225,74 @@ static int insert_manager(const seaudit_log_t * log, seaudit_message_t * msg, co
  */
 static int parse_context(seaudit_log_t * log, char *token, char **user, char **role, char **type, char **mls_lvl, char **mls_clr)
 {
-	size_t i = 0;
-	char *fields[PARSE_NUM_CONTEXT_FIELDS + 2], *s;
-	char *tmp;
-	int error;
+	char *s, *range;
+	int error, ret = 0;
+	context_t con = context_new(token);
 	*user = *role = *type = *mls_lvl = *mls_clr = NULL;
-	while (i < (PARSE_NUM_CONTEXT_FIELDS) && (fields[i] = strsep(&token, ":")) != NULL) {
-		i++;
+
+	if (con == NULL) {
+		WARN(log, "%s", "Error parsing context.");
+		ret = 1;
+		goto out;
 	}
 
-	if (i != PARSE_NUM_CONTEXT_FIELDS) {
-		WARN(log, "%s", "Not enough tokens for context.");
-		return 1;
-	}
-	fields[i] = strsep(&token, " ");
-	if (fields[i] != NULL) //MLS exists
-	{
-		i++;
-		if (strchr(fields[i-1], 45) != NULL) //Check for '-' (clearance exists)
-		{
-			tmp = strsep(&fields[i-1], "-"); //Get level
-			fields[i] = strsep(&fields[i-1], " "); //Get clearance
-			fields[i-1] = tmp; //Move level from tmp to fields[3]
-		}
-		else{
-			fields[i] = fields[i-1]; //No clearance - copy level to clearance
-		}
-
-	}
-	if ((s = strdup(fields[0])) == NULL || apol_bst_insert_and_get(log->users, (void **)&s, NULL) < 0) {
+	if ((s = strdup(context_user_get(con))) == NULL || apol_bst_insert_and_get(log->users, (void **)&s, NULL) < 0) {
 		error = errno;
 		ERR(log, "%s", strerror(error));
 		errno = error;
-		return -1;
+		ret = -1;
+		goto out;
 	}
 	*user = s;
 
-	if ((s = strdup(fields[1])) == NULL || apol_bst_insert_and_get(log->roles, (void **)&s, NULL) < 0) {
+	if ((s = strdup(context_role_get(con))) == NULL || apol_bst_insert_and_get(log->roles, (void **)&s, NULL) < 0) {
 		error = errno;
 		ERR(log, "%s", strerror(error));
 		errno = error;
-		return -1;
+		ret = -1;
+		goto out;
 	}
 	*role = s;
 
-	if ((s = strdup(fields[2])) == NULL || apol_bst_insert_and_get(log->types, (void **)&s, NULL) < 0) {
+	if ((s = strdup(context_type_get(con))) == NULL || apol_bst_insert_and_get(log->types, (void **)&s, NULL) < 0) {
 		error = errno;
 		ERR(log, "%s", strerror(error));
 		errno = error;
-		return -1;
+		ret = -1;
+		goto out;
 	}
 	*type = s;
 
-	if (i > 3){
-		if ((s = strdup(fields[3])) == NULL || apol_bst_insert_and_get(log->mls_lvl, (void **)&s, NULL) < 0) {
+	if (range = context_range_get(con)) {
+		char *lvl, *clr;
+		lvl = strsep(&range, "-");
+		clr = strsep(&range, "-");
+		if (clr == NULL)
+			/* level and clearance are the same */
+			clr = lvl;
+
+		if ((s = strdup(lvl)) == NULL || apol_bst_insert_and_get(log->mls_lvl, (void **)&s, NULL) < 0) {
 			error = errno;
 			ERR(log, "%s", strerror(error));
 			errno = error;
-			return -1;
+			ret = -1;
+			goto out;
 		}
 		*mls_lvl = s;
 
-		if ((s = strdup(fields[4])) == NULL || apol_bst_insert_and_get(log->mls_clr, (void **)&s, NULL) < 0) {
+		if ((s = strdup(clr)) == NULL || apol_bst_insert_and_get(log->mls_clr, (void **)&s, NULL) < 0) {
 			error = errno;
 			ERR(log, "%s", strerror(error));
 			errno = error;
-			return -1;
+			ret = -1;
+			goto out;
 		}
 		*mls_clr = s;
 	}
 
-	return 0;
+out:
+	context_free(con);
+	return ret;
 }
 
 /******************** AVC message parsing ********************/
