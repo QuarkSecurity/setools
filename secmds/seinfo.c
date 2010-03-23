@@ -67,7 +67,7 @@ enum opt_values
 	OPT_INITIALSID, OPT_FS_USE, OPT_GENFSCON,
 	OPT_NETIFCON, OPT_NODECON, OPT_PORTCON, OPT_PROTOCOL,
 	OPT_PERMISSIVE, OPT_POLCAP,
-	OPT_ALL, OPT_STATS
+	OPT_ALL, OPT_STATS, OPT_CONSTRAIN
 };
 
 static struct option const longopts[] = {
@@ -79,6 +79,7 @@ static struct option const longopts[] = {
 	{"role", optional_argument, NULL, 'r'},
 	{"user", optional_argument, NULL, 'u'},
 	{"bool", optional_argument, NULL, 'b'},
+	{"constrain", no_argument, NULL, OPT_CONSTRAIN},
 	{"initialsid", optional_argument, NULL, OPT_INITIALSID},
 	{"fs_use", optional_argument, NULL, OPT_FS_USE},
 	{"genfscon", optional_argument, NULL, OPT_GENFSCON},
@@ -120,6 +121,7 @@ void usage(const char *program_name, int brief)
 	printf("  -r[NAME], --role[=NAME]          print roles\n");
 	printf("  -u[NAME], --user[=NAME]          print users\n");
 	printf("  -b[NAME], --bool[=NAME]          print conditional booleans\n");
+	printf("  --constrain                      print constrain statements\n");
 	printf("  --initialsid[=NAME]              print initial SIDs\n");
 	printf("  --fs_use[=TYPE]                  print fs_use statements\n");
 	printf("  --genfscon[=TYPE]                print genfscon statements\n");
@@ -1333,10 +1335,47 @@ static int print_polcaps(FILE * fp, const char *name, int expand, const apol_pol
 	return retval;
 }
 
+static int print_constraints(FILE * fp, int expand, const apol_policy_t * policydb)
+{
+	int retval = -1;
+	int err=0;
+	const char *tmp = NULL;
+	qpol_iterator_t *iter = NULL;
+//	qpol_iterator_t *iter = NULL;
+//	qpol_iterator_t *iter = NULL;
+	qpol_policy_t *q = apol_policy_get_qpol(policydb);
+	qpol_constraint_t *constraint = NULL;
+	qpol_constraint_expr_node_t *cexpr = NULL;
+	void *constraintNode = NULL;
+	size_t n_constraints = 0;
+
+	if (qpol_policy_get_constraint_iter(q, &iter))
+		goto cleanup;
+	if (qpol_iterator_get_size(iter, &n_constraints))
+		goto cleanup;
+
+	fprintf(fp, "\nConstraints: %zd\n", n_constraints);
+
+	// Iterate through constraints
+	for (; qpol_iterator_end(iter) != 0; qpol_iterator_next(iter))
+	{
+		if (qpol_iterator_get_item(iter, (void **)&constraint) != 0)
+			break;		// Should never happen, just quit for now
+
+		
+	// print class
+	// print permissions
+	// dump RPN expressions
+	}
+	printf("\nconstraints not fully supported yet\n\n");
+cleanup:
+	return(0);
+}
+
 int main(int argc, char **argv)
 {
 	int classes, types, attribs, roles, users, all, expand, stats, rt, optc, isids, bools, sens, cats, fsuse, genfs, netif,
-		node, port, permissives, polcaps;
+		node, port, permissives, polcaps, constrain;
 	apol_policy_t *policydb = NULL;
 	apol_policy_path_t *pol_path = NULL;
 	apol_vector_t *mod_paths = NULL;
@@ -1348,7 +1387,7 @@ int main(int argc, char **argv)
 	class_name = type_name = attrib_name = role_name = user_name = isid_name = bool_name = sens_name = cat_name = fsuse_type =
 		genfs_type = netif_name = node_addr = port_num = permissive_name = polcap_name = NULL;
 	classes = types = attribs = roles = users = all = expand = stats = isids = bools = sens = cats = fsuse = genfs = netif =
-		node = port = permissives = polcaps = 0;
+		node = port = permissives = polcaps = constrain = 0;
 	while ((optc = getopt_long(argc, argv, "c::t::a::r::u::b::xhV", longopts, NULL)) != -1) {
 		switch (optc) {
 		case 0:
@@ -1443,6 +1482,9 @@ int main(int argc, char **argv)
 		case 'x':	       /* expand */
 			expand = 1;
 			break;
+		case OPT_CONSTRAIN:	/* Print constraints */
+			constrain=1;
+			break;
 		case OPT_STATS:
 			stats = 1;
 			break;
@@ -1465,7 +1507,7 @@ int main(int argc, char **argv)
 	}
 
 	/* if no options, then show stats */
-	if (classes + types + attribs + roles + users + isids + bools + sens + cats + fsuse + genfs + netif + node + port + permissives + polcaps + all < 1) {
+	if (classes + types + attribs + roles + users + isids + bools + sens + cats + fsuse + genfs + netif + node + port + permissives + polcaps + constrain + all < 1) {
 		stats = 1;
 	}
 
@@ -1567,6 +1609,8 @@ int main(int argc, char **argv)
 		print_permissives(stdout, permissive_name, expand, policydb);
 	if (polcaps || all)
 		print_polcaps(stdout, polcap_name, expand, policydb);
+	if (constrain || all)
+		print_constraints(stdout, expand, policydb);
 
 	apol_policy_destroy(&policydb);
 	apol_policy_path_destroy(&pol_path);

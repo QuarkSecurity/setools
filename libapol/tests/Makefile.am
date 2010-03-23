@@ -9,6 +9,7 @@ libapol_tests_SOURCES = \
 	role-tests.c role-tests.h \
 	terule-tests.c terule-tests.h \
 	user-tests.c user-tests.h \
+	constrain-tests.c constrain-tests.h \
 	libapol-tests.c
 
 AM_CFLAGS = @DEBUGCFLAGS@ @WARNCFLAGS@ @PROFILECFLAGS@ @SELINUX_CFLAGS@ \
