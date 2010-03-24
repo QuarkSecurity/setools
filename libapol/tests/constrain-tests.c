@@ -118,7 +118,7 @@ static void constrain_source(void)
 	const char *class_name = NULL;
 	const char *constrain_type = "?constrain";
 	char *perm_list = "No Perms Extracted";
-	const char *expr = "No expression extracted";
+	const qpol_constraint_expr_node_t *expr = NULL;
 	qpol_iterator_t *policy_iter = NULL;	// Iterates over all constraints in a policy
 	qpol_iterator_t *perm_iter = NULL;		// Iterates over permissions in a constraint
 	qpol_iterator_t *expr_iter = NULL;		// Iterates over expression in a constraint
@@ -186,14 +186,53 @@ static void constrain_source(void)
 		err = qpol_constraint_get_expr_iter (q, constraint, &expr_iter);
 		CU_ASSERT_EQUAL_FATAL(err, 0);
 
+		printf ("\n( ");
 		for (; qpol_iterator_end(expr_iter) == 0; qpol_iterator_next(expr_iter))
 		{
+			int expr_type = 0;
+			int sym_type = 0;		// 'attr' in struct constraint_expr
+			int op = 0;
+			qpol_iterator_t *names_iter = NULL;
+
 			err = qpol_iterator_get_item(expr_iter, (void **)&expr);
 			CU_ASSERT_EQUAL_FATAL(err,0)
 
-		printf ("{ %s }\n", expr);
+			err = qpol_constraint_expr_node_get_op (q, expr, &op);
+			CU_ASSERT_EQUAL_FATAL(err,0)
+
+			err = qpol_constraint_expr_node_get_sym_type(q, expr, &sym_type);
+			CU_ASSERT_EQUAL_FATAL(err,0)
+
+			err = qpol_constraint_expr_node_get_expr_type(q, expr, &expr_type);
+			CU_ASSERT_EQUAL_FATAL(err,0)
+
+			printf ("\n\t( expr_type=%d attr=%d op=%d", expr_type, sym_type, op);
+
+			CU_ASSERT_PTR_NOT_NULL(q);
+			CU_ASSERT_PTR_NOT_NULL(expr);
+			CU_ASSERT_PTR_NOT_NULL(&names_iter);
+			if (expr_type == QPOL_CEXPR_TYPE_NAMES)
+			{
+				printf (" names='", expr_type, sym_type, op);
+				err = qpol_constraint_expr_node_get_names_iter (q, expr, &names_iter);
+				CU_ASSERT_EQUAL_FATAL(err,0)
+
+				for (; qpol_iterator_end(names_iter) == 0; qpol_iterator_next(names_iter))
+				{
+					char *lname = NULL;
+
+					err = qpol_iterator_get_item (names_iter, (void **)&lname);
+					CU_ASSERT_EQUAL_FATAL(err,0)
+					printf ("%s ", lname);
+					free (lname);
+
+				}
+				printf ("'");
+			}
+			printf (" )");
+		}
+		printf ("\n);\n\n");
 	}
-	printf ("iteration count=%d\n\n", i);
 
 	CU_PASS();
 
