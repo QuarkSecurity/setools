@@ -91,6 +91,7 @@ static struct option const longopts[] = {
 	{"protocol", required_argument, NULL, OPT_PROTOCOL},
 	{"stats", no_argument, NULL, OPT_STATS},
 	{"all", no_argument, NULL, OPT_ALL},
+	{"line-breaks", no_argument, NULL, 'l'},
 	{"expand", no_argument, NULL, 'x'},
 	{"help", no_argument, NULL, 'h'},
 	{"version", no_argument, NULL, 'V'},
@@ -122,6 +123,7 @@ void usage(const char *program_name, int brief)
 	printf("  -u[NAME], --user[=NAME]          print users\n");
 	printf("  -b[NAME], --bool[=NAME]          print conditional booleans\n");
 	printf("  --constrain                      print constrain statements\n");
+	printf("  -l, --line-breaks                print line breaks in constrain statements\n");
 	printf("  --initialsid[=NAME]              print initial SIDs\n");
 	printf("  --fs_use[=TYPE]                  print fs_use statements\n");
 	printf("  --genfscon[=TYPE]                print genfscon statements\n");
@@ -1419,7 +1421,7 @@ static const char *get_op_string(int op)
 	return string;
 }
 
-static int print_constraints(FILE * fp, int expand, const apol_policy_t * policydb)
+static int print_constraints(FILE * fp, int expand, const apol_policy_t * policydb, int linebreaks)
 {
 	int retval = -1;
 //	int err=0;
@@ -1559,8 +1561,8 @@ static int print_constraints(FILE * fp, int expand, const apol_policy_t * policy
 				goto cleanup;
 			}
 
-			printf ("\n\t expr_type=%d %s op=%d", expr_type, get_attr_string(sym_type), op);
-			printf ("\n\t");
+			if (linebreaks)
+				printf ("\n\t");
 
 			if (expr_type == QPOL_CEXPR_TYPE_NOT)
 			{
@@ -1577,6 +1579,7 @@ static int print_constraints(FILE * fp, int expand, const apol_policy_t * policy
 			if (expr_type == QPOL_CEXPR_TYPE_ATTR)
 			{
 				printf (" %s ", get_attr_string(sym_type));
+				printf ("%s ", get_attr_string(sym_type | QPOL_CEXPR_SYM_TARGET));
 				printf ("%s ", get_op_string(op));
 			}
 			if (expr_type == QPOL_CEXPR_TYPE_NAMES)
@@ -1624,7 +1627,10 @@ static int print_constraints(FILE * fp, int expand, const apol_policy_t * policy
 				printf ("%s ", get_op_string(op));
 			}
 		}
-		printf ("\n);\n\n");
+		if (linebreaks)
+			printf ("\n);\n\n");
+		else
+			printf (");\n\n");
 	}
 
 	retval = 0;
@@ -1641,7 +1647,7 @@ cleanup:	// close and destroy iterators etc.
 int main(int argc, char **argv)
 {
 	int classes, types, attribs, roles, users, all, expand, stats, rt, optc, isids, bools, sens, cats, fsuse, genfs, netif,
-		node, port, permissives, polcaps, constrain;
+		node, port, permissives, polcaps, constrain, linebreaks;
 	apol_policy_t *policydb = NULL;
 	apol_policy_path_t *pol_path = NULL;
 	apol_vector_t *mod_paths = NULL;
@@ -1653,8 +1659,8 @@ int main(int argc, char **argv)
 	class_name = type_name = attrib_name = role_name = user_name = isid_name = bool_name = sens_name = cat_name = fsuse_type =
 		genfs_type = netif_name = node_addr = port_num = permissive_name = polcap_name = NULL;
 	classes = types = attribs = roles = users = all = expand = stats = isids = bools = sens = cats = fsuse = genfs = netif =
-		node = port = permissives = polcaps = constrain = 0;
-	while ((optc = getopt_long(argc, argv, "c::t::a::r::u::b::xhV", longopts, NULL)) != -1) {
+		node = port = permissives = polcaps = constrain = linebreaks = 0;
+	while ((optc = getopt_long(argc, argv, "c::t::a::r::u::b::lxhV", longopts, NULL)) != -1) {
 		switch (optc) {
 		case 0:
 			break;
@@ -1747,6 +1753,9 @@ int main(int argc, char **argv)
 			break;
 		case 'x':	       /* expand */
 			expand = 1;
+			break;
+		case 'l':	/* Print line breaks in constraints */
+			linebreaks=1;
 			break;
 		case OPT_CONSTRAIN:	/* Print constraints */
 			constrain=1;
@@ -1876,7 +1885,7 @@ int main(int argc, char **argv)
 	if (polcaps || all)
 		print_polcaps(stdout, polcap_name, expand, policydb);
 	if (constrain || all)
-		print_constraints(stdout, expand, policydb);
+		print_constraints(stdout, expand, policydb, linebreaks);
 
 	apol_policy_destroy(&policydb);
 	apol_policy_path_destroy(&pol_path);
