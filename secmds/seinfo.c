@@ -1587,7 +1587,7 @@ static int print_constraints(FILE * fp, int expand, const apol_policy_t * policy
 				printf (" %s ", get_attr_string(sym_type));
 //				printf (" names='", expr_type, sym_type, op);
 			}
-			if (/*expr_type == QPOL_CEXPR_TYPE_ATTR ||*/ expr_type == QPOL_CEXPR_TYPE_NAMES)
+			if (expr_type == QPOL_CEXPR_TYPE_NAMES)
 			{
 				size_t name_size=0;
 				if (qpol_constraint_expr_node_get_names_iter (q, expr, &names_iter) != 0)
