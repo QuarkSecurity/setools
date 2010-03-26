@@ -1424,7 +1424,6 @@ static const char *get_op_string(int op)
 static int print_constraints(FILE * fp, int expand, const apol_policy_t * policydb, int linebreaks)
 {
 	int retval = -1;
-//	int err=0;
 	const char *class_name = NULL;
 	char *constrain_type;
 	char *perm_list = "No Perms Extracted";
@@ -1504,7 +1503,7 @@ static int print_constraints(FILE * fp, int expand, const apol_policy_t * policy
 		}
 
 	// print permissions
-		printf ("%sconstrain { %s } { ", constrain_type, class_name);
+		fprintf (fp, "%sconstrain { %s } { ", constrain_type, class_name);
 
 		if (qpol_constraint_get_perm_iter (q, constraint, &perm_iter) != 0)
 		{
@@ -1520,10 +1519,10 @@ static int print_constraints(FILE * fp, int expand, const apol_policy_t * policy
 				goto cleanup;
 			}
 
-			printf ("%s ", perm_list);
+			fprintf (fp, "%s ", perm_list);
 			free (perm_list);		// Strdup created the string.
 		}
-		printf (" } ");
+		fprintf (fp, " } ");
 
 		// dump RPN expressions
 		if (qpol_constraint_get_expr_iter (q, constraint, &expr_iter) != 0)
@@ -1532,7 +1531,7 @@ static int print_constraints(FILE * fp, int expand, const apol_policy_t * policy
 			goto cleanup;
 		}
 
-		printf ("\n( ");
+		fprintf (fp, "\n( ");
 		for (; qpol_iterator_end(expr_iter) == 0; qpol_iterator_next(expr_iter))
 		{
 			qpol_iterator_t *names_iter = NULL;
@@ -1562,34 +1561,32 @@ static int print_constraints(FILE * fp, int expand, const apol_policy_t * policy
 			}
 
 			if (linebreaks)
-				printf ("\n\t");
+				fprintf (fp, "\n\t");
 
 			if (expr_type == QPOL_CEXPR_TYPE_NOT)
 			{
-				printf (" ! ");
+				fprintf (fp, " ! ");
 			}
 			if (expr_type == QPOL_CEXPR_TYPE_AND)
 			{
-				printf (" && ");
+				fprintf (fp, " && ");
 			}
 			if (expr_type == QPOL_CEXPR_TYPE_OR)
 			{
-				printf (" || ");
+				fprintf (fp, " || ");
 			}
 			if (expr_type == QPOL_CEXPR_TYPE_ATTR)
 			{
-				printf (" %s ", get_attr_string(sym_type));
-				printf ("%s ", get_attr_string(sym_type | QPOL_CEXPR_SYM_TARGET));
-				printf ("%s ", get_op_string(op));
-			}
-			if (expr_type == QPOL_CEXPR_TYPE_NAMES)
-			{
-				printf (" %s ", get_attr_string(sym_type));
-//				printf (" names='", expr_type, sym_type, op);
+				fprintf (fp, " %s ", get_attr_string(sym_type));
+				fprintf (fp, "%s ", get_attr_string(sym_type | QPOL_CEXPR_SYM_TARGET));
+				fprintf (fp, "%s ", get_op_string(op));
 			}
 			if (expr_type == QPOL_CEXPR_TYPE_NAMES)
 			{
 				size_t name_size=0;
+
+				fprintf (fp, " %s ", get_attr_string(sym_type));
+
 				if (qpol_constraint_expr_node_get_names_iter (q, expr, &names_iter) != 0)
 				{
 					ERR(policydb, "%s", "Can't get names iterator from expression\n");
@@ -1604,7 +1601,7 @@ static int print_constraints(FILE * fp, int expand, const apol_policy_t * policy
 				if (name_size > 0)
 				{
 					if (name_size > 1)
-						printf ("{ ");
+						fprintf (fp, "{ ");
 
 					for (; qpol_iterator_end(names_iter) == 0; qpol_iterator_next(names_iter))
 					{
@@ -1616,21 +1613,21 @@ static int print_constraints(FILE * fp, int expand, const apol_policy_t * policy
 							goto cleanup;
 						}
 
-						printf ("%s ", lname);
+						fprintf (fp, "%s ", lname);
 						free (lname);
 
 					}
 					if (name_size > 1)
-						printf ("} ");
+						fprintf (fp, "} ");
 				}
 
-				printf ("%s ", get_op_string(op));
+				fprintf (fp, "%s ", get_op_string(op));
 			}
 		}
 		if (linebreaks)
-			printf ("\n);\n\n");
+			fprintf (fp, "\n);\n\n");
 		else
-			printf (");\n\n");
+			fprintf (fp, ");\n\n");
 	}
 
 	retval = 0;
