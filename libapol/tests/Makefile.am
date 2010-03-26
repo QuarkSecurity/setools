@@ -10,6 +10,7 @@ libapol_tests_SOURCES = \
 	terule-tests.c terule-tests.h \
 	user-tests.c user-tests.h \
 	constrain-tests.c constrain-tests.h \
+	../../libqpol/src/queue.c ../../libqpol/src/queue.h \
 	libapol-tests.c
 
 AM_CFLAGS = @DEBUGCFLAGS@ @WARNCFLAGS@ @PROFILECFLAGS@ @SELINUX_CFLAGS@ \
