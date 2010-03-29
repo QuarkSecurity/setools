@@ -40,7 +40,7 @@
 // Glob won't work, but this gives the idea of where we are trying to go
 #define CONSTR_MODULAR TEST_POLICIES "/setools-3.1/modules/*.pp"
 
-//#define JJODEBUG 1
+//#define DEBUGTRACE 1
 
 
 /*	General concepts:  The constraints are stored in the policy by class,
@@ -195,7 +195,7 @@ static int compare_expr_list(qpol_policy_t *q, qpol_iterator_t *expr_iter, int e
 		err = qpol_constraint_expr_node_get_expr_type(q, expr, &expr_type);
 		CU_ASSERT_EQUAL_FATAL(err, 0);
 
-#ifdef JJODEBUG
+#ifdef DEBUGTRACE
 		printf ("Expr compare: Policy:attr:%d, op:%d, expr_type:%d\n", sym_type, op, expr_type);
 		printf ("Expr compare:   Test:attr:%d, op:%d, expr_type:%d\n", le[i]->attr, le[i]->op, le[i]->expr_type);
 #endif
@@ -218,7 +218,7 @@ static int compare_expr_list(qpol_policy_t *q, qpol_iterator_t *expr_iter, int e
 			size_t name_size=0;
 			compare_perm_str_t x;
 			
-#ifdef JJODEBUG
+#ifdef DEBUGTRACE
 			printf ("Found CEXPR_NAMES expression\n");
 #endif
 			x.list_length = le[i]->name_count;
@@ -250,7 +250,7 @@ static int compare_expr_list(qpol_policy_t *q, qpol_iterator_t *expr_iter, int e
 				free (lname);
 			}
 
-#ifdef JJODEBUG
+#ifdef DEBUGTRACE
 			printf ("name list length=%d, list_found=%d, q_elements_compared=%d\n", x.list_length, x.list_found, x.q_elements_compared);
 #endif
 			if ((x.list_length != x.list_found) || (x.list_length != x.q_elements_compared))
@@ -272,7 +272,7 @@ static int compare_item_to_list(void *e, void *v)
 
 	while ((perm=*permlist++) != NULL)
 	{
-#ifdef JJODEBUG
+#ifdef DEBUGTRACE
 		printf ("pe = %s\n", pe);
 		printf ("perm = %s\n", perm);
 #endif
@@ -295,13 +295,13 @@ static int compare_perm_list(queue_t perm_q, char **permissions)
 	while (*permissions++ != NULL)
 		x.list_length++;
 
-#ifdef JJODEBUG
+#ifdef DEBUGTRACE
 	printf ("list_length = %d\n", x.list_length);
 #endif
 	if (queue_map(perm_q, compare_item_to_list, &x) != 0)
 		return 1;
 
-#ifdef JJODEBUG
+#ifdef DEBUGTRACE
 	printf ("list length=%d, list_found=%d, q_elements_compared=%d\n", x.list_length, x.list_found, x.q_elements_compared);
 #endif
 	if ((x.list_length != x.list_found) || (x.list_length != x.q_elements_compared))
@@ -375,7 +375,7 @@ static void constrain_test(apol_policy_t *ap)
 		err = qpol_class_get_name(q, class, &class_name);
 		CU_ASSERT_EQUAL_FATAL(err, 0);	// Should never happen
 
-#ifdef JJODEBUG
+#ifdef DEBUGTRACE
 		printf ("Found class %s\n", class_name);
 #endif
 		// get permission(s)
@@ -390,11 +390,8 @@ static void constrain_test(apol_policy_t *ap)
 
 			err = queue_insert (perm_q, perm_list);
 			CU_ASSERT_EQUAL_FATAL(err,0)
-//			printf ("%s ", perm_list);
-//			free (perm_list);		// Strdup created the string.
 		}
-//		printf (" } ");
-#ifdef JJODEBUG
+#ifdef DEBUGTRACE
 		printf ("perms: ");
 		queue_map(perm_q, doprintstr, NULL);
 		printf ("\n");
@@ -408,98 +405,39 @@ static void constrain_test(apol_policy_t *ap)
 		// the iterator) have been identified. Based on expected class/permission
 		// combinations, find one which matches, and note that it was found.
 		// If not found, count that too.
-#ifdef JJODEBUG
-		printf ("test count is %d\n", test_count);
-#endif
 		for (i=0; i<test_count; i++)
 		{
 			if (strcmp(*(test_list[i].class), class_name) == 0)
 			{
-#ifdef JJODEBUG
-				printf ("Got class match %s\n", class_name);
-#endif
 				if (compare_perm_list(perm_q, test_list[i].permissions) == 0)
 				{
-#ifdef JJODEBUG
-					printf ("Got permissions list match\n");
-#endif
 					if (compare_expr_list(q, expr_iter, test_list[i].expr_count, test_list[i].expr_list) == 0)
 					{
-#ifdef JJODEBUG
-						printf ("Matched test %d\n", i);
-#endif
 						test_list[i].test_found = 1;
 						constrains_matched++;
 						break;
 					}
-#ifdef JJODEBUG
+#ifdef DEBUGTRACE
 					else
 					{
 						printf ("Mismatch comparing expression list\n");
 					}
 #endif
 				}
-#ifdef JJODEBUG
+#ifdef DEBUGTRACE
 				else
 				{
 					printf ("Mismatch comparing permission list\n");
 				}
 #endif
 			}
-#ifdef JJODEBUG
+#ifdef DEBUGTRACE
 			else
 			{
 				printf ("Mismatch comparing classes %s,%s\n", *(test_list[i].class),class_name);
 			}
 #endif
 		}
-#if 0
-		for (; qpol_iterator_end(expr_iter) == 0; qpol_iterator_next(expr_iter))
-		{
-			int expr_type = 0;
-			int sym_type = 0;		// 'attr' in struct constraint_expr
-			int op = 0;
-			qpol_iterator_t *names_iter = NULL;
-
-			err = qpol_iterator_get_item(expr_iter, (void **)&expr);
-			CU_ASSERT_EQUAL_FATAL(err,0)
-
-			err = qpol_constraint_expr_node_get_op (q, expr, &op);
-			CU_ASSERT_EQUAL_FATAL(err,0)
-
-			err = qpol_constraint_expr_node_get_sym_type(q, expr, &sym_type);
-			CU_ASSERT_EQUAL_FATAL(err,0)
-
-			err = qpol_constraint_expr_node_get_expr_type(q, expr, &expr_type);
-			CU_ASSERT_EQUAL_FATAL(err,0)
-
-			printf ("\n\t( expr_type=%d attr=%d op=%d", expr_type, sym_type, op);
-
-			CU_ASSERT_PTR_NOT_NULL(q);
-			CU_ASSERT_PTR_NOT_NULL(expr);
-			CU_ASSERT_PTR_NOT_NULL(&names_iter);
-			if (expr_type == QPOL_CEXPR_TYPE_NAMES)
-			{
-				printf (" names='", expr_type, sym_type, op);
-				err = qpol_constraint_expr_node_get_names_iter (q, expr, &names_iter);
-				CU_ASSERT_EQUAL_FATAL(err,0)
-
-				for (; qpol_iterator_end(names_iter) == 0; qpol_iterator_next(names_iter))
-				{
-					char *lname = NULL;
-
-					err = qpol_iterator_get_item (names_iter, (void **)&lname);
-					CU_ASSERT_EQUAL_FATAL(err,0)
-					printf ("%s ", lname);
-					free (lname);
-
-				}
-				printf ("'");
-			}
-			printf (" )");
-		}
-#endif
-//		printf ("\n);\n\n");
 		queue_destroy(perm_q);
 	}
 	for (i=0; i<test_count; i++)
@@ -511,7 +449,7 @@ static void constrain_test(apol_policy_t *ap)
 		else
 			tests_matched++;
 	}
-#ifdef JJODEBUG
+#ifdef DEBUGTRACE
 	printf ("tests_matched: %d, constrains_matched: %d, counted_constraints: %d, n_constraints: %d\n", tests_matched, constrains_matched, counted_constraints, n_constraints);
 #endif
 	CU_ASSERT_EQUAL(tests_matched, 5);
