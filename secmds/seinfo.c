@@ -49,6 +49,9 @@
 
 #define COPYRIGHT_INFO "Copyright (C) 2003-2007 Tresys Technology, LLC"
 
+/* placeholder for empty set in constraint statements */
+#define CONSTRAIN_NULL_SET "<empty set>"
+
 static char *policy_file = NULL;
 
 static void print_type_attrs(FILE * fp, const qpol_type_t * type_datum, const apol_policy_t * policydb, const int expand);
@@ -1619,6 +1622,8 @@ static int print_constraints(FILE * fp, int expand, const apol_policy_t * policy
 					}
 					if (name_size > 1)
 						fprintf (fp, "} ");
+				} else {
+					fprintf (fp, "%s ", CONSTRAIN_NULL_SET);
 				}
 
 				fprintf (fp, "%s ", get_op_string(op));
