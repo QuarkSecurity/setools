@@ -2042,7 +2042,7 @@ typedef struct apol_avrule_query {} apol_avrule_query_t;
 		apol_vector_t *v;
 		BEGIN_EXCEPTION
 		if (apol_syn_avrule_get_by_query(p, self, &v)) {
-			SWIG_exception(SWIG_RuntimeError, "Could not run avrule query");
+			SWIG_exception(SWIG_RuntimeError, "Could not run syn avrule query");
 		}
 		END_EXCEPTION
 	fail:

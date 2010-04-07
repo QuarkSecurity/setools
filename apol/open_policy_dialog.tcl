@@ -45,7 +45,7 @@ proc Apol_Open_Policy_Dialog::getPolicyPath {defaultPath} {
             if {[catch {getModuleInfo $m} info]} {
                 tk_messageBox -icon error -type ok -title "Open Module" -message $info
             } else {
-                foreach {name vers} $info {break}
+                foreach {name vers type} $info {break}
                 lappend vars(mod_names) $name
                 lappend vars(mod_vers) $vers
                 lappend vars(mod_paths) $m
@@ -226,13 +226,23 @@ proc Apol_Open_Policy_Dialog::addModule {f} {
     variable vars
     variable widgets
     if {[lsearch $vars(mod_paths) $f] >= 0} {
-        tk_messageBox -icon error -type ok -title "Open Module" -message "Module $f was already added."
+        tk_messageBox -icon error -type ok -title "Open Module" -message "Module $f was already added." -parent .open_policy_dialog
         return
     }
     if {[catch {getModuleInfo $f} info]} {
         tk_messageBox -icon error -type ok -title "Open Module" -message $info
     } else {
-        foreach {name vers} $info {break}
+        foreach {name vers type} $info {break}
+		if {$type == 1} {
+			if {$vars(primary_file) != {}} {
+				if{ $vars(primary_file) != $f} {
+				tk_messageBox -icon error -type ok -title "Open Module" -message "Base already set\nCurrent $vars(primary_file)\nnew file $f\nIgnoring new file." -parent .open_policy_dialog
+				}
+				return
+			}
+			set vars(primary_file) $f
+			return
+		}
         set vars(mod_names) [lsort [concat $vars(mod_names) $name]]
         set i [lsearch $vars(mod_names) $name]
         set vars(mod_vers) [linsert $vars(mod_vers) $i $vers]
@@ -353,7 +363,7 @@ proc Apol_Open_Policy_Dialog::tryOpenPolicy {} {
 # The policy module will be closed afterwards.
 proc Apol_Open_Policy_Dialog::getModuleInfo {f} {
     set mod [new_qpol_module_t $f]
-    set retval [list [$mod get_name] [$mod get_version]]
+    set retval [list [$mod get_name] [$mod get_version] [$mod get_type]]
     $mod -acquire
     $mod -delete
     return $retval
