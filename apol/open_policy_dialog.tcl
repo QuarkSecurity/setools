@@ -34,6 +34,9 @@ proc Apol_Open_Policy_Dialog::getPolicyPath {defaultPath} {
     set vars(mod_vers) {}
     set vars(mod_paths) {}
 
+	if {$defaultPath != {} } {
+		tk_messageBox -icon info -type ok -title "DEBUG" -message "defaultPath=[$defaultPath get_type] [$defaultPath get_primary]"
+	}
     if {$defaultPath != {}} {
         foreach {path_type primary modules} [policy_path_to_list $defaultPath] {break}
         set vars(path_type) $path_type
@@ -43,7 +46,7 @@ proc Apol_Open_Policy_Dialog::getPolicyPath {defaultPath} {
         set vars(last_module) $vars(primary_file)
         foreach m $modules {
             if {[catch {getModuleInfo $m} info]} {
-                tk_messageBox -icon error -type ok -title "Open Module" -message $info
+                tk_messageBox -icon error -type ok -title "Open Module" -message $info -detail "Module file $m" -parent [$dialog getframe]
             } else {
                 foreach {name vers type} $info {break}
                 lappend vars(mod_names) $name
@@ -230,13 +233,13 @@ proc Apol_Open_Policy_Dialog::addModule {f} {
         return
     }
     if {[catch {getModuleInfo $f} info]} {
-        tk_messageBox -icon error -type ok -title "Open Module" -message $info
+        tk_messageBox -icon error -type ok -title "Open Module" -message $info -detail "Module file $f" -parent .open_policy_dialog
     } else {
         foreach {name vers type} $info {break}
 		if {$type == 1} {
 			if {$vars(primary_file) != {}} {
-				if{ $vars(primary_file) != $f} {
-				tk_messageBox -icon error -type ok -title "Open Module" -message "Base already set\nCurrent $vars(primary_file)\nnew file $f\nIgnoring new file." -parent .open_policy_dialog
+				if {$vars(primary_file) != $f} {
+				tk_messageBox -icon error -type ok -title "Open Module" -message "Base already set" -detail "Current $vars(primary_file)\n\nNew file $f\n\nIgnoring new file." -parent .open_policy_dialog
 				}
 				return
 			}
