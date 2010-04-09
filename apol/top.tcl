@@ -545,6 +545,7 @@ proc ApolTop::_user_close_policy {} {
 	variable last_policy_path
 
 	_close_policy
+	set last_policy_path {}
 }
 
 proc ApolTop::_close_policy {} {

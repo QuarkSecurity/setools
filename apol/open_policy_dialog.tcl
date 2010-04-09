@@ -34,9 +34,6 @@ proc Apol_Open_Policy_Dialog::getPolicyPath {defaultPath} {
     set vars(mod_vers) {}
     set vars(mod_paths) {}
 
-	if {$defaultPath != {} } {
-		tk_messageBox -icon info -type ok -title "DEBUG" -message "defaultPath=[$defaultPath get_type] [$defaultPath get_primary]"
-	}
     if {$defaultPath != {}} {
         foreach {path_type primary modules} [policy_path_to_list $defaultPath] {break}
         set vars(path_type) $path_type
