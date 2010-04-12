@@ -197,10 +197,16 @@ proc Apol_Open_Policy_Dialog::browsePrimary {} {
     variable dialog
     if {$vars(path_type) == "monolithic"} {
         set title "Open Monolithic Policy"
+		set initDirName {}
     } else {
         set title "Open Modular Policy"
+		if {$vars(primary_file) != {} } {
+			set initDirName [file dirname $vars(primary_file)]
+		} else {
+			set initDirName [file dirname $vars(last_module)]
+		}
     }
-    set f [tk_getOpenFile -initialdir [file dirname $vars(primary_file)] \
+    set f [tk_getOpenFile -initialdir $initDirName \
                -initialfile $vars(primary_file) -parent $dialog -title $title]
     if {$f != {}} {
         set vars(primary_file) $f
@@ -211,14 +217,23 @@ proc Apol_Open_Policy_Dialog::browsePrimary {} {
 proc Apol_Open_Policy_Dialog::browseModule {} {
     variable vars
     variable dialog
-    set paths [tk_getOpenFile -initialdir [file dirname $vars(last_module)] \
+
+	if {$vars(last_module) != {} } {
+		set initDirName [file dirname $vars(last_module)]
+	} else {
+		set initDirName [file dirname $vars(primary_file)]
+	}
+    set paths [tk_getOpenFile -initialdir $initDirName \
                    -initialfile $vars(last_module) -parent $dialog \
                    -title "Open Module" -multiple 1]
     if {$paths == {}} {
         return
     }
     foreach f $paths {
-        addModule $f
+		# tk_getOpenFile returns "initialfile" as a selected file, so skip it.
+		if { $f != $vars(last_module) } { 
+			addModule $f
+		}
     }
 }
 

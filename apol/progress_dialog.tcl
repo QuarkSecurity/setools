@@ -36,7 +36,7 @@ proc Apol_Progress_Dialog::wait {title initialtext lambda} {
         set text_width 32
     }
     ProgressDlg .apol_progress -title $title \
-        -type normal -stop {} -separator 1 -parent . -maximum 2 \
+        -type normal -stop {} -separator 1 -parent [focus] -maximum 2 \
         -width $text_width -textvariable Apol_Progress_Dialog::text \
         -variable Apol_Progress_Dialog::val
 
