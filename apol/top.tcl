@@ -477,8 +477,11 @@ proc ApolTop::_toplevel_update_stats {} {
         "types" new_apol_type_query_t
         "attribs" new_apol_attr_query_t
     }
+    #tk_messageBox -icon error -type ok -title "Query" -message $query_funcs
     foreach {key func} $query_funcs {
         set q [$func]
+        #tk_messageBox -icon error -type ok -title "q" -message $key
+        #tk_messageBox -icon error -type ok -title "q" -message $func
         set v [$q run $::ApolTop::policy]
         $q -acquire
         $q -delete
@@ -577,6 +580,7 @@ proc ApolTop::_exit {} {
     if {$policy != {}} {
         _close_policy
     }
+    
     Apol_File_Contexts::close
     _write_configuration_file
     exit

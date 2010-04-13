@@ -93,6 +93,7 @@ proc Apol_Initial_SIDS::_popupSIDInfo {sid} {
 proc Apol_Initial_SIDS::_search {} {
     variable vals
     variable widgets
+    #.mainframe.frame.nb.fcomponents.nb.fApol_Initial_SIDS.pw.f1.frame.obox.f.ok configure -state disable
 
     set name {}
     set context {}
@@ -100,18 +101,26 @@ proc Apol_Initial_SIDS::_search {} {
     Apol_Widget::clearSearchResults $widgets(results)
     if {![ApolTop::is_policy_open]} {
         tk_messageBox -icon error -type ok -title "Error" -message "No current policy file is opened."
+        #.mainframe.frame.nb.fcomponents.nb.fApol_Initial_SIDS.pw.f1.frame.obox.f.ok configure -state normal
         return
     }
 
     set q [new_apol_isid_query_t]
+    
     if {[Apol_Widget::getContextSelectorState $widgets(context)]} {
         foreach {context range_match attribute} [Apol_Widget::getContextSelectorValue $widgets(context)] {break}
         $q set_context $::ApolTop::policy $context $range_match
     }
+    
+    #tk_messageBox -icon error -type ok -title "::ApolTop::policy" -message $::ApolTop::policy
+    
     set v [$q run $::ApolTop::policy]
+    
+    #tk_messageBox -icon error -type ok -title "q" -message $q
     $q -acquire
     $q -delete
     set isids [isid_vector_to_list $v]
+    #tk_messageBox -icon error -type ok -title "isids" -message $isids
     $v -acquire
     $v -delete
 
@@ -123,7 +132,11 @@ proc Apol_Initial_SIDS::_search {} {
             append results "\n[_render_isid $i]"
         }
     }
+    
+    #tk_messageBox -icon error -type ok -title "We haven't crashed yet" -message "No segfault up to here"
     Apol_Widget::appendSearchResultText $widgets(results) $results
+    
+    #.mainframe.frame.nb.fcomponents.nb.fApol_Initial_SIDS.pw.f1.frame.obox.f.ok configure -state normal
 }
 
 proc Apol_Initial_SIDS::_render_isid {isid_name {compact 0}} {
