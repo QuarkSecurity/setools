@@ -42,7 +42,7 @@ struct apol_isid_query
 
 int apol_isid_get_by_query(const apol_policy_t * p, const apol_isid_query_t * i, apol_vector_t ** v)
 {
-	printf("starting query");
+	//printf("starting query");
 	qpol_iterator_t *iter;
 	int retval = -1, retval2;
 	const qpol_isid_t *isid = NULL;
@@ -89,7 +89,7 @@ int apol_isid_get_by_query(const apol_policy_t * p, const apol_isid_query_t * i,
 		apol_vector_destroy(v);
 	}
 	qpol_iterator_destroy(&iter);
-	printf("finished query");
+	//printf("finished query");
 	return retval;
 }
 
