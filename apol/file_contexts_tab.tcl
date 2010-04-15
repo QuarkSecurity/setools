@@ -95,72 +95,54 @@ proc Apol_File_Contexts::create {tab_name nb} {
 
     checkbutton $user_frame.enable -text "User" \
         -variable Apol_File_Contexts::opts(useUser)
-    #set widgets(user) [entry $user_frame.e -width 12 \
-    #                       -textvariable Apol_File_Contexts::opts(user)]
-    set widgets(user) [ComboBox $user_frame.combo -width 12 \
-    						-textvariable Apol_Users::opts(user) \
-                           -state disabled \
-                           -autopost 1]
+    set widgets(user) [entry $user_frame.e -width 12 \
+                           -textvariable Apol_File_Contexts::opts(user)]
     trace add variable Apol_File_Contexts::opts(useUser) write \
         [list Apol_File_Contexts::_toggleEnable $widgets(user)]
     pack $user_frame.enable -side top -anchor nw
-    #pack $widgets(user) -side top -anchor nw -padx 4 -expand 0 -fill none
-    pack $widgets(user) -side top -anchor nw -padx 4 -expand 0
+    pack $widgets(user) -side top -anchor nw -padx 4 -expand 0 -fill x
 
     checkbutton $role_frame.enable -text "Role" \
         -variable Apol_File_Contexts::opts(useRole)
-    #set widgets(role) [entry $role_frame.e -width 12 \
-    #                       -textvariable Apol_File_Contexts::opts(role)]
-    set widgets(role) [ComboBox $role_frame.combo -width 12 -textvariable Apol_Users::opts(role) \
-                           -state disabled \
-                           -autopost 1]
+    set widgets(role) [entry $role_frame.e -width 12 \
+                           -textvariable Apol_File_Contexts::opts(role)]
     trace add variable Apol_File_Contexts::opts(useRole) write \
         [list Apol_File_Contexts::_toggleEnable $widgets(role)]
     pack $role_frame.enable -side top -anchor nw
-    pack $widgets(role) -side top -anchor nw -padx 4 -expand 0 -fill none
+    pack $widgets(role) -side top -anchor nw -padx 4 -expand 0 -fill x
 
     checkbutton $type_frame.enable -text "Type" \
         -variable Apol_File_Contexts::opts(useType)
-    #set widgets(type) [entry $type_frame.e -width 12 \
-    #                       -textvariable Apol_File_Contexts::opts(type)]
-    set widgets(type) [ComboBox $type_frame.combo -width 12 -textvariable Apol_Users::opts(type) \
-                           -state disabled \
-                           -autopost 1]
+    set widgets(type) [entry $type_frame.e -width 12 \
+                           -textvariable Apol_File_Contexts::opts(type)]
     trace add variable Apol_File_Contexts::opts(useType) write \
         [list Apol_File_Contexts::_toggleEnable $widgets(type)]
     pack $type_frame.enable -side top -anchor nw
-    pack $widgets(type) -side top -anchor nw -padx 4 -expand 0 -fill none
+    pack $widgets(type) -side top -anchor nw -padx 4 -expand 0 -fill x
 
     checkbutton $objclass_frame.enable -text "Object class" \
         -variable Apol_File_Contexts::opts(useObjclass)
-    #set widgets(objclass) [entry $objclass_frame.e -width 12 \
-    #                       -textvariable Apol_File_Contexts::opts(objclass)]
-    set widgets(objclass) [ComboBox $objclass_frame.combo -width 2 -textvariable Apol_Users::opts(objclass) \
-                           -state disabled \
-                           -autopost 1]
+    set widgets(objclass) [entry $objclass_frame.e -width 12 \
+                           -textvariable Apol_File_Contexts::opts(objclass)]
     trace add variable Apol_File_Contexts::opts(useObjclass) write \
         [list Apol_File_Contexts::_toggleEnable $widgets(objclass)]
     pack $objclass_frame.enable -side top -anchor nw
-    pack $widgets(objclass) -side top -anchor nw -padx 4 -expand 0 -fill none
+    pack $widgets(objclass) -side top -anchor nw -padx 4 -expand 0 -fill x
 
-	#-----------------------------------------------------------------
-    #set range_cb [checkbutton $range_frame.enable \
-    #                  -variable Apol_File_Contexts::opts(useRange) -text "MLS range"]
-    #set range_entry [entry $range_frame.e -width 12 \
-    #                     -textvariable Apol_File_Contexts::opts(range)]
-    set range_entry [Apol_Widget::makeRangeSelector $range_frame.range Users]
+    set range_cb [checkbutton $range_frame.enable \
+                      -variable Apol_File_Contexts::opts(useRange) -text "MLS range"]
+    set range_entry [entry $range_frame.e -width 12 \
+                         -textvariable Apol_File_Contexts::opts(range)]
     trace add variable Apol_File_Contexts::opts(useRange) write \
         [list Apol_File_Contexts::_toggleEnable $range_entry]
-    #trace add variable Apol_File_Contexts::opts(fc_is_mls) write \
-    #    [list Apol_File_Contexts::_toggleRange $range_cb $range_entry]
-    #pack $range_cb -side top -anchor nw
-    pack $range_entry -side top -anchor nw -padx 4 -expand 1 -fill none
-    #pack $range_entry -expand 0
-    #-----------------------------------------------------------------
+    trace add variable Apol_File_Contexts::opts(fc_is_mls) write \
+        [list Apol_File_Contexts::_toggleRange $range_cb $range_entry]
+    pack $range_cb -side top -anchor nw
+    pack $range_entry -side top -anchor nw -padx 4 -expand 0 -fill x
 
     checkbutton $path_frame.enable \
         -variable Apol_File_Contexts::opts(usePath) -text "File path"
-    set path_entry [entry $path_frame.path -width 2 \
+    set path_entry [entry $path_frame.path -width 24 \
                         -textvariable Apol_File_Contexts::opts(path)]
     trace add variable Apol_File_Contexts::opts(usePath) write \
         [list Apol_File_Contexts::_toggleEnable $path_entry]
@@ -180,9 +162,6 @@ proc Apol_File_Contexts::create {tab_name nb} {
 }
 
 proc Apol_File_Contexts::open {ppath} {
-	$Apol_File_Contexts::widgets(user) configure -values [Apol_Users::getUsers]
-    $Apol_File_Contexts::widgets(role) configure -values [Apol_Roles::getRoles]
-    $Apol_File_Contexts::widgets(type) configure -values [Apol_Types::getTypes]
     if {[is_db_loaded]} {
         variable opts
         $opts(db) associatePolicy $::ApolTop::policy
@@ -237,8 +216,7 @@ proc Apol_File_Contexts::_initializeVars {} {
         useRole 0       role {}
         useType 0       type {}
         useObjclass 0   objclass {}
-        #useRange 0      
-        range {}
+        useRange 0      range {}
         usePath 0       path {}
 
         useRegexp 0  showContext 1  showObjclass 1
@@ -251,7 +229,7 @@ proc Apol_File_Contexts::_initializeVars {} {
 proc Apol_File_Contexts::_show_info {} {
 	.mainframe.frame.nb.fApol_File_Contexts.opts.f.bb.b1 configure -state disabled
     Apol_Widget::showPopupParagraph "File Contexts Information" $Apol_File_Contexts::info_button_text
-	.mainframe.frame.nb.fApol_File_Contexts.opts.f.bb.b1 configure -state normal
+    .mainframe.frame.nb.fApol_File_Contexts.opts.f.bb.b1 configure -state normal
 }
 
 proc Apol_File_Contexts::_changeStatusLabel {label1 label2 name1 name2 opt} {
@@ -276,11 +254,9 @@ proc Apol_File_Contexts::_changeStatusLabel {label1 label2 name1 name2 opt} {
 proc Apol_File_Contexts::_toggleEnable {entry name1 name2 op} {
     variable opts
     if {$opts($name2)} {
-        #$entry configure -state normal -bg white
-        $entry configure -state normal
+        $entry configure -state normal -bg white
     } else {
-        #$entry configure -state disabled -bg $ApolTop::default_bg_color
-    	$entry configure -state disabled
+        $entry configure -state disabled -bg $ApolTop::default_bg_color
     }
 }
 
@@ -299,7 +275,7 @@ proc Apol_File_Contexts::_toggleRange {cb entry name1 name2 op} {
 
 proc Apol_File_Contexts::_create_dialog {} {
     variable opts
-	.mainframe.frame.nb.fApol_File_Contexts.status.f.bb.b0 configure -state disabled
+
     set opts(new_filename) $opts(indexFilename)
     set opts(new_rootdir) "/"
 
@@ -335,7 +311,6 @@ proc Apol_File_Contexts::_create_dialog {} {
 
     $d draw
     destroy $d
-    .mainframe.frame.nb.fApol_File_Contexts.status.f.bb.b0 configure -state normal
 }
 
 proc Apol_File_Contexts::_browse_save {} {
