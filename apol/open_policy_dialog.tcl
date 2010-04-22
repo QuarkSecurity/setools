@@ -377,7 +377,7 @@ proc Apol_Open_Policy_Dialog::tryOpenPolicy {} {
 }
 
 # Retrieve information about a policy module file, either source or
-# binary, from disk.  This will be a 2-ple of module name and version.
+# binary, from disk.  This will be a 3-ple of module name, version and type.
 # The policy module will be closed afterwards.
 proc Apol_Open_Policy_Dialog::getModuleInfo {f} {
     set mod [new_qpol_module_t $f]

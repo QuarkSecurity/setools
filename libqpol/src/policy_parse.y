@@ -215,10 +215,12 @@ mls			: sensitivities dominance opt_categories levels mlspolicy
 sensitivities	 	: sensitivity_def 
 			| sensitivities sensitivity_def
 			;
+/* Need to call define_mls here, as we are working with files */
+/* only, not command line options */
 sensitivity_def		: SENSITIVITY identifier alias_def ';'
-			{if (define_sens()) return -1;}
+			{if (define_mls() | define_sens()) return -1;}
 			| SENSITIVITY identifier ';'
-			{if (define_sens()) return -1;}
+			{if (define_mls() | define_sens()) return -1;}
 	                ;
 alias_def		: ALIAS names
 			;

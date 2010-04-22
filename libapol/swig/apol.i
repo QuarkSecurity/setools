@@ -3217,3 +3217,4 @@ typedef struct apol_types_relation_access {} apol_types_relation_access_t;
 		return (apol_types_relation_access_t*)x;
 	};
 %}
+// vim:ft=c
