@@ -41,9 +41,7 @@ proc Apol_Context_Dialog::getContext {{defaultContext {}} {defaultAttribute {}} 
     
     # initialize widget states
     array set vars [list $dialog:low_enable 0  $dialog:high_enable 0]
-    tk_messageBox -icon error -type ok -title "Halb" -message "Halbhalbhalbhalb"
     if {$defaultContext != {}} {
-    tk_messageBox -icon error -type ok -title "Halb" -message "Ina if"
         set user [$defaultContext get_user]
         set role [$defaultContext get_role]
         set type [$defaultContext get_type]
@@ -56,7 +54,6 @@ proc Apol_Context_Dialog::getContext {{defaultContext {}} {defaultAttribute {}} 
             set high_level [$range get_high]
         }
     }
-    tk_messageBox -icon error -type ok -title "Blah" -message "Blahblablahblah"
 
     $vars($dialog:user_box) configure -values [Apol_Users::getUsers]
     set vars($dialog:user) $user
@@ -133,7 +130,7 @@ proc Apol_Context_Dialog::_create_dialog {parent} {
     set vars($dialog:user_cb) [checkbutton $user_f.enable -text "User" \
                                   -variable Apol_Context_Dialog::vars($dialog:user_enable)]
     set vars($dialog:user_box) [ComboBox $user_f.user -entrybg white \
-    								-width 12 \
+                                   -width 12 \
                                    -textvariable Apol_Context_Dialog::vars($dialog:user) \
                                    -autopost 1]
     trace add variable Apol_Context_Dialog::vars($dialog:user_enable) write \

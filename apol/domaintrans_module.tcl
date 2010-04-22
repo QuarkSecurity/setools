@@ -330,7 +330,7 @@ proc Apol_Analysis_domaintrans::_createAccessDialog {} {
     _createAccessTargets [$d getframe]
     _createAccessClasses [$d getframe]
     $d draw
-        $widgets(access) configure -state normal
+    $widgets(access) configure -state normal
 }
 
 proc Apol_Analysis_domaintrans::_createAccessTargets {f} {

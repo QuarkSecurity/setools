@@ -341,7 +341,7 @@ proc Apol_Open_Policy_Dialog::multiyview {args} {
 proc Apol_Open_Policy_Dialog::tryOpenPolicy {} {
     variable dialog
     variable vars
-	.open_policy_dialog.bbox.b0 configure -state disabled
+    .open_policy_dialog.bbox.b0 configure -state disabled
     if {[string trim $vars(primary_file)] != {}} {
         set ppath [list_to_policy_path $vars(path_type) $vars(primary_file) $vars(mod_paths)]
         if {[ApolTop::openPolicyPath $ppath] == 0} {

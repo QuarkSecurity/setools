@@ -319,9 +319,9 @@ proc Apol_Analysis_transflow::_createAdvancedDialog {} {
     if {[ApolTop::is_policy_open] && ![Apol_Perms_Map::is_pmap_loaded]} {
         if {![ApolTop::openDefaultPermMap]} {
             return "This analysis requires that a permission map is loaded."
-	}
+        }
     }
-    	
+
     set d [Dialog .transflow_adv -modal local -separator 1 -title "Transitive Information Flow Advanced Filters" -parent .]
     $d add -text "Close"
 
@@ -630,7 +630,7 @@ proc Apol_Analysis_transflow::_checkParams {} {
     if {![Apol_Perms_Map::is_pmap_loaded]} {
         if {![ApolTop::openDefaultPermMap]} {
             return "This analysis requires that a permission map is loaded."
-	}
+        }
         apol_tcl_clear_info_string
     }
 

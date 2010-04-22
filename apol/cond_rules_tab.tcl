@@ -195,9 +195,9 @@ proc Apol_Cond_Rules::_search {} {
         append text " match the search criteria.  Expressions are in Reverse Polish Notation.\n\n"
     }
     Apol_Widget::appendSearchResultText $widgets(results) $text
-	if {![info exists apol_progress]} {
-	Apol_Progress_Dialog::wait "Conditional Expressions" "Rendering conditionals" \
-    	{
+    if {![info exists apol_progress]} {
+        Apol_Progress_Dialog::wait "Conditional Expressions" "Rendering conditionals" \
+        {
             if {[ApolTop::is_capable "syntactic rules"]} {
                 $::ApolTop::qpolicy build_syn_rule_table
             }
@@ -209,9 +209,9 @@ proc Apol_Cond_Rules::_search {} {
                 Apol_Widget::appendSearchResultText $widgets(results) "$text\n\n"
                 incr counter
             }
-   		}
+        }
     }
-	.mainframe.frame.nb.frules.nb.fApol_Cond_Rules.top.obox.f.ok configure -state normal
+    .mainframe.frame.nb.frules.nb.fApol_Cond_Rules.top.obox.f.ok configure -state normal
 }
 
 proc Apol_Cond_Rules::_renderConditional {cond avrules terules cond_number} {

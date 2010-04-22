@@ -227,7 +227,7 @@ proc Apol_File_Contexts::_initializeVars {} {
 }
 
 proc Apol_File_Contexts::_show_info {} {
-	.mainframe.frame.nb.fApol_File_Contexts.opts.f.bb.b1 configure -state disabled
+    .mainframe.frame.nb.fApol_File_Contexts.opts.f.bb.b1 configure -state disabled
     Apol_Widget::showPopupParagraph "File Contexts Information" $Apol_File_Contexts::info_button_text
     .mainframe.frame.nb.fApol_File_Contexts.opts.f.bb.b1 configure -state normal
 }

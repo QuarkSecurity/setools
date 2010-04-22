@@ -155,7 +155,7 @@ proc Apol_Users::_initializeVars {} {
 proc Apol_Users::_toggleRolesCheckbutton {path name1 name2 op} {
     variable opts
     if {$opts($name2)} {
-	$path configure -state normal -entrybg white
+    $path configure -state normal -entrybg white
     } else {
         $path configure -state disabled -entrybg $ApolTop::default_bg_color
     }
