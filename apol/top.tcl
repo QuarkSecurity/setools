@@ -127,7 +127,7 @@ proc ApolTop::openPolicyPath {ppath} {
                         apol_tcl_open_policy $ppath
                     } \
                 } p] || $p == "NULL"} {
-        tk_messageBox -icon error -type ok -title "Open Policy" -parent [focus] \
+        tk_messageBox -icon error -type ok -title "Open Policy" -parent . \
             -message "[apol_tcl_get_error_string]"
         return -1  ;# indicates failed to open policy
     }
@@ -144,7 +144,7 @@ proc ApolTop::openPolicyPath {ppath} {
     if {![is_capable "attribute names"] && \
             [llength $::Apol_Types::attriblist] > 0 && \
             $show_fake_attrib_warning} {
-        set d [Dialog .fake_attribute_dialog -modal local -parent [focus] \
+        set d [Dialog .fake_attribute_dialog -modal local -parent . \
                    -title "Open Policy" -separator 1]
         $d add -text "OK"
         set f [$d getframe]
