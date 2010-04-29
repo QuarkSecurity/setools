@@ -552,9 +552,7 @@ proc ApolTop::_close_policy {} {
         {
             variable tabs
             foreach tab $tabs {
-                if {[catch [lindex $tab 0]::close]} {
-                set i [expr $i+2]
-                }
+                [lindex $tab 0]::close
             }
             Apol_Perms_Map::close
             variable policy
