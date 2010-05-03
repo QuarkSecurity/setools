@@ -267,7 +267,7 @@ proc Apol_Analysis_transflow::_reinitializeVals {} {
 
         classes:title {}
         classes:displayed {}
-
+        classes:threshold_enable 0
         classes:threshold 1
 
         intermed:inc {}   intermed:inc_all {}
@@ -277,9 +277,9 @@ proc Apol_Analysis_transflow::_reinitializeVals {} {
         find_more:hours 0   find_more:minutes 0   find_more:seconds 30
         find_more:limit 20
     }
-    if {[info exists .transflow_adv.frame.classes.f.f.threshold]} {
-        set vals(classes:threshold_enable) 0
-    }
+    #if {[info exists .transflow_adv.frame.classes.f.f.threshold]} {
+    #    set vals(classes:threshold_enable) 0
+    #}
     
     array unset vals perms:*
     foreach class [Apol_Class_Perms::getClasses] {
@@ -327,7 +327,8 @@ proc Apol_Analysis_transflow::_createAdvancedDialog {} {
     }
 
     set d [Dialog .transflow_adv -modal none -separator 1 -title "Transitive Information Flow Advanced Filters" -parent .]
-
+    $d add -text "Close" -command [list Apol_Analysis_transflow::_closeAdvancedDialog $d]
+    
     set tf [TitleFrame [$d getframe].classes -text "Filter By Object Class Permissions"]
     pack $tf -side top -expand 1 -fill both -padx 2 -pady 4
     _createClassFilter [$tf getframe]
@@ -362,11 +363,7 @@ proc Apol_Analysis_transflow::_createAdvancedDialog {} {
 }
 
 proc Apol_Analysis_transflow::_closeAdvancedDialog {d} {
-    $d configure -modal local
-    #$d setfocus 0
-    #tk_messageBox -icon error -type ok -title "Modality set" -message [$d cget -modal]
-    $d configure -title [$d cget -modal]
-    $d enddialog 0
+    $d withdraw
 }
 
 proc Apol_Analysis_transflow::_createClassFilter {f} {
