@@ -277,9 +277,6 @@ proc Apol_Analysis_transflow::_reinitializeVals {} {
         find_more:hours 0   find_more:minutes 0   find_more:seconds 30
         find_more:limit 20
     }
-    #if {[info exists .transflow_adv.frame.classes.f.f.threshold]} {
-    #    set vals(classes:threshold_enable) 0
-    #}
     
     array unset vals perms:*
     foreach class [Apol_Class_Perms::getClasses] {
