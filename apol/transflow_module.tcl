@@ -532,6 +532,20 @@ proc Apol_Analysis_transflow::_moveToExclude {inc exc} {
     $exc selection clear 0 end
 }
 
+proc Apol_Analysis_transflow::_excludeType {type} {
+    variable vals
+    if {[lsearch vals(intermed:exc) $type] != -1} {
+        return
+    }
+    set vals(intermed:exc) [lsort [concat $vals(intermed:exc) [list $type]]]
+    set vals(intermed:exc_all) [lsort [concat $vals(intermed:exc_all) [list $type]]]
+    
+    set i [lsearch $vals(intermed:inc) $type]
+    set vals(intermed:inc) [lreplace $vals(intermed:inc) $i $i]
+    set i [lsearch $vals(intermed:inc_all) $type]
+    set vals(intermed:inc_all) [lreplace $vals(intermed:inc_all) $i $i]
+}
+
 proc Apol_Analysis_transflow::_moveToInclude {inc exc} {
     variable vals
     if {[set selection [$exc curselection]] == {}} {
@@ -550,6 +564,20 @@ proc Apol_Analysis_transflow::_moveToInclude {inc exc} {
     }
     $inc selection clear 0 end
     $exc selection clear 0 end
+}
+
+proc Apol_Analysis_transflow::_includeType {type} {
+    variable vals
+    if {[lsearch vals(intermed:inc) $type] != -1} {
+        return
+    }
+    set vals(intermed:inc) [lsort [concat $vals(intermed:inc) [list $type]]]
+    set vals(intermed:inc_all) [lsort [concat $vals(intermed:inc_all) [list $type]]]
+    
+    set i [lsearch $vals(intermed:exc) $type]
+    set vals(intermed:exc) [lreplace $vals(intermed:exc) $i $i]
+    set i [lsearch $vals(intermed:exc_all) $type]
+    set vals(intermed:exc_all) [lreplace $vals(intermed:exc_all) $i $i]
 }
 
 proc Apol_Analysis_transflow::_attribEnabled {cb} {
@@ -749,6 +777,7 @@ proc Apol_Analysis_transflow::_createResultsDisplay {} {
 }
 
 proc Apol_Analysis_transflow::_treeSelect {res tree node} {
+    variable vals
     if {$node != {}} {
         $res.tb configure -state normal
         $res.tb delete 0.0 end
@@ -758,6 +787,32 @@ proc Apol_Analysis_transflow::_treeSelect {res tree node} {
         } else {
             # an informational node, whose data has already been rendered
             eval $res.tb insert end [lindex $data 1]
+        }
+        
+        if {[string match "*title*" $data] == 0} {
+            set type [string range [lindex [split [lindex $data 1] " "] 1] 3 end]
+            
+            set temp2 -1
+            foreach i $vals(intermed:exc) {
+                if {[string compare $i $type] == 0} {
+                   set temp2 0
+                }
+            }
+            puts $temp2
+            
+            set temp3 -1
+            foreach i $vals(intermed:inc) {
+                if {[string compare $i $type] == 0} {
+                    set temp3 0
+                }
+            }
+            puts $temp3
+
+            if {$temp2 == -1} {
+                _excludeType $type
+            } elseif {$temp3 == -1} {
+                _includeType $type
+            }
         }
         $res.tb configure -state disabled
     }
