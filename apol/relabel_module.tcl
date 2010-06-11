@@ -332,7 +332,7 @@ proc Apol_Analysis_relabel::_createAdvancedDialog {} {
     variable vals
 
     set d [Dialog .relabel_analysis_adv -modal local -separator 1 -title "Direct Relabel Advanced Filters" -parent .]
-    $d add -text "Close"
+    $d add -text "Close" -command [list Apol_Analysis_relabel::_closeAdvancedDialog $d]
 
     set tf [TitleFrame [$d getframe].objs -text "Filter By Object Classes"]
     pack $tf -side top -expand 1 -fill both -padx 2 -pady 4
@@ -375,6 +375,10 @@ proc Apol_Analysis_relabel::_createAdvancedDialog {} {
 
     $d draw
     $widgets(advanced) configure -state normal
+}
+
+proc Apol_Analysis_relabel::_closeAdvancedDialog {d} {
+    $d withdraw
 }
 
 proc Apol_Analysis_relabel::_createAdvancedFilter {f title varname disabled} {
