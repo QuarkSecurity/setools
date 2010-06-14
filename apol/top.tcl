@@ -1186,6 +1186,8 @@ if {[catch {tcl_config_init_libraries}]} {
 }
 
 print_init "Initializing Tk... "
+lappend auto_path [glob type -d /usr/lib/tk???]
+lappend auto_path [glob type -d /usr/share/tk???]
 if {[catch {package require Tk}]} {
     puts stderr "FAILED. This library could not be found in any of these subdirectories:\n\t[join $auto_path "\n\t"]"
     puts stderr "This may indicate a problem with the tcl package's auto_path variable.\n"
